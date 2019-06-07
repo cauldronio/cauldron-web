@@ -439,7 +439,7 @@ def create_kibana_user(name, psw, dashboard):
     """
     logging.info('Creating ES user: <{}>'.format(name))
     headers = {'Content-Type': 'application/json'}
-    r = requests.put("{}/_opendistro/_security/api/internalusers/{}".format(ES_URL, name),
+    r = requests.put("https://{}/_opendistro/_security/api/internalusers/{}".format(ES_URL, name),
                      auth=('admin', ES_ADMIN_PSW),
                      json={"password": psw},
                      verify=False,
@@ -449,7 +449,7 @@ def create_kibana_user(name, psw, dashboard):
 
     role_name = "role_{}".format(name)
     logging.info('Creating ES role for user: <{}>'.format(name))
-    r = requests.put("{}/_opendistro/_security/api/roles/{}".format(ES_URL, role_name),
+    r = requests.put("https://{}/_opendistro/_security/api/roles/{}".format(ES_URL, role_name),
                      auth=('admin', ES_ADMIN_PSW),
                      json={"indices": {'none':  {"*": ["READ"]}}},
                      verify=False,
@@ -458,7 +458,7 @@ def create_kibana_user(name, psw, dashboard):
     r.raise_for_status()
 
     logging.info('Creating ES role mapping for user: <{}>'.format(name))
-    r = requests.put("{}/_opendistro/_security/api/rolesmapping/{}".format(ES_URL, role_name),
+    r = requests.put("https://{}/_opendistro/_security/api/rolesmapping/{}".format(ES_URL, role_name),
                      auth=('admin', ES_ADMIN_PSW),
                      json={"users": [name]},
                      verify=False,
@@ -476,7 +476,7 @@ def create_kibana_user(name, psw, dashboard):
     # Set default Index pattern
     logging.info('Set default index pattern')
     headers = {'Content-Type': 'application/json', 'kbn-xsrf': 'true'}
-    requests.post('{}/api/kibana/settings/defaultIndex'.format(KIB_URL),
+    requests.post('http://{}/api/kibana/settings/defaultIndex'.format(KIB_URL),
                   auth=(name, psw),
                   json={"value": "git_enrich"},
                   verify=False,
@@ -714,7 +714,7 @@ def request_kibana(request, dash_id):
 
     update_indices(dash_id)
 
-    return HttpResponseRedirect(KIB_URL + "/?jwtToken=" + jwt_key)
+    return HttpResponseRedirect("http://" + KIB_URL + "/?jwtToken=" + jwt_key)
 
 
 def jwt_sign_user(user, roles):
@@ -743,7 +743,7 @@ def update_indices(dash_id):
         role['indices']["*{}".format(repo.index_name)] = {"*": ["READ"]}
 
     headers = {'Content-Type': 'application/json'}
-    r = requests.put("{}/_opendistro/_security/api/roles/{}".format(ES_URL, role_name),
+    r = requests.put("https://{}/_opendistro/_security/api/roles/{}".format(ES_URL, role_name),
                      auth=('admin', ES_ADMIN_PSW),
                      json=role,
                      verify=False,
