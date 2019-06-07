@@ -17,7 +17,7 @@ ROLE_NAME = "dashboard-2-role"
 
 PANELS_DIR = "overview"
 
-INDICES = ["chaoss_grimoirelab-perceval", "chaoss-grimoirelab-perceval", "github_chaoss_augur", "git-chaoss-augur"]
+INDICES = ["asd"]
 
 
 # ADD USER
@@ -28,8 +28,6 @@ r = requests.put("{}/_opendistro/_security/api/internalusers/{}".format(ES_URL, 
                  json={"password": USER_PSW},
                  verify=False,
                  headers=headers)
-
-logging.info(r.status_code, r.text)
 
 r.raise_for_status()
 
@@ -51,7 +49,6 @@ r = requests.put("{}/_opendistro/_security/api/roles/{}".format(ES_URL, ROLE_NAM
                  json=role,
                  verify=False,
                  headers=headers)
-logging.info(r.status_code, r.text)
 
 r.raise_for_status()
 
@@ -65,7 +62,6 @@ r = requests.put("{}/_opendistro/_security/api/rolesmapping/{}".format(ES_URL, R
                  verify=False,
                  headers=headers)
 
-logging.info(r.status_code, r.text)
 
 r.raise_for_status()
 
@@ -85,7 +81,6 @@ requests.post('{}/api/kibana/settings/defaultIndex'.format(ES_URL),
               headers=headers)
 
 
-logging.info(r.status_code, r.text)
 
 r.raise_for_status()
 

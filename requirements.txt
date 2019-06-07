@@ -6,3 +6,6 @@ elasticsearch>=6.0.0,<7.0.0
 mysqlclient
 python-gitlab==1.8.0
 python-slugify==3.0.2
+git+https://github.com/Bitergia/archimedes
+cryptography==2.7
+PyJWT==1.4.0

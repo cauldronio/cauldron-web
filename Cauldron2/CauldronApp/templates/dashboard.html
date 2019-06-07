@@ -168,7 +168,15 @@
           <div class="container">
               <div class="header-dashboard">
                 {% if dashboard %}
-                  <h3>Control panel for '{{dashboard.name}}'</strong></h3>
+                  <h2>Control panel for '{{dashboard.name}}'</strong></h2>
+                  {% if editable %}
+                  <a id="open-kibana" class="btn btn-success" href="/kibana/{{dash_id}}">
+                    Open Dashboard
+                  </a>
+                  <a id="create-panels-kibana" class="btn btn-success" href="/dashboard/{{dash_id}}/create-panels">
+                    Import panels
+                  </a>
+                  {% endif %}
                 {% else %}
                   <h3>Dashboard not found</h3>
                 {% endif %}
@@ -187,16 +195,16 @@
                     <div class="col-md-6">
                       <p><strong>Backend</strong></p>
                       <div class="list-group">
-                        <a class="list-group-item list-group-item-action active" id="list-home-list" data-toggle="list" data-filter-type="backend" data-filter="any" href="#" role="tab">
+                        <a class="list-group-item list-group-item-action active" data-toggle="list" data-filter-type="backend" data-filter="any" href="#" role="tab">
                           <strong>Any</strong>
                         </a>
-                        <a class="list-group-item list-group-item-action" id="list-profile-list" data-toggle="list" data-filter-type="backend" data-filter="github" href="#" role="tab">
+                        <a class="list-group-item list-group-item-action" data-toggle="list" data-filter-type="backend" data-filter="github" href="#" role="tab">
                           <strong>GitHub</strong>
                         </a>
-                        <a class="list-group-item list-group-item-action" id="list-messages-list" data-toggle="list" data-filter-type="backend" data-filter="gitlab" href="#" role="tab">
+                        <a class="list-group-item list-group-item-action" data-toggle="list" data-filter-type="backend" data-filter="gitlab" href="#" role="tab">
                           <strong>GitLab</strong>
                         </a>
-                        <a class="list-group-item list-group-item-action" id="list-settings-list" data-toggle="list" data-filter-type="backend" data-filter="git" href="#" role="tab">
+                        <a class="list-group-item list-group-item-action" data-toggle="list" data-filter-type="backend" data-filter="git" href="#" role="tab">
                           <strong>Git</strong>
                         </a>
                       </div>
@@ -204,19 +212,19 @@
                     <div class="col-md-6">
                       <p><strong>Status</strong></p>
                       <div class="list-group">
-                        <a class="list-group-item list-group-item-action active" id="list-home-list" data-toggle="list" data-filter-type="status" data-filter="all" href="#" role="tab">
+                        <a class="list-group-item list-group-item-action active" data-toggle="list" data-filter-type="status" data-filter="all" href="#" role="tab">
                           <strong>All</strong>
                         </a>
-                        <a class="list-group-item list-group-item-action" id="list-profile-list" data-toggle="list" data-filter-type="status" data-filter="pending" href="#" role="tab">
+                        <a class="list-group-item list-group-item-action" data-toggle="list" data-filter-type="status" data-filter="pending" href="#" role="tab">
                           <strong>Not started</strong>
                         </a>
-                        <a class="list-group-item list-group-item-action" id="list-messages-list" data-toggle="list" data-filter-type="status" data-filter="running" href="#" role="tab">
+                        <a class="list-group-item list-group-item-action" data-toggle="list" data-filter-type="status" data-filter="running" href="#" role="tab">
                           <strong>Running</strong>
                         </a>
-                        <a class="list-group-item list-group-item-action" id="list-settings-list" data-toggle="list" data-filter-type="status" data-filter="completed" href="#" role="tab">
+                        <a class="list-group-item list-group-item-action" data-toggle="list" data-filter-type="status" data-filter="completed" href="#" role="tab">
                           <strong>Completed</strong>
                         </a>
-                        <a class="list-group-item list-group-item-action" id="list-settings-list" data-toggle="list" data-filter-type="status" data-filter="error" href="#" role="tab">
+                        <a class="list-group-item list-group-item-action" data-toggle="list" data-filter-type="status" data-filter="error" href="#" role="tab">
                           <strong>Error</strong>
                         </a>
   

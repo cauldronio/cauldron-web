@@ -35,6 +35,11 @@ GL_CLIENT_SECRET = secret.GL_CLIENT_SECRET
 
 GL_PRIVATE_TOKEN = secret.GL_PRIVATE_TOKEN
 
+# SECURITY WARNING: keep the keys privates in Production
+ES_URL = secret.ES_URL
+KIB_URL = secret.KIB_URL
+ES_ADMIN_PSW = secret.ES_ADMIN_PSW
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 

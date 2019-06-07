@@ -19,3 +19,8 @@ DB_USER = 'grimoirelab'
 DB_PASSWORD = ''
 DB_HOST = 'grimoirelab_service'
 DB_PORT = '3306'
+
+# ElasticSearch  and Kibana endpoint
+ES_URL = ""
+KIB_URL = ""
+ES_ADMIN_PSW = ""

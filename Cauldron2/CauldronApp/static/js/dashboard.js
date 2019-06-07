@@ -16,6 +16,8 @@ $(document).ready(function(){
     $('.btn-delete').click(deleteRepo);
 
     $('#collapseFilters a').click(onFilterClick);
+
+    $('#create-panels-kibana').click(requestImportPanels);
 });
 
 function loadLastStatus(){
@@ -174,6 +176,26 @@ function updateBadgesRepos(repo_arr) {
     $('.badge-repos-git').html(repos_git)
 }
 
+function requestImportPanels(event) {
+    event.preventDefault();
+    var addBtn = $(`#${event.target.id}`);
+
+    addBtn.html(`<div class="spinner-border text-dark spinner-border-sm" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>`);
+
+    showToast('Importing', `Importing Panels, this will take <strong>1 minute</strong> the first time`, 'fas fa-check-circle text-success', 5000);
+    
+    $.post(url = window.location.pathname + "/create-panels")
+        .done(function (data) {
+            showToast('Imported', `The default panels were imported`, 'fas fa-check-circle text-success', 5000);
+        })
+        .fail(function (data) {
+            showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', 5000);
+        })
+        .always(function(){addBtn.html('Import panels')})
+         
+}
 
 /****************************
  *     LOGS FUNCTIONS       *

@@ -8,7 +8,7 @@
 {% block content %}
 
     <div class="container">
-        <form action="/new-dashboard" method="post">
+        <form action="/new-dashboard" method="post" id="create-dashboard">
           {% csrf_token %}
           <div class="form-group">
             <div class="input-group">

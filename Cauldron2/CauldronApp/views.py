@@ -6,15 +6,17 @@ from django.contrib.auth.models import User
 import os
 import logging
 import requests
+import jwt
 from urllib.parse import urlparse, urljoin, urlencode
 from random import choice
 from string import ascii_lowercase, digits
 from github import Github
 from gitlab import Gitlab
 from slugify import slugify
+from archimedes.archimedes import Archimedes
 
-from Cauldron2.settings import GH_CLIENT_ID, GH_CLIENT_SECRET, GL_CLIENT_ID, GL_CLIENT_SECRET, GL_PRIVATE_TOKEN
-from CauldronApp.models import GithubUser, GitlabUser, Dashboard, Repository, Task, CompletedTask, AnonymousUser
+from Cauldron2.settings import GH_CLIENT_ID, GH_CLIENT_SECRET, GL_CLIENT_ID, GL_CLIENT_SECRET, GL_PRIVATE_TOKEN, ES_URL, KIB_URL, ES_ADMIN_PSW
+from CauldronApp.models import GithubUser, GitlabUser, Dashboard, Repository, Task, CompletedTask, AnonymousUser, ESUser
 from CauldronApp.githubsync import GitHubSync
 
 
@@ -417,10 +419,94 @@ def request_new_dashboard(request):
 
     # Create a new dashboard
     dash = Dashboard.objects.create(name=generate_random_uuid(length=12), creator=request.user)
-    dash.name = "Dashboard_{}".format(dash.id)
+    dash.name = "dashboard_{}".format(dash.id)
     dash.save()
 
+    # Create the Kibana user associated to that dashboard
+    kib_username = "dashboard_{}".format(dash.id)
+    kib_pwd = generate_random_uuid(length=32, delimiter='')
+    create_kibana_user(kib_username, kib_pwd, dash)
+    # TODO: If something is wrong delete the dashboard
     return HttpResponseRedirect('/dashboard/{}'.format(dash.id))
+
+
+def create_kibana_user(name, psw, dashboard):
+    """
+    Create ES user, role and Role mapping
+    :param name: Name for the user
+    :param psw: Password fot the user
+    :return:
+    """
+    logging.info('Creating ES user: <{}>'.format(name))
+    headers = {'Content-Type': 'application/json'}
+    r = requests.put("{}/_opendistro/_security/api/internalusers/{}".format(ES_URL, name),
+                     auth=('admin', ES_ADMIN_PSW),
+                     json={"password": psw},
+                     verify=False,
+                     headers=headers)
+    logging.info("{} - {}".format(r.status_code, r.text))
+    r.raise_for_status()
+
+    role_name = "role_{}".format(name)
+    logging.info('Creating ES role for user: <{}>'.format(name))
+    r = requests.put("{}/_opendistro/_security/api/roles/{}".format(ES_URL, role_name),
+                     auth=('admin', ES_ADMIN_PSW),
+                     json={"indices": {'none':  {"*": ["READ"]}}},
+                     verify=False,
+                     headers=headers)
+    logging.info("{} - {}".format(r.status_code, r.text))
+    r.raise_for_status()
+
+    logging.info('Creating ES role mapping for user: <{}>'.format(name))
+    r = requests.put("{}/_opendistro/_security/api/rolesmapping/{}".format(ES_URL, role_name),
+                     auth=('admin', ES_ADMIN_PSW),
+                     json={"users": [name]},
+                     verify=False,
+                     headers=headers)
+    logging.info("{} - {}".format(r.status_code, r.text))
+    r.raise_for_status()
+
+    logging.info('Import Index patterns')
+    archimedes = Archimedes("http://{}:{}@localhost:5601".format(name, psw), "CauldronApp/archimedes_panels/")
+    archimedes.import_from_disk(obj_type='index-pattern', obj_id='gitlab_enriched', force=False)
+    archimedes.import_from_disk(obj_type='index-pattern', obj_id='git_aoc_enriched', force=False)
+    archimedes.import_from_disk(obj_type='index-pattern', obj_id='github_enrich', force=False)
+    archimedes.import_from_disk(obj_type='index-pattern', obj_id='git_enrich', force=False)
+
+    # Set default Index pattern
+    logging.info('Set default index pattern')
+    headers = {'Content-Type': 'application/json', 'kbn-xsrf': 'true'}
+    requests.post('{}/api/kibana/settings/defaultIndex'.format(KIB_URL),
+                  auth=(name, psw),
+                  json={"value": "git_enrich"},
+                  verify=False,
+                  headers=headers)
+
+    r.raise_for_status()
+
+    es_user = ESUser(name=name, password=psw, role=role_name, dashboard=dashboard)
+    es_user.save()
+
+
+def request_import_panels(request, dash_id):
+    dash = Dashboard.objects.filter(id=dash_id).first()
+    if not dash:
+        return JsonResponse({'status': 'error', 'message': 'Dashboard not found'}, status=404)
+
+    if not request.user.is_authenticated:
+        return JsonResponse({'status': 'error', 'message': 'You are not authenticated'}, status=401)
+
+    if request.user != dash.creator:
+        return JsonResponse({'status': 'error', 'message': 'This is not your dashboard'}, status=403)
+
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Only POST method allowed'}, status=405)
+
+    archimedes = Archimedes("http://{}:{}@localhost:5601".format(dash.esuser.name, dash.esuser.password), "CauldronApp/archimedes_panels/")
+    archimedes.import_from_disk(obj_type='dashboard', obj_id='Overview',
+                                find=True, force=False)
+
+    return JsonResponse({'status': 'ok'})
 
 
 def add_to_dashboard(dash, backend, url):
@@ -599,6 +685,70 @@ def request_show_dashboard(request, dash_id):
     context['dash_id'] = dash_id
 
     return render(request, 'dashboard.html', context=context)
+
+
+def request_kibana(request, dash_id):
+    """
+    Redirect to Kibana
+    :param request:
+    :param dash_id:
+    :return:
+    """
+    dash = Dashboard.objects.filter(id=dash_id).first()
+    if not dash:
+        return JsonResponse({'status': 'error', 'message': 'Dashboard not found'}, status=404)
+
+    if not request.user.is_authenticated:
+        return JsonResponse({'status': 'error', 'message': 'You are not authenticated'}, status=401)
+
+    if request.user != dash.creator:
+        return JsonResponse({'status': 'error', 'message': 'This is not your dashboard'}, status=403)
+
+    if request.method != 'GET':
+        return JsonResponse({'status': 'error', 'message': 'Only GET method allowed'}, status=405)
+
+    # TODO: The user should be stored in db
+    user = "dashboard_{}".format(dash_id)
+    roles = ""
+    jwt_key = jwt_sign_user(user, roles)
+
+    update_indices(dash_id)
+
+    return HttpResponseRedirect(KIB_URL + "/?jwtToken=" + jwt_key)
+
+
+def jwt_sign_user(user, roles):
+    with open('jwtR256.key', 'r') as f_private:
+        private_key = f_private.read()
+
+    claims = {
+        "user": user,
+        "roles": roles
+    }
+
+    return jwt.encode(claims, private_key, algorithm='RS256').decode('utf-8')
+
+
+def update_indices(dash_id):
+    repos = Repository.objects.filter(dashboards__id=dash_id)
+    role_name = "role_dashboard_{}".format(dash_id)
+    if not len(repos):
+        return
+    role = {
+        "indices": {
+            # Here comes each index
+        }
+    }
+    for repo in repos:
+        role['indices']["*{}".format(repo.index_name)] = {"*": ["READ"]}
+
+    headers = {'Content-Type': 'application/json'}
+    r = requests.put("{}/_opendistro/_security/api/roles/{}".format(ES_URL, role_name),
+                     auth=('admin', ES_ADMIN_PSW),
+                     json=role,
+                     verify=False,
+                     headers=headers)
+    r.raise_for_status()
 
 
 def request_delete_token(request):
