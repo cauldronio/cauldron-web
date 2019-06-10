@@ -7,7 +7,7 @@ import os
 import logging
 import requests
 import jwt
-from urllib.parse import urlparse, urljoin, urlencode
+from urllib.parse import urlparse, urlencode
 from random import choice
 from string import ascii_lowercase, digits
 from github import Github
@@ -467,7 +467,9 @@ def create_kibana_user(name, psw, dashboard):
     r.raise_for_status()
 
     logging.info('Import Index patterns')
-    archimedes = Archimedes("http://{}:{}@localhost:5601".format(name, psw), "CauldronApp/archimedes_panels/")
+    kib_url_parsed = urlparse(KIB_URL)
+    kib_url_auth = "{}://{}:{}@{}".format(kib_url_parsed.scheme, name, psw, kib_url_parsed.netloc)
+    archimedes = Archimedes(kib_url_auth, "CauldronApp/archimedes_panels/")
     archimedes.import_from_disk(obj_type='index-pattern', obj_id='gitlab_enriched', force=False)
     archimedes.import_from_disk(obj_type='index-pattern', obj_id='git_aoc_enriched', force=False)
     archimedes.import_from_disk(obj_type='index-pattern', obj_id='github_enrich', force=False)
@@ -502,7 +504,12 @@ def request_import_panels(request, dash_id):
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'Only POST method allowed'}, status=405)
 
-    archimedes = Archimedes("http://{}:{}@localhost:5601".format(dash.esuser.name, dash.esuser.password), "CauldronApp/archimedes_panels/")
+    kib_url_parsed = urlparse(KIB_URL)
+    kib_url_auth = "{}://{}:{}@{}".format(kib_url_parsed.scheme,
+                                             dash.esuser.name,
+                                             dash.esuser.password,
+                                             kib_url_parsed.netloc)
+    archimedes = Archimedes(kib_url_auth, "CauldronApp/archimedes_panels/")
     archimedes.import_from_disk(obj_type='dashboard', obj_id='Overview',
                                 find=True, force=False)
 
