@@ -15,7 +15,9 @@ from gitlab import Gitlab
 from slugify import slugify
 from archimedes.archimedes import Archimedes
 
-from Cauldron2.settings import GH_CLIENT_ID, GH_CLIENT_SECRET, GL_CLIENT_ID, GL_CLIENT_SECRET, GL_PRIVATE_TOKEN, ES_URL, KIB_URL, ES_ADMIN_PSW
+from Cauldron2.settings import GH_CLIENT_ID, GH_CLIENT_SECRET, GL_CLIENT_ID, GL_CLIENT_SECRET, GL_PRIVATE_TOKEN, \
+                                ES_IN_HOST, ES_PORT, ES_PROTO, ES_OUT_HOST, ES_ADMIN_PSW, \
+                                KIB_IN_HOST, KIB_PORT, KIB_PROTO, KIB_OUT_HOST
 from CauldronApp.models import GithubUser, GitlabUser, Dashboard, Repository, Task, CompletedTask, AnonymousUser, ESUser
 from CauldronApp.githubsync import GitHubSync
 
@@ -26,6 +28,9 @@ GH_URI_IDENTITY = 'https://github.com/login/oauth/authorize'
 GL_ACCESS_OAUTH = 'https://gitlab.com/oauth/token'
 GL_URI_IDENTITY = 'https://gitlab.com/oauth/authorize'
 GL_REDIRECT_PATH = '/gitlab-login'
+
+ES_IN_URL = "{}://{}:{}".format(ES_PROTO, ES_IN_HOST, ES_PORT)
+KIB_IN_URL = "{}://{}:{}".format(KIB_PROTO, KIB_IN_HOST, KIB_PORT)
 
 
 def homepage(request):
@@ -439,7 +444,7 @@ def create_kibana_user(name, psw, dashboard):
     """
     logging.info('Creating ES user: <{}>'.format(name))
     headers = {'Content-Type': 'application/json'}
-    r = requests.put("{}/_opendistro/_security/api/internalusers/{}".format(ES_URL, name),
+    r = requests.put("{}/_opendistro/_security/api/internalusers/{}".format(ES_IN_URL, name),
                      auth=('admin', ES_ADMIN_PSW),
                      json={"password": psw},
                      verify=False,
@@ -449,7 +454,7 @@ def create_kibana_user(name, psw, dashboard):
 
     role_name = "role_{}".format(name)
     logging.info('Creating ES role for user: <{}>'.format(name))
-    r = requests.put("{}/_opendistro/_security/api/roles/{}".format(ES_URL, role_name),
+    r = requests.put("{}/_opendistro/_security/api/roles/{}".format(ES_IN_URL, role_name),
                      auth=('admin', ES_ADMIN_PSW),
                      json={"indices": {'none':  {"*": ["READ"]}}},
                      verify=False,
@@ -458,7 +463,7 @@ def create_kibana_user(name, psw, dashboard):
     r.raise_for_status()
 
     logging.info('Creating ES role mapping for user: <{}>'.format(name))
-    r = requests.put("{}/_opendistro/_security/api/rolesmapping/{}".format(ES_URL, role_name),
+    r = requests.put("{}/_opendistro/_security/api/rolesmapping/{}".format(ES_IN_URL, role_name),
                      auth=('admin', ES_ADMIN_PSW),
                      json={"users": [name]},
                      verify=False,
@@ -467,8 +472,7 @@ def create_kibana_user(name, psw, dashboard):
     r.raise_for_status()
 
     logging.info('Import Index patterns')
-    kib_url_parsed = urlparse(KIB_URL)
-    kib_url_auth = "{}://{}:{}@{}".format(kib_url_parsed.scheme, name, psw, kib_url_parsed.netloc)
+    kib_url_auth = "{}://{}:{}@{}:{}".format(KIB_PROTO, name, psw, KIB_IN_HOST, KIB_PORT)
     archimedes = Archimedes(kib_url_auth, "CauldronApp/archimedes_panels/")
     archimedes.import_from_disk(obj_type='index-pattern', obj_id='gitlab_enriched', force=False)
     archimedes.import_from_disk(obj_type='index-pattern', obj_id='git_aoc_enriched', force=False)
@@ -478,7 +482,7 @@ def create_kibana_user(name, psw, dashboard):
     # Set default Index pattern
     logging.info('Set default index pattern')
     headers = {'Content-Type': 'application/json', 'kbn-xsrf': 'true'}
-    requests.post('{}/api/kibana/settings/defaultIndex'.format(KIB_URL),
+    requests.post('{}/api/kibana/settings/defaultIndex'.format(KIB_IN_URL),
                   auth=(name, psw),
                   json={"value": "git_enrich"},
                   verify=False,
@@ -504,11 +508,11 @@ def request_import_panels(request, dash_id):
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'Only POST method allowed'}, status=405)
 
-    kib_url_parsed = urlparse(KIB_URL)
-    kib_url_auth = "{}://{}:{}@{}".format(kib_url_parsed.scheme,
+    kib_url_auth = "{}://{}:{}@{}:{}".format(KIB_PROTO,
                                              dash.esuser.name,
                                              dash.esuser.password,
-                                             kib_url_parsed.netloc)
+                                             KIB_IN_HOST,
+                                             KIB_PORT)
     archimedes = Archimedes(kib_url_auth, "CauldronApp/archimedes_panels/")
     archimedes.import_from_disk(obj_type='dashboard', obj_id='Overview',
                                 find=True, force=False)
@@ -721,7 +725,8 @@ def request_kibana(request, dash_id):
 
     update_indices(dash_id)
 
-    return HttpResponseRedirect(KIB_URL + "/?jwtToken=" + jwt_key)
+    kib_out_url = "{}://{}:{}".format(KIB_PROTO, KIB_OUT_HOST, KIB_PORT)
+    return HttpResponseRedirect(kib_out_url + "/?jwtToken=" + jwt_key)
 
 
 def jwt_sign_user(user, roles):
@@ -750,7 +755,7 @@ def update_indices(dash_id):
         role['indices']["*{}".format(repo.index_name)] = {"*": ["READ"]}
 
     headers = {'Content-Type': 'application/json'}
-    r = requests.put("{}/_opendistro/_security/api/roles/{}".format(ES_URL, role_name),
+    r = requests.put("{}/_opendistro/_security/api/roles/{}".format(ES_IN_URL, role_name),
                      auth=('admin', ES_ADMIN_PSW),
                      json=role,
                      verify=False,
