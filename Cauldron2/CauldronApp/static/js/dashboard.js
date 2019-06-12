@@ -16,6 +16,9 @@ $(document).ready(function(){
     $('.btn-delete').click(deleteRepo);
 
     $('#collapseFilters a').click(onFilterClick);
+    $('.backend-filters a').click(onFilterClick);
+    $('.status-filters a').click(onFilterClick);
+
 
     $('#create-panels-kibana').click(requestImportPanels);
 });
@@ -40,6 +43,8 @@ function loadLastStatus(){
 
 function onFilterClick(ev) {
     ev.preventDefault();
+    $('.backend-item').removeClass('active');
+    $(this).addClass('active');
     var filterType = $(this).attr('data-filter-type');
     
     if(filterType == 'status'){
@@ -63,8 +68,8 @@ function filterTable() {
         }
     })
     $('#num-repos-filter').html(num_filtered);
-    $('#badge-filter-status').html(`status: ${StatusFilter}`);
-    $('#badge-filter-backend').html(`backend: ${BackendFilter}`);
+    $('#btn-filter-status').html(`status: ${StatusFilter}`);
+    $('#btn-filter-backend').html(`backend: ${BackendFilter}`);
 }
 
 function deleteRepo(event) {
@@ -197,6 +202,7 @@ function requestImportPanels(event) {
          
 }
 
+
 /****************************
  *     LOGS FUNCTIONS       *
  ****************************/
@@ -242,7 +248,6 @@ function updateLogs(id_repo){
 }
 
 
-
 /****************************
  *     GITHUB GITLAB URL    *
  ****************************/
@@ -282,6 +287,7 @@ function onURLFail(data, target) {
         showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', 5000);
     }
 }
+
 
 /******************************
  *     GITHUB GITLAB OWNER    *

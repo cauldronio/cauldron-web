@@ -168,12 +168,12 @@
           <div class="container">
               <div class="header-dashboard">
                 {% if dashboard %}
-                  <h2>Control panel for '{{dashboard.name}}'</strong></h2>
+                  <h2 style="display: inline; float: left;"><strong>{{dashboard.name}}</strong></h2>
                   {% if editable %}
-                  <a id="open-kibana" class="btn btn-success" href="/kibana/{{dash_id}}">
-                    Open Dashboard
+                  <a id="open-kibana" class="btn btn-success" href="/kibana/{{dash_id}}" style="display: inline; float: right;">
+                    Open Kibana
                   </a>
-                  <a id="create-panels-kibana" class="btn btn-success" href="/dashboard/{{dash_id}}/create-panels">
+                  <a id="create-panels-kibana" class="btn btn-success" href="/dashboard/{{dash_id}}/create-panels" style="display: inline; float: right;">
                     Import panels
                   </a>
                   {% endif %}
@@ -181,63 +181,38 @@
                   <h3>Dashboard not found</h3>
                 {% endif %}
               </div>
-
+            <br>
             <div class="body-dashboard pt-2">
               {% if dashboard %}
-              <p>
-                <a class="btn btn-primary" data-toggle="collapse" href="#collapseFilters" role="button" aria-expanded="false" aria-controls="collapseFilters">
-                  Filters
-                </a>
-              </p>
-              <div class="collapse" id="collapseFilters">
-                <div class="card card-body">
-                  <div class="row">
-                    <div class="col-md-6">
-                      <p><strong>Backend</strong></p>
-                      <div class="list-group">
-                        <a class="list-group-item list-group-item-action active" data-toggle="list" data-filter-type="backend" data-filter="any" href="#" role="tab">
-                          <strong>Any</strong>
-                        </a>
-                        <a class="list-group-item list-group-item-action" data-toggle="list" data-filter-type="backend" data-filter="github" href="#" role="tab">
-                          <strong>GitHub</strong>
-                        </a>
-                        <a class="list-group-item list-group-item-action" data-toggle="list" data-filter-type="backend" data-filter="gitlab" href="#" role="tab">
-                          <strong>GitLab</strong>
-                        </a>
-                        <a class="list-group-item list-group-item-action" data-toggle="list" data-filter-type="backend" data-filter="git" href="#" role="tab">
-                          <strong>Git</strong>
-                        </a>
-                      </div>
-                    </div>
-                    <div class="col-md-6">
-                      <p><strong>Status</strong></p>
-                      <div class="list-group">
-                        <a class="list-group-item list-group-item-action active" data-toggle="list" data-filter-type="status" data-filter="all" href="#" role="tab">
-                          <strong>All</strong>
-                        </a>
-                        <a class="list-group-item list-group-item-action" data-toggle="list" data-filter-type="status" data-filter="pending" href="#" role="tab">
-                          <strong>Not started</strong>
-                        </a>
-                        <a class="list-group-item list-group-item-action" data-toggle="list" data-filter-type="status" data-filter="running" href="#" role="tab">
-                          <strong>Running</strong>
-                        </a>
-                        <a class="list-group-item list-group-item-action" data-toggle="list" data-filter-type="status" data-filter="completed" href="#" role="tab">
-                          <strong>Completed</strong>
-                        </a>
-                        <a class="list-group-item list-group-item-action" data-toggle="list" data-filter-type="status" data-filter="error" href="#" role="tab">
-                          <strong>Error</strong>
-                        </a>
-  
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
               <div>
                 <h5>
                   <strong><span id="num-repos-filter">0</span> repositories found</strong>
-                  <span class="badge badge-primary" id="badge-filter-backend">Any</span>
-                  <span class="badge badge-primary" id="badge-filter-status">All</span>
+
+                  <span class="dropdown backend-filters">
+                    <button class="badge btn btn-primary dropdown-toggle" type="button" id="btn-filter-backend" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+
+                    </button>
+                    <div class="dropdown-menu" aria-labelledby="btn-filter-backend">
+                      <a class="backend-item dropdown-item active" data-filter-type="backend" data-filter="any" href="#">Any</a>
+                      <a class="backend-item dropdown-item" data-filter-type="backend" data-filter="git" href="#">Git</a>
+                      <a class="backend-item dropdown-item" data-filter-type="backend" data-filter="github" href="#">GitHub</a>
+                      <a class="backend-item dropdown-item" data-filter-type="backend" data-filter="gitlab" href="#">GitLab</a>
+                    </div>
+                  </span>
+
+                  <span class="dropdown status-filters">
+                    <button class="badge btn btn-primary dropdown-toggle" type="button" id="btn-filter-status" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+
+                    </button>
+                    <div class="dropdown-menu" aria-labelledby="btn-filter-backend">
+                      <a class="backend-item dropdown-item active" data-filter-type="status" data-filter="all" href="#">All</a>
+                      <a class="backend-item dropdown-item" data-filter-type="status" data-filter="pending" href="#">Pending</a>
+                      <a class="backend-item dropdown-item" data-filter-type="status" data-filter="running" href="#">Running</a>
+                      <a class="backend-item dropdown-item" data-filter-type="status" data-filter="completed" href="#">Completed</a>
+                      <a class="backend-item dropdown-item" data-filter-type="status" data-filter="error" href="#">Error</a>
+                    </div>
+                  </span>
+
                 </h5>
                 <table class="table table-hover repos-table">
                   <thead>
@@ -294,70 +269,6 @@
           </div>
         </div>
               
-            
-        <!--
-          <div class="card card-table shadow-sm">
-            <div class="card-header">
-              Repositories included
-            </div>
-            <div class="card-body table-responsive">
-              <p><b>GitHub</b> <span class="badge badge-dark">{{ gh_repositories | length }}</span></p>
-              {% if gh_repositories %}
-              <table class="table table-hover repos-table">
-                <thead>
-                  <tr>
-                    <th scope="col">Repository</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for repo in gh_repositories %}
-                  <tr>
-                    <td>{{ repo.url }}</td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-              {% endif %}
-
-              <p><b>Gitlab</b>  <span class="badge badge-dark">{{ gl_repositories | length }}</span></p>
-              {% if gl_repositories %}
-              <table class="table table-hover repos-table">
-                <thead>
-                  <tr>
-                    <th scope="col">Repository</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for repo in gl_repositories %}
-                  <tr>
-                    <td>{{ repo.url }}</td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-              {% endif %}
-
-              <p><b>Git</b>  <span class="badge badge-dark">{{ git_repositories | length }}</span></p>
-              {% if git_repositories %}
-              <table class="table table-hover repos-table">
-                <thead>
-                  <tr>
-                    <th scope="col">Repository</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for repo in git_repositories %}
-                  <tr>
-                    <td>{{ repo.url }}</td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-              {% endif %}
-
-            </div>
-          </div>
-        -->
         </div>
       </div>
     </div>

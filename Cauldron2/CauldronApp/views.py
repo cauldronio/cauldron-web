@@ -16,7 +16,7 @@ from slugify import slugify
 from archimedes.archimedes import Archimedes
 
 from Cauldron2.settings import GH_CLIENT_ID, GH_CLIENT_SECRET, GL_CLIENT_ID, GL_CLIENT_SECRET, GL_PRIVATE_TOKEN, \
-                                ES_IN_HOST, ES_PORT, ES_PROTO, ES_OUT_HOST, ES_ADMIN_PSW, \
+                                ES_IN_HOST, ES_PORT, ES_PROTO, ES_ADMIN_PSW, \
                                 KIB_IN_HOST, KIB_PORT, KIB_PROTO, KIB_OUT_HOST
 from CauldronApp.models import GithubUser, GitlabUser, Dashboard, Repository, Task, CompletedTask, AnonymousUser, ESUser
 from CauldronApp.githubsync import GitHubSync
@@ -36,34 +36,22 @@ KIB_IN_URL = "{}://{}:{}".format(KIB_PROTO, KIB_IN_HOST, KIB_PORT)
 def homepage(request):
     context = create_context(request)
 
-    dashboards = Dashboard.objects.filter()
-    context_dbs = []
-    for db in dashboards:
-        status = get_dashboard_status(db.name)
-
-        completed = sum(1 for repo in status['repos'] if repo['status'] == 'COMPLETED')
-        context_dbs.append({'status': status['general'],
-                            'name': db.name,
-                            'id': db.id,
-                            'completed': completed,
-                            'total': len(status['repos'])})
     if request.user.is_authenticated:
         your_dashboards = Dashboard.objects.filter(creator=request.user)
         context_your_dbs = []
-        for db in your_dashboards:
-            status = get_dashboard_status(db.name)
+        for dash in your_dashboards:
+            status = get_dashboard_status(dash.id)
 
             completed = sum(1 for repo in status['repos'] if repo['status'] == 'COMPLETED')
             context_your_dbs.append({'status': status['general'],
-                                     'id': db.id,
-                                     'name': db.name,
+                                     'id': dash.id,
+                                     'name': dash.name,
                                      'completed': completed,
                                      'total': len(status['repos'])})
     else:
         context_your_dbs = []
 
     # TODO: Generate a state for that session and store it in request.session. More security in Oauth
-    context['dashboards'] = context_dbs
     context['your_dashboards'] = context_your_dbs
     context['gh_uri_identity'] = GH_URI_IDENTITY
     context['gh_client_id'] = GH_CLIENT_ID
@@ -424,7 +412,7 @@ def request_new_dashboard(request):
 
     # Create a new dashboard
     dash = Dashboard.objects.create(name=generate_random_uuid(length=12), creator=request.user)
-    dash.name = "dashboard_{}".format(dash.id)
+    dash.name = "Dashboard {}".format(dash.id)
     dash.save()
 
     # Create the Kibana user associated to that dashboard
@@ -555,7 +543,7 @@ def create_index_name(backend, url):
         return txt
 
 
-def get_dashboard_status(dash_name):
+def get_dashboard_status(dash_id):
     """
     General status:
     If no repos -> UNKNOWN
@@ -563,10 +551,10 @@ def get_dashboard_status(dash_name):
     2. Else if any repo pending -> return PENDING
     3. Else if any repo error -> return ERROR
     4. Else -> return COMPLETED
-    :param dash_name: name of the dashboard
+    :param dash_id: id of the dashboard
     :return: Status of the dashboard depending on the the previous rules
     """
-    repos = Repository.objects.filter(dashboards__name=dash_name)
+    repos = Repository.objects.filter(dashboards__id=dash_id)
     if len(repos) == 0:
         return {
             'repos': [],
@@ -681,18 +669,9 @@ def request_show_dashboard(request, dash_id):
     # Information for the dashboard
     if dash:
         context['dashboard'] = dash
-        context['dashboard_status'] = get_dashboard_status(dash.name)['general']
-        context['repositories'] = Repository.objects.filter(dashboards__id=dash_id)
+        context['repositories'] = Repository.objects.filter(dashboards__id=dash_id).order_by('-id')
 
     context['editable'] = request.user.is_authenticated and request.user == dash.creator
-
-    # Repositories
-    gh_repos = Repository.objects.filter(backend='github', dashboards__id=dash_id)
-    gl_repos = Repository.objects.filter(backend='gitlab', dashboards__id=dash_id)
-    git_repos = Repository.objects.filter(backend='git', dashboards__id=dash_id)
-    context['gh_repositories'] = list(repo for repo in gh_repos)
-    context['gl_repositories'] = list(repo for repo in gl_repos)
-    context['git_repositories'] = list(repo for repo in git_repos)
     context['dash_id'] = dash_id
 
     return render(request, 'dashboard.html', context=context)
@@ -841,11 +820,6 @@ def repo_status(request, repo_id):
     if not repo:
         return JsonResponse({'status': 'UNKNOWN'})
     return JsonResponse({'status': get_repo_status(repo)})
-
-
-def dash_status(request, dash_name):
-    status = get_dashboard_status(dash_name)
-    return JsonResponse({'status': status})
 
 
 def request_dash_info(request, dash_id):

@@ -56,45 +56,5 @@
         </div>
       </div>
 
-      <div class="row">
-          <div class="col-md-12">
-            <div class="card shadow-sm mb-3">
-  
-  
-              <div class="card-header">
-                <h4 class="font-weight-normal">All the dashboards</h4>
-              </div>
-  
-  
-              <div class="card-body">
-  
-                <table class="table">
-                  <thead>
-                    <tr>
-                      <th scope="col">Name</th>
-                      <th scope="col">Status</th>
-                      <th scope="col">Repositories</th>
-                      <!--<th scope="col">Author</th>-->
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for db in dashboards %}
-                    <tr>
-                      <td><a href="/dashboard/{{db.id}}">{{db.name}}</a></td>
-                      <td>{{db.status}}</td>
-                      <td>{{db.completed}}/{{db.total}}</td>
-                      <!--<td>{{db.creator}}</td>-->
-                    </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-  
-              </div>
-  
-            </div>
-          </div>
-        </div>
-  
-
     </div>
 {% endblock %}
