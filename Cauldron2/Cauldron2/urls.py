@@ -25,8 +25,9 @@ urlpatterns = [
 
     path('new-dashboard', views.request_new_dashboard),
     path('dashboard/<int:dash_id>/edit', views.request_edit_dashboard),
-    path('dashboard/<int:dash_id>', views.request_show_dashboard),
     path('dashboard/<int:dash_id>/create-panels', views.request_import_panels),
+    path('dashboard/<int:dash_id>/edit-name', views.request_edit_dashboard_name),
+    path('dashboard/<int:dash_id>', views.request_show_dashboard),
 
     path('dashboard-info/<int:dash_id>', views.request_dash_info),
     path('repo-logs/<int:repo_id>', views.repo_logs),

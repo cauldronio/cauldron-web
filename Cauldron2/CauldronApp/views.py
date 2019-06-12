@@ -7,6 +7,7 @@ import os
 import logging
 import requests
 import jwt
+import re
 from urllib.parse import urlparse, urlencode
 from random import choice
 from string import ascii_lowercase, digits
@@ -374,6 +375,53 @@ def request_edit_dashboard(request, dash_id):
                             status=400)
 
 
+def request_edit_dashboard_name(request, dash_id):
+    """
+    Update the name for a dashboard
+    :param request: Object from Django
+    :param dash_id: ID for the dashboard to change
+    :return:
+    """
+    dash = Dashboard.objects.filter(id=dash_id).first()
+    if not dash:
+        return JsonResponse({'status': 'error', 'message': 'Dashboard not found'}, status=404)
+
+    if not request.user.is_authenticated:
+        return JsonResponse({'status': 'error', 'message': 'You are not authenticated', 'redirect': '/login?next=/dashboard/' + str(dash_id)}, status=401)
+
+    if request.user != dash.creator:
+        return JsonResponse({'status': 'error', 'message': 'You cannot edit this dashboard'}, status=403)
+
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Only POST method allowed'}, status=405)
+
+    name = request.POST.get('name', None)
+
+    if not name:
+        return JsonResponse({'status': 'error', 'message': 'New name not found in the POST or action not allowed'},
+                            status=400)
+
+    if len(name) < 4 or len(name) > 32:
+        return JsonResponse({'status': 'error', 'message': "The name doesn't fit the allowed length "},
+                            status=400)
+
+    if not re.match("^[a-zA-Z\s\d_-]+$", name):
+        return JsonResponse({'status': 'No valid name',
+                             'message': "Only can contain letters, numbers, underscores, hypens or spaces"},
+                            status=400)
+
+    dashboards = Dashboard.objects.filter(creator=request.user)
+    for tmp_dash in dashboards:
+        if tmp_dash.name == name:
+            return JsonResponse({'status': 'Duplicate name', 'message': 'You have the same name in another Dashboard'},
+                                status=400)
+    old_name = dash.name
+    dash.name = name
+    dash.save()
+
+    return JsonResponse({'status': 'Ok', 'message': 'Name updated from "{}" to "{}"'.format(old_name, name)})
+
+
 def start_task(repo, user, restart=False):
     """
     Start a new task for the given repository
@@ -514,8 +562,7 @@ def add_to_dashboard(dash, backend, url):
     :param dash: Dashboard row from db
     :param url: url for the analysis
     :param backend: Identity used like github or gitlab. See models.py for more details
-    :param task_creator: user to start a task with that repository
-    :return: Repostory created
+    :return: Repository created
     """
     repo_obj = Repository.objects.filter(url=url, backend=backend).first()
     index_name = create_index_name(backend, url)

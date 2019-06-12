@@ -15,10 +15,10 @@ $(document).ready(function(){
 
     $('.btn-delete').click(deleteRepo);
 
-    $('#collapseFilters a').click(onFilterClick);
     $('.backend-filters a').click(onFilterClick);
     $('.status-filters a').click(onFilterClick);
 
+    $('#edit-name').click(onClickEditName);
 
     $('#create-panels-kibana').click(requestImportPanels);
 });
@@ -71,6 +71,51 @@ function filterTable() {
     $('#btn-filter-status').html(`status: ${StatusFilter}`);
     $('#btn-filter-backend').html(`backend: ${BackendFilter}`);
 }
+
+function onClickEditName(ev) {
+    ev.preventDefault();
+    var this_a = $(this)
+    var old_name = $('#dash_name').text()
+    this_a.hide();
+
+    var name_input = `<form class="input-group mb-3" id="change-name">
+                          <input type="text" class="form-control" id="new-name" name="name" placeholder="${old_name}" data-container="body" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-html="true" data-content="Between 4-32 characters allowed. Try to use only: <ul><li>Alphanumeric characters</li><li>Spaces</li><li>Hyphens</li><li>Underscores</li></ul>">
+                          <div class="input-group-append">
+                            <button class="btn btn-outline-primary" type="submit">Change</button>
+                          </div>
+                        </form>`
+    
+    $('#dash_name').html(name_input);
+    $('input#new-name').focus();
+    $('[data-toggle="popover"]').popover();
+
+    $('form#change-name').submit(function (ev) {
+        ev.preventDefault();
+        $('input#new-name').popover('dispose')
+
+        var name = $('#new-name').val();
+        if (!name){
+            showToast('Empty input', 'We are keeping the same name', 'fas fa-check-circle text-success', 5000);
+            this_a.show();
+            $('#dash_name').text(old_name);
+            return
+        }
+        
+        $.post(url = window.location.pathname + "/edit-name",
+           data = {'name': name})
+        .done(function (data) {
+            showToast('Name updated', `${data.message}`, 'fas fa-check-circle text-success', 5000);
+            this_a.show();
+            $('#dash_name').text(name);
+        })
+        .fail(function (data) {
+            showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', 5000);
+            this_a.show();
+            $('#dash_name').text(old_name);
+        })
+    });
+}
+
 
 function deleteRepo(event) {
     var id_repo = event.target.dataset['repo'];

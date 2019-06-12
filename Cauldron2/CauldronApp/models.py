@@ -25,7 +25,7 @@ class GitlabUser(models.Model):
 
 
 class Dashboard(models.Model):
-    name = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255)
     creator = models.ForeignKey(User,
                                 on_delete=models.SET_NULL,
                                 blank=True,

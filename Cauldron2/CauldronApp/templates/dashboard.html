@@ -168,15 +168,25 @@
           <div class="container">
               <div class="header-dashboard">
                 {% if dashboard %}
-                  <h2 style="display: inline; float: left;"><strong>{{dashboard.name}}</strong></h2>
-                  {% if editable %}
-                  <a id="open-kibana" class="btn btn-success" href="/kibana/{{dash_id}}" style="display: inline; float: right;">
-                    Open Kibana
-                  </a>
-                  <a id="create-panels-kibana" class="btn btn-success" href="/dashboard/{{dash_id}}/create-panels" style="display: inline; float: right;">
-                    Import panels
-                  </a>
-                  {% endif %}
+                  <div class="row">
+                    <div class="col-md-8">
+                      <h2><strong><span id="dash_name">{{dashboard.name}}</span></strong></h2>
+
+                      {% if editable %}
+                      <a href="#" id="edit-name"><i class="far fa-edit"></i> Change name</a>
+                      {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                      {% if editable %}
+                      <a id="open-kibana" class="btn btn-success" href="/kibana/{{dash_id}}" target="_blank">
+                        Open Kibana
+                      </a>
+                      <a id="create-panels-kibana" class="btn btn-success" href="/dashboard/{{dash_id}}/create-panels">
+                        Import panels
+                      </a>
+                      {% endif %}
+                    </div>
+                  </div>
                 {% else %}
                   <h3>Dashboard not found</h3>
                 {% endif %}
