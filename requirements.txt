@@ -1,11 +1,10 @@
-Django==2.1.7
-requests==2.21.0
-# sirmordred==0.2.5
-PyGithub==1.43.5
-elasticsearch>=6.0.0,<7.0.0
+Django>=2.1.9,<2.2
+requests>=2.21,<3
+PyGithub>=1.43.7,<1.44
+elasticsearch>=6,<7
 mysqlclient
-python-gitlab==1.8.0
+python-gitlab=>1.8,<2
 python-slugify==3.0.2
 git+https://github.com/Bitergia/archimedes
-cryptography==2.7
-PyJWT==1.4.0
+cryptography>=2.7,<3
+PyJWT>=1.7,<2
