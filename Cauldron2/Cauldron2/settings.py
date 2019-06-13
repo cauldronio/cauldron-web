@@ -31,9 +31,6 @@ GH_CLIENT_SECRET = secret.GH_CLIENT_SECRET
 GL_CLIENT_ID = secret.GL_CLIENT_ID
 GL_CLIENT_SECRET = secret.GL_CLIENT_SECRET
 
-# TODO: modify the auth token
-
-GL_PRIVATE_TOKEN = secret.GL_PRIVATE_TOKEN
 
 # SECURITY WARNING: keep the keys privates in Production
 ES_IN_HOST = secret.ES_IN_HOST
