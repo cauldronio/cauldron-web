@@ -8,10 +8,9 @@ $(document).ready(function(){
     $('#logModal').on('show.bs.modal', onShowLogsModal);
     $('#logModal').on('hidden.bs.modal', OnHideLogsModal);
     loadLastStatus();
-    $('form#gh_url_add').submit(submitURL);
-    $('form#gh_owner_add').submit(submitOwner);
-    $('form#gl_url_add').submit(submitURL);
-    $('form#gl_owner_add').submit(submitOwner);
+    $('form#gh_add').submit(submitBackend);
+    $('form#gl_add').submit(submitBackend);
+    $('form#git_add').submit(submitBackend);
 
     $('.btn-delete').click(deleteRepo);
 
@@ -27,18 +26,13 @@ function loadLastStatus(){
     if(!LocalStorageAvailable){
         return
     }
-    var gh_owner = window.localStorage.getItem('gh_owner');
-    var gh_url = window.localStorage.getItem('gh_url');
-    var gl_owner = window.localStorage.getItem('gl_owner');
-    var gl_url = window.localStorage.getItem('gl_url');
-    window.localStorage.removeItem('gh_owner');
-    window.localStorage.removeItem('gh_url');
-    window.localStorage.removeItem('gl_owner');
-    window.localStorage.removeItem('gl_url');
-    $('#gh_owner').val(gh_owner);
-    $('#gh_url').val(gh_url);
-    $('#gl_owner').val(gl_owner);
-    $('#gl_url').val(gl_url);
+    var gh_data = window.localStorage.getItem('gh_data');
+    var gl_data = window.localStorage.getItem('gl_data');
+    window.localStorage.removeItem('gh_data');
+    window.localStorage.removeItem('gl_data');
+    $('#gh_data').val(gh_data);
+    $('#gl_data').val(gl_data);
+    $('#git_data').val('');
 }
 
 function onFilterClick(ev) {
@@ -127,18 +121,17 @@ function deleteRepo(event) {
                     <span class="sr-only">Loading...</span>
                 </div>`);
 
-
     $.post(url = window.location.pathname + "/edit", 
-           data = {'action': 'delete', 'backend': backend, 'url': url_repo})
+           data = {'action': 'delete', 'backend': backend, 'data': url_repo})
         .done(function (data) {
-            showToast('Deleted', `The repository <b>${url_repo}</b> was deleted from this dashboard`, 'fas fa-check-circle text-success', 5000);
+            showToast('Deleted', `The repository <b>${url_repo}</b> was deleted from this dashboard`, 'fas fa-check-circle text-success', 1500);
             $(`tr#repo-${id_repo}`).remove();
+            filterTable();
         })
         .fail(function (data) {
             showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', 5000);
         })
         .always(function(){deleteBtn.html('Delete')})
-
     
 }
 
@@ -294,9 +287,9 @@ function updateLogs(id_repo){
 
 
 /****************************
- *     GITHUB GITLAB URL    *
+ *     GITHUB GITLAB GIT SUBMIT    *
  ****************************/
-function submitURL(event) {
+function submitBackend(event) {
     var addBtn = $(`#${event.target.id} button`);
     addBtn.html(`<div class="spinner-border text-dark spinner-border-sm" role="status">
                     <span class="sr-only">Loading...</span>
@@ -304,73 +297,32 @@ function submitURL(event) {
     
     $.post(url = window.location.pathname + "/edit", 
            data = $(this).serializeArray())
-        .done(function (data) {onURLAdded(data, event.target)})
-        .fail(function (data) {onURLFail(data, event.target)})
+        .done(function (data) {onDataAdded(data, event.target)})
+        .fail(function (data) {onDataFail(data, event.target)})
         .always(function(){addBtn.html('Add')})
     event.preventDefault()
 }
 
-function onURLAdded(data, target) {
-    showToast('Success', `URL added correctly. Reloading the list of repositories...`, 'fas fa-spinner text-success', 5000);
-    setTimeout(function(){window.location.reload()}, 2000);
+function onDataAdded(data, target) {
+    //showToast('Success', `Data added correctly. Reloading the list of repositories...`, 'fas fa-spinner text-success', 5000);
+    console.log(data);
+    //setTimeout(function(){window.location.reload()}, 2000);
+    window.location.reload()
 }
 
-function onURLFail(data, target) {
+function onDataFail(data, target) {
     if(!data.hasOwnProperty('responseJSON')){
         showToast('Unknown error from server', `${data.responseText}`, 'fas fa-question-circle text-danger', 5000);
         return;
     }
     if (data.responseJSON.hasOwnProperty('redirect')){
         if(LocalStorageAvailable){
-            var input_target = $(`#${target.id} input[name=url]`);
+            var input_target = $(`#${target.id} input[name=data]`);
             window.localStorage.setItem('location', window.location.href);
             window.localStorage.setItem(input_target.attr('id'), input_target.val());
         }
         var redirect = `<a href="${data.responseJSON['redirect']}" class="btn btn-primary"> Go</a>`;
         showModalAlert('We can not add it right now...', `<p><b>${data.responseJSON['message']}</b></p>`,  redirect);
-    } else {
-        showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', 5000);
-    }
-}
-
-
-/******************************
- *     GITHUB GITLAB OWNER    *
- ******************************/
-function submitOwner(event) {
-    var addBtn = $(`#${event.target.id} button`);
-    addBtn.html(`<div class="spinner-border text-dark spinner-border-sm" role="status">
-                    <span class="sr-only">Loading...</span>
-                </div>`);
-
-    $.post(url = window.location.pathname + "/edit", 
-           data = $(this).serializeArray())
-        .done(function (data) {onOwnerAdded(data, event.target)})
-        .fail(function (data) {onOwnerFail(data, event.target)})
-        .always(function () {addBtn.html('Add');})
-        event.preventDefault()
-}
-
-function onOwnerAdded(data, target) {
-    showToast('Success', `User/organization added correctly. Reloading the list of repositories...`, 'fas fa-spinner text-success', 5000);
-    setTimeout(function(){window.location.reload()}, 2000);
-}
-
-function onOwnerFail(data, target) {
-    if(!data.hasOwnProperty('responseJSON')){
-        showToast('Unknown error from server', `${data.responseText}`, 'fas fa-question-circle text-danger', 5000);
-        return;
-    }
-    if (data.responseJSON.hasOwnProperty('redirect')){
-        var input_target = $(`#${target.id} input[name=owner]`);
-        if(LocalStorageAvailable){
-            window.localStorage.setItem('location', window.location.href);
-            window.localStorage.setItem(input_target.attr('id'), input_target.val());
-        }
-
-        var a_redirect = `<a href="${data.responseJSON['redirect']}" class="btn btn-primary"> Go</a>`;
-        showModalAlert('We can not add it right now...', `<p><b>${data.responseJSON['message']}</b></p>`,  a_redirect);
-        setTimeout(function(){window.location.href = data.responseJSON['redirect']}, 5000);
     } else {
         showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', 5000);
     }

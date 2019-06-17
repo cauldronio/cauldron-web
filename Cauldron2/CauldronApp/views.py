@@ -237,43 +237,46 @@ def request_logout(request):
 
 # TODO: Add state
 def request_edit_dashboard(request, dash_id):
+    """
+    Edit a dashboard. Only POST allowed:
+    - data: Could be URL user, URL repo, user, user/repo
+    - action: add or delete. If delete: in data field only the URL of a repository is accepted
+    - backend: git, github, gitlab. For git only URL is accepted
+    :param request: Django request object
+    :param dash_id: ID of the dashboard
+    :return:
+    """
     dash = Dashboard.objects.filter(id=dash_id).first()
     if not dash:
         return JsonResponse({'status': 'error', 'message': 'Dashboard not found'}, status=404)
-
     if not request.user.is_authenticated:
         return JsonResponse({'status': 'error', 'message': 'You are not authenticated', 'redirect': '/login?next=/dashboard/' + str(dash_id)}, status=401)
-
     if request.user != dash.creator:
         return JsonResponse({'status': 'error', 'message': 'You cannot edit this dashboard'}, status=403)
-
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'Only POST method allowed'}, status=405)
 
     # Get the possible data posted
     action = request.POST.get('action', None)
-    owner = request.POST.get('owner', None)
-    url = request.POST.get('url', None)
     backend = request.POST.get('backend', None)
+    data_in = request.POST.get('data', None)
 
     if not action or action not in ('add', 'delete'):
         return JsonResponse({'status': 'error', 'message': 'Action not found in the POST or action not allowed'},
                             status=400)
-
     if not backend or backend not in ('github', 'gitlab', 'git'):
         return JsonResponse({'status': 'error', 'message': 'Backend not found in the POST or action not allowed'},
                             status=400)
-
-    if not url and not owner:
+    if not data_in:
         return JsonResponse({'status': 'error', 'message': 'We need a url or a owner to add/delete'},
                             status=400)
 
     if action == 'delete':
-        print('deleting repository [{}|{}] from dashboard[{}]'.format(backend, url, dash_id))
-        if not url or not backend:
+        print('deleting repository [{}|{}] from dashboard[{}]'.format(backend, data_in, dash_id))
+        if not data_in or not backend:
             return JsonResponse({'status': 'error', 'message': 'We need a url and a backend for deleting'},
                                 status=400)
-        repo = Repository.objects.filter(url=url, backend=backend).first()
+        repo = Repository.objects.filter(url=data_in, backend=backend).first()
         if not repo:
             return JsonResponse({'status': 'error', 'message': 'Repository not found'},
                                 status=404)
@@ -281,9 +284,20 @@ def request_edit_dashboard(request, dash_id):
         task = Task.objects.filter(repository=repo).first()
         if task and task.user == dash.creator and not task.worker_id:
             task.delete()
-
         return JsonResponse({'status': 'deleted'})
 
+    if backend == 'git':
+        repo = add_to_dashboard(dash, backend, data_in)
+        start_task(repo, request.user, False)
+
+        return JsonResponse({'status': 'ok'})
+
+    data = guess_data_backend(data_in, backend)
+    if not data:
+        return JsonResponse({'status': 'error',
+                             'message': "We couldn't guess what do you mean with that string. "
+                                        "Valid: URL user, URL repo, user or user/repo"},
+                            status=401)
     if backend == 'github':
         if not hasattr(request.user, 'githubuser'):
             params = urlencode({'client_id': GH_CLIENT_ID})
@@ -292,33 +306,7 @@ def request_edit_dashboard(request, dash_id):
                                  'message': 'We need your GitHub token for analyzing this kind of repositories',
                                  'redirect': gh_url_oauth},
                                 status=401)
-
-        if owner:
-            gh_sync = GitHubSync(request.user.githubuser.token)
-            try:
-                git_list, github_list = gh_sync.get_repo(owner, False)
-            except Exception:
-                logging.warning("Error for GitHub owner {}".format(owner))
-                return JsonResponse({'status': 'error', 'message': 'Error from GitHub API. Does that user exist?'},
-                                    status=500)
-            for url in github_list:
-                repo = add_to_dashboard(dash, backend, url)
-                start_task(repo, request.user, False)
-
-            for url in git_list:
-                repo = add_to_dashboard(dash, 'git', url)
-                start_task(repo, request.user, False)
-        elif url:
-            if not valid_github_url(url):
-                return JsonResponse({'status': 'error', 'message': 'Invalid GitHub URL format.'},
-                                    status=400)
-            # Add to github and git
-            repo = add_to_dashboard(dash, backend, url)
-            start_task(repo, request.user, False)
-            repo = add_to_dashboard(dash, 'git', url + '.git')
-            start_task(repo, request.user, False)
-
-        return JsonResponse({'status': 'ok'})
+        return manage_add_gh_repo(dash, data)
 
     elif backend == 'gitlab':
         if not hasattr(request.user, 'gitlabuser'):
@@ -330,46 +318,129 @@ def request_edit_dashboard(request, dash_id):
                                  'message': 'We need your GitLab token for analyzing this kind of repositories',
                                  'redirect': gh_url_oauth},
                                 status=401)
-
-        if owner:
-            try:
-                gitlab_list, git_list = get_gl_repos(owner, request.user.gitlabuser.token)
-            except Exception as e:
-                logging.warning("Error for Gitlab owner {}: {}".format(owner, e.error_message))
-                return JsonResponse({'status': 'error', 'message': 'Error from GitLab API. Does that user exist?'},
-                                    status=500)
-
-            for url in gitlab_list:
-                repo = add_to_dashboard(dash, backend, url)
-                start_task(repo, request.user, False)
-
-            for url in git_list:
-                repo = add_to_dashboard(dash, 'git', url)
-                start_task(repo, request.user, False)
-        elif url:
-            if not valid_gitlab_url(url):
-                return JsonResponse({'status': 'error', 'message': 'Invalid Gitlab URL format.'},
-                                    status=400)
-            # Add to gitlab and git
-            repo = add_to_dashboard(dash, backend, url)
-            start_task(repo, request.user, False)
-            repo = add_to_dashboard(dash, 'git', url + '.git')
-            start_task(repo, request.user, False)
-
-        return JsonResponse({'status': 'ok'})
-
-    elif backend == 'git':
-        if not url:
-            return JsonResponse({'status': 'error', 'message': 'No URL found for git repository.'},
-                                status=400)
-        repo = add_to_dashboard(dash, backend, url)
-        start_task(repo, request.user, False)
-
-        return JsonResponse({'status': 'ok'})
+        return manage_add_gl_repo(dash, data)
 
     else:
         return JsonResponse({'status': 'error', 'message': 'Backend not found'},
                             status=400)
+
+
+def manage_add_gh_repo(dash, data):
+    """
+    Add a repository for a dashboard
+    :param dash: Dashboard object for adding the repository
+    :param data: Dictionary with the user or the repository to be added. Format: {'user': 'xxx', 'repository': 'yyy'}
+    :return:
+    """
+    if data['user'] and not data['repository']:
+        gh_sync = GitHubSync(dash.creator.githubuser.token)
+        try:
+            git_list, github_list = gh_sync.get_repo(data['user'], False)
+        except Exception:
+            logging.warning("Error for GitHub owner {}".format(owner))
+            return JsonResponse({'status': 'error', 'message': 'Error from GitHub API. Does that user exist?'},
+                                status=500)
+        for url in github_list:
+            repo = add_to_dashboard(dash, 'github', url)
+            start_task(repo, dash.creator, False)
+
+        for url in git_list:
+            repo = add_to_dashboard(dash, 'git', url)
+            start_task(repo, dash.creator, False)
+
+        return JsonResponse({'status': 'ok'})
+
+    elif data['user'] and data['repository']:
+        url = "https://github.com/{}/{}".format(data['user'], data['repository'])
+        repo = add_to_dashboard(dash, 'github', url)
+        start_task(repo, dash.creator, False)
+        repo = add_to_dashboard(dash, 'git', url)
+        start_task(repo, dash.creator, False)
+
+        return JsonResponse({'status': 'ok'})
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid data posted, something is missing'},
+                        status=401)
+
+
+def manage_add_gl_repo(dash, data):
+    """
+    Add a repository for a dashboard
+    :param dash: Dashboard object for adding the repository
+    :param data: Dictionary with the user or the repository to be added. Format: {'user': 'xxx', 'repository': 'yyy'}
+    :return:
+    """
+    if data['user'] and not data['repository']:
+        try:
+            gitlab_list, git_list = get_gl_repos(data['user'], dash.creator.gitlabuser.token)
+        except Exception as e:
+            logging.warning("Error for Gitlab owner {}: {}".format(data['user'], e.error_message))
+            return JsonResponse({'status': 'error', 'message': 'Error from GitLab API. Does that user exist?'},
+                                status=500)
+
+        for url in gitlab_list:
+            repo = add_to_dashboard(dash, 'gitlab', url)
+            start_task(repo, dash.creator, False)
+
+        for url in git_list:
+            repo = add_to_dashboard(dash, 'git', url)
+            start_task(repo, dash.creator, False)
+
+        return JsonResponse({'status': 'ok'})
+    if data['url'] and data['repository']:
+        url = 'https://gitlab.com/{}/{}'.format(data['user'], data['repository'])
+        repo = add_to_dashboard(dash, 'gitlab', url)
+        start_task(repo, dash.creator, False)
+        repo = add_to_dashboard(dash, 'git', url)
+        start_task(repo, dash.creator, False)
+
+        return JsonResponse({'status': 'ok'})
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid data posted, something is missing'},
+                        status=401)
+
+
+def guess_data_backend(data_guess, backend):
+    """
+    Guess the following formats:
+    - User: "user"
+    - User/Repository: "user/repository"
+    - URL of user: "https://backend.com/user"
+    - URL of repository: "https://backend.com/user/repository"
+    backend: Could be github or gitlab, for git is always the URL
+    :return:
+    """
+    gh_user_regex = '([a-zA-Z0-9](?:[a-zA-Z0-9]|-[a-zA-Z0-9]){1,38})'
+    gh_repo_regex = '([a-zA-Z0-9\.\-\_]{1,100})'
+    gl_user_regex = '([a-zA-Z0-9_\.][a-zA-Z0-9_\-\.]{1,200}[a-zA-Z0-9_\-]|[a-zA-Z0-9_])'
+    gl_repo_regex = '([a-zA-Z0-9_\.][a-zA-Z0-9_\-\.]*[a-zA-Z0-9_\-\.])'
+    if backend == 'github':
+        re_user = re.match('^{}$'.format(gh_user_regex), data_guess)
+        if re_user:
+            return {'user': re_user.groups()[0], 'repository': None}
+        re_url_user = re.match('^https?://github\.com/{}/?$'.format(gh_user_regex), data_guess)
+        if re_url_user:
+            return {'user': re_url_user.groups()[0], 'repository': None}
+        re_url_repo = re.match('^https?://github\.com/{}/{}(?:.git)?$'.format(gh_user_regex, gh_repo_regex), data_guess)
+        if re_url_repo:
+            return {'user': re_url_repo.groups()[0], 'repository': re_url_repo.groups()[1]}
+        re_user_repo = re.match('^{}/{}$'.format(gh_user_regex, gh_repo_regex), data_guess)
+        if re_user_repo:
+            return {'user': re_user_repo.groups()[0], 'repository': re_user_repo.groups()[1]}
+    elif backend == 'gitlab':
+        re_user = re.match('^{}$'.format(gl_user_regex), data_guess)
+        if re_user:
+            return {'user': re_user.groups()[0], 'repository': None}
+        re_url_user = re.match('^https?://gitlab\.com/{}\/?$'.format(gl_user_regex), data_guess)
+        if re_url_user:
+            return {'user': re_url_user.groups()[0], 'repository': None}
+        re_url_repo = re.match('^https?://gitlab\.com/{}/{}(?:.git)?$'.format(gl_user_regex, gl_repo_regex), data_guess)
+        if re_url_repo:
+            return {'user': re_url_repo.groups()[0], 'repository': re_url_repo.groups()[1]}
+        re_user_repo = re.match('{}/{}$'.format(gl_user_regex, gl_repo_regex), data_guess)
+        if re_user_repo:
+            return {'user': re_user_repo.groups()[0], 'repository': re_user_repo.groups()[1]}
+    return Non
 
 
 def request_edit_dashboard_name(request, dash_id):
