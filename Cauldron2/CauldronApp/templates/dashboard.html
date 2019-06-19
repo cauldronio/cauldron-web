@@ -31,14 +31,8 @@
               <form action="" method="post" id="gh_add">
                 {% csrf_token %}
                 <div class="form-group">
-                  <ul>
-                    <li>username</li>
-                    <li>username/repository</li>
-                    <li>URL of a repository</li>
-                    <li>URL of a user</li>
-                  </ul>                  
                   <div class="input-group">
-                    <input type="text" class="form-control" id="gh_data" name="data">
+                    <input type="text" class="form-control" id="gh_data" name="data" placeholder="user or user/repository or url">
                     <input type="hidden" name="backend" value="github">
                     <input type="hidden" name="action" value="add">
                     <div class="input-group-append">
@@ -71,9 +65,8 @@
               <form action="" method="post" id="git_add">
                 {% csrf_token %}
                 <div class="form-group">
-                  <label>Single repository</label>
                   <div class="input-group">
-                    <input type="text" class="form-control" id="git_data" placeholder="Enter URL" name="data">
+                    <input type="text" class="form-control" id="git_data" placeholder="git repository url" name="data">
                     <input type="hidden" name="backend" value="git">
                     <input type="hidden" name="action" value="add">
                     <div class="input-group-append">
@@ -102,15 +95,9 @@
               <form action="" method="post" id="gl_add">
                 {% csrf_token %}
                 <div class="form-group">
-                  <ul>
-                    <li>username</li>
-                    <li>username/repository</li>
-                    <li>URL of a repository</li>
-                    <li>URL of a user</li>
-                  </ul>                  
   
                   <div class="input-group">
-                    <input type="text" class="form-control" id="gl_data" name="data">
+                    <input type="text" class="form-control" id="gl_data" name="data" placeholder="user or user/repository or url">
                     <input type="hidden" name="backend" value="gitlab">
                     <input type="hidden" name="action" value="add">
                     <div class="input-group-append">

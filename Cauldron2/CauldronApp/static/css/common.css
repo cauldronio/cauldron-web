@@ -58,3 +58,21 @@
 .toast {
   background-color: white;
 }
+
+body {
+    position: relative;
+    margin: 0;
+    padding-bottom: 20rem;
+    height: 100%;
+    min-height: 100vh;
+}
+
+footer {
+    position: absolute;
+    background-color: #333;
+    color: #fff;
+    padding-top: 2em;
+    padding-bottom: 2em;
+    bottom: 0px;
+
+}

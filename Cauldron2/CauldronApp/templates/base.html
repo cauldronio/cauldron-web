@@ -5,6 +5,7 @@
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Software development analytics online tool by Bitergia">
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
@@ -14,14 +15,14 @@
     {% block css%}
     {% endblock %}
 
-    <title>Cauldron 2</title>
+    <title>Cauldron - Level Up Software Development Analytics</title>
   </head>
   <body>
     <!-- BEGIN NAVBAR -->
     <nav class="navbar navbar-dark bg-dark shadow-sm mb-3">
       <div class="container-fluid">
         <a class="navbar-brand" href="/">
-          Cauldron v2
+          Cauldron
         </a>
 
         {% if authenticated %}
@@ -90,7 +91,7 @@
       </div>
     </div>
     <!-- END Modal for login -->
-  
+
 
 
     <!-- BEGIN Container for alerts -->
@@ -135,6 +136,27 @@
     {% block content %}
     {% endblock %}
 
+
+    <footer class="container-fluid">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-4">
+            <p>Copyright &copy; 2019 <a href="http://bitergia.com">Bitergium SLL.</a> and its contributors.</p>
+            <p>Some Rights Reserved.</p>
+            <p><a href="http://bitergia.com" target="_blank"><img src="/static/img/bitergia-w-logo-s.png" alt="Bitergia"></a>
+          </div>
+          <div class="col-md-4">
+            <p class="text-justify">Unless otherwise stated, this work is licensed under a <strong>Creative Commons Attribution-ShareAlike 4.0 Unported License</strong>. Cauldron and the Cauldron logo are trademarks of <a href="http://bitergia.com" target="_blank">Bitergium SLL.</a> in the European Union and/or other jurisdictions. All other trademarks are the property of their respective holders.</p>
+          </div>
+          <div class="col-md-4">
+            <p><a href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank"><img src="/static/img/by-sa.png" alt="Creative Commons Attribution-ShareAlike 4.0 International" width="120px"></a></p>
+            <p>Made with <abbr title="love">&hearts;</abbr> and <strong>free, open source software</strong>:</p>
+            <p><a href="http://grimoirelab.github.io" target="_blank"><img src="/static/img/wizard-y.svg" height="24" alt=""> GrimoireLab</a></p>
+            <p class="text-center"><a class="btn btn-success" role="button" href="https://gitlab.com/cauldron2/cauldron-feedback/issues/new" target="_blank">Send us feedback!</a></p>
+          </div>
+        </div>
+      </div>
+    </footer>
 
 
     <!-- Optional JavaScript -->
