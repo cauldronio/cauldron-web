@@ -828,7 +828,9 @@ def request_kibana(request, dash_id):
 
 
 def jwt_sign_user(user, roles):
-    with open('jwtR256.key', 'r') as f_private:
+    dirname = os.path.dirname(os.path.abspath(__file__))
+    key_location = os.path.join(dirname, 'jwtR256.key')
+    with open(key_location, 'r') as f_private:
         private_key = f_private.read()
 
     claims = {
