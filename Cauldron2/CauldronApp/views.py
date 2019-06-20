@@ -577,7 +577,9 @@ def create_kibana_user(name, psw, dashboard):
 
     logging.info('Import Index patterns')
     kib_url_auth = "{}://{}:{}@{}:{}".format(KIB_PROTO, name, psw, KIB_IN_HOST, KIB_PORT)
-    archimedes = Archimedes(kib_url_auth, "CauldronApp/archimedes_panels/")
+    dirname = os.path.dirname(os.path.abspath(__file__))
+    panels_location = os.path.join(dirname, 'archimedes_panels/')
+    archimedes = Archimedes(kib_url_auth, panels_location)
     archimedes.import_from_disk(obj_type='index-pattern', obj_id='gitlab_enriched', force=False)
     archimedes.import_from_disk(obj_type='index-pattern', obj_id='git_aoc_enriched', force=False)
     archimedes.import_from_disk(obj_type='index-pattern', obj_id='github_enrich', force=False)
@@ -617,7 +619,9 @@ def request_import_panels(request, dash_id):
                                              dash.esuser.password,
                                              KIB_IN_HOST,
                                              KIB_PORT)
-    archimedes = Archimedes(kib_url_auth, "CauldronApp/archimedes_panels/")
+    dirname = os.path.dirname(os.path.abspath(__file__))
+    panels_location = os.path.join(dirname, 'archimedes_panels/')
+    archimedes = Archimedes(kib_url_auth, panels_location)
     archimedes.import_from_disk(obj_type='dashboard', obj_id='Overview',
                                 find=True, force=False)
 
