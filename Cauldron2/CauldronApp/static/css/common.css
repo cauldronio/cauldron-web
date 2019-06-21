@@ -86,3 +86,10 @@ footer {
         position: absolute;
     }
 }
+
+#toast-container {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    overflow-y: auto;
+}
