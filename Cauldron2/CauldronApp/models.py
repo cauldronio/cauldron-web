@@ -37,6 +37,7 @@ class ESUser(models.Model):
     password = models.CharField(max_length=255)
     role = models.CharField(max_length=255)
     dashboard = models.OneToOneField(Dashboard, on_delete=models.CASCADE, unique=True)
+    index = models.CharField(max_length=255, blank=True, default="")
 
 
 class Repository(models.Model):

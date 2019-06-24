@@ -4,17 +4,20 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.models import User
 
 import os
-import logging
-import requests
 import jwt
 import re
-from urllib.parse import urlparse, urlencode
+import ssl
+import logging
+import requests
 from random import choice
-from string import ascii_lowercase, digits
 from github import Github
 from gitlab import Gitlab
 from slugify import slugify
-from archimedes.archimedes import Archimedes
+from string import ascii_lowercase, digits
+from urllib.parse import urlparse, urlencode
+from elasticsearch import Elasticsearch
+from elasticsearch.client import CatClient
+from elasticsearch.connection import create_ssl_context
 
 from Cauldron2.settings import GH_CLIENT_ID, GH_CLIENT_SECRET, GL_CLIENT_ID, GL_CLIENT_SECRET, \
                                 ES_IN_HOST, ES_PORT, ES_PROTO, ES_ADMIN_PSW, \
@@ -271,6 +274,10 @@ def request_edit_dashboard(request, dash_id):
         return JsonResponse({'status': 'error', 'message': 'We need a url or a owner to add/delete'},
                             status=400)
 
+    es_user = ESUser.objects.filter(dashboard=dash).first()
+    if not es_user:
+        return JsonResponse({'status': 'error', 'message': 'Internal server error. Kibana user not found for that dashboard'}, status=500)
+
     if action == 'delete':
         print('deleting repository [{}|{}] from dashboard[{}]'.format(backend, data_in, dash_id))
         if not data_in or not backend:
@@ -281,6 +288,8 @@ def request_edit_dashboard(request, dash_id):
             return JsonResponse({'status': 'error', 'message': 'Repository not found'},
                                 status=404)
         repo.dashboards.remove(dash)
+
+        delete_role_indices(role_name=es_user.role, indices=[repo.index_name])
         task = Task.objects.filter(repository=repo).first()
         if task and task.user == dash.creator and not task.worker_id:
             task.delete()
@@ -532,7 +541,7 @@ def request_new_dashboard(request):
     dash.save()
 
     # Create the Kibana user associated to that dashboard
-    kib_username = "dashboard_{}".format(dash.id)
+    kib_username = "dashboard{}".format(dash.id)
     kib_pwd = generate_random_uuid(length=32, delimiter='')
     create_kibana_user(kib_username, kib_pwd, dash)
     # TODO: If something is wrong delete the dashboard
@@ -575,57 +584,42 @@ def create_kibana_user(name, psw, dashboard):
     logging.info("{} - {}".format(r.status_code, r.text))
     r.raise_for_status()
 
-    logging.info('Import Index patterns')
-    kib_url_auth = "{}://{}:{}@{}:{}".format(KIB_PROTO, name, psw, KIB_IN_HOST, KIB_PORT)
-    dirname = os.path.dirname(os.path.abspath(__file__))
-    panels_location = os.path.join(dirname, 'archimedes_panels/')
-    archimedes = Archimedes(kib_url_auth, panels_location)
-    archimedes.import_from_disk(obj_type='index-pattern', obj_id='gitlab_enriched', force=False)
-    archimedes.import_from_disk(obj_type='index-pattern', obj_id='git_aoc_enriched', force=False)
-    archimedes.import_from_disk(obj_type='index-pattern', obj_id='github_enrich', force=False)
-    archimedes.import_from_disk(obj_type='index-pattern', obj_id='git_enrich', force=False)
-
-    # Set default Index pattern
-    logging.info('Set default index pattern')
-    headers = {'Content-Type': 'application/json', 'kbn-xsrf': 'true'}
-    requests.post('{}/api/kibana/settings/defaultIndex'.format(KIB_IN_URL),
-                  auth=(name, psw),
-                  json={"value": "git_enrich"},
-                  verify=False,
-                  headers=headers)
-
+    # We need to force the creation of his index by login in
+    jwt_token = get_kibana_jwt(name, role_name)
+    r = requests.get("{}/?jwtToken={}".format(KIB_IN_URL, jwt_token), verify=False)
     r.raise_for_status()
 
-    es_user = ESUser(name=name, password=psw, role=role_name, dashboard=dashboard)
+    # We need the name of the index created
+    context = create_ssl_context()
+    context.check_hostname = False
+    context.verify_mode = ssl.CERT_NONE
+    es = Elasticsearch([ES_IN_HOST], scheme=ES_PROTO, port=ES_PORT,
+                       http_auth=("admin", ES_ADMIN_PSW), ssl_context=context)
+    cat = CatClient(es)
+    index = cat.indices(index=['.kibana_*_{}'.format(name)], h=["index"]).strip()
+    if not index:
+        raise Exception('Internal server error. Index not found for that kibana user')
+
+    # We copy the default panels here now
+    es.reindex(body={"source": {"index": ".kibana_*_defaultpanels"}, "dest": {"index": index}})
+
+    # Create a default index in the role to avoid warnings
+    # in the dashboard if a backend doesn't exist
+    # These indices are created in the panels container empty
+    data = {'indices': {'git_enrich_default': {'*': ['READ']},
+                        'git_aoc_enriched_default': {'*': ['READ']},
+                        'github_enrich_default': {'*': ['READ']},
+                        'gitlab_enriched_default': {'*': ['READ']}
+                        }
+            }
+    r = requests.patch("{}/_opendistro/_security/api/roles".format(ES_IN_URL),
+                       auth=('admin', ES_ADMIN_PSW),
+                       json=[{"op": "add", "path": "/{}".format(role_name), "value": data}],
+                       verify=False,
+                       headers=headers)
+
+    es_user = ESUser(name=name, password=psw, role=role_name, dashboard=dashboard, index=index)
     es_user.save()
-
-
-def request_import_panels(request, dash_id):
-    dash = Dashboard.objects.filter(id=dash_id).first()
-    if not dash:
-        return JsonResponse({'status': 'error', 'message': 'Dashboard not found'}, status=404)
-
-    if not request.user.is_authenticated:
-        return JsonResponse({'status': 'error', 'message': 'You are not authenticated'}, status=401)
-
-    if request.user != dash.creator:
-        return JsonResponse({'status': 'error', 'message': 'This is not your dashboard'}, status=403)
-
-    if request.method != 'POST':
-        return JsonResponse({'status': 'error', 'message': 'Only POST method allowed'}, status=405)
-
-    kib_url_auth = "{}://{}:{}@{}:{}".format(KIB_PROTO,
-                                             dash.esuser.name,
-                                             dash.esuser.password,
-                                             KIB_IN_HOST,
-                                             KIB_PORT)
-    dirname = os.path.dirname(os.path.abspath(__file__))
-    panels_location = os.path.join(dirname, 'archimedes_panels/')
-    archimedes = Archimedes(kib_url_auth, panels_location)
-    archimedes.import_from_disk(obj_type='dashboard', obj_id='Overview',
-                                find=True, force=False)
-
-    return JsonResponse({'status': 'ok'})
 
 
 def add_to_dashboard(dash, backend, url):
@@ -638,12 +632,49 @@ def add_to_dashboard(dash, backend, url):
     """
     repo_obj = Repository.objects.filter(url=url, backend=backend).first()
     index_name = create_index_name(backend, url)
+    enriched_indices = get_enriched_indices(index_name, backend)
     if not repo_obj:
         repo_obj = Repository(url=url, backend=backend, index_name=index_name)
         repo_obj.save()
-    # Add the repo to the dashboard
+        create_es_indices(enriched_indices)
+
     repo_obj.dashboards.add(dash)
+    es_user = ESUser.objects.filter(dashboard=dash).first()
+    add_role_indices(es_user.role, enriched_indices)
+
     return repo_obj
+
+
+def get_enriched_indices(index_name, backend):
+    """
+    Return the names of the enriched indices
+    :param index_name: The index global name for that repository
+    :param backend: Git, GitHub or GitLab
+    :return: A list with the names of the indices
+    """
+    if backend == 'git':
+        return ["git_aoc_enriched_{}".format(index_name), "git_enrich_{}".format(index_name)]
+    elif backend == 'github':
+        return ["github_enrich_{}".format(index_name)]
+    elif backend == 'gitlab':
+        return ["gitlab_enriched_{}".format(index_name)]
+    raise Exception('Unknown backend')
+
+
+def create_es_indices(indices):
+    """
+    Create the indices in ElasticSearch
+    :param indices: List of indices
+    :return:
+    """
+    # Connect ElasticSearch
+    context = create_ssl_context()
+    context.check_hostname = False
+    context.verify_mode = ssl.CERT_NONE
+    es = Elasticsearch([ES_IN_HOST], scheme=ES_PROTO, port=ES_PORT,
+                       http_auth=("admin", ES_ADMIN_PSW), ssl_context=context)
+    for index in indices:
+        es.indices.create(index, ignore=400)
 
 
 def create_index_name(backend, url):
@@ -660,6 +691,55 @@ def create_index_name(backend, url):
             txt = slugify("{}_{}".format('git', url), max_length=100)
 
         return txt
+
+
+def add_role_indices(role_name, indices):
+    """
+    Add multiple indices to a role
+    :param role_name:
+    :param indices:
+    :return:
+    """
+
+    headers = {'Content-Type': 'application/json'}
+    r = requests.get("{}/_opendistro/_security/api/roles/{}".format(ES_IN_URL, role_name),
+                     auth=('admin', ES_ADMIN_PSW),
+                     verify=False,
+                     headers=headers)
+    data = r.json()
+    if role_name not in 'indices':
+        data[role_name] = dict()
+        data[role_name]['indices'] = dict()
+    for index in indices:
+        data[role_name]['indices'][index] = {'*': ['READ']}
+
+    r = requests.patch("{}/_opendistro/_security/api/roles".format(ES_IN_URL),
+                       auth=('admin', ES_ADMIN_PSW),
+                       json=[{"op": "add", "path": "/{}".format(role_name), "value": data[role_name]}],
+                       verify=False,
+                       headers=headers)
+    r.raise_for_status()
+
+
+def delete_role_indices(role_name, indices):
+    """
+    Delete multiple indices from a role
+    :param role_name:
+    :param indices:
+    :return:
+    """
+    items = list()
+    for index in indices:
+        items.append({"op": "remove",
+                      "path": "/indices/{}".format(index)
+                      })
+    headers = {'Content-Type': 'application/json'}
+    r = requests.patch("{}/_opendistro/_security/api/roles/{}".format(ES_IN_URL, role_name),
+                       auth=('admin', ES_ADMIN_PSW),
+                       json=items,
+                       verify=False,
+                       headers=headers)
+    r.raise_for_status()
 
 
 def get_dashboard_status(dash_id):
@@ -816,51 +896,31 @@ def request_kibana(request, dash_id):
     if request.method != 'GET':
         return JsonResponse({'status': 'error', 'message': 'Only GET method allowed'}, status=405)
 
-    # TODO: The user should be stored in db
-    user = "dashboard_{}".format(dash_id)
-    roles = ""
-    jwt_key = jwt_sign_user(user, roles)
-
-    update_indices(dash_id)
+    es_user = ESUser.objects.filter(dashboard=dash).first()
+    if not es_user:
+        return JsonResponse({'status': 'error', 'message': 'Internal server error. Kibana user for that dashboard not found'}, status=500)
+    jwt_key = get_kibana_jwt(es_user.name, es_user.role)
 
     kib_out_url = "{}://{}:{}".format(KIB_PROTO, KIB_OUT_HOST, KIB_PORT)
     return HttpResponseRedirect(kib_out_url + "/?jwtToken=" + jwt_key)
 
 
-def jwt_sign_user(user, roles):
+def get_kibana_jwt(user, roles):
+    """
+    Return the jwt key for a specific user and role
+    :param user:
+    :param roles: String or list of roles
+    :return:
+    """
     dirname = os.path.dirname(os.path.abspath(__file__))
     key_location = os.path.join(dirname, 'jwtR256.key')
     with open(key_location, 'r') as f_private:
         private_key = f_private.read()
-
     claims = {
         "user": user,
         "roles": roles
     }
-
     return jwt.encode(claims, private_key, algorithm='RS256').decode('utf-8')
-
-
-def update_indices(dash_id):
-    repos = Repository.objects.filter(dashboards__id=dash_id)
-    role_name = "role_dashboard_{}".format(dash_id)
-    if not len(repos):
-        return
-    role = {
-        "indices": {
-            # Here comes each index
-        }
-    }
-    for repo in repos:
-        role['indices']["*{}".format(repo.index_name)] = {"*": ["READ"]}
-
-    headers = {'Content-Type': 'application/json'}
-    r = requests.put("{}/_opendistro/_security/api/roles/{}".format(ES_IN_URL, role_name),
-                     auth=('admin', ES_ADMIN_PSW),
-                     json=role,
-                     verify=False,
-                     headers=headers)
-    r.raise_for_status()
 
 
 def request_delete_token(request):
