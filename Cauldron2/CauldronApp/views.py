@@ -707,7 +707,7 @@ def add_role_indices(role_name, indices):
                      verify=False,
                      headers=headers)
     data = r.json()
-    if role_name not in 'indices':
+    if role_name not in data:
         data[role_name] = dict()
         data[role_name]['indices'] = dict()
     for index in indices:
