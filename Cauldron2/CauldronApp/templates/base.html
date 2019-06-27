@@ -1,174 +1,196 @@
 {% load static %}
 <!doctype html>
 <html lang="en">
-  <head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="Software development analytics online tool by Bitergia">
 
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-    <!-- Awesome icons -->
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
-    <link rel="stylesheet" href="{% static 'css/common.css' %}">
-    {% block css%}
-    {% endblock %}
+<head>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="Software development analytics online tool by Bitergia">
 
-    <title>Cauldron - Level Up Software Development Analytics</title>
-  </head>
-  <body>
-    <!-- BEGIN NAVBAR -->
-    <nav class="navbar navbar-dark bg-dark shadow-sm mb-3">
-      <div class="container-fluid">
-        <a class="navbar-brand" href="/">
-          Cauldron
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+    integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <!-- Awesome icons -->
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css"
+    integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+  <link rel="stylesheet" href="{% static 'css/common.css' %}">
+  {% block css%}
+  {% endblock %}
+
+  <title>Cauldron - Level Up Software Development Analytics</title>
+</head>
+
+<body>
+  <!-- BEGIN NAVBAR -->
+  <nav class="navbar navbar-dark bg-dark shadow-sm mb-3">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="/">
+        Cauldron
+      </a>
+
+      {% if authenticated %}
+      <div class="dropdown">
+        <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown"
+          aria-haspopup="true" aria-expanded="false">
+          <img src="{{ photo_user }}" class="rounded-circle avatar">
+          <span>{{ auth_user_username }}</span>
         </a>
 
-        {% if authenticated %}
-        <div class="dropdown">
-          <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <img src="{{ photo_user }}" class="rounded-circle avatar">  
-            <span>{{ auth_user_username }}</span>
-          </a>
-            
-          <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
-            <a class="dropdown-item" href="/logout">Log out</a>
-            {% if github_enabled %}
-            <a class="dropdown-item" id="delete-gh-token" class="text-danger" href="">Delete my Github token</a>
-            {% endif %}
-            {% if gitlab_enabled %}
-            <a class="dropdown-item" id="delete-gl-token" href="">Delete my Gitlab token</a>
-            {% endif %}
-            <!--<a class="dropdown-item" href="/profile">Profile</a>-->
+        <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+          <a class="dropdown-item" href="/logout">Log out</a>
+          {% if github_enabled %}
+          <a class="dropdown-item" id="delete-gh-token" class="text-danger" href="">Delete my Github token</a>
+          {% endif %}
+          {% if gitlab_enabled %}
+          <a class="dropdown-item" id="delete-gl-token" href="">Delete my Gitlab token</a>
+          {% endif %}
+          <!--<a class="dropdown-item" href="/profile">Profile</a>-->
+        </div>
+      </div>
+      {% else %}
+      <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#modalLogin">
+        Login
+      </button>
+      {% endif %}
+    </div>
+  </nav>
+  <!-- END NAVBAR-->
+
+
+
+  <!-- BEGIN Modal for login -->
+  <div class="modal fade" id="modalLogin" tabindex="-1" role="dialog" aria-labelledby="modalLoginTitle"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="col-12 text-center">Sign in</h3>
+        </div>
+        <div class="modal-body">
+
+          <div class="text-center">
+            <form action="{{ gh_uri_identity }}" method="GET">
+              <input type="hidden" name="client_id" value="{{ gh_client_id }}">
+              <button type="submit" class="btn btn-github btn-block" aria-haspopup="true" aria-expanded="false">
+                <i class="fab fa-github"></i>
+                Sign in with <b>GitHub</b>
+              </button>
+            </form>
+          </div>
+          <div class="text-center">
+            <form action="{{ gl_uri_identity }}" method="GET">
+              <input type="hidden" name="client_id" value="{{ gl_client_id }}">
+              <input type="hidden" name="response_type" value="code">
+              <input type="hidden" name="redirect_uri" value="{{ gl_uri_redirect }}">
+              <button type="submit" class="btn btn-gitlab btn-block" aria-haspopup="true" aria-expanded="false">
+                <i class="fab fa-gitlab"></i>
+                Sign in with <b>GitLab</b>
+              </button>
+            </form>
           </div>
         </div>
-        {% else %}
-        <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#modalLogin">
-          Login
-        </button>
-        {% endif %}
-      </div>
-    </nav>
-    <!-- END NAVBAR-->
-
-
-
-    <!-- BEGIN Modal for login -->
-    <div class="modal fade" id="modalLogin" tabindex="-1" role="dialog" aria-labelledby="modalLoginTitle" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-              <h3 class="col-12 text-center">Sign in</h3>
-          </div>
-          <div class="modal-body">
-              
-              <div class="text-center">
-                <form action="{{ gh_uri_identity }}" method="GET">
-                  <input type="hidden" name="client_id" value="{{ gh_client_id }}">
-                  <button type="submit" class="btn btn-github btn-block"  aria-haspopup="true" aria-expanded="false">
-                      <i class="fab fa-github"></i>
-                    Sign in with <b>GitHub</b>
-                  </button>
-                </form>
-              </div>
-              <div class="text-center">
-                <form action="{{ gl_uri_identity }}" method="GET">
-                  <input type="hidden" name="client_id" value="{{ gl_client_id }}">
-                  <input type="hidden" name="response_type" value="code">
-                  <input type="hidden" name="redirect_uri" value="{{ gl_uri_redirect }}">
-                  <button type="submit" class="btn btn-gitlab btn-block"  aria-haspopup="true" aria-expanded="false">
-                      <i class="fab fa-gitlab"></i>
-                    Sign in with <b>GitLab</b>
-                  </button>
-                </form>
-              </div>
-          </div>
-          <div class="modal-footer">
-            <p class="text-muted">We will store your token for your analysis. You can revoke the use at any time</p>
-          </div>
+        <div class="modal-footer">
+          <p class="text-muted">We will store your token for your analysis. You can revoke the use at any time</p>
         </div>
       </div>
     </div>
-    <!-- END Modal for login -->
+  </div>
+  <!-- END Modal for login -->
 
 
 
-    <!-- BEGIN Container for alerts -->
+  <!-- BEGIN Container for alerts -->
+  <div class="container">
+    <div id="alert-container" style="display: none;">
+    </div>
+  </div>
+  <!-- END Container for alerts-->
+
+
+  <!-- BEGIN Container for modals -->
+  <div class="modal" tabindex="-1" role="dialog" id="modal-alert">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"></h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p></p>
+        </div>
+        <div class="modal-footer"></div>
+      </div>
+    </div>
+  </div>
+  <!-- END Container for modals-->
+
+
+  <!-- BEGIN Toast list for notifications-->
+  <div aria-live="polite" aria-atomic="true" style="position: fixed; width: 100%; bottom: 50px; z-index: 9999;">
+    <!-- Position it -->
+    <div id="toast-container">
+
+    </div>
+  </div>
+  <!-- END Toast list for notifications-->
+
+
+
+  {% block content %}
+  {% endblock %}
+
+
+  <footer class="container-fluid footer-position">
+    <button id="less-footer" type="button" class="close" aria-label="Close">
+      <span aria-hidden="true" style="color:white;">&times;</span>
+    </button>
+
     <div class="container">
-      <div id="alert-container" style="display: none;">
-      </div>
-    </div>
-    <!-- END Container for alerts-->
-
-
-    <!-- BEGIN Container for modals -->
-    <div class="modal" tabindex="-1" role="dialog" id="modal-alert">
-      <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title"></h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            <p></p>
-          </div>
-          <div class="modal-footer"></div>
+      <div class="row">
+        <div class="col-md-4">
+          <p class="full-footer"><a href="https://bitergia.com" target="_blank"><img class="mx-auto d-block" src="/static/img/bitergia-w-logo-s.png" alt="Bitergia"></a>
+            <p >Copyright &copy; 2019 <a href="https://bitergia.com">Bitergium SLL.</a> and its
+              contributors.</p>
+            <p class="full-footer">Some Rights Reserved.</p>
+        </div>
+        <div class="col-md-4">
+          <p class="text-center"><a style="display: none;" id="more-footer" href="#"><i class="fas fa-chevron-circle-up"></i> More <i class="fas fa-chevron-circle-up"></i></a></p>
+          <p class="text-justify full-footer">Unless otherwise stated, this work is licensed under a <strong>Creative
+              Commons Attribution-ShareAlike 4.0 Unported License</strong>. Cauldron and the Cauldron logo are
+            trademarks of <a href="https://bitergia.com" target="_blank">Bitergium SLL.</a> in the European Union and/or
+            other jurisdictions. All other trademarks are the property of their respective holders.</p>
+        </div>
+        <div class="col-md-4">
+          <p class="text-center"><a class="btn btn-success" role="button"
+              href="https://gitlab.com/cauldron2/cauldron-feedback/issues/new" target="_blank">Send us feedback!</a></p>
+          <p class="full-footer">Made with <abbr title="love">&hearts;</abbr> and <strong>free, open source software</strong>:</p>
+          <p class="full-footer"><a href="https://chaoss.github.io/grimoirelab/" target="_blank"><img src="/static/img/wizard-y.svg"
+                height="24" alt=""> GrimoireLab</a></p>
         </div>
       </div>
     </div>
-    <!-- END Container for modals-->
+  </footer>
 
 
-    <!-- BEGIN Toast list for notifications-->
-    <div aria-live="polite" aria-atomic="true" style="position: fixed; width: 100%; bottom: 50px; z-index: 9999;">
-      <!-- Position it -->
-      <div id="toast-container">
-   
-      </div>
-    </div>
-    <!-- END Toast list for notifications-->
+  <!-- Optional JavaScript -->
+  <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.3.1.js" integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+    crossorigin="anonymous"></script>
+  <!--<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>-->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+    integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+    integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+    crossorigin="anonymous"></script>
 
-    
+  <script src="{% static 'js/common.js' %}" charset="utf-8"></script>
 
-    {% block content %}
-    {% endblock %}
+  {% block javascript %}
+  {% endblock %}
+</body>
 
-
-    <footer class="container-fluid footer-position">
-      <div class="container">
-        <div class="row">
-          <div class="col-md-4">
-            <p>Copyright &copy; 2019 <a href="https://bitergia.com">Bitergium SLL.</a> and its contributors.</p>
-            <p>Some Rights Reserved.</p>
-            <p><a href="https://bitergia.com" target="_blank"><img src="/static/img/bitergia-w-logo-s.png" alt="Bitergia"></a>
-          </div>
-          <div class="col-md-4">
-            <p class="text-justify">Unless otherwise stated, this work is licensed under a <strong>Creative Commons Attribution-ShareAlike 4.0 Unported License</strong>. Cauldron and the Cauldron logo are trademarks of <a href="https://bitergia.com" target="_blank">Bitergium SLL.</a> in the European Union and/or other jurisdictions. All other trademarks are the property of their respective holders.</p>
-          </div>
-          <div class="col-md-4">
-            <p><a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank"><img src="/static/img/by-sa.png" alt="Creative Commons Attribution-ShareAlike 4.0 International" width="120px"></a></p>
-            <p>Made with <abbr title="love">&hearts;</abbr> and <strong>free, open source software</strong>:</p>
-            <p><a href="https://chaoss.github.io/grimoirelab/" target="_blank"><img src="/static/img/wizard-y.svg" height="24" alt=""> GrimoireLab</a></p>
-            <p class="text-center"><a class="btn btn-success" role="button" href="https://gitlab.com/cauldron2/cauldron-feedback/issues/new" target="_blank">Send us feedback!</a></p>
-          </div>
-        </div>
-      </div>
-    </footer>
-
-
-    <!-- Optional JavaScript -->
-    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script src="https://code.jquery.com/jquery-3.3.1.js" integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60=" crossorigin="anonymous"></script>
-    <!--<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>-->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-    
-    <script src="{% static 'js/common.js' %}" charset="utf-8"></script>
-
-    {% block javascript %}
-    {% endblock %}
-  </body>
 </html>
