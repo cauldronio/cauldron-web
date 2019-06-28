@@ -158,7 +158,7 @@ function reanalyzeRepo(event){
 
 function getInfo() {
     TimeoutInfo = null; // To avoid multiple getInfo calls
-    $.getJSON('/dashboard-info/' + Dash_ID, function(data) {
+    $.getJSON('/dashboard/' + Dash_ID + "/info", function(data) {
         var status_dict = {}
         if (!data || !data.exists){
             return
