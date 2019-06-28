@@ -141,7 +141,11 @@ function getInfo(dash_id) {
         data.repos.forEach(function(repo){
             setIconStatus('#repo-' + repo.id + ' .repo-status', repo.status);
             $('#repo-' + repo.id).attr('data-status', repo.status.toLowerCase());
-            $('#repo-' + repo.id + " .repo-creation").html(moment(repo.created).fromNow());
+            if (repo.completed){
+                $('#repo-' + repo.id + " .repo-last-update").html(moment(repo.completed).fromNow());
+            } else {
+                $('#repo-' + repo.id + " .repo-last-update").html("Not completed");
+            }
             var duration = get_duration(repo);
             $('#repo-' + repo.id + " .repo-duration").html(duration);
 
