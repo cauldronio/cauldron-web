@@ -135,10 +135,16 @@ function deleteRepo(event) {
 
 function getInfo(dash_id) {
     $.getJSON('/dashboard-info/' + dash_id, function(data) {
+        var status_dict = {}
         if (!data || !data.exists){
             return
         }
         data.repos.forEach(function(repo){
+            if (!(repo.status.toLowerCase() in status_dict)){
+                status_dict[repo.status.toLowerCase()] = 1;
+            } else {
+                status_dict[repo.status.toLowerCase()]++;
+            }
             setIconStatus('#repo-' + repo.id + ' .repo-status', repo.status);
             $('#repo-' + repo.id).attr('data-status', repo.status.toLowerCase());
             if (repo.completed){
@@ -154,6 +160,13 @@ function getInfo(dash_id) {
         if (data.general == 'PENDING' || data.general == 'RUNNING') {
             setTimeout(getInfo, 5000, dash_id);
         }
+        var status_output = ""
+        for (var key in status_dict){
+            if (status_dict.hasOwnProperty(key)) {
+                status_output += `<strong>${key}</strong>: ${status_dict[key]} `;
+            }
+        }
+        $('#general-status').html(status_output)
     }); 
     filterTable();
 }
