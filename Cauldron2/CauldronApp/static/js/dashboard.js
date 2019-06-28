@@ -1,10 +1,11 @@
 var LogsInterval;
 var BackendFilter = 'any';
 var StatusFilter = 'all';
+var TimeoutInfo = null; // To avoid multiple getInfo calls with timeouts
+var Dash_ID = window.location.pathname.split('/')[2];
 
 $(document).ready(function(){
-    var dash_id = window.location.pathname.split('/')[2];
-    getInfo(dash_id);
+    getInfo();
     $('#logModal').on('show.bs.modal', onShowLogsModal);
     $('#logModal').on('hidden.bs.modal', OnHideLogsModal);
     loadLastStatus();
@@ -13,6 +14,7 @@ $(document).ready(function(){
     $('form#git_add').submit(submitBackend);
 
     $('.btn-delete').click(deleteRepo);
+    $('.btn-reanalyze').click(reanalyzeRepo);
 
     $('.backend-filters a').click(onFilterClick);
     $('.status-filters a').click(onFilterClick);
@@ -133,8 +135,30 @@ function deleteRepo(event) {
     
 }
 
-function getInfo(dash_id) {
-    $.getJSON('/dashboard-info/' + dash_id, function(data) {
+function reanalyzeRepo(event){
+    var id_repo = event.target.dataset['repo'];
+    var backend = $(`tr#repo-${id_repo}`).attr('data-backend');
+    var url_repo = $(`tr#repo-${id_repo} td.repo-url`).html();
+
+    var reanalyzeRepo = $(this);
+    reanalyzeRepo.html(`<div class="spinner-border text-primary spinner-border-sm" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </div>`);
+    $.post(url = window.location.pathname + "/edit",
+           data = {'action': 'reanalyze', 'backend': backend, 'data': url_repo})
+        .done(function (data) {
+            showToast('Reanalyzing', `The repository <b>${url_repo}</b> has restarted`, 'fas fa-check-circle text-success', 1500);
+            getInfo();
+        })
+        .fail(function (data) {
+            showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', 5000);
+        })
+        .always(function(){reanalyzeRepo.html('Restart')})
+}
+
+function getInfo() {
+    TimeoutInfo = null; // To avoid multiple getInfo calls
+    $.getJSON('/dashboard-info/' + Dash_ID, function(data) {
         var status_dict = {}
         if (!data || !data.exists){
             return
@@ -157,8 +181,8 @@ function getInfo(dash_id) {
 
         });
         $('#general-status').html(data.general);
-        if (data.general == 'PENDING' || data.general == 'RUNNING') {
-            setTimeout(getInfo, 5000, dash_id);
+        if ((data.general == 'PENDING' || data.general == 'RUNNING') && !TimeoutInfo) {
+            TimeoutInfo = setTimeout(getInfo, 5000, Dash_ID);
         }
         var status_output = ""
         for (var key in status_dict){
@@ -181,7 +205,7 @@ function setIconStatus(jq_selector, status) {
             icon = '<i class="fas fa-check text-success"></i>';
             break;
         case 'PENDING':
-            icon = '<div class="spinner-grow spinner-grow-sm text-primary" role="status"><span class="sr-only">...</span></div> Not started...';
+            icon = '<div class="spinner-grow spinner-grow-sm text-primary" role="status"><span class="sr-only">...</span></div> Pending...';
             break;
         case 'RUNNING':
             icon = '<div class="spinner-border spinner-border-sm text-secondary" role="status"><span class="sr-only">...</span></div> Running...';
@@ -203,10 +227,10 @@ function get_duration(repo) {
     if (repo.started){
         var a = moment(repo.started);
         var b = "";
-        if (repo.completed){
-            b = moment(repo.completed);
-        } else {
+        if (repo.status == 'RUNNING'){
             b = moment();
+        } else {
+            b = moment(repo.completed);
         }
         output = moment.utc(b.diff(a)).format("HH:mm:ss")
     } else {

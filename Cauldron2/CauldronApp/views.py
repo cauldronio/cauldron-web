@@ -264,7 +264,7 @@ def request_edit_dashboard(request, dash_id):
     backend = request.POST.get('backend', None)
     data_in = request.POST.get('data', None)
 
-    if not action or action not in ('add', 'delete'):
+    if not action or action not in ('add', 'delete', 'reanalyze'):
         return JsonResponse({'status': 'error', 'message': 'Action not found in the POST or action not allowed'},
                             status=400)
     if not backend or backend not in ('github', 'gitlab', 'git'):
@@ -279,7 +279,6 @@ def request_edit_dashboard(request, dash_id):
         return JsonResponse({'status': 'error', 'message': 'Internal server error. Kibana user not found for that dashboard'}, status=500)
 
     if action == 'delete':
-        print('deleting repository [{}|{}] from dashboard[{}]'.format(backend, data_in, dash_id))
         if not data_in or not backend:
             return JsonResponse({'status': 'error', 'message': 'We need a url and a backend for deleting'},
                                 status=400)
@@ -294,6 +293,17 @@ def request_edit_dashboard(request, dash_id):
         if task and task.user == dash.creator and not task.worker_id:
             task.delete()
         return JsonResponse({'status': 'deleted'})
+
+    elif action == 'reanalyze':
+        if not data_in or not backend:
+            return JsonResponse({'status': 'error', 'message': 'We need a url and a backend for restart'},
+                                status=400)
+        repo = Repository.objects.filter(url=data_in, backend=backend).first()
+        if not repo:
+            return JsonResponse({'status': 'error', 'message': 'Repository not found'},
+                                status=404)
+        start_task(repo=repo, user=request.user, restart=True)
+        return JsonResponse({'status': 'reanalyzing'})
 
     if backend == 'git':
         repo = add_to_dashboard(dash, backend, data_in)
@@ -345,9 +355,8 @@ def manage_add_gh_repo(dash, data):
         gh_sync = GitHubSync(dash.creator.githubuser.token)
         try:
             git_list, github_list = gh_sync.get_repo(data['user'], False)
-        except Exception:
-            logging.warning("Error for GitHub owner {}".format(owner))
-            return JsonResponse({'status': 'error', 'message': 'Error from GitHub API. Does that user exist?'},
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': 'Error from GitHub API. ' + str(e)},
                                 status=500)
         for url in github_list:
             repo = add_to_dashboard(dash, 'github', url)
@@ -501,7 +510,8 @@ def request_edit_dashboard_name(request, dash_id):
 
 def start_task(repo, user, restart=False):
     """
-    Start a new task for the given repository
+    Start a new task for the given repository. If the repository has been analyzed,
+    it will not start unless forced with restart
     :param repo: Repository object to analyze
     :param user: User that make the analysis
     :param restart: If the task is not pending or running, start it. Else only start if not completed before
@@ -605,7 +615,7 @@ def create_kibana_user(name, psw, dashboard):
 
     # Create a default index in the role to avoid warnings
     # in the dashboard if a backend doesn't exist
-    # These indices are created in the panels container empty
+    # These indices were created in the panels container empty
     data = {'indices': {'git_enrich_default': {'*': ['READ']},
                         'git_aoc_enriched_default': {'*': ['READ']},
                         'github_enrich_default': {'*': ['READ']},
@@ -821,27 +831,26 @@ def get_dashboard_info(dash_id):
         item['status'] = get_repo_status(repo)
 
         task = Task.objects.filter(repository=repo).first()
+        compl_task = CompletedTask.objects.filter(repository=repo).order_by('-completed').first()
         if task:
             item['created'] = task.created
             item['started'] = task.started
-            item['completed'] = None
-            info['repos'].append(item)
-            continue
+            if compl_task:
+                item['completed'] = compl_task.completed
+            else:
+                item['completed'] = None
 
-        compl_task = CompletedTask.objects.filter(repository=repo).order_by('-completed').first()
-        if compl_task:
+        elif compl_task and not task:
             item['created'] = compl_task.created
             item['started'] = compl_task.started
             item['completed'] = compl_task.completed
-            info['repos'].append(item)
-            continue
 
-        # If we are here something wrong is happening. We leave everything as None
-        # just in case there is a race condition while creating the task
-        item['created'] = None
-        item['started'] = None
-        item['completed'] = None
+        else:
+            item['created'] = None
+            item['started'] = None
+            item['completed'] = None
         info['repos'].append(item)
+
     return info
 
 
@@ -982,7 +991,7 @@ def create_context(request):
         context['auth_user_username'] = request.user.gitlabuser.username
         context['photo_user'] = request.user.gitlabuser.photo
     else:
-        context['auth_user_username'] = 'Unknown'
+        context['auth_user_username'] = 'Anonymous'
         context['photo_user'] = '/static/img/profile-default.png'
 
     # Information about the accounts connected

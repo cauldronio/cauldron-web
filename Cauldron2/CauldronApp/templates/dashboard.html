@@ -201,6 +201,7 @@
                         <th scope="col">Logs</th>
                         {% if editable %}
                         <th scope="col">Delete</th>
+                        <th scope="col">Analyze again</th>
                         {% endif %}
                       </tr>
                     </thead>
@@ -236,6 +237,9 @@
                         {% if editable %}
                         <td>
                             <button type="button" class="btn btn-outline-danger btn-delete" data-repo="{{repo.id}}">Delete</button>
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-outline-primary btn-reanalyze" data-repo="{{repo.id}}">Restart</button>
                         </td>
                         {% endif %}
                       </tr>
