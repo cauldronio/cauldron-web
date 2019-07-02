@@ -20,11 +20,14 @@ from elasticsearch.client import CatClient
 from elasticsearch.connection import create_ssl_context
 
 from Cauldron2.settings import GH_CLIENT_ID, GH_CLIENT_SECRET, GL_CLIENT_ID, GL_CLIENT_SECRET, \
-                                ES_IN_HOST, ES_PORT, ES_PROTO, ES_ADMIN_PSW, \
-                                KIB_IN_HOST, KIB_PORT, KIB_PROTO, KIB_OUT_HOST
+                                ES_IN_HOST, ES_IN_PORT, ES_IN_PROTO, ES_ADMIN_PSW, \
+                                KIB_IN_HOST, KIB_IN_PORT, KIB_IN_PROTO, KIB_OUT_URL, \
+                                KIB_PATH
 from CauldronApp.models import GithubUser, GitlabUser, Dashboard, Repository, Task, CompletedTask, AnonymousUser, ESUser
 from CauldronApp.githubsync import GitHubSync
 
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 GH_ACCESS_OAUTH = 'https://github.com/login/oauth/access_token'
 GH_URI_IDENTITY = 'https://github.com/login/oauth/authorize'
@@ -33,8 +36,8 @@ GL_ACCESS_OAUTH = 'https://gitlab.com/oauth/token'
 GL_URI_IDENTITY = 'https://gitlab.com/oauth/authorize'
 GL_REDIRECT_PATH = '/gitlab-login'
 
-ES_IN_URL = "{}://{}:{}".format(ES_PROTO, ES_IN_HOST, ES_PORT)
-KIB_IN_URL = "{}://{}:{}".format(KIB_PROTO, KIB_IN_HOST, KIB_PORT)
+ES_IN_URL = "{}://{}:{}".format(ES_IN_PROTO, ES_IN_HOST, ES_IN_PORT)
+KIB_IN_URL = "{}://{}:{}{}".format(KIB_IN_PROTO, KIB_IN_HOST, KIB_IN_PORT, KIB_PATH)
 
 
 def homepage(request):
@@ -603,7 +606,7 @@ def create_kibana_user(name, psw, dashboard):
     context = create_ssl_context()
     context.check_hostname = False
     context.verify_mode = ssl.CERT_NONE
-    es = Elasticsearch([ES_IN_HOST], scheme=ES_PROTO, port=ES_PORT,
+    es = Elasticsearch([ES_IN_HOST], scheme=ES_IN_PROTO, port=ES_IN_PORT,
                        http_auth=("admin", ES_ADMIN_PSW), ssl_context=context)
     cat = CatClient(es)
     index = cat.indices(index=['.kibana_*_{}'.format(name)], h=["index"]).strip()
@@ -681,7 +684,7 @@ def create_es_indices(indices):
     context = create_ssl_context()
     context.check_hostname = False
     context.verify_mode = ssl.CERT_NONE
-    es = Elasticsearch([ES_IN_HOST], scheme=ES_PROTO, port=ES_PORT,
+    es = Elasticsearch([ES_IN_HOST], scheme=ES_IN_PROTO, port=ES_IN_PORT,
                        http_auth=("admin", ES_ADMIN_PSW), ssl_context=context)
     for index in indices:
         es.indices.create(index, ignore=400)
@@ -690,15 +693,14 @@ def create_es_indices(indices):
 def create_index_name(backend, url):
     if backend in ('github', 'gitlab'):
         owner, repo = parse_url(url)
-        return "{}_{}_{}".format(backend, owner, repo)
+        return slugify("{}_{}_{}".format(backend, owner, repo), max_length=100, replacements=[['.', '_dot_']]).lower()
     else:
         # Like git
         try:
             owner, repo = parse_url(url[:-4])
-            txt = slugify("{}_{}_{}".format('git', owner, repo), max_length=100)
+            txt = slugify("{}_{}_{}".format('git', owner, repo), max_length=100, replacements=[['.', '_dot_']]).lower()
         except Exception:
-            # Its ok, let's call sluglify for that work
-            txt = slugify("{}_{}".format('git', url), max_length=100)
+            txt = slugify("{}_{}".format('git', url), max_length=100, replacements=[['.', '_dot_']]).lower()
 
         return txt
 
@@ -710,7 +712,6 @@ def add_role_indices(role_name, indices):
     :param indices:
     :return:
     """
-
     headers = {'Content-Type': 'application/json'}
     r = requests.get("{}/_opendistro/_security/api/roles/{}".format(ES_IN_URL, role_name),
                      auth=('admin', ES_ADMIN_PSW),
@@ -721,7 +722,8 @@ def add_role_indices(role_name, indices):
         data[role_name] = dict()
         data[role_name]['indices'] = dict()
     for index in indices:
-        data[role_name]['indices'][index] = {'*': ['READ']}
+        if index not in data[role_name]['indices']:
+            data[role_name]['indices'][index] = {'*': ['READ']}
 
     r = requests.patch("{}/_opendistro/_security/api/roles".format(ES_IN_URL),
                        auth=('admin', ES_ADMIN_PSW),
@@ -910,8 +912,7 @@ def request_kibana(request, dash_id):
         return JsonResponse({'status': 'error', 'message': 'Internal server error. Kibana user for that dashboard not found'}, status=500)
     jwt_key = get_kibana_jwt(es_user.name, es_user.role)
 
-    kib_out_url = "{}://{}:{}".format(KIB_PROTO, KIB_OUT_HOST, KIB_PORT)
-    return HttpResponseRedirect(kib_out_url + "/?jwtToken=" + jwt_key)
+    return HttpResponseRedirect(KIB_OUT_URL + "/?jwtToken=" + jwt_key)
 
 
 def get_kibana_jwt(user, roles):

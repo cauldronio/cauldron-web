@@ -14,15 +14,16 @@ GL_CLIENT_SECRET = ''
 
 # ElasticSearch info
 ES_IN_HOST = 'localhost?'
-ES_PORT = '9200'
-ES_PROTO = 'https'
+ES_IN_PORT = '9200'
+ES_IN_PROTO = 'https'
 ES_ADMIN_PSW = 'admin'
 
 # Kiban info
 KIB_IN_HOST = ''
-KIB_PORT = ''
-KIB_PROTO = ''
-KIB_OUT_HOST = ''
+KIB_IN_PORT = ''
+KIB_PATH = ''
+KIB_IN_PROTO = ''
+KIB_OUT_URL = ''
 
 DEBUG = True
 
