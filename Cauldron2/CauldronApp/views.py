@@ -241,7 +241,6 @@ def request_logout(request):
     return HttpResponseRedirect('/')
 
 
-# TODO: Add state
 def request_edit_dashboard(request, dash_id):
     """
     Edit a dashboard. Only POST allowed:
@@ -265,7 +264,7 @@ def request_edit_dashboard(request, dash_id):
     # Get the possible data posted
     action = request.POST.get('action', None)
     backend = request.POST.get('backend', None)
-    data_in = request.POST.get('data', None)
+    data_in = request.POST.get('data', None)  # Could be url or user
 
     if not action or action not in ('add', 'delete', 'reanalyze'):
         return JsonResponse({'status': 'error', 'message': 'Action not found in the POST or action not allowed'},
@@ -279,12 +278,11 @@ def request_edit_dashboard(request, dash_id):
 
     es_user = ESUser.objects.filter(dashboard=dash).first()
     if not es_user:
-        return JsonResponse({'status': 'error', 'message': 'Internal server error. Kibana user not found for that dashboard'}, status=500)
+        return JsonResponse({'status': 'error',
+                             'message': 'Internal server error. Kibana user not found for that dashboard'},
+                            status=500)
 
     if action == 'delete':
-        if not data_in or not backend:
-            return JsonResponse({'status': 'error', 'message': 'We need a url and a backend for deleting'},
-                                status=400)
         repo = Repository.objects.filter(url=data_in, backend=backend).first()
         if not repo:
             return JsonResponse({'status': 'error', 'message': 'Repository not found'},
@@ -298,18 +296,24 @@ def request_edit_dashboard(request, dash_id):
         return JsonResponse({'status': 'deleted'})
 
     elif action == 'reanalyze':
-        if not data_in or not backend:
-            return JsonResponse({'status': 'error', 'message': 'We need a url and a backend for restart'},
-                                status=400)
         repo = Repository.objects.filter(url=data_in, backend=backend).first()
         if not repo:
             return JsonResponse({'status': 'error', 'message': 'Repository not found'},
                                 status=404)
-        start_task(repo=repo, user=request.user, restart=True)
-        return JsonResponse({'status': 'reanalyzing'})
+        started = start_task(repo=repo, user=request.user, restart=True)
+        if started:
+            return JsonResponse({'status': 'reanalyze'})
+        else:
+            return JsonResponse({'status': 'Running or pending'})
 
+    # From here the action should be add
     if backend == 'git':
         repo = add_to_dashboard(dash, backend, data_in)
+
+        es_user = ESUser.objects.filter(dashboard=dash).first()
+        enriched_indices = get_enriched_indices(repo.index_name, backend)
+        add_role_indices(es_user.role, enriched_indices)
+
         start_task(repo, request.user, False)
 
         return JsonResponse({'status': 'ok'})
@@ -349,8 +353,8 @@ def request_edit_dashboard(request, dash_id):
 
 def manage_add_gh_repo(dash, data):
     """
-    Add a repository for a dashboard
-    :param dash: Dashboard object for adding the repository
+    Add a repository or a user in a dashboard
+    :param dash: Dashboard object for adding
     :param data: Dictionary with the user or the repository to be added. Format: {'user': 'xxx', 'repository': 'yyy'}
     :return:
     """
@@ -361,22 +365,35 @@ def manage_add_gh_repo(dash, data):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': 'Error from GitHub API. ' + str(e)},
                                 status=500)
+
+        enriched_indices = list()
         for url in github_list:
             repo = add_to_dashboard(dash, 'github', url)
             start_task(repo, dash.creator, False)
+            enriched_indices += get_enriched_indices(repo.index_name, 'github')
 
         for url in git_list:
             repo = add_to_dashboard(dash, 'git', url)
             start_task(repo, dash.creator, False)
+            enriched_indices += get_enriched_indices(repo.index_name, 'git')
+
+        es_user = ESUser.objects.filter(dashboard=dash).first()
+        add_role_indices(es_user.role, enriched_indices)
 
         return JsonResponse({'status': 'ok'})
 
     elif data['user'] and data['repository']:
         url = "https://github.com/{}/{}".format(data['user'], data['repository'])
+
         repo = add_to_dashboard(dash, 'github', url)
         start_task(repo, dash.creator, False)
         repo = add_to_dashboard(dash, 'git', url)
         start_task(repo, dash.creator, False)
+
+        es_user = ESUser.objects.filter(dashboard=dash).first()
+        enriched_indices = [get_enriched_indices(repo.index_name, 'github'),
+                            get_enriched_indices(repo.index_name, 'git')]
+        add_role_indices(es_user.role, enriched_indices)
 
         return JsonResponse({'status': 'ok'})
 
@@ -386,8 +403,8 @@ def manage_add_gh_repo(dash, data):
 
 def manage_add_gl_repo(dash, data):
     """
-    Add a repository for a dashboard
-    :param dash: Dashboard object for adding the repository
+    Add a repository or a user in a dashboard
+    :param dash: Dashboard object for adding
     :param data: Dictionary with the user or the repository to be added. Format: {'user': 'xxx', 'repository': 'yyy'}
     :return:
     """
@@ -399,21 +416,34 @@ def manage_add_gl_repo(dash, data):
             return JsonResponse({'status': 'error', 'message': 'Error from GitLab API. Does that user exist?'},
                                 status=500)
 
+        enriched_indices = list()
         for url in gitlab_list:
             repo = add_to_dashboard(dash, 'gitlab', url)
             start_task(repo, dash.creator, False)
+            enriched_indices += get_enriched_indices(repo.index_name, 'gitlab')
 
         for url in git_list:
             repo = add_to_dashboard(dash, 'git', url)
             start_task(repo, dash.creator, False)
+            enriched_indices += get_enriched_indices(repo.index_name, 'git')
+
+        es_user = ESUser.objects.filter(dashboard=dash).first()
+        add_role_indices(es_user.role, enriched_indices)
 
         return JsonResponse({'status': 'ok'})
-    if data['url'] and data['repository']:
+
+    elif data['url'] and data['repository']:
         url = 'https://gitlab.com/{}/{}'.format(data['user'], data['repository'])
+
         repo = add_to_dashboard(dash, 'gitlab', url)
         start_task(repo, dash.creator, False)
         repo = add_to_dashboard(dash, 'git', url)
         start_task(repo, dash.creator, False)
+
+        es_user = ESUser.objects.filter(dashboard=dash).first()
+        enriched_indices = [get_enriched_indices(repo.index_name, 'gitlab'),
+                            get_enriched_indices(repo.index_name, 'git')]
+        add_role_indices(es_user.role, enriched_indices)
 
         return JsonResponse({'status': 'ok'})
 
@@ -524,6 +554,8 @@ def start_task(repo, user, restart=False):
         if restart or not CompletedTask.objects.filter(repository=repo).first():
             new_task = Task(repository=repo, user=user)
             new_task.save()
+            return True
+    return False
 
 
 def request_new_dashboard(request):
@@ -644,17 +676,11 @@ def add_to_dashboard(dash, backend, url):
     :return: Repository created
     """
     repo_obj = Repository.objects.filter(url=url, backend=backend).first()
-    index_name = create_index_name(backend, url)
-    enriched_indices = get_enriched_indices(index_name, backend)
     if not repo_obj:
+        index_name = create_index_name(backend, url)
         repo_obj = Repository(url=url, backend=backend, index_name=index_name)
         repo_obj.save()
-        create_es_indices(enriched_indices)
-
     repo_obj.dashboards.add(dash)
-    es_user = ESUser.objects.filter(dashboard=dash).first()
-    add_role_indices(es_user.role, enriched_indices)
-
     return repo_obj
 
 

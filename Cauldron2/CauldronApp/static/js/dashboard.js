@@ -147,8 +147,12 @@ function reanalyzeRepo(event){
     $.post(url = window.location.pathname + "/edit",
            data = {'action': 'reanalyze', 'backend': backend, 'data': url_repo})
         .done(function (data) {
-            showToast('Reanalyzing', `The repository <b>${url_repo}</b> has restarted`, 'fas fa-check-circle text-success', 1500);
-            getInfo();
+            if (data['status'] == 'reanalyze'){
+                showToast('Reanalyzing', `The repository <b>${url_repo}</b> has restarted`, 'fas fa-check-circle text-success', 1500);
+                getInfo();
+            } else {
+                showToast(data['status'], "The repository couldn't be restarted", 'fas fa-times-circle text-danger', 1500);
+            }
         })
         .fail(function (data) {
             showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', 5000);
