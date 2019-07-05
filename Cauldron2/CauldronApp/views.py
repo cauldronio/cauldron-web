@@ -64,7 +64,7 @@ def homepage(request):
     context['gh_client_id'] = GH_CLIENT_ID
     context['gl_uri_identity'] = GL_URI_IDENTITY
     context['gl_client_id'] = GL_CLIENT_ID
-    context['gl_uri_redirect'] = request.build_absolute_uri(GL_REDIRECT_PATH)
+    context['gl_uri_redirect'] = "https://{}{}".format(request.get_host(), GL_REDIRECT_PATH)
     context['gitlab_allow'] = hasattr(request.user, 'gitlabuser')
     context['github_allow'] = hasattr(request.user, 'githubuser')
 
@@ -164,7 +164,7 @@ def request_gitlab_login_callback(request):
                               'client_secret': GL_CLIENT_SECRET,
                               'code': code,
                               'grant_type': 'authorization_code',
-                              'redirect_uri': request.build_absolute_uri(GL_REDIRECT_PATH)},
+                              'redirect_uri': "https://{}{}".format(request.get_host(), GL_REDIRECT_PATH)},
                       headers={'Accept': 'application/json'})
 
     if r.status_code != requests.codes.ok:
@@ -370,7 +370,7 @@ def request_edit_dashboard(request, dash_id):
             request.session['last_page'] = '/dashboard/{}'.format(dash_id)
             params = urlencode({'client_id': GL_CLIENT_ID,
                                 'response_type': 'code',
-                                'redirect_uri': request.build_absolute_uri(GL_REDIRECT_PATH)})
+                                'redirect_uri': "https://{}{}".format(request.get_host(), GL_REDIRECT_PATH)})
             gh_url_oauth = "{}?{}".format(GL_URI_IDENTITY, params)
             return JsonResponse({'status': 'error',
                                  'message': 'We need your GitLab token for analyzing this kind of repositories',
@@ -1039,7 +1039,7 @@ def create_context(request):
     context['gh_client_id'] = GH_CLIENT_ID
     context['gl_uri_identity'] = GL_URI_IDENTITY
     context['gl_client_id'] = GL_CLIENT_ID
-    context['gl_uri_redirect'] = request.build_absolute_uri(GL_REDIRECT_PATH)
+    context['gl_uri_redirect'] = "https://{}{}".format(request.get_host(), GL_REDIRECT_PATH)
 
     # Information for the photo and the profile
     context['authenticated'] = request.user.is_authenticated
