@@ -444,7 +444,7 @@ def manage_add_gl_repo(dash, data):
         try:
             gitlab_list, git_list = get_gl_repos(data['user'], dash.creator.gitlabuser.token)
         except Exception as e:
-            logging.warning("Error for Gitlab owner {}: {}".format(data['user'], e.error_message))
+            logging.warning("Error for Gitlab owner {}: {}".format(data['user'], e))
             return JsonResponse({'status': 'error', 'message': 'Error from GitLab API. Does that user exist?'},
                                 status=500)
 
@@ -523,7 +523,7 @@ def guess_data_backend(data_guess, backend):
         re_user_repo = re.match('{}/{}$'.format(gl_user_regex, gl_repo_regex), data_guess)
         if re_user_repo:
             return {'user': re_user_repo.groups()[0], 'repository': re_user_repo.groups()[1]}
-    return Non
+    return None
 
 
 def request_edit_dashboard_name(request, dash_id):
