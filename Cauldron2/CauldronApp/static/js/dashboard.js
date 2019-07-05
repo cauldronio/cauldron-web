@@ -8,7 +8,6 @@ $(document).ready(function(){
     getInfo();
     $('#logModal').on('show.bs.modal', onShowLogsModal);
     $('#logModal').on('hidden.bs.modal', OnHideLogsModal);
-    loadLastStatus();
     $('form#gh_add').submit(submitBackend);
     $('form#gl_add').submit(submitBackend);
     $('form#git_add').submit(submitBackend);
@@ -22,18 +21,6 @@ $(document).ready(function(){
     $('#edit-name').click(onClickEditName);
 });
 
-function loadLastStatus(){
-    if(!LocalStorageAvailable){
-        return
-    }
-    var gh_data = window.localStorage.getItem('gh_data');
-    var gl_data = window.localStorage.getItem('gl_data');
-    window.localStorage.removeItem('gh_data');
-    window.localStorage.removeItem('gl_data');
-    $('#gh_data').val(gh_data);
-    $('#gl_data').val(gl_data);
-    $('#git_data').val('');
-}
 
 function onFilterClick(ev) {
     ev.preventDefault();
@@ -337,11 +324,6 @@ function onDataFail(data, target) {
         return;
     }
     if (data.responseJSON.hasOwnProperty('redirect')){
-        if(LocalStorageAvailable){
-            var input_target = $(`#${target.id} input[name=data]`);
-            window.localStorage.setItem('location', window.location.href);
-            window.localStorage.setItem(input_target.attr('id'), input_target.val());
-        }
         var redirect = `<a href="${data.responseJSON['redirect']}" class="btn btn-primary"> Go</a>`;
         showModalAlert('We can not add it right now...', `<p><b>${data.responseJSON['message']}</b></p>`,  redirect);
     } else {

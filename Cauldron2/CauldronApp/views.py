@@ -103,7 +103,21 @@ def request_github_login_callback(request):
     username = gh_user.login
     photo_url = gh_user.avatar_url
 
+    # Get data from session
+    data_add = request.session.get('add_repo', None)
+    last_page = request.session.get('last_page', None)
+
     tricky_authentication(request, GithubUser, username, token, photo_url)
+
+    # Get the previous state
+    if data_add:
+        dash = Dashboard.objects.filter(id=data_add['dash_id']).first()
+        # Only GitHub, is the new account added
+        if data_add['backend'] == 'github':
+            manage_add_gh_repo(dash, data_add['data'])
+
+    if last_page:
+        return HttpResponseRedirect(last_page)
 
     return HttpResponseRedirect('/')
 
@@ -171,7 +185,21 @@ def request_gitlab_login_callback(request):
     username = gl.user.attributes['username']
     photo_url = gl.user.attributes['avatar_url']
 
+    # Get data from session
+    data_add = request.session.get('add_repo', None)
+    last_page = request.session.get('last_page', None)
+
     tricky_authentication(request, GitlabUser, username, token, photo_url)
+
+    # Get the previous state
+    if data_add:
+        dash = Dashboard.objects.filter(id=data_add['dash_id']).first()
+        # Only GitLab, is the new account added
+        if data_add['backend'] == 'gitlab':
+            manage_add_gl_repo(dash, data_add['data'])
+
+    if last_page:
+        return HttpResponseRedirect(last_page)
 
     return HttpResponseRedirect('/')
 
@@ -326,6 +354,8 @@ def request_edit_dashboard(request, dash_id):
                             status=401)
     if backend == 'github':
         if not hasattr(request.user, 'githubuser'):
+            request.session['add_repo'] = {'data': data, 'backend': backend, 'dash_id': dash.id}
+            request.session['last_page'] = '/dashboard/{}'.format(dash_id)
             params = urlencode({'client_id': GH_CLIENT_ID})
             gh_url_oauth = "{}?{}".format(GH_URI_IDENTITY, params)
             return JsonResponse({'status': 'error',
@@ -336,6 +366,8 @@ def request_edit_dashboard(request, dash_id):
 
     elif backend == 'gitlab':
         if not hasattr(request.user, 'gitlabuser'):
+            request.session['add_repo'] = {'data': data, 'backend': backend, 'dash_id': dash.id}
+            request.session['last_page'] = '/dashboard/{}'.format(dash_id)
             params = urlencode({'client_id': GL_CLIENT_ID,
                                 'response_type': 'code',
                                 'redirect_uri': request.build_absolute_uri(GL_REDIRECT_PATH)})

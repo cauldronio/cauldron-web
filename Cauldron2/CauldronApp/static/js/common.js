@@ -11,7 +11,6 @@ $(document).ready(function () {
         }
     });
     LocalStorageAvailable = checkLocalStorage()
-    loadLastLocation();
     
     loadShowFooterInfo();
     $('#more-footer').click(function(ev){
@@ -142,20 +141,6 @@ function showModalAlert(title, message, footer) {
     }
 }
 
-/**
- * Load the last location. This trick is for redirect after GitHub or Gitlab oauth
- * It will not work if the browser doesn't accept localStorage
- */
-function loadLastLocation() {
-    if (!LocalStorageAvailable) {
-        return;
-    }
-    var location = window.localStorage.getItem('location');
-    if (location) {
-        window.localStorage.removeItem('location');
-        window.location.href = location;
-    }
-}
 
 /**
  * Show the full footer, or just a part depending if the user has hidden it
