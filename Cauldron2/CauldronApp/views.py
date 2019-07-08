@@ -316,8 +316,8 @@ def request_edit_dashboard(request, dash_id):
             return JsonResponse({'status': 'error', 'message': 'Repository not found'},
                                 status=404)
         repo.dashboards.remove(dash)
-
-        delete_role_indices(role_name=es_user.role, indices=[repo.index_name])
+        enriched_indices = get_enriched_indices(repo.index_name, backend)
+        delete_role_indices(role_name=es_user.role, indices=enriched_indices)
         task = Task.objects.filter(repository=repo).first()
         if task and task.user == dash.creator and not task.worker_id:
             task.delete()
