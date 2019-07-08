@@ -423,8 +423,8 @@ def manage_add_gh_repo(dash, data):
         start_task(repo, dash.creator, False)
 
         es_user = ESUser.objects.filter(dashboard=dash).first()
-        enriched_indices = [get_enriched_indices(repo.index_name, 'github'),
-                            get_enriched_indices(repo.index_name, 'git')]
+        enriched_indices = get_enriched_indices(repo.index_name, 'github') + \
+                           get_enriched_indices(repo.index_name, 'git')
         add_role_indices(es_user.role, enriched_indices)
 
         return JsonResponse({'status': 'ok'})
@@ -755,7 +755,7 @@ def create_index_name(backend, url):
     else:
         # Like git
         try:
-            owner, repo = parse_url(url[:-4])
+            owner, repo = parse_url(url)
             txt = slugify("{}_{}_{}".format('git', owner, repo), max_length=100, replacements=[['.', '_dot_']]).lower()
         except Exception:
             txt = slugify("{}_{}".format('git', url), max_length=100, replacements=[['.', '_dot_']]).lower()
