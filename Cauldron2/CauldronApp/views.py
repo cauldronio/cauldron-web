@@ -1179,7 +1179,7 @@ def get_gl_repos(owner, token):
         gl_urls_sg, git_urls_sg = get_urls_subgroups(owner, init_time)
         gitlab_urls += gl_urls_sg
         git_urls += git_urls_sg
-        return gl_urls_sg, git_urls_sg
+        return gitlab_urls, git_urls
 
     # USER REPOSITORIES
     r = requests.get("https://gitlab.com/api/v4/search?scope=users&search={}".format(owner), headers=headers)
