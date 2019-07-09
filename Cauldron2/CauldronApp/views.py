@@ -18,6 +18,7 @@ from urllib.parse import urlparse, urlencode
 from elasticsearch import Elasticsearch
 from elasticsearch.client import CatClient
 from elasticsearch.connection import create_ssl_context
+import time
 
 from Cauldron2.settings import GH_CLIENT_ID, GH_CLIENT_SECRET, GL_CLIENT_ID, GL_CLIENT_SECRET, \
                                 ES_IN_HOST, ES_IN_PORT, ES_IN_PROTO, ES_ADMIN_PSW, \
@@ -1154,21 +1155,79 @@ def get_repo_status(repo):
 
 
 def get_gl_repos(owner, token):
-    gl = Gitlab(url='https://gitlab.com', oauth_token=token)
-    gl.auth()
-    users = gl.users.list(username=owner)
-    if len(users) > 0:
-        user = users[0]
-    else:
-        user = gl.groups.get(owner)
-
-    repos = user.projects.list(visibility='public')
+    """
+    Get all the repositories from a owner or a group
+    Limited to 5 seconds
+    :param owner: Group or user name
+    :param token: Token for gitlab authentication. Must be oauth
+    :return: Tuple of list of (gitlab repositories and git repositories)
+    """
+    init_time = time.time()
     git_urls = list()
-    gl_urls = list()
-    for repo in repos:
-        git_urls.append(repo.http_url_to_repo)
-        gl_urls.append(repo.web_url)
-    return gl_urls, git_urls
+    gitlab_urls = list()
+    # GROUP REPOSITORIES
+    headers = {'Authorization': "Bearer {}".format(token)}
+    r_group = requests.get('https://gitlab.com/api/v4/groups/{}'.format(owner), headers=headers)
+    if r_group.ok:
+        r = requests.get('https://gitlab.com/api/v4/groups/{}/projects?visibility=public'.format(owner), headers=headers)
+        if not r.ok:
+            raise Exception('Projects not found for that group')
+        for project in r.json():
+            gitlab_urls.append(project['web_url'])
+            git_urls.append(project['http_url_to_repo'])
+
+        gl_urls_sg, git_urls_sg = get_urls_subgroups(owner, init_time)
+        gitlab_urls += gl_urls_sg
+        git_urls += git_urls_sg
+        return gl_urls_sg, git_urls_sg
+
+    # USER REPOSITORIES
+    r = requests.get("https://gitlab.com/api/v4/search?scope=users&search={}".format(owner), headers=headers)
+    if not r.ok or len(r.json()) <= 0:
+        raise Exception('User/group not found in GitLab, or the API is not working')
+    user = r.json()[0]
+    r = requests.get("https://gitlab.com/api/v4/users/{}/projects?visibility=public".format(user['id']), headers=headers)
+    if not r.ok:
+        raise Exception('Error in GitLab API retrieving user projects')
+    for project in r.json():
+        git_urls.append(project['http_url_to_repo'])
+        gitlab_urls.append(project['web_url'])
+
+    return gitlab_urls, git_urls
+
+
+def get_urls_subgroups(group, init_time=time.time()):
+    """
+    Get repositories from subgroups
+    Limited to 6 seconds
+    NOTE: Auth token doesn't work with subgroups, no token required here (last update: 07-2019)
+    :param group:
+    :param init_time: The time it started
+    :return: gl_urls, git_urls
+    """
+    gitlab_urls, git_urls = list(), list()
+    r = requests.get('https://gitlab.com/api/v4/groups/{}/subgroups'.format(group))
+    if not r.ok:
+        return gitlab_urls, git_urls
+    for subgroup in r.json():
+        path = "{}%2F{}".format(group, subgroup['path'])
+        r = requests.get('https://gitlab.com/api/v4/groups/{}/projects?visibility=public'.format(path))
+        if not r.ok:
+            continue
+        else:
+            for project in r.json():
+                main_group = project['path_with_namespace'].split('/')[0]
+                subgroup = '%2F'.join(project['path_with_namespace'].split('/')[1:])
+                gitlab_urls.append('https://gitlab.com/{}/{}'.format(main_group, subgroup))
+                git_urls.append(project['http_url_to_repo'])
+        gl_urls_sub, git_urls_sub = get_urls_subgroups(path, init_time)
+        gitlab_urls += gl_urls_sub
+        git_urls += git_urls_sub
+        logging.error("Elapsed: {}".format(time.time()-init_time))
+        if time.time() > init_time + 6:
+            return gitlab_urls, git_urls
+
+    return gitlab_urls, git_urls
 
 
 # https://gist.github.com/jcinis/2866253
