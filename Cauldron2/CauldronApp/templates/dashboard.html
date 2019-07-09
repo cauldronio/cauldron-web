@@ -32,7 +32,7 @@
                 {% csrf_token %}
                 <div class="form-group">
                   <div class="input-group">
-                    <input type="text" class="form-control" id="gh_data" name="data" placeholder="user or user/repository or url">
+                    <input type="text" class="form-control" id="gh_data" name="data" placeholder="owner or owner/repository or url">
                     <input type="hidden" name="backend" value="github">
                     <input type="hidden" name="action" value="add">
                     <div class="input-group-append">
@@ -97,7 +97,7 @@
                 <div class="form-group">
   
                   <div class="input-group">
-                    <input type="text" class="form-control" id="gl_data" name="data" placeholder="user or user/repository or url">
+                    <input type="text" class="form-control" id="gl_data" name="data" placeholder="owner or owner/repository or url">
                     <input type="hidden" name="backend" value="gitlab">
                     <input type="hidden" name="action" value="add">
                     <div class="input-group-append">
