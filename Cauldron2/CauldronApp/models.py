@@ -65,6 +65,7 @@ class Task(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     started = models.DateTimeField(null=True)
     log_file = models.CharField(max_length=255, blank=True)
+    rate_time = models.DateTimeField(null=True, auto_now_add=True)
 
 
 class CompletedTask(models.Model):
