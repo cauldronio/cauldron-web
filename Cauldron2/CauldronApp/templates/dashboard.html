@@ -146,7 +146,10 @@
                     </div>
                     <div class="col-md-3">
                       {% if editable %}
-                      <a id="open-kibana" class="btn btn-success" href="/dashboard/{{dash_id}}/kibana" target="_blank">
+                      <a id="open-kibana"
+                         class="btn btn-success {% if repositories|length == 0 %}disabled{% endif %}"
+                         href="/dashboard/{{dash_id}}/kibana"
+                         target="_blank">
                         Open Kibana
                       </a>
                       {% endif %}
@@ -247,6 +250,24 @@
                     </tbody>
                   </table>
                 </div>
+                {% if repositories|length == 0 %}
+                  <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <div class="row">
+                      <div class="col-sm-2">
+                        <i class="fas fa-arrow-left"></i>
+                      </div>
+                      <div class="col-sm-10">
+                        <p><strong>Start adding repositories!</strong></p>
+                        <p>Projects are defined by set of repositories from different data sources. Add them with the tools in the side bar.</p>
+
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                          <span aria-hidden="true">&times;</span>
+                        </button>
+
+                      </div>
+                    </div>
+                  </div>
+                  {% endif %}
               </div>
               {% endif %}
           </div>
