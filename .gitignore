@@ -271,3 +271,7 @@ fabric.properties
 .venv/
 
 # End of https://www.gitignore.io/api/pycharm,python,django
+
+# Keys
+
+*.key
