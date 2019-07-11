@@ -418,14 +418,14 @@ def manage_add_gh_repo(dash, data):
     elif data['user'] and data['repository']:
         url = "https://github.com/{}/{}".format(data['user'], data['repository'])
 
-        repo = add_to_dashboard(dash, 'github', url)
-        start_task(repo, dash.creator, False)
-        repo = add_to_dashboard(dash, 'git', url)
-        start_task(repo, dash.creator, False)
+        repo_gh = add_to_dashboard(dash, 'github', url)
+        start_task(repo_gh, dash.creator, False)
+        repo_git = add_to_dashboard(dash, 'git', url)
+        start_task(repo_git, dash.creator, False)
 
         es_user = ESUser.objects.filter(dashboard=dash).first()
-        enriched_indices = get_enriched_indices(repo.index_name, 'github') + \
-                           get_enriched_indices(repo.index_name, 'git')
+        enriched_indices = get_enriched_indices(repo_gh.index_name, 'github') + \
+                           get_enriched_indices(repo_git.index_name, 'git')
         add_role_indices(es_user.role, enriched_indices)
 
         return JsonResponse({'status': 'ok'})
@@ -468,14 +468,14 @@ def manage_add_gl_repo(dash, data):
     elif data['url'] and data['repository']:
         url = 'https://gitlab.com/{}/{}'.format(data['user'], data['repository'])
 
-        repo = add_to_dashboard(dash, 'gitlab', url)
-        start_task(repo, dash.creator, False)
-        repo = add_to_dashboard(dash, 'git', url)
-        start_task(repo, dash.creator, False)
+        repo_gl = add_to_dashboard(dash, 'gitlab', url)
+        start_task(repo_gl, dash.creator, False)
+        repo_git = add_to_dashboard(dash, 'git', url)
+        start_task(repo_git, dash.creator, False)
 
         es_user = ESUser.objects.filter(dashboard=dash).first()
-        enriched_indices = [get_enriched_indices(repo.index_name, 'gitlab'),
-                            get_enriched_indices(repo.index_name, 'git')]
+        enriched_indices = [get_enriched_indices(repo_gl.index_name, 'gitlab'),
+                            get_enriched_indices(repo_git.index_name, 'git')]
         add_role_indices(es_user.role, enriched_indices)
 
         return JsonResponse({'status': 'ok'})
