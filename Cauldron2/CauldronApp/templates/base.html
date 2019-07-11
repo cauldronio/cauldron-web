@@ -15,10 +15,12 @@
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css"
     integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
   <link rel="stylesheet" href="{% static 'css/common.css' %}">
+  <!-- Favicon.ico -->
+  <link rel="shortcut icon" href="{% static 'img/favicon.ico' %}"/>
   {% block css%}
   {% endblock %}
 
-  <title>Cauldron - Level Up Software Development Analytics</title>
+  <title>Cauldron (&alpha; version) - Level Up Software Development Analytics</title>
 </head>
 
 <body>
@@ -26,9 +28,13 @@
   <nav class="navbar navbar-dark bg-dark shadow-sm mb-3">
     <div class="container-fluid">
       <a class="navbar-brand" href="/">
-        Cauldron
+        <img src="{% static 'img/cauldron-logo-white.png' %}" alt="" style="float:left; margin-right: 5px;" height="28px">
+        Cauldron (&alpha; version)
       </a>
-
+<div class="btn-toolbar">
+  <button type="button" class="btn btn-secondary btn-success" style="margin-right: 5px" href="https://gitlab.com/cauldron2/cauldron-feedback/issues/new" target="_blank">
+    Send us feedback!
+  </button>
       {% if authenticated %}
       <div class="dropdown">
         <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown"
@@ -53,6 +59,7 @@
         Login
       </button>
       {% endif %}
+      </div>
     </div>
   </nav>
   <!-- END NAVBAR-->
@@ -144,28 +151,22 @@
 
 
   <footer class="container-fluid footer-position">
-    <button id="less-footer" type="button" class="close" aria-label="Close">
-      <span aria-hidden="true" style="color:white;">&times;</span>
-    </button>
 
     <div class="container">
       <div class="row">
         <div class="col-md-4">
-          <p class="full-footer"><a href="https://bitergia.com" target="_blank"><img class="mx-auto d-block" src="/static/img/bitergia-w-logo-s.png" alt="Bitergia"></a>
-            <p >Copyright &copy; 2019 <a href="https://bitergia.com">Bitergium SLL.</a> and its
+          <div class="full-footer"><a href="https://bitergia.com" target="_blank"><img class="mx-auto d-block" src="/static/img/bitergia-w-logo-s.png" style="float:left" alt="Bitergia"></a></div>
+            <p style="display:inline-block">Copyright &copy; 2019 <a href="https://bitergia.com">Bitergium SLL.</a> and its
               contributors.</p>
             <p class="full-footer">Some Rights Reserved.</p>
         </div>
         <div class="col-md-4">
-          <p class="text-center"><a style="display: none;" id="more-footer" href="#"><i class="fas fa-chevron-circle-up"></i> More <i class="fas fa-chevron-circle-up"></i></a></p>
           <p class="text-justify full-footer">Unless otherwise stated, this work is licensed under a <strong>Creative
               Commons Attribution-ShareAlike 4.0 Unported License</strong>. Cauldron and the Cauldron logo are
             trademarks of <a href="https://bitergia.com" target="_blank">Bitergium SLL.</a> in the European Union and/or
             other jurisdictions. All other trademarks are the property of their respective holders.</p>
         </div>
         <div class="col-md-4">
-          <p class="text-center"><a class="btn btn-success" role="button"
-              href="https://gitlab.com/cauldron2/cauldron-feedback/issues/new" target="_blank">Send us feedback!</a></p>
           <p class="full-footer">Made with <abbr title="love">&hearts;</abbr> and <strong>free, open source software</strong>:</p>
           <p class="full-footer"><a href="https://chaoss.github.io/grimoirelab/" target="_blank"><img src="/static/img/wizard-y.svg"
                 height="24" alt=""> GrimoireLab</a></p>
