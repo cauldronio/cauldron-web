@@ -11,18 +11,6 @@ $(document).ready(function () {
         }
     });
     LocalStorageAvailable = checkLocalStorage()
-    
-    loadShowFooterInfo();
-    $('#more-footer').click(function(ev){
-        ev.preventDefault();
-        localStorage.setItem('small_footer', false);
-        loadShowFooterInfo();
-    });
-    $('#less-footer').click(function(ev){
-        ev.preventDefault();
-        localStorage.setItem('small_footer', true);
-        loadShowFooterInfo();
-    });
 
     $('#delete-gh-token').click(function(ev){
         showModalAlert('Do you want to delete your GitHub token?', 
@@ -138,28 +126,6 @@ function showModalAlert(title, message, footer) {
     $('#modal-alert').modal('show');
     if (footer != undefined){
         $('#modal-alert .modal-footer').html(footer);
-    }
-}
-
-
-/**
- * Show the full footer, or just a part depending if the user has hidden it
- */
-function loadShowFooterInfo() {
-    if (!LocalStorageAvailable){
-        return;
-    }
-    var small_footer = window.localStorage.getItem('small_footer');
-    
-    if (JSON.parse(small_footer)) {
-        $('.full-footer').hide();
-        $('#more-footer').show();
-        $('#less-footer').hide();
-    } else {
-        $('.full-footer').show();
-        $('#more-footer').hide();
-        $('#less-footer').show();
-
     }
 }
 
