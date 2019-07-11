@@ -10,9 +10,9 @@
 
     <div class="container-fluid">
 
-        
 
-             
+
+
       <div class="row">
 
         <!-- ADD REPOS SIDE -->
@@ -36,14 +36,14 @@
                     <input type="hidden" name="backend" value="github">
                     <input type="hidden" name="action" value="add">
                     <div class="input-group-append">
-                      <button class="btn btn-outline-primary" type="submit">Add</button>
+                      <button class="btn btn-primary" type="submit">Add</button>
                     </div>
                   </div>
                 </div>
               </form>
 
             </div>
-            
+
             <div class="card-footer">
               <span class="text-muted">This will add to the analysis:</span>
               <ul>
@@ -51,7 +51,7 @@
                 <li class="text-muted" style="list-style: none;">Git repositories</li>
               </ul>
             </div>
-            
+
           </div>
           <!-- end GITHUB CARD -->
 
@@ -70,7 +70,7 @@
                     <input type="hidden" name="backend" value="git">
                     <input type="hidden" name="action" value="add">
                     <div class="input-group-append">
-                      <button class="btn btn-outline-primary" type="submit">Add</button>
+                      <button class="btn btn-primary" type="submit">Add</button>
                     </div>
                   </div>
                 </div>
@@ -95,13 +95,13 @@
               <form action="" method="post" id="gl_add">
                 {% csrf_token %}
                 <div class="form-group">
-  
+
                   <div class="input-group">
                     <input type="text" class="form-control" id="gl_data" name="data" placeholder="owner or owner/repository or url">
                     <input type="hidden" name="backend" value="gitlab">
                     <input type="hidden" name="action" value="add">
                     <div class="input-group-append">
-                      <button class="btn btn-outline-primary" type="submit">Add</button>
+                      <button class="btn btn-primary" type="submit">Add</button>
                     </div>
                   </div>
                 </div>
@@ -110,7 +110,7 @@
 
             </div>
 
-            
+
             <div class="card-footer">
                 <span class="text-muted">This will add to the analysis:</span>
                 <ul>
@@ -118,12 +118,12 @@
                   <li class="text-muted" style="list-style: none;">Git repositories</li>
                 </ul>
             </div>
-            
-  
+
+
 
           </div>
           <!-- end GITLAB CARD -->
-  
+
         </div>
         {% endif %}
 
@@ -147,10 +147,10 @@
                     <div class="col-md-3">
                       {% if editable %}
                       <a id="open-kibana"
-                         class="btn btn-success {% if repositories|length == 0 %}disabled{% endif %}"
+                         class="btn btn-primary {% if repositories|length == 0 %}disabled{% endif %}"
                          href="/dashboard/{{dash_id}}/kibana"
                          target="_blank">
-                        Open Kibana
+                        View project data
                       </a>
                       {% endif %}
                     </div>
@@ -272,7 +272,7 @@
               {% endif %}
           </div>
         </div>
-              
+
         </div>
       </div>
     </div>
@@ -294,8 +294,8 @@
         </div>
       </div>
     </div>
-      
-      
+
+
 
 {% endblock %}
 
