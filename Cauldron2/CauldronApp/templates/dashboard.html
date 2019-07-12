@@ -24,7 +24,12 @@
           <!-- GITHUB CARD -->
           <div class="card shadow-sm">
             <div class="card-header">
-              <div class="title">GitHub</div>
+              <div class="title">
+                <i class="fab fa-github"></i><strong> GitHub</strong>
+                <button type="button" class="btn btn-info btn-sm" data-toggle="tooltip" style="float:right" title="This will add GitHub repositories to the analysis">
+                  <i class="fas fa-info"><span class="sr-only"> GitHub info</span></i>
+                </button>
+              </div>
             </div>
             <div class="card-body">
 
@@ -32,7 +37,7 @@
                 {% csrf_token %}
                 <div class="form-group">
                   <div class="input-group">
-                    <input type="text" class="form-control" id="gh_data" name="data" placeholder="owner or owner/repository or url">
+                    <input type="text" class="form-control" id="gh_data" name="data" placeholder="github owner or owner/repository or url">
                     <input type="hidden" name="backend" value="github">
                     <input type="hidden" name="action" value="add">
                     <div class="input-group-append">
@@ -44,21 +49,18 @@
 
             </div>
 
-            <div class="card-footer">
-              <span class="text-muted">This will add to the analysis:</span>
-              <ul>
-                <li class="text-muted" style="list-style: none;">GitHub repositories</li>
-                <li class="text-muted" style="list-style: none;">Git repositories</li>
-              </ul>
-            </div>
-
           </div>
           <!-- end GITHUB CARD -->
 
           <!-- GIT CARD -->
           <div class="card shadow-sm">
             <div class="card-header">
-              <div class="title">Git</div>
+              <div class="title">
+                <i class="fab fa-git-square"></i><strong> Git</strong>
+                <button type="button" class="btn btn-info btn-sm" data-toggle="tooltip" style="float:right" title="This will add Git repositories to the analysis">
+                  <i class="fas fa-info"><span class="sr-only"> Git info</span></i>
+                </button>
+              </div>
             </div>
             <div class="card-body">
 
@@ -84,9 +86,10 @@
 
             <div class="card-header">
               <div class="title">
-                <b>
-                  Gitlab
-                </b>
+                <i class="fab fa-gitlab"></i><strong> GitLab</strong>
+                <button type="button" class="btn btn-info btn-sm" data-toggle="tooltip" style="float:right" title="This will add GitLab repositories to the analysis">
+                  <i class="fas fa-info"><span class="sr-only"> GitLab info</span></i>
+                </button>
               </div>
             </div>
 
@@ -97,7 +100,7 @@
                 <div class="form-group">
 
                   <div class="input-group">
-                    <input type="text" class="form-control" id="gl_data" name="data" placeholder="owner or owner/repository or url">
+                    <input type="text" class="form-control" id="gl_data" name="data" placeholder="gitlab owner or owner/repository or url">
                     <input type="hidden" name="backend" value="gitlab">
                     <input type="hidden" name="action" value="add">
                     <div class="input-group-append">
@@ -109,17 +112,6 @@
 
 
             </div>
-
-
-            <div class="card-footer">
-                <span class="text-muted">This will add to the analysis:</span>
-                <ul>
-                  <li class="text-muted" style="list-style: none;">Gitlab repositories</li>
-                  <li class="text-muted" style="list-style: none;">Git repositories</li>
-                </ul>
-            </div>
-
-
 
           </div>
           <!-- end GITLAB CARD -->
