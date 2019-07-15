@@ -60,15 +60,15 @@ function onClickEditName(ev) {
     this_a.hide();
 
     var name_input = `<form class="input-group mb-3" id="change-name">
-                          <input type="text" class="form-control" id="new-name" name="name" placeholder="${old_name}" data-container="body" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-html="true" data-content="Between 4-32 characters allowed. Try to use only: <ul><li>Alphanumeric characters</li><li>Spaces</li><li>Hyphens</li><li>Underscores</li></ul>">
+                          <input type="text" class="form-control" id="new-name" name="name" placeholder="${old_name}" data-container="body" data-toggle="popover" data-trigger="focus" data-placement="bottom" data-html="true" data-content="4-32 characters long">
                           <div class="input-group-append">
                             <button class="btn btn-primary" type="submit">Change</button>
                           </div>
                         </form>`
 
     $('#dash_name').html(name_input);
+    $('input#new-name').popover();
     $('input#new-name').focus();
-    $('[data-toggle="popover"]').popover();
 
     $('form#change-name').submit(function (ev) {
         ev.preventDefault();

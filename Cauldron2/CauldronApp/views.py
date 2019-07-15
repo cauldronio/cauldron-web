@@ -557,11 +557,6 @@ def request_edit_dashboard_name(request, dash_id):
         return JsonResponse({'status': 'error', 'message': "The name doesn't fit the allowed length "},
                             status=400)
 
-    if not re.match("^[a-zA-Z\s\d_-]+$", name):
-        return JsonResponse({'status': 'No valid name',
-                             'message': "Only can contain letters, numbers, underscores, hypens or spaces"},
-                            status=400)
-
     dashboards = Dashboard.objects.filter(creator=request.user)
     for tmp_dash in dashboards:
         if tmp_dash.name == name:
