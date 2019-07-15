@@ -27,7 +27,7 @@ function onFilterClick(ev) {
     $('.backend-item').removeClass('active');
     $(this).addClass('active');
     var filterType = $(this).attr('data-filter-type');
-    
+
     if(filterType == 'status'){
         StatusFilter = $(this).attr('data-filter');
     } else if (filterType == 'backend'){
@@ -62,10 +62,10 @@ function onClickEditName(ev) {
     var name_input = `<form class="input-group mb-3" id="change-name">
                           <input type="text" class="form-control" id="new-name" name="name" placeholder="${old_name}" data-container="body" data-toggle="popover" data-trigger="hover" data-placement="bottom" data-html="true" data-content="Between 4-32 characters allowed. Try to use only: <ul><li>Alphanumeric characters</li><li>Spaces</li><li>Hyphens</li><li>Underscores</li></ul>">
                           <div class="input-group-append">
-                            <button class="btn btn-outline-primary" type="submit">Change</button>
+                            <button class="btn btn-primary" type="submit">Change</button>
                           </div>
                         </form>`
-    
+
     $('#dash_name').html(name_input);
     $('input#new-name').focus();
     $('[data-toggle="popover"]').popover();
@@ -81,7 +81,7 @@ function onClickEditName(ev) {
             $('#dash_name').text(old_name);
             return
         }
-        
+
         $.post(url = window.location.pathname + "/edit-name",
            data = {'name': name})
         .done(function (data) {
@@ -108,7 +108,7 @@ function deleteRepo(event) {
                     <span class="sr-only">Loading...</span>
                 </div>`);
 
-    $.post(url = window.location.pathname + "/edit", 
+    $.post(url = window.location.pathname + "/edit",
            data = {'action': 'delete', 'backend': backend, 'data': url_repo})
         .done(function (data) {
             showToast('Deleted', `The repository <b>${url_repo}</b> was deleted from this dashboard`, 'fas fa-check-circle text-success', 1500);
@@ -119,7 +119,7 @@ function deleteRepo(event) {
             showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', 5000);
         })
         .always(function(){deleteBtn.html('Delete')})
-    
+
 }
 
 function reanalyzeRepo(event){
@@ -182,7 +182,7 @@ function getInfo() {
             }
         }
         $('#general-status').html(status_output)
-    }); 
+    });
     filterTable();
 }
 
@@ -241,7 +241,7 @@ function updateBadgesRepos(repo_arr) {
             repos_gl += 1;
         } else if (repo.backend == 'git'){
             repos_git += 1;
-        }        
+        }
     });
     $('.badge-repos-all').html(repos_git + repos_gh + repos_gl)
     $('.badge-repos-gh').html(repos_gh)
@@ -277,7 +277,7 @@ function updateLogs(id_repo){
             if (LogsInterval){
                 clearInterval(LogsInterval);
                 LogsInterval = null;
-            } 
+            }
             return // NOTHING MORE TO DO
         }
         if (data.content) {
@@ -302,8 +302,8 @@ function submitBackend(event) {
     addBtn.html(`<div class="spinner-border text-dark spinner-border-sm" role="status">
                     <span class="sr-only">Loading...</span>
                 </div>`);
-    
-    $.post(url = window.location.pathname + "/edit", 
+
+    $.post(url = window.location.pathname + "/edit",
            data = $(this).serializeArray())
         .done(function (data) {onDataAdded(data, event.target)})
         .fail(function (data) {onDataFail(data, event.target)})
