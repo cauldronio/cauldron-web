@@ -175,7 +175,7 @@ function getInfo() {
         if ((data.general == 'PENDING' || data.general == 'RUNNING') && !TimeoutInfo) {
             TimeoutInfo = setTimeout(getInfo, 5000, Dash_ID);
         }
-        var status_output = ""
+        var status_output = "<strong>general status</strong>: " + data.general.toLowerCase() + " ";
         for (var key in status_dict){
             if (status_dict.hasOwnProperty(key)) {
                 status_output += `<strong>${key}</strong>: ${status_dict[key]} `;
