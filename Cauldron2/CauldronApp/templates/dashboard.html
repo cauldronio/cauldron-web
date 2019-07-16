@@ -26,7 +26,7 @@
             <div class="card-header">
               <div class="title">
                 <i class="fab fa-github"></i><strong> GitHub</strong>
-                <button type="button" class="btn btn-info btn-sm" data-toggle="tooltip" style="float:right" title="This will add GitHub repositories to the analysis">
+                <button type="button" class="btn btn-info btn-sm" data-toggle="tooltip" style="float:right" title="This will add GitHub and Git repositories to the analysis">
                   <i class="fas fa-info"><span class="sr-only"> GitHub info</span></i>
                 </button>
               </div>
@@ -87,7 +87,7 @@
             <div class="card-header">
               <div class="title">
                 <i class="fab fa-gitlab"></i><strong> GitLab</strong>
-                <button type="button" class="btn btn-info btn-sm" data-toggle="tooltip" style="float:right" title="This will add GitLab repositories to the analysis">
+                <button type="button" class="btn btn-info btn-sm" data-toggle="tooltip" style="float:right" title="This will add GitLab and Git repositories to the analysis">
                   <i class="fas fa-info"><span class="sr-only"> GitLab info</span></i>
                 </button>
               </div>
@@ -194,12 +194,12 @@
                       <tr>
                         <th scope="col" class="text-muted">Status</th>
                         <th scope="col">Repository</th>
-                        <th scope="col">Last update</th>
+                        <th scope="col">Last refresh</th>
                         <th scope="col">Duration</th>
-                        <th scope="col">Logs</th>
+                        <th scope="col"></th>
                         {% if editable %}
-                        <th scope="col">Delete</th>
-                        <th scope="col">Analyze again</th>
+                        <th scope="col"></th>
+                        <th scope="col"></th>
                         {% endif %}
                       </tr>
                     </thead>
@@ -230,14 +230,14 @@
                           </span>
                         </td>
                         <td>
-                          <button type="button" class="btn btn-outline-secondary" data-toggle="modal" data-target="#logModal" data-repo="{{repo.id}}">Logs</button>
+                          <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#logModal" data-repo="{{repo.id}}">Logs</button>
                         </td>
                         {% if editable %}
                         <td>
-                            <button type="button" class="btn btn-outline-danger btn-delete" data-repo="{{repo.id}}">Delete</button>
+                            <button type="button" class="btn btn-danger btn-delete" data-repo="{{repo.id}}">Delete</button>
                         </td>
                         <td>
-                            <button type="button" class="btn btn-outline-primary btn-reanalyze" data-repo="{{repo.id}}">Restart</button>
+                            <button type="button" class="btn btn-primary btn-reanalyze" data-repo="{{repo.id}}">Refresh</button>
                         </td>
                         {% endif %}
                       </tr>

@@ -29,7 +29,9 @@ $(document).ready(function () {
         ev.preventDefault();
     });
 
-    $('form#create-dashboard').on('submit', on_create_dashboard)
+    $('form#create-dashboard').on('submit', on_create_dashboard);
+
+    $('[data-toggle="tooltip"]').tooltip();
 });
 
 
