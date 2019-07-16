@@ -133,11 +133,12 @@
                 {% if dashboard %}
                   <div class="row">
                     <div class="col-md-9">
-                      <h2><strong><span id="dash_name">{{dashboard.name}}</span></strong></h2>
-
-                      {% if editable %}
-                      <a href="#" id="edit-name"><i class="far fa-edit"></i> Change name</a>
-                      {% endif %}
+                      <h2>
+                        <strong><span id="dash_name">{{dashboard.name}}</span></strong>
+                        {% if editable %}
+                        <a href="#" id="edit-name"><i class="far fa-xs fa-edit"></i></a>
+                        {% endif %}
+                      </h2>
                     </div>
                     <div class="col-md-3">
                       {% if editable %}
@@ -212,7 +213,16 @@
                             <span class="sr-only">Loading...</span>
                           </div>
                         </td>
-                        <td class="repo-url">{{ repo.url }}</td>
+                        <td class="repo-url">
+                          {% if repo.backend == "github" %}
+                          <i class="fab fa-github"></i>
+                          {% elif repo.backend == "gitlab" %}
+                          <i class="fab fa-gitlab"></i>
+                          {% else %}
+                          <i class="fab fa-git-square"></i>
+                          {% endif %}
+                          {{ repo.url }}
+                        </td>
                         <td>
                           <i class="fas fa-calendar-alt text-muted"></i>
                           <span class="repo-last-update">

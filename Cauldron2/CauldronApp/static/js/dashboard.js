@@ -150,7 +150,10 @@ function reanalyzeRepo(event){
 function getInfo() {
     TimeoutInfo = null; // To avoid multiple getInfo calls
     $.getJSON('/dashboard/' + Dash_ID + "/info", function(data) {
-        var status_dict = {}
+        var status_dict = {"completed": 0,
+                           "pending": 0,
+                           "running": 0,
+                           "error": 0}
         if (!data || !data.exists){
             return
         }
@@ -175,10 +178,10 @@ function getInfo() {
         if ((data.general == 'PENDING' || data.general == 'RUNNING') && !TimeoutInfo) {
             TimeoutInfo = setTimeout(getInfo, 5000, Dash_ID);
         }
-        var status_output = "<strong>general status</strong>: " + data.general.toLowerCase() + " ";
+        var status_output = "<strong>general status</strong>: " + data.general.toLowerCase();
         for (var key in status_dict){
             if (status_dict.hasOwnProperty(key)) {
-                status_output += `<strong>${key}</strong>: ${status_dict[key]} `;
+                status_output += ` | <strong>${key}</strong>: ${status_dict[key]}`;
             }
         }
         $('#general-status').html(status_output)
