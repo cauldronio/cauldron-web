@@ -14,6 +14,7 @@ $(document).ready(function(){
 
     $('.btn-delete').click(deleteRepo);
     $('.btn-reanalyze').click(reanalyzeRepo);
+    $('.btn-reanalyze-all').click(reanalyzeEveryRepo);
 
     $('.backend-filters a').click(onFilterClick);
     $('.status-filters a').click(onFilterClick);
@@ -104,7 +105,7 @@ function deleteRepo(event) {
     var url_repo = $(`tr#repo-${id_repo} td.repo-url`).html();
 
     var deleteBtn = $(this);
-    deleteBtn.html(`<div class="spinner-border text-dark spinner-border-sm" role="status">
+    deleteBtn.html(`<div class="spinner-border spinner-border-sm" role="status">
                     <span class="sr-only">Loading...</span>
                 </div>`);
 
@@ -128,7 +129,7 @@ function reanalyzeRepo(event){
     var url_repo = $(`tr#repo-${id_repo} td.repo-url`).html();
 
     var reanalyzeRepo = $(this);
-    reanalyzeRepo.html(`<div class="spinner-border text-primary spinner-border-sm" role="status">
+    reanalyzeRepo.html(`<div class="spinner-border spinner-border-sm" role="status">
                             <span class="sr-only">Loading...</span>
                         </div>`);
     $.post(url = window.location.pathname + "/edit",
@@ -145,6 +146,30 @@ function reanalyzeRepo(event){
             showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', 5000);
         })
         .always(function(){reanalyzeRepo.html('Refresh')})
+}
+
+function reanalyzeEveryRepo(event){
+    var id_repo = 'all';
+    var backend = 'all';
+
+    var reanalyzeRepo = $(this);
+    reanalyzeRepo.html(`<div class="spinner-border spinner-border-sm" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </div>`);
+    $.post(url = window.location.pathname + "/edit",
+           data = {'action': 'reanalyze-all', 'backend': backend, 'data': id_repo})
+        .done(function (data) {
+            if (data['status'] == 'reanalyze'){
+                showToast('Reanalyzing', `${data.message}`, 'fas fa-check-circle text-success', 3000);
+                getInfo();
+            } else {
+                showToast(data['status'], "The repositories couldn't be refreshed", 'fas fa-times-circle text-danger', 3000);
+            }
+        })
+        .fail(function (data) {
+            showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', 5000);
+        })
+        .always(function(){reanalyzeRepo.html('Refresh all')})
 }
 
 function getInfo() {
@@ -302,7 +327,7 @@ function updateLogs(id_repo){
  ****************************/
 function submitBackend(event) {
     var addBtn = $(`#${event.target.id} button`);
-    addBtn.html(`<div class="spinner-border text-dark spinner-border-sm" role="status">
+    addBtn.html(`<div class="spinner-border spinner-border-sm" role="status">
                     <span class="sr-only">Loading...</span>
                 </div>`);
 

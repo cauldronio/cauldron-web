@@ -295,10 +295,10 @@ def request_edit_dashboard(request, dash_id):
     backend = request.POST.get('backend', None)
     data_in = request.POST.get('data', None)  # Could be url or user
 
-    if not action or action not in ('add', 'delete', 'reanalyze'):
+    if not action or action not in ('add', 'delete', 'reanalyze', 'reanalyze-all'):
         return JsonResponse({'status': 'error', 'message': 'Action not found in the POST or action not allowed'},
                             status=400)
-    if not backend or backend not in ('github', 'gitlab', 'git'):
+    if not backend or backend not in ('github', 'gitlab', 'git', 'all'):
         return JsonResponse({'status': 'error', 'message': 'Backend not found in the POST or action not allowed'},
                             status=400)
     if not data_in:
@@ -329,11 +329,24 @@ def request_edit_dashboard(request, dash_id):
         if not repo:
             return JsonResponse({'status': 'error', 'message': 'Repository not found'},
                                 status=404)
-        started = start_task(repo=repo, user=request.user, restart=True)
+        started = start_task(repo=repo, user=request.user, refresh=True)
         if started:
             return JsonResponse({'status': 'reanalyze'})
         else:
             return JsonResponse({'status': 'Running or pending'})
+
+    elif action == 'reanalyze-all':
+        repos = Repository.objects.filter(dashboards=dash_id)
+        if not repos:
+            return JsonResponse({'status': 'error', 'message': 'Repositories not found'},
+                                status=404)
+        refreshed_count = 0
+        for repo in repos:
+            started = start_task(repo=repo, user=request.user, refresh=True)
+            if started:
+                refreshed_count += 1
+        return JsonResponse({'status': 'reanalyze',
+                             'message': "{} of {} will be refreshed".format(refreshed_count, len(repos))})
 
     # From here the action should be add
     if backend == 'git':
@@ -569,17 +582,17 @@ def request_edit_dashboard_name(request, dash_id):
     return JsonResponse({'status': 'Ok', 'message': 'Name updated from "{}" to "{}"'.format(old_name, name)})
 
 
-def start_task(repo, user, restart=False):
+def start_task(repo, user, refresh=False):
     """
     Start a new task for the given repository. If the repository has been analyzed,
-    it will not start unless forced with restart
+    it will not start unless forced with refresh
     :param repo: Repository object to analyze
     :param user: User that make the analysis
-    :param restart: If the task is not pending or running, start it. Else only start if not completed before
+    :param refresh: If the task is not pending or running, starts it
     :return:
     """
     if not Task.objects.filter(repository=repo).first():
-        if restart or not CompletedTask.objects.filter(repository=repo).first():
+        if refresh or not CompletedTask.objects.filter(repository=repo).first():
             new_task = Task(repository=repo, user=user)
             new_task.save()
             return True
