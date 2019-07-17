@@ -312,7 +312,7 @@ def request_edit_dashboard(request, dash_id):
                             status=500)
 
     if action == 'delete':
-        repo = Repository.objects.filter(url=data_in, backend=backend).first()
+        repo = Repository.objects.filter(id=data_in, backend=backend).first()
         if not repo:
             return JsonResponse({'status': 'error', 'message': 'Repository not found'},
                                 status=404)
@@ -325,7 +325,7 @@ def request_edit_dashboard(request, dash_id):
         return JsonResponse({'status': 'deleted'})
 
     elif action == 'reanalyze':
-        repo = Repository.objects.filter(url=data_in, backend=backend).first()
+        repo = Repository.objects.filter(id=data_in, backend=backend).first()
         if not repo:
             return JsonResponse({'status': 'error', 'message': 'Repository not found'},
                                 status=404)
