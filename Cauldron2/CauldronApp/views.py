@@ -24,7 +24,8 @@ from Cauldron2.settings import GH_CLIENT_ID, GH_CLIENT_SECRET, GL_CLIENT_ID, GL_
                                 ES_IN_HOST, ES_IN_PORT, ES_IN_PROTO, ES_ADMIN_PSW, \
                                 KIB_IN_HOST, KIB_IN_PORT, KIB_IN_PROTO, KIB_OUT_URL, \
                                 KIB_PATH
-from CauldronApp.models import GithubUser, GitlabUser, Dashboard, Repository, Task, CompletedTask, AnonymousUser, ESUser
+from CauldronApp.models import GithubUser, GitlabUser, Dashboard, Repository, Task, CompletedTask, AnonymousUser, \
+    ESUser, Token
 from CauldronApp.githubsync import GitHubSync
 
 import urllib3
@@ -142,14 +143,10 @@ def merge_accounts(user_origin, user_dest):
     for dash in dashs:
         dash.creator = user_dest
         dash.save()
-    tasks = Task.objects.filter(user=user_origin)
-    for task in tasks:
-        task.user = user_dest
-        task.save()
-    c_tasks = CompletedTask.objects.filter(user=user_origin)
-    for c_task in c_tasks:
-        c_task.user = user_dest
-        c_task.save()
+    tokens = Token.objects.filter(user=user_origin)
+    for token in tokens:
+        token.user = user_origin
+        token.save()
 
 
 # TODO: Add state
@@ -231,25 +228,35 @@ def tricky_authentication(req, BackendUser, username, token, photo_url):
         else:
             login(req, dj_ent_user)
         # Update the token
-        ent_user.token = token
-        ent_user.save()
+        ent_user.token.key = token
+        ent_user.token.save()
     else:
+        # Create the token entry
+        if BackendUser is GitlabUser:
+            token_item = Token(backend='gitlab', key=token, user=req.user)
+            token_item.save()
+        elif BackendUser is GithubUser:
+            token_item = Token(backend='github', key=token, user=req.user)
+            token_item.save()
+        else:
+            raise Exception("Internal server error, BackendUser unknown")
+
         # Django Entity user doesn't exist, someone is authenticated
         if req.user.is_authenticated:
             # Check if is anonymous and delete anonymous tag
             anony_user = AnonymousUser.objects.filter(user=req.user).first()
             if anony_user:
                 anony_user.delete()
-            # Create the token entry and associate with the account
-            gl_entry = BackendUser(user=req.user, username=username, token=token, photo=photo_url)
+            # Create the BackendUser entry and associate with the account
+            gl_entry = BackendUser(user=req.user, username=username, token=token_item, photo=photo_url)
             gl_entry.save()
         # Django Entity user doesn't exist, none is authenticated
         else:
             # Create account
             dj_user = create_django_user()
             login(req, dj_user)
-            # Create the token entry and associate with the account
-            gl_entry = BackendUser(user=req.user, username=username, token=token, photo=photo_url)
+            # Create the BackendUser entry and associate with the account
+            gl_entry = BackendUser(user=req.user, username=username, token=token_item, photo=photo_url)
             gl_entry.save()
 
 
@@ -319,17 +326,21 @@ def request_edit_dashboard(request, dash_id):
         repo.dashboards.remove(dash)
         enriched_indices = get_enriched_indices(repo.index_name, backend)
         delete_role_indices(role_name=es_user.role, indices=enriched_indices)
-        task = Task.objects.filter(repository=repo).first()
-        if task and task.user == dash.creator and not task.worker_id:
+        task = Task.objects.filter(repository=repo, tokens__user=dash.creator).first()
+        if task and not task.worker_id:
             task.delete()
         return JsonResponse({'status': 'deleted'})
 
     elif action == 'reanalyze':
         repo = Repository.objects.filter(id=data_in, backend=backend).first()
+        token = Token.objects.filter(user=request.user, backend=backend).first()
         if not repo:
             return JsonResponse({'status': 'error', 'message': 'Repository not found'},
                                 status=404)
-        started = start_task(repo=repo, user=request.user, refresh=True)
+        elif not token:
+            return JsonResponse({'status': 'error', 'message': 'Token not found for that backend'},
+                                status=404)
+        started = start_task(repo=repo, token=token, refresh=True)
         if started:
             return JsonResponse({'status': 'reanalyze'})
         else:
@@ -337,12 +348,16 @@ def request_edit_dashboard(request, dash_id):
 
     elif action == 'reanalyze-all':
         repos = Repository.objects.filter(dashboards=dash_id)
+        token = Token.objects.filter(user=request.user, backend=backend).first()
         if not repos:
             return JsonResponse({'status': 'error', 'message': 'Repositories not found'},
                                 status=404)
+        elif not token:
+            return JsonResponse({'status': 'error', 'message': 'Token not found for that backend'},
+                                status=404)
         refreshed_count = 0
         for repo in repos:
-            started = start_task(repo=repo, user=request.user, refresh=True)
+            started = start_task(repo=repo, token=token, refresh=True)
             if started:
                 refreshed_count += 1
         return JsonResponse({'status': 'reanalyze',
@@ -356,7 +371,7 @@ def request_edit_dashboard(request, dash_id):
         enriched_indices = get_enriched_indices(repo.index_name, backend)
         add_role_indices(es_user.role, enriched_indices)
 
-        start_task(repo, request.user, False)
+        start_task(repo=repo, token=None, refresh=False)
 
         return JsonResponse({'status': 'ok'})
 
@@ -405,7 +420,7 @@ def manage_add_gh_repo(dash, data):
     :return:
     """
     if data['user'] and not data['repository']:
-        gh_sync = GitHubSync(dash.creator.githubuser.token)
+        gh_sync = GitHubSync(dash.creator.githubuser.token.key)
         try:
             git_list, github_list = gh_sync.get_repo(data['user'], False)
         except Exception as e:
@@ -415,12 +430,12 @@ def manage_add_gh_repo(dash, data):
         enriched_indices = list()
         for url in github_list:
             repo = add_to_dashboard(dash, 'github', url)
-            start_task(repo, dash.creator, False)
+            start_task(repo, dash.creator.githubuser.token, False)
             enriched_indices += get_enriched_indices(repo.index_name, 'github')
 
         for url in git_list:
             repo = add_to_dashboard(dash, 'git', url)
-            start_task(repo, dash.creator, False)
+            start_task(repo, dash.creator.githubuser.token, False)
             enriched_indices += get_enriched_indices(repo.index_name, 'git')
 
         es_user = ESUser.objects.filter(dashboard=dash).first()
@@ -432,9 +447,9 @@ def manage_add_gh_repo(dash, data):
         url = "https://github.com/{}/{}".format(data['user'], data['repository'])
 
         repo_gh = add_to_dashboard(dash, 'github', url)
-        start_task(repo_gh, dash.creator, False)
+        start_task(repo_gh, dash.creator.githubuser.token, False)
         repo_git = add_to_dashboard(dash, 'git', url)
-        start_task(repo_git, dash.creator, False)
+        start_task(repo_git, dash.creator.githubuser.token, False)
 
         es_user = ESUser.objects.filter(dashboard=dash).first()
         enriched_indices = get_enriched_indices(repo_gh.index_name, 'github') + \
@@ -456,7 +471,7 @@ def manage_add_gl_repo(dash, data):
     """
     if data['user'] and not data['repository']:
         try:
-            gitlab_list, git_list = get_gl_repos(data['user'], dash.creator.gitlabuser.token)
+            gitlab_list, git_list = get_gl_repos(data['user'], dash.creator.gitlabuser.token.key)
         except Exception as e:
             logging.warning("Error for Gitlab owner {}: {}".format(data['user'], e))
             return JsonResponse({'status': 'error', 'message': 'Error from GitLab API. Does that user exist?'},
@@ -465,12 +480,12 @@ def manage_add_gl_repo(dash, data):
         enriched_indices = list()
         for url in gitlab_list:
             repo = add_to_dashboard(dash, 'gitlab', url)
-            start_task(repo, dash.creator, False)
+            start_task(repo, dash.creator.gitlabuser.token, False)
             enriched_indices += get_enriched_indices(repo.index_name, 'gitlab')
 
         for url in git_list:
             repo = add_to_dashboard(dash, 'git', url)
-            start_task(repo, dash.creator, False)
+            start_task(repo, dash.creator.gitlabuser.token, False)
             enriched_indices += get_enriched_indices(repo.index_name, 'git')
 
         es_user = ESUser.objects.filter(dashboard=dash).first()
@@ -482,9 +497,9 @@ def manage_add_gl_repo(dash, data):
         url = 'https://gitlab.com/{}/{}'.format(data['user'], data['repository'])
 
         repo_gl = add_to_dashboard(dash, 'gitlab', url)
-        start_task(repo_gl, dash.creator, False)
+        start_task(repo_gl, dash.creator.gitlabuser.token, False)
         repo_git = add_to_dashboard(dash, 'git', url)
-        start_task(repo_git, dash.creator, False)
+        start_task(repo_git, dash.creator.gitlabuser.token, False)
 
         es_user = ESUser.objects.filter(dashboard=dash).first()
         enriched_indices = [get_enriched_indices(repo_gl.index_name, 'gitlab'),
@@ -582,19 +597,22 @@ def request_edit_dashboard_name(request, dash_id):
     return JsonResponse({'status': 'Ok', 'message': 'Name updated from "{}" to "{}"'.format(old_name, name)})
 
 
-def start_task(repo, user, refresh=False):
+def start_task(repo, token, refresh=False):
     """
     Start a new task for the given repository. If the repository has been analyzed,
     it will not start unless forced with refresh
     :param repo: Repository object to analyze
-    :param user: User that make the analysis
-    :param refresh: If the task is not pending or running, starts it
+    :param token: Token used for the analysis
+    :param refresh: If the task is not pending or running, force the refresh
     :return:
     """
-    if not Task.objects.filter(repository=repo).first():
+    if not Task.objects.filter(repository=repo, tokens=token).first():
         if refresh or not CompletedTask.objects.filter(repository=repo).first():
-            new_task = Task(repository=repo, user=user)
+            new_task = Task(repository=repo)
             new_task.save()
+            if token:
+                new_task.tokens.add(token)
+
             return True
     return False
 
@@ -1016,20 +1034,22 @@ def request_delete_token(request):
     identity = request.POST.get('identity', None)
     if identity == 'github':
         if hasattr(request.user, 'githubuser'):
-            request.user.githubuser.delete()
-            tasks = Task.objects.filter(user=request.user)
+            token = Token.objects.filter(backend=identity, user=request.user).first()
+            tasks = Task.objects.filter(tokens=token)
             for task in tasks:
-                if task.repository.backend == 'github':
+                if len(task.tokens) == 1 and not task.worker_id:
                     task.delete()
+            request.user.githubuser.delete()
         return JsonResponse({'status': 'ok'})
 
     elif identity == 'gitlab':
         if hasattr(request.user, 'gitlabuser'):
-            request.user.gitlabuser.delete()
-            tasks = Task.objects.filter(user=request.user)
+            token = Token.objects.filter(backend=identity, user=request.user).first()
+            tasks = Task.objects.filter(tokens=token)
             for task in tasks:
-                if task.repository.backend == 'gitlab':
+                if len(task.tokens) == 1 and not task.worker_id:
                     task.delete()
+            request.user.githubuser.delete()
         return JsonResponse({'status': 'ok'})
     else:
         return JsonResponse({'status': 'error', 'message': 'Unkown identity: {}'.format(identity)})
@@ -1149,12 +1169,11 @@ def get_repo_status(repo):
     :param repo: Repository object from the database
     :return: status (PENDING, RUNNING, COMPLETED)
     """
-    if hasattr(repo, 'task'):
-        # PENDING OR RUNNING
-        if repo.task.worker_id:
-            return 'RUNNING'
-        else:
-            return 'PENDING'
+    task_repo = Task.objects.filter(repository=repo).first()
+    if task_repo and task_repo.worker_id:
+        return 'RUNNING'
+    elif task_repo:
+        return 'PENDING'
     c_task = CompletedTask.objects.filter(repository=repo).order_by('completed').last()
     if c_task:
         return c_task.status
