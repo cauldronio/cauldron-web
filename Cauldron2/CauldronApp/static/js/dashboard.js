@@ -244,18 +244,28 @@ function setIconStatus(jq_selector, status) {
 function get_duration(repo) {
     var output = "";
     if (repo.started){
-        var a = moment(repo.started);
-        var b = "";
+        var start = moment(repo.started);
+        var finish = "";
         if (repo.status == 'RUNNING'){
-            b = moment();
+            finish = moment();
         } else {
-            b = moment(repo.completed);
+            finish = moment(repo.completed);
         }
-        output = moment.utc(b.diff(a)).format("HH:mm:ss")
+        var duration = moment.duration(finish.diff(start));
+        var h = Math.floor(duration.asHours());
+        var m = Math.floor(duration.asMinutes()) % 60;
+        var s = Math.floor(duration.asSeconds()) % 60;
+        output = `${pad(h, 2)}:${pad(m, 2)}:${pad(s, 2)}`
     } else {
         output = "Not started";
     }
     return output
+}
+
+function pad(num, size) {
+    var s = num + "";
+    while (s.length < size) s = "0" + s;
+    return s;
 }
 
 function updateBadgesRepos(repo_arr) {
