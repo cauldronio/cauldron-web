@@ -326,9 +326,10 @@ def request_edit_dashboard(request, dash_id):
         repo.dashboards.remove(dash)
         enriched_indices = get_enriched_indices(repo.index_name, backend)
         delete_role_indices(role_name=es_user.role, indices=enriched_indices)
-        task = Task.objects.filter(repository=repo, tokens__user=dash.creator).first()
-        if task and not task.worker_id:
-            task.delete()
+        if backend != 'git':
+            task = Task.objects.filter(repository=repo, tokens__user=dash.creator).first()
+            if task and not task.worker_id:
+                task.delete()
         return JsonResponse({'status': 'deleted'})
 
     elif action == 'reanalyze':
@@ -337,7 +338,7 @@ def request_edit_dashboard(request, dash_id):
         if not repo:
             return JsonResponse({'status': 'error', 'message': 'Repository not found'},
                                 status=404)
-        elif not token:
+        elif not token and backend != 'git':
             return JsonResponse({'status': 'error', 'message': 'Token not found for that backend'},
                                 status=404)
         started = start_task(repo=repo, token=token, refresh=True)
@@ -348,18 +349,16 @@ def request_edit_dashboard(request, dash_id):
 
     elif action == 'reanalyze-all':
         repos = Repository.objects.filter(dashboards=dash_id)
-        token = Token.objects.filter(user=request.user, backend=backend).first()
         if not repos:
             return JsonResponse({'status': 'error', 'message': 'Repositories not found'},
                                 status=404)
-        elif not token:
-            return JsonResponse({'status': 'error', 'message': 'Token not found for that backend'},
-                                status=404)
         refreshed_count = 0
         for repo in repos:
-            started = start_task(repo=repo, token=token, refresh=True)
-            if started:
-                refreshed_count += 1
+            token = Token.objects.filter(user=request.user, backend=repo.backend).first()
+            if token or repo.backend == 'git':
+                started = start_task(repo=repo, token=token, refresh=True)
+                if started:
+                    refreshed_count += 1
         return JsonResponse({'status': 'reanalyze',
                              'message': "{} of {} will be refreshed".format(refreshed_count, len(repos))})
 
@@ -435,7 +434,7 @@ def manage_add_gh_repo(dash, data):
 
         for url in git_list:
             repo = add_to_dashboard(dash, 'git', url)
-            start_task(repo, dash.creator.githubuser.token, False)
+            start_task(repo, None, False)
             enriched_indices += get_enriched_indices(repo.index_name, 'git')
 
         es_user = ESUser.objects.filter(dashboard=dash).first()
@@ -449,7 +448,7 @@ def manage_add_gh_repo(dash, data):
         repo_gh = add_to_dashboard(dash, 'github', url)
         start_task(repo_gh, dash.creator.githubuser.token, False)
         repo_git = add_to_dashboard(dash, 'git', url)
-        start_task(repo_git, dash.creator.githubuser.token, False)
+        start_task(repo_git, None, False)
 
         es_user = ESUser.objects.filter(dashboard=dash).first()
         enriched_indices = get_enriched_indices(repo_gh.index_name, 'github') + \
@@ -485,7 +484,7 @@ def manage_add_gl_repo(dash, data):
 
         for url in git_list:
             repo = add_to_dashboard(dash, 'git', url)
-            start_task(repo, dash.creator.gitlabuser.token, False)
+            start_task(repo, None, False)
             enriched_indices += get_enriched_indices(repo.index_name, 'git')
 
         es_user = ESUser.objects.filter(dashboard=dash).first()
@@ -499,7 +498,7 @@ def manage_add_gl_repo(dash, data):
         repo_gl = add_to_dashboard(dash, 'gitlab', url)
         start_task(repo_gl, dash.creator.gitlabuser.token, False)
         repo_git = add_to_dashboard(dash, 'git', url)
-        start_task(repo_git, dash.creator.gitlabuser.token, False)
+        start_task(repo_git, None, False)
 
         es_user = ESUser.objects.filter(dashboard=dash).first()
         enriched_indices = [get_enriched_indices(repo_gl.index_name, 'gitlab'),
