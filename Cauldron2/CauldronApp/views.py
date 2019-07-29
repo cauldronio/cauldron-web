@@ -231,6 +231,18 @@ def tricky_authentication(req, BackendUser, username, token, photo_url):
         ent_user.token.key = token
         ent_user.token.save()
     else:
+        # Django Entity user doesn't exist, someone is authenticated
+        if req.user.is_authenticated:
+            # Check if is anonymous and delete anonymous tag
+            anony_user = AnonymousUser.objects.filter(user=req.user).first()
+            if anony_user:
+                anony_user.delete()
+
+        # Django Entity user doesn't exist, none is authenticated
+        else:
+            # Create account
+            dj_user = create_django_user()
+            login(req, dj_user)
         # Create the token entry
         if BackendUser is GitlabUser:
             token_item = Token(backend='gitlab', key=token, user=req.user)
@@ -241,23 +253,9 @@ def tricky_authentication(req, BackendUser, username, token, photo_url):
         else:
             raise Exception("Internal server error, BackendUser unknown")
 
-        # Django Entity user doesn't exist, someone is authenticated
-        if req.user.is_authenticated:
-            # Check if is anonymous and delete anonymous tag
-            anony_user = AnonymousUser.objects.filter(user=req.user).first()
-            if anony_user:
-                anony_user.delete()
-            # Create the BackendUser entry and associate with the account
-            gl_entry = BackendUser(user=req.user, username=username, token=token_item, photo=photo_url)
-            gl_entry.save()
-        # Django Entity user doesn't exist, none is authenticated
-        else:
-            # Create account
-            dj_user = create_django_user()
-            login(req, dj_user)
-            # Create the BackendUser entry and associate with the account
-            gl_entry = BackendUser(user=req.user, username=username, token=token_item, photo=photo_url)
-            gl_entry.save()
+        # Create the BackendUser entry and associate with the account
+        bu_entry = BackendUser(user=req.user, username=username, token=token_item, photo=photo_url)
+        bu_entry.save()
 
 
 def create_django_user():
