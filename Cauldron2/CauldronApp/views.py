@@ -41,6 +41,7 @@ GL_REDIRECT_PATH = '/gitlab-login'
 ES_IN_URL = "{}://{}:{}".format(ES_IN_PROTO, ES_IN_HOST, ES_IN_PORT)
 KIB_IN_URL = "{}://{}:{}{}".format(KIB_IN_PROTO, KIB_IN_HOST, KIB_IN_PORT, KIB_PATH)
 
+ES_INDEX_SUFFIX = "index"
 
 def homepage(request):
     context = create_context(request)
@@ -707,17 +708,18 @@ def create_kibana_user(name, psw, dashboard):
     # Create a default index in the role to avoid warnings
     # in the dashboard if a backend doesn't exist
     # These indices were created in the panels container empty
-    data = {'indices': {'git_enrich_default': {'*': ['READ']},
-                        'git_aoc_enriched_default': {'*': ['READ']},
-                        'github_enrich_default': {'*': ['READ']},
-                        'gitlab_enriched_default': {'*': ['READ']}
-                        }
-            }
-    r = requests.patch("{}/_opendistro/_security/api/roles".format(ES_IN_URL),
-                       auth=('admin', ES_ADMIN_PSW),
-                       json=[{"op": "add", "path": "/{}".format(role_name), "value": data}],
-                       verify=False,
-                       headers=headers)
+    # TODO: Check permissions for a void index
+    # data = {'indices': {'git_enrich_default': {'*': ['READ']},
+    #                     'git_aoc_enriched_default': {'*': ['READ']},
+    #                     'github_enrich_default': {'*': ['READ']},
+    #                     'gitlab_enriched_default': {'*': ['READ']}
+    #                     }
+    #         }
+    # r = requests.patch("{}/_opendistro/_security/api/roles".format(ES_IN_URL),
+    #                    auth=('admin', ES_ADMIN_PSW),
+    #                    json=[{"op": "add", "path": "/{}".format(role_name), "value": data}],
+    #                    verify=False,
+    #                    headers=headers)
 
     es_user = ESUser(name=name, password=psw, role=role_name, dashboard=dashboard, index=index)
     es_user.save()
@@ -739,7 +741,9 @@ def add_to_dashboard(dash, backend, url):
     repo_obj.dashboards.add(dash)
     return repo_obj
 
-
+# TODO: This function no longer needs index_name as an argument,
+# TODO: now it is always ES_INDEX_SUFFIX.
+# TODO: Remove index_name from argument list and review calls to this function.
 def get_enriched_indices(index_name, backend):
     """
     Return the names of the enriched indices
@@ -748,14 +752,14 @@ def get_enriched_indices(index_name, backend):
     :return: A list with the names of the indices
     """
     if backend == 'git':
-        return ["git_aoc_enriched_{}".format(index_name), "git_enrich_{}".format(index_name)]
+        return ["git_aoc_enriched_{}".format(ES_INDEX_SUFFIX), "git_enrich_{}".format(ES_INDEX_SUFFIX)]
     elif backend == 'github':
-        return ["github_enrich_{}".format(index_name)]
+        return ["github_enrich_{}".format(ES_INDEX_SUFFIX)]
     elif backend == 'gitlab':
-        return ["gitlab_enriched_{}".format(index_name)]
+        return ["gitlab_enriched_{}".format(ES_INDEX_SUFFIX)]
     raise Exception('Unknown backend')
 
-
+# TODO: Check if this function is still used somewhere else
 def create_es_indices(indices):
     """
     Create the indices in ElasticSearch
@@ -786,7 +790,42 @@ def create_index_name(backend, url):
 
         return txt
 
+def add_role_documents(role_name, index_name, documents):
+    """
+    Add multiple documents to an index inside a role
+    :param role_name:
+    :param index_name:
+    :param documents:
+    :return:
+    """
+    headers = {'Content-Type': 'application/json'}
+    r = requests.get("{}/_opendistro/_security/api/roles/{}".format(ES_IN_URL, role_name),
+                     auth=('admin', ES_ADMIN_PSW),
+                     verify=False,
+                     headers=headers)
+    data = r.json()
 
+    if role_name not in data:
+        data[role_name] = dict()
+        data[role_name]['indices'] = dict()
+
+    if index_name not in data[role_name]['indices']:
+        data[role_name]['indices'][index_name] = dict()
+        data[role_name]['indices'][index_name]['documents'] = dict()
+
+    for document in documents:
+        if document not in data[role_name]['indices'][index_name]['documents']:
+            data[role_name]['indices'][index_name]['documents'][document] = ['READ']
+
+    r = requests.patch("{}/_opendistro/_security/api/roles".format(ES_IN_URL),
+                       auth=('admin', ES_ADMIN_PSW),
+                       json=[{"op": "add", "path": "/{}".format(role_name), "value": data[role_name]}],
+                       verify=False,
+                       headers=headers)
+
+    r.raise_for_status()
+
+# TODO: Modify query to work with documents
 def add_role_indices(role_name, indices):
     """
     Add multiple indices to a role
