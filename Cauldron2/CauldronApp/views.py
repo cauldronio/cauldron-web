@@ -43,6 +43,8 @@ KIB_IN_URL = "{}://{}:{}{}".format(KIB_IN_PROTO, KIB_IN_HOST, KIB_IN_PORT, KIB_P
 
 ES_INDEX_SUFFIX = "index"
 
+logger = logging.getLogger(__name__)
+
 def homepage(request):
     context = create_context(request)
 
@@ -324,7 +326,7 @@ def request_edit_dashboard(request, dash_id):
                                 status=404)
         repo.dashboards.remove(dash)
         enriched_indices = get_enriched_indices(repo.index_name, backend)
-        delete_role_indices(role_name=es_user.role, indices=enriched_indices)
+        delete_role_repos(role_name=es_user.role, indices=enriched_indices, repos=[repo])
         if backend != 'git':
             task = Task.objects.filter(repository=repo, tokens__user=dash.creator).first()
             if task and not task.worker_id:
@@ -364,10 +366,9 @@ def request_edit_dashboard(request, dash_id):
     # From here the action should be add
     if backend == 'git':
         repo = add_to_dashboard(dash, backend, data_in)
-
         es_user = ESUser.objects.filter(dashboard=dash).first()
         enriched_indices = get_enriched_indices(repo.index_name, backend)
-        add_role_indices(es_user.role, enriched_indices)
+        add_role_repos(es_user.role, enriched_indices, [repo])
 
         start_task(repo=repo, token=None, refresh=False)
 
@@ -425,34 +426,37 @@ def manage_add_gh_repo(dash, data):
             return JsonResponse({'status': 'error', 'message': 'Error from GitHub API. ' + str(e)},
                                 status=500)
 
-        enriched_indices = list()
+        repos = list()
+        enriched_indices = get_enriched_indices("", 'github') + \
+                           get_enriched_indices("", 'git')
         for url in github_list:
-            repo = add_to_dashboard(dash, 'github', url)
+            repos.append(add_to_dashboard(dash, 'github', url))
+            repo = repos[-1]
             start_task(repo, dash.creator.githubuser.token, False)
-            enriched_indices += get_enriched_indices(repo.index_name, 'github')
 
         for url in git_list:
-            repo = add_to_dashboard(dash, 'git', url)
+            repos.append(add_to_dashboard(dash, 'git', url))
+            repo = repos[-1]
             start_task(repo, None, False)
-            enriched_indices += get_enriched_indices(repo.index_name, 'git')
 
         es_user = ESUser.objects.filter(dashboard=dash).first()
-        add_role_indices(es_user.role, enriched_indices)
+        add_role_repos(es_user.role, enriched_indices, repos)
 
         return JsonResponse({'status': 'ok'})
 
     elif data['user'] and data['repository']:
-        url = "https://github.com/{}/{}".format(data['user'], data['repository'])
-
-        repo_gh = add_to_dashboard(dash, 'github', url)
+        url_gh = "https://github.com/{}/{}".format(data['user'], data['repository'])
+        repo_gh = add_to_dashboard(dash, 'github', url_gh)
         start_task(repo_gh, dash.creator.githubuser.token, False)
-        repo_git = add_to_dashboard(dash, 'git', url)
+
+        url_git = "https://github.com/{}/{}.git".format(data['user'], data['repository'])
+        repo_git = add_to_dashboard(dash, 'git', url_git)
         start_task(repo_git, None, False)
 
         es_user = ESUser.objects.filter(dashboard=dash).first()
         enriched_indices = get_enriched_indices(repo_gh.index_name, 'github') + \
                            get_enriched_indices(repo_git.index_name, 'git')
-        add_role_indices(es_user.role, enriched_indices)
+        add_role_repos(es_user.role, enriched_indices, [repo_gh, repo_git])
 
         return JsonResponse({'status': 'ok'})
 
@@ -475,34 +479,37 @@ def manage_add_gl_repo(dash, data):
             return JsonResponse({'status': 'error', 'message': 'Error from GitLab API. Does that user exist?'},
                                 status=500)
 
-        enriched_indices = list()
+        repos = list()
+        enriched_indices = get_enriched_indices("", 'gitlab') + \
+                           get_enriched_indices("", 'git')
         for url in gitlab_list:
-            repo = add_to_dashboard(dash, 'gitlab', url)
+            repos.append(add_to_dashboard(dash, 'gitlab', url))
+            repo = repos[-1]
             start_task(repo, dash.creator.gitlabuser.token, False)
-            enriched_indices += get_enriched_indices(repo.index_name, 'gitlab')
 
         for url in git_list:
-            repo = add_to_dashboard(dash, 'git', url)
+            repos.append(add_to_dashboard(dash, 'git', url))
+            repo = repos[-1]
             start_task(repo, None, False)
-            enriched_indices += get_enriched_indices(repo.index_name, 'git')
 
         es_user = ESUser.objects.filter(dashboard=dash).first()
-        add_role_indices(es_user.role, enriched_indices)
+        add_role_repos(es_user.role, enriched_indices, repos)
 
         return JsonResponse({'status': 'ok'})
 
-    elif data['url'] and data['repository']:
-        url = 'https://gitlab.com/{}/{}'.format(data['user'], data['repository'])
-
-        repo_gl = add_to_dashboard(dash, 'gitlab', url)
+    elif data['user'] and data['repository']:
+        url_gl = 'https://gitlab.com/{}/{}'.format(data['user'], data['repository'])
+        repo_gl = add_to_dashboard(dash, 'gitlab', url_gl)
         start_task(repo_gl, dash.creator.gitlabuser.token, False)
-        repo_git = add_to_dashboard(dash, 'git', url)
+
+        url_git = 'https://gitlab.com/{}/{}.git'.format(data['user'], data['repository'])
+        repo_git = add_to_dashboard(dash, 'git', url_git)
         start_task(repo_git, None, False)
 
         es_user = ESUser.objects.filter(dashboard=dash).first()
-        enriched_indices = [get_enriched_indices(repo_gl.index_name, 'gitlab'),
-                            get_enriched_indices(repo_git.index_name, 'git')]
-        add_role_indices(es_user.role, enriched_indices)
+        enriched_indices = get_enriched_indices(repo_gl.index_name, 'gitlab') + \
+                           get_enriched_indices(repo_git.index_name, 'git')
+        add_role_repos(es_user.role, enriched_indices, [repo_gl, repo_git])
 
         return JsonResponse({'status': 'ok'})
 
@@ -790,62 +797,57 @@ def create_index_name(backend, url):
 
         return txt
 
-def add_role_documents(role_name, index_name, documents):
+# TODO: Get all repos in the dashboard, not just the new ones. Same with indices
+def add_role_repos(role_name, indices, repos):
     """
-    Add multiple documents to an index inside a role
-    :param role_name:
-    :param index_name:
-    :param documents:
-    :return:
-    """
-    headers = {'Content-Type': 'application/json'}
-    r = requests.get("{}/_opendistro/_security/api/roles/{}".format(ES_IN_URL, role_name),
-                     auth=('admin', ES_ADMIN_PSW),
-                     verify=False,
-                     headers=headers)
-    data = r.json()
-
-    if role_name not in data:
-        data[role_name] = dict()
-        data[role_name]['indices'] = dict()
-
-    if index_name not in data[role_name]['indices']:
-        data[role_name]['indices'][index_name] = dict()
-        data[role_name]['indices'][index_name]['documents'] = dict()
-
-    for document in documents:
-        if document not in data[role_name]['indices'][index_name]['documents']:
-            data[role_name]['indices'][index_name]['documents'][document] = ['READ']
-
-    r = requests.patch("{}/_opendistro/_security/api/roles".format(ES_IN_URL),
-                       auth=('admin', ES_ADMIN_PSW),
-                       json=[{"op": "add", "path": "/{}".format(role_name), "value": data[role_name]}],
-                       verify=False,
-                       headers=headers)
-
-    r.raise_for_status()
-
-# TODO: Modify query to work with documents
-def add_role_indices(role_name, indices):
-    """
-    Add multiple indices to a role
+    Add multiple repositories to a role
     :param role_name:
     :param indices:
+    :param repos:
     :return:
     """
+
     headers = {'Content-Type': 'application/json'}
     r = requests.get("{}/_opendistro/_security/api/roles/{}".format(ES_IN_URL, role_name),
                      auth=('admin', ES_ADMIN_PSW),
                      verify=False,
                      headers=headers)
+
     data = r.json()
     if role_name not in data:
         data[role_name] = dict()
         data[role_name]['indices'] = dict()
+
     for index in indices:
         if index not in data[role_name]['indices']:
             data[role_name]['indices'][index] = {'*': ['READ']}
 
+        # TODO: Find a way to join every repository under the same field filter
+        # git_enrich -> origin, repo_name, tag
+        # git_aoc_enriched -> repository
+        # github_enrich -> origin, repository, tag
+        # gitlab_enriched -> unknown (¿repository?)
+
+        filter_field = ""
+        if index == 'git_enrich_index':
+            filter_field = "repo_name"
+        else:
+            filter_field = "repository"
+
+        # TODO: For some reason, the index 'git_aoc_enriched_index' doesn't care about roles
+        if "_dls_" not in data[role_name]['indices'][index]:
+            data[role_name]['indices'][index]["_dls_"] = '{"terms": {}}'
+
+        dls = eval(data[role_name]['indices'][index]["_dls_"])
+        if filter_field not in dls['terms']:
+            dls['terms'][filter_field] = []
+
+        for repo in repos:
+            if index in get_enriched_indices('', repo.backend):
+                dls['terms'][filter_field].append(repo.url)
+
+        data[role_name]['indices'][index]["_dls_"] = str(dls).replace("'", "\"")
+
     r = requests.patch("{}/_opendistro/_security/api/roles".format(ES_IN_URL),
                        auth=('admin', ES_ADMIN_PSW),
                        json=[{"op": "add", "path": "/{}".format(role_name), "value": data[role_name]}],
@@ -854,22 +856,52 @@ def add_role_indices(role_name, indices):
     r.raise_for_status()
 
 
-def delete_role_indices(role_name, indices):
+def delete_role_repos(role_name, indices, repos):
     """
-    Delete multiple indices from a role
+    Delete multiple repositories from a role
     :param role_name:
     :param indices:
+    :param repos:
     :return:
     """
-    items = list()
-    for index in indices:
-        items.append({"op": "remove",
-                      "path": "/indices/{}".format(index)
-                      })
+
     headers = {'Content-Type': 'application/json'}
-    r = requests.patch("{}/_opendistro/_security/api/roles/{}".format(ES_IN_URL, role_name),
+    r = requests.get("{}/_opendistro/_security/api/roles/{}".format(ES_IN_URL, role_name),
+                     auth=('admin', ES_ADMIN_PSW),
+                     verify=False,
+                     headers=headers)
+
+    data = r.json()
+    if role_name not in data:
+        return
+
+    for index in indices:
+        if index not in data[role_name]['indices']:
+            continue
+
+        filter_field = ""
+        if index == 'git_enrich_index':
+            filter_field = "repo_name"
+        else:
+            filter_field = "repository"
+
+        if "_dls_" not in data[role_name]['indices'][index]:
+            continue
+
+        dls = eval(data[role_name]['indices'][index]["_dls_"])
+        if filter_field not in dls['terms']:
+            continue
+
+        for repo in repos:
+            if repo.url not in dls['terms'][filter_field]:
+                continue
+            dls['terms'][filter_field].remove(repo.url)
+
+        data[role_name]['indices'][index]["_dls_"] = str(dls).replace("'", "\"")
+
+    r = requests.patch("{}/_opendistro/_security/api/roles".format(ES_IN_URL),
                        auth=('admin', ES_ADMIN_PSW),
-                       json=items,
+                       json=[{"op": "add", "path": "/{}".format(role_name), "value": data[role_name]}],
                        verify=False,
                        headers=headers)
     r.raise_for_status()
