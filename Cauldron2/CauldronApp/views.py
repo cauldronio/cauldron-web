@@ -596,10 +596,12 @@ def start_task(repo, token, refresh=False):
     """
     if not Task.objects.filter(repository=repo, tokens=token).first():
         if refresh or not CompletedTask.objects.filter(repository=repo).first():
-            new_task = Task(repository=repo)
-            new_task.save()
+            task = Task.objects.filter(repository=repo).first()
+            if not task:
+                task = Task(repository=repo)
+                task.save()
             if token:
-                new_task.tokens.add(token)
+                task.tokens.add(token)
 
             return True
     return False
