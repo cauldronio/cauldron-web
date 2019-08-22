@@ -9,6 +9,7 @@ import re
 import ssl
 import logging
 import requests
+import meetup.api
 from random import choice
 from github import Github
 from gitlab import Gitlab
@@ -21,10 +22,11 @@ from elasticsearch.connection import create_ssl_context
 import time
 
 from Cauldron2.settings import GH_CLIENT_ID, GH_CLIENT_SECRET, GL_CLIENT_ID, GL_CLIENT_SECRET, \
+                                MEETUP_CLIENT_ID, MEETUP_CLIENT_SECRET, \
                                 ES_IN_HOST, ES_IN_PORT, ES_IN_PROTO, ES_ADMIN_PSW, \
                                 KIB_IN_HOST, KIB_IN_PORT, KIB_IN_PROTO, KIB_OUT_URL, \
                                 KIB_PATH
-from CauldronApp.models import GithubUser, GitlabUser, Dashboard, Repository, Task, CompletedTask, AnonymousUser, \
+from CauldronApp.models import GithubUser, GitlabUser, MeetupUser, Dashboard, Repository, Task, CompletedTask, AnonymousUser, \
     ESUser, Token
 from CauldronApp.githubsync import GitHubSync
 
@@ -38,12 +40,17 @@ GL_ACCESS_OAUTH = 'https://gitlab.com/oauth/token'
 GL_URI_IDENTITY = 'https://gitlab.com/oauth/authorize'
 GL_REDIRECT_PATH = '/gitlab-login'
 
+MEETUP_ACCESS_OAUTH = 'https://secure.meetup.com/oauth2/access'
+MEETUP_URI_IDENTITY = 'https://secure.meetup.com/oauth2/authorize'
+MEETUP_REDIRECT_PATH = '/meetup-login'
+
 ES_IN_URL = "{}://{}:{}".format(ES_IN_PROTO, ES_IN_HOST, ES_IN_PORT)
 KIB_IN_URL = "{}://{}:{}{}".format(KIB_IN_PROTO, KIB_IN_HOST, KIB_IN_PORT, KIB_PATH)
 
 ES_INDEX_SUFFIX = "index"
 
 logger = logging.getLogger(__name__)
+
 
 def homepage(request):
     context = create_context(request)
@@ -72,6 +79,7 @@ def homepage(request):
     context['gl_uri_redirect'] = "https://{}{}".format(request.get_host(), GL_REDIRECT_PATH)
     context['gitlab_allow'] = hasattr(request.user, 'gitlabuser')
     context['github_allow'] = hasattr(request.user, 'githubuser')
+    context['meetup_allow'] = hasattr(request.user, 'meetupuser')
 
     return render(request, 'index.html', context=context)
 
@@ -142,6 +150,10 @@ def merge_accounts(user_origin, user_dest):
     for gl_user in gl_users:
         gl_user.user = user_dest
         gl_user.save()
+    mu_users = MeetupUser.objects.filter(user=user_origin)
+    for mu_user in mu_users:
+        mu_user.user = user_dest
+        mu_user.save()
     dashs = Dashboard.objects.filter(creator=user_origin)
     for dash in dashs:
         dash.creator = user_dest
@@ -205,11 +217,72 @@ def request_gitlab_login_callback(request):
     return HttpResponseRedirect('/')
 
 
+# TODO: Add state
+def request_meetup_login_callback(request):
+    # Meetup authentication
+    error = request.GET.get('error', None)
+    if error:
+        return render(request, 'error.html', status=400,
+                      context={'title': 'Error from Meetup Oauth',
+                               'description': error})
+    code = request.GET.get('code', None)
+    if not code:
+        return render(request, 'error.html', status=400,
+                      context={'title': 'Bad Request',
+                               'description': "There isn't a code in the Meetup callback"})
+    r = requests.post(MEETUP_ACCESS_OAUTH,
+                      params={'client_id': MEETUP_CLIENT_ID,
+                              'client_secret': MEETUP_CLIENT_SECRET,
+                              'code': code,
+                              'grant_type': 'authorization_code',
+                              'redirect_uri': "https://{}{}".format(request.get_host(), MEETUP_REDIRECT_PATH)},
+                      headers={'Accept': 'application/json'})
+
+    if r.status_code != requests.codes.ok:
+        logging.error('Meetup API error %s %s', r.status_code, r.reason)
+        return render(request, 'error.html', status=500,
+                      context={'title': 'Meetup error',
+                               'description': "Meetup API error"})
+    response = r.json()
+    token = response.get('access_token', None)
+    refresh_token = response.get('refresh_token', None)
+    if not token or not refresh_token:
+        logging.error('ERROR Meetup Token not found. %s', r.text)
+        return render(request, 'error.html', status=500,
+                      context={'title': 'Meetup error',
+                               'description': "Error getting the token from Meetup endpoint"})
+
+    # Authenticate/register an user, and login
+    mu = meetup.api(token)
+    mu_me = mu.GetMember('self')
+    name = mu_me.name
+    # TODO: Modify to check if there is a photo
+    photo_url = mu_me.photo or '/static/img/profile-default.png'
+
+    # Get data from session
+    data_add = request.session.get('add_repo', None)
+    last_page = request.session.get('last_page', None)
+
+    tricky_authentication(request, MeetupUser, mu_me.name, token, photo_url)
+
+    # Get the previous state
+    if data_add:
+        dash = Dashboard.objects.filter(id=data_add['dash_id']).first()
+        # Only Meetup, is the new account added
+        if data_add['backend'] == 'meetup':
+            manage_add_meetup_repo(dash, data_add['data'])
+
+    if last_page:
+        return HttpResponseRedirect(last_page)
+
+    return HttpResponseRedirect('/')
+
+
 def tricky_authentication(req, BackendUser, username, token, photo_url):
     """
     Tricky authentication ONLY for login callbacks.
     :param req: request from login callback
-    :param BackendUser: GitlabUser, GithubUser... Full model object with the tokens
+    :param BackendUser: GitlabUser, GithubUser, MeetupUser... Full model object with the tokens
     :param username: username for the entity
     :param token: token for the entity
     :param photo_url: photo for the user and the entity
@@ -253,6 +326,9 @@ def tricky_authentication(req, BackendUser, username, token, photo_url):
         elif BackendUser is GithubUser:
             token_item = Token(backend='github', key=token, user=req.user)
             token_item.save()
+        elif BackendUser is MeetupUser:
+            token_item = Token(backend='meetup', key=token, user=req.user)
+            token_item.save()
         else:
             raise Exception("Internal server error, BackendUser unknown")
 
@@ -283,7 +359,7 @@ def request_edit_dashboard(request, dash_id):
     Edit a dashboard. Only POST allowed:
     - data: Could be URL user, URL repo, user, user/repo
     - action: add or delete. If delete: in data field only the URL of a repository is accepted
-    - backend: git, github, gitlab. For git only URL is accepted
+    - backend: git, github, gitlab or meetup. For git only URL is accepted
     :param request: Django request object
     :param dash_id: ID of the dashboard
     :return:
@@ -306,7 +382,7 @@ def request_edit_dashboard(request, dash_id):
     if not action or action not in ('add', 'delete', 'reanalyze', 'reanalyze-all'):
         return JsonResponse({'status': 'error', 'message': 'Action not found in the POST or action not allowed'},
                             status=400)
-    if not backend or backend not in ('github', 'gitlab', 'git', 'all'):
+    if not backend or backend not in ('github', 'gitlab', 'meetup', 'git', 'all'):
         return JsonResponse({'status': 'error', 'message': 'Backend not found in the POST or action not allowed'},
                             status=400)
     if not data_in:
@@ -396,12 +472,26 @@ def request_edit_dashboard(request, dash_id):
             params = urlencode({'client_id': GL_CLIENT_ID,
                                 'response_type': 'code',
                                 'redirect_uri': "https://{}{}".format(request.get_host(), GL_REDIRECT_PATH)})
-            gh_url_oauth = "{}?{}".format(GL_URI_IDENTITY, params)
+            gl_url_oauth = "{}?{}".format(GL_URI_IDENTITY, params)
             return JsonResponse({'status': 'error',
                                  'message': 'We need your GitLab token for analyzing this kind of repositories',
-                                 'redirect': gh_url_oauth},
+                                 'redirect': gl_url_oauth},
                                 status=401)
         return manage_add_gl_repo(dash, data)
+
+    elif backend == 'meetup':
+        if not hasattr(request.user, 'meetupuser'):
+            request.session['add_repo'] = {'data': data, 'backend': backend, 'dash_id': dash.id}
+            request.session['last_page'] = '/dashboard/{}'.format(dash_id)
+            params = urlencode({'client_id': MEETUP_CLIENT_ID,
+                                'response_type': 'code',
+                                'redirect_uri': "https://{}{}".format(request.get_host(), MEETUP_REDIRECT_PATH)})
+            meetup_url_oauth = "{}?{}".format(MEETUP_URI_IDENTITY, params)
+            return JsonResponse({'status': 'error',
+                                 'message': 'We need your GitLab token for analyzing this kind of repositories',
+                                 'redirect': meetup_url_oauth},
+                                status=401)
+        return manage_add_meetup_repo(dash, data)
 
     else:
         return JsonResponse({'status': 'error', 'message': 'Backend not found'},
@@ -500,6 +590,54 @@ def manage_add_gl_repo(dash, data):
                         status=401)
 
 
+# TODO: Not done this part of meetup
+def manage_add_meetup_repo(dash, data):
+    """
+    Add a repository or a user in a dashboard
+    :param dash: Dashboard object for adding
+    :param data: Dictionary with the user or the repository to be added. Format: {'user': 'xxx', 'repository': 'yyy'}
+    :return:
+    """
+    if data['user'] and not data['repository']:
+        try:
+            gitlab_list, git_list = get_gl_repos(data['user'], dash.creator.gitlabuser.token.key)
+        except Exception as e:
+            logging.warning("Error for Gitlab owner {}: {}".format(data['user'], e))
+            return JsonResponse({'status': 'error', 'message': 'Error from GitLab API. Does that user exist?'},
+                                status=500)
+
+        for url in gitlab_list:
+            repo = add_to_dashboard(dash, 'gitlab', url)
+            start_task(repo, dash.creator.gitlabuser.token, False)
+
+        for url in git_list:
+            repo = add_to_dashboard(dash, 'git', url)
+            start_task(repo, None, False)
+
+        es_user = ESUser.objects.filter(dashboard=dash).first()
+        update_role_dashboard(es_user.role, dash)
+
+        return JsonResponse({'status': 'ok'})
+
+    elif data['user'] and data['repository']:
+        url_gl = 'https://gitlab.com/{}/{}'.format(data['user'], data['repository'])
+        repo_gl = add_to_dashboard(dash, 'gitlab', url_gl)
+        start_task(repo_gl, dash.creator.gitlabuser.token, False)
+
+        url_git = 'https://gitlab.com/{}/{}.git'.format(data['user'], data['repository'])
+        repo_git = add_to_dashboard(dash, 'git', url_git)
+        start_task(repo_git, None, False)
+
+        es_user = ESUser.objects.filter(dashboard=dash).first()
+        update_role_dashboard(es_user.role, dash)
+
+        return JsonResponse({'status': 'ok'})
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid data posted, something is missing'},
+                        status=401)
+
+
+# TODO: Not modified with meetup
 def guess_data_backend(data_guess, backend):
     """
     Guess the following formats:
@@ -722,7 +860,7 @@ def add_to_dashboard(dash, backend, url):
     Add a repository to a dashboard
     :param dash: Dashboard row from db
     :param url: url for the analysis
-    :param backend: Identity used like github or gitlab. See models.py for more details
+    :param backend: Identity used like github, gitlab or meetup. See models.py for more details
     :return: Repository created
     """
     repo_obj = Repository.objects.filter(url=url, backend=backend).first()
@@ -733,6 +871,7 @@ def add_to_dashboard(dash, backend, url):
     repo_obj.dashboards.add(dash)
     return repo_obj
 
+
 # TODO: This function no longer needs index_name as an argument,
 # TODO: now it is always ES_INDEX_SUFFIX.
 # TODO: Remove index_name from argument list and review calls to this function.
@@ -740,7 +879,7 @@ def get_enriched_indices(index_name, backend):
     """
     Return the names of the enriched indices
     :param index_name: The index global name for that repository
-    :param backend: Git, GitHub or GitLab
+    :param backend: Git, GitHub, GitLab or Meetup
     :return: A list with the names of the indices
     """
     if backend == 'git':
@@ -749,25 +888,12 @@ def get_enriched_indices(index_name, backend):
         return ["github_enrich_{}".format(ES_INDEX_SUFFIX)]
     elif backend == 'gitlab':
         return ["gitlab_enriched_{}".format(ES_INDEX_SUFFIX)]
+    elif backend == 'meetup':
+        return ["meetup_enriched_{}".format(ES_INDEX_SUFFIX)]
     raise Exception('Unknown backend')
 
-# TODO: Check if this function is still used somewhere else
-def create_es_indices(indices):
-    """
-    Create the indices in ElasticSearch
-    :param indices: List of indices
-    :return:
-    """
-    # Connect ElasticSearch
-    context = create_ssl_context()
-    context.check_hostname = False
-    context.verify_mode = ssl.CERT_NONE
-    es = Elasticsearch([ES_IN_HOST], scheme=ES_IN_PROTO, port=ES_IN_PORT,
-                       http_auth=("admin", ES_ADMIN_PSW), ssl_context=context)
-    for index in indices:
-        es.indices.create(index, ignore=400)
 
-
+# TODO: Check meetup
 def create_index_name(backend, url):
     if backend in ('github', 'gitlab'):
         owner, repo = parse_url(url)
@@ -787,9 +913,11 @@ def update_role_dashboard(role_name, dash):
     repos = Repository.objects.filter(dashboards=dash)
     enriched_indices = get_enriched_indices("", 'git') + \
                        get_enriched_indices("", 'github') + \
-                       get_enriched_indices("", 'gitlab')
+                       get_enriched_indices("", 'gitlab') + \
+                       get_enriched_indices("", 'meetup')
 
     return update_role(role_name, enriched_indices, repos)
+
 
 def update_role(role_name, indices, repos):
     """
@@ -812,7 +940,7 @@ def update_role(role_name, indices, repos):
     for index in indices:
         data[role_name]['indices'][index] = {'*': ['READ'],
                                              '_dls_': '{"terms": {}}'}
-
+        # TODO: Check meetup index
         filter_field = ""
         if index == 'git_enrich_index':
             filter_field = "repo_name"
@@ -861,19 +989,13 @@ def add_role_repos(role_name, indices, repos):
         if index not in data[role_name]['indices']:
             data[role_name]['indices'][index] = {'*': ['READ']}
 
-        # TODO: Find a way to join every repository under the same field filter
-        # git_enrich -> origin, repo_name, tag
-        # git_aoc_enriched -> repository
-        # github_enrich -> origin, repository, tag
-        # gitlab_enriched -> origin, repository, tag
-
+        # TODO: Check meetup indices
         filter_field = ""
         if index == 'git_enrich_index':
             filter_field = "repo_name"
         else:
             filter_field = "repository"
 
-        # TODO: For some reason, the index 'git_aoc_enriched_index' doesn't care about roles
         if "_dls_" not in data[role_name]['indices'][index]:
             data[role_name]['indices'][index]["_dls_"] = '{"terms": {}}'
 
@@ -918,6 +1040,7 @@ def delete_role_repos(role_name, indices, repos):
         if index not in data[role_name]['indices']:
             continue
 
+        # TODO: Check meetup indices
         filter_field = ""
         if index == 'git_enrich_index':
             filter_field = "repo_name"
@@ -1158,6 +1281,17 @@ def request_delete_token(request):
                     task.delete()
             request.user.githubuser.delete()
         return JsonResponse({'status': 'ok'})
+
+    elif identity == 'meetup':
+        if hasattr(request.user, 'meetupuser'):
+            token = Token.objects.filter(backend=identity, user=request.user).first()
+            tasks = Task.objects.filter(tokens=token)
+            for task in tasks:
+                if len(task.tokens) == 1 and not task.worker_id:
+                    task.delete()
+            request.user.githubuser.delete()
+        return JsonResponse({'status': 'ok'})
+
     else:
         return JsonResponse({'status': 'error', 'message': 'Unkown identity: {}'.format(identity)})
 
@@ -1185,6 +1319,9 @@ def create_context(request):
     elif hasattr(request.user, 'gitlabuser'):
         context['auth_user_username'] = request.user.gitlabuser.username
         context['photo_user'] = request.user.gitlabuser.photo
+    elif hasattr(request.user, 'meetupuser'):
+        context['auth_user_username'] = request.user.meetupuser.username
+        context['photo_user'] = request.user.meetupuser.photo
     else:
         context['auth_user_username'] = 'Anonymous'
         context['photo_user'] = '/static/img/profile-default.png'
@@ -1192,6 +1329,7 @@ def create_context(request):
     # Information about the accounts connected
     context['github_enabled'] = hasattr(request.user, 'githubuser')
     context['gitlab_enabled'] = hasattr(request.user, 'gitlabuser')
+    context['meetup_enabled'] = hasattr(request.user, 'meetupuser')
 
     return context
 

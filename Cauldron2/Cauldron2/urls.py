@@ -20,6 +20,7 @@ from CauldronApp import views
 urlpatterns = [
     path('github-login', views.request_github_login_callback),
     path('gitlab-login', views.request_gitlab_login_callback),
+    path('meetup-login', views.request_meetup_login_callback),
     path('logout', views.request_logout),
     path('delete-token', views.request_delete_token),
 

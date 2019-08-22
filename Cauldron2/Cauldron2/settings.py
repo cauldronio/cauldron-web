@@ -12,6 +12,10 @@ GH_CLIENT_SECRET = ''
 GL_CLIENT_ID = ''
 GL_CLIENT_SECRET = ''
 
+# Meetup Oauth keys
+MEETUP_CLIENT_ID = ''
+MEETUP_CLIENT_SECRET = ''
+
 # ElasticSearch info
 ES_IN_HOST = 'localhost?'
 ES_IN_PORT = '9200'

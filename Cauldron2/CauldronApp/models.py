@@ -33,6 +33,14 @@ class GitlabUser(models.Model):
     photo = models.URLField()
 
 
+class MeetupUser(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, unique=True)
+    username = models.CharField(max_length=100)
+    token = models.ForeignKey(Token, on_delete=models.CASCADE)
+    refresh_token = models.CharField(max_length=100)
+    photo = models.URLField()
+
+
 class Dashboard(models.Model):
     name = models.CharField(max_length=255)
     creator = models.ForeignKey(User,
@@ -51,7 +59,7 @@ class ESUser(models.Model):
 
 class Repository(models.Model):
     """
-    Available backends: github, gitlab and git
+    Available backends: github, gitlab, meetup and git
     """
     url = models.URLField()
     backend = models.CharField(max_length=100)
