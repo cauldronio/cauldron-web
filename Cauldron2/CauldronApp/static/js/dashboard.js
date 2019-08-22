@@ -244,6 +244,9 @@ function setIconStatus(jq_selector, status) {
 function get_duration(repo) {
     var output = "";
     if (repo.started){
+        if (repo.status == 'PENDING'){
+          return "Waiting token"
+        }
         var start = moment(repo.started);
         var finish = "";
         if (repo.status == 'RUNNING'){
