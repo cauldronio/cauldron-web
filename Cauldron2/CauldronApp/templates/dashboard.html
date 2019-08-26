@@ -116,8 +116,43 @@
           </div>
           <!-- end GITLAB CARD -->
 
+          <!-- MEETUP CARD -->
+          <div class="card shadow-sm">
+
+            <div class="card-header">
+              <div class="title">
+                <i class="fab fa-meetup"></i><strong> Meetup</strong>
+                <button type="button" class="btn btn-info btn-sm" data-toggle="tooltip" style="float:right" title="This will add Meetup group to the analysis">
+                  <i class="fas fa-info"><span class="sr-only"> Meetup info</span></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="card-body">
+
+              <form action="" method="post" id="meetup_add">
+                {% csrf_token %}
+                <div class="form-group">
+
+                  <div class="input-group">
+                    <input type="text" class="form-control" id="meetup_data" name="data" placeholder="Meetup group URL">
+                    <input type="hidden" name="backend" value="meetup">
+                    <input type="hidden" name="action" value="add">
+                    <div class="input-group-append">
+                      <button class="btn btn-primary" type="submit">Add</button>
+                    </div>
+                  </div>
+                </div>
+              </form>
+
+
+            </div>
+
+          </div>
+          <!-- end MEETUP CARD -->
+
           <div class="alert alert-info" role="alert">
-            It is planned for the future to add more data sources (like Discourse, Slack or Meetup), but feel free to suggest any other data source option via the feedback button!
+            It is planned for the future to add more data sources (like Discourse or Slack), but feel free to suggest any other data source option via the feedback button!
           </div>
         </div>
         {% endif %}
@@ -171,6 +206,7 @@
                       <a class="backend-item dropdown-item" data-filter-type="backend" data-filter="git" href="#">Git</a>
                       <a class="backend-item dropdown-item" data-filter-type="backend" data-filter="github" href="#">GitHub</a>
                       <a class="backend-item dropdown-item" data-filter-type="backend" data-filter="gitlab" href="#">GitLab</a>
+                      <a class="backend-item dropdown-item" data-filter-type="backend" data-filter="meetup" href="#">Meetup</a>
                     </div>
                   </span>
 
@@ -223,6 +259,8 @@
                           <i class="fab fa-github"></i>
                           {% elif repo.backend == "gitlab" %}
                           <i class="fab fa-gitlab"></i>
+                          {% elif repo.backend == "meetup" %}
+                          <i class="fab fa-meetup"></i>
                           {% else %}
                           <i class="fab fa-git-square"></i>
                           {% endif %}

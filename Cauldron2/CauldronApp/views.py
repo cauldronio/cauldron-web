@@ -9,7 +9,6 @@ import re
 import ssl
 import logging
 import requests
-import meetup.api
 from random import choice
 from github import Github
 from gitlab import Gitlab
@@ -253,22 +252,23 @@ def request_meetup_login_callback(request):
                                'description': "Error getting the token from Meetup endpoint"})
 
     # Authenticate/register an user, and login
-    mu = meetup.api(token)
-    mu_me = mu.GetMember('self')
-    name = mu_me.name
-    # TODO: Modify to check if there is a photo
-    photo_url = mu_me.photo or '/static/img/profile-default.png'
+    r = requests.get('https://api.meetup.com/members/self?&sign=true&photo-host=public',
+                    headers={'Authorization': 'bearer {}'.format(token)})
+    data_user = r.json()
+    try:
+        photo = data_user['photo']['photo_link']
+    except KeyError:
+        photo = '/static/img/profile-default.png'
 
     # Get data from session
     data_add = request.session.get('add_repo', None)
     last_page = request.session.get('last_page', None)
-
-    tricky_authentication(request, MeetupUser, mu_me.name, token, photo_url)
+    # TODO: Change username
+    tricky_authentication(request, MeetupUser, data_user['id'], token, photo)
 
     # Get the previous state
     if data_add:
         dash = Dashboard.objects.filter(id=data_add['dash_id']).first()
-        # Only Meetup, is the new account added
         if data_add['backend'] == 'meetup':
             manage_add_meetup_repo(dash, data_add['data'])
 
@@ -488,7 +488,7 @@ def request_edit_dashboard(request, dash_id):
                                 'redirect_uri': "https://{}{}".format(request.get_host(), MEETUP_REDIRECT_PATH)})
             meetup_url_oauth = "{}?{}".format(MEETUP_URI_IDENTITY, params)
             return JsonResponse({'status': 'error',
-                                 'message': 'We need your GitLab token for analyzing this kind of repositories',
+                                 'message': 'We need your Meetup token for analyzing this kind of repositories',
                                  'redirect': meetup_url_oauth},
                                 status=401)
         return manage_add_meetup_repo(dash, data)
@@ -590,43 +590,23 @@ def manage_add_gl_repo(dash, data):
                         status=401)
 
 
-# TODO: Not done this part of meetup
 def manage_add_meetup_repo(dash, data):
     """
     Add a repository or a user in a dashboard
     :param dash: Dashboard object for adding
-    :param data: Dictionary with the user or the repository to be added. Format: {'user': 'xxx', 'repository': 'yyy'}
+    :param data: Dictionary with the group to be added. Format: {'group': 'xxx'}
     :return:
     """
-    if data['user'] and not data['repository']:
-        try:
-            gitlab_list, git_list = get_gl_repos(data['user'], dash.creator.gitlabuser.token.key)
-        except Exception as e:
-            logging.warning("Error for Gitlab owner {}: {}".format(data['user'], e))
-            return JsonResponse({'status': 'error', 'message': 'Error from GitLab API. Does that user exist?'},
-                                status=500)
+    if data['group']:
+        r = requests.get('https://api.meetup.com/{}'.format(data['group']),
+                         headers={'Authorization': 'bearer {}'.format(dash.creator.meetupuser.token.key)})
+        group_info = r.json()
+        if 'errors' in group_info:
+            error_msg = group_info['errors'][0]['message']
+            return JsonResponse({'status': 'error', 'message': 'Error from Meetup API. {}'.format(error_msg)})
 
-        for url in gitlab_list:
-            repo = add_to_dashboard(dash, 'gitlab', url)
-            start_task(repo, dash.creator.gitlabuser.token, False)
-
-        for url in git_list:
-            repo = add_to_dashboard(dash, 'git', url)
-            start_task(repo, None, False)
-
-        es_user = ESUser.objects.filter(dashboard=dash).first()
-        update_role_dashboard(es_user.role, dash)
-
-        return JsonResponse({'status': 'ok'})
-
-    elif data['user'] and data['repository']:
-        url_gl = 'https://gitlab.com/{}/{}'.format(data['user'], data['repository'])
-        repo_gl = add_to_dashboard(dash, 'gitlab', url_gl)
-        start_task(repo_gl, dash.creator.gitlabuser.token, False)
-
-        url_git = 'https://gitlab.com/{}/{}.git'.format(data['user'], data['repository'])
-        repo_git = add_to_dashboard(dash, 'git', url_git)
-        start_task(repo_git, None, False)
+        repo = add_to_dashboard(dash, 'meetup', data['group'])
+        start_task(repo, dash.creator.meetupuser.token, False)
 
         es_user = ESUser.objects.filter(dashboard=dash).first()
         update_role_dashboard(es_user.role, dash)
@@ -637,7 +617,6 @@ def manage_add_meetup_repo(dash, data):
                         status=401)
 
 
-# TODO: Not modified with meetup
 def guess_data_backend(data_guess, backend):
     """
     Guess the following formats:
@@ -645,13 +624,16 @@ def guess_data_backend(data_guess, backend):
     - User/Repository: "user/repository"
     - URL of user: "https://backend.com/user"
     - URL of repository: "https://backend.com/user/repository"
-    backend: Could be github or gitlab, for git is always the URL
+    - Meetup group: "https://www.backend.com/one-group/"
+    backend: Could be github, gitlab or meetup for git is always the URL
     :return:
     """
     gh_user_regex = '([a-zA-Z0-9](?:[a-zA-Z0-9]|-[a-zA-Z0-9]){1,38})'
     gh_repo_regex = '([a-zA-Z0-9\.\-\_]{1,100})'
     gl_user_regex = '([a-zA-Z0-9_\.][a-zA-Z0-9_\-\.]{1,200}[a-zA-Z0-9_\-]|[a-zA-Z0-9_])'
     gl_repo_regex = '([a-zA-Z0-9_\.][a-zA-Z0-9_\-\.]*[a-zA-Z0-9_\-\.])'
+    meetup_group_regex = '([a-zA-Z0-9\-]{6,70})'
+    data_guess = data_guess.strip()
     if backend == 'github':
         re_user = re.match('^{}$'.format(gh_user_regex), data_guess)
         if re_user:
@@ -678,6 +660,12 @@ def guess_data_backend(data_guess, backend):
         re_user_repo = re.match('{}/{}$'.format(gl_user_regex, gl_repo_regex), data_guess)
         if re_user_repo:
             return {'user': re_user_repo.groups()[0], 'repository': re_user_repo.groups()[1]}
+    elif backend == 'meetup':
+        group = "https://www.meetup.com/Madrid-Artificial-Intelligence-Deep-Learning/"
+        re_group = re.match('^https?://www\.meetup\.com(?:/[a-zA-Z\-]+)?/{}/?'.format(meetup_group_regex), data_guess)
+        if re_group:
+            print(re_group.groups()[0])
+            return {'group': re_group.groups()[0]}
     return None
 
 
@@ -835,22 +823,6 @@ def create_kibana_user(name, psw, dashboard):
     # We copy the default panels here now
     es.reindex(body={"source": {"index": ".kibana_*_defaultpanels"}, "dest": {"index": index}})
 
-    # Create a default index in the role to avoid warnings
-    # in the dashboard if a backend doesn't exist
-    # These indices were created in the panels container empty
-    # TODO: Check permissions for a void index
-    # data = {'indices': {'git_enrich_default': {'*': ['READ']},
-    #                     'git_aoc_enriched_default': {'*': ['READ']},
-    #                     'github_enrich_default': {'*': ['READ']},
-    #                     'gitlab_enriched_default': {'*': ['READ']}
-    #                     }
-    #         }
-    # r = requests.patch("{}/_opendistro/_security/api/roles".format(ES_IN_URL),
-    #                    auth=('admin', ES_ADMIN_PSW),
-    #                    json=[{"op": "add", "path": "/{}".format(role_name), "value": data}],
-    #                    verify=False,
-    #                    headers=headers)
-
     es_user = ESUser(name=name, password=psw, role=role_name, dashboard=dashboard, index=index)
     es_user.save()
 
@@ -872,13 +844,9 @@ def add_to_dashboard(dash, backend, url):
     return repo_obj
 
 
-# TODO: This function no longer needs index_name as an argument,
-# TODO: now it is always ES_INDEX_SUFFIX.
-# TODO: Remove index_name from argument list and review calls to this function.
-def get_enriched_indices(index_name, backend):
+def get_enriched_indices(backend):
     """
     Return the names of the enriched indices
-    :param index_name: The index global name for that repository
     :param backend: Git, GitHub, GitLab or Meetup
     :return: A list with the names of the indices
     """
@@ -895,6 +863,7 @@ def get_enriched_indices(index_name, backend):
 
 # TODO: Check meetup
 def create_index_name(backend, url):
+    return "Deprecated"
     if backend in ('github', 'gitlab'):
         owner, repo = parse_url(url)
         return slugify("{}_{}_{}".format(backend, owner, repo), max_length=100, replacements=[['.', '_dot_']]).lower()
@@ -911,10 +880,10 @@ def create_index_name(backend, url):
 
 def update_role_dashboard(role_name, dash):
     repos = Repository.objects.filter(dashboards=dash)
-    enriched_indices = get_enriched_indices("", 'git') + \
-                       get_enriched_indices("", 'github') + \
-                       get_enriched_indices("", 'gitlab') + \
-                       get_enriched_indices("", 'meetup')
+    enriched_indices = get_enriched_indices('git') + \
+                       get_enriched_indices('github') + \
+                       get_enriched_indices('gitlab') + \
+                       get_enriched_indices('meetup')
 
     return update_role(role_name, enriched_indices, repos)
 
@@ -940,18 +909,14 @@ def update_role(role_name, indices, repos):
     for index in indices:
         data[role_name]['indices'][index] = {'*': ['READ'],
                                              '_dls_': '{"terms": {}}'}
-        # TODO: Check meetup index
-        filter_field = ""
-        if index == 'git_enrich_index':
-            filter_field = "repo_name"
-        else:
-            filter_field = "repository"
+
+        filter_field = get_filter_field(index)
 
         dls = eval(data[role_name]['indices'][index]['_dls_'])
         dls['terms'][filter_field] = []
 
         for repo in repos:
-            if index in get_enriched_indices('', repo.backend):
+            if index in get_enriched_indices(repo.backend):
                 dls['terms'][filter_field].append(repo.url)
 
         data[role_name]['indices'][index]['_dls_'] = str(dls).replace("'", "\"")
@@ -990,11 +955,7 @@ def add_role_repos(role_name, indices, repos):
             data[role_name]['indices'][index] = {'*': ['READ']}
 
         # TODO: Check meetup indices
-        filter_field = ""
-        if index == 'git_enrich_index':
-            filter_field = "repo_name"
-        else:
-            filter_field = "repository"
+        filter_field = get_filter_field(index)
 
         if "_dls_" not in data[role_name]['indices'][index]:
             data[role_name]['indices'][index]["_dls_"] = '{"terms": {}}'
@@ -1004,7 +965,7 @@ def add_role_repos(role_name, indices, repos):
             dls['terms'][filter_field] = []
 
         for repo in repos:
-            if index in get_enriched_indices('', repo.backend):
+            if index in get_enriched_indices(repo.backend):
                 dls['terms'][filter_field].append(repo.url)
 
         data[role_name]['indices'][index]["_dls_"] = str(dls).replace("'", "\"")
@@ -1040,12 +1001,7 @@ def delete_role_repos(role_name, indices, repos):
         if index not in data[role_name]['indices']:
             continue
 
-        # TODO: Check meetup indices
-        filter_field = ""
-        if index == 'git_enrich_index':
-            filter_field = "repo_name"
-        else:
-            filter_field = "repository"
+        filter_field = get_filter_field(index)
 
         if "_dls_" not in data[role_name]['indices'][index]:
             continue
@@ -1121,6 +1077,23 @@ def general_stat_dash(repos):
             general = 'COMPLETED'
         # Unknown status not included
     return general
+
+
+def get_filter_field(index):
+    """
+    Get the field where the repository or group
+    is defined in the document
+    :param index: Index name
+    :return:
+    """
+    if index == 'git_enrich_index':
+        return 'repo_name'
+    elif index == 'meetup_enriched_index':
+        return 'tag'
+    elif index in ('git_aoc_enriched_index', 'github_enrich_index', 'gitlab_enriched_index'):
+        return "repository"
+    else:
+        raise Exception('Unknown index: {}'.format(index))
 
 
 def get_dashboard_info(dash_id):

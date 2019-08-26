@@ -5,11 +5,11 @@ var TimeoutInfo = null; // To avoid multiple getInfo calls with timeouts
 var Dash_ID = window.location.pathname.split('/')[2];
 
 $(document).ready(function(){
-    getInfo();
     $('#logModal').on('show.bs.modal', onShowLogsModal);
     $('#logModal').on('hidden.bs.modal', OnHideLogsModal);
     $('form#gh_add').submit(submitBackend);
     $('form#gl_add').submit(submitBackend);
+    $('form#meetup_add').submit(submitBackend);
     $('form#git_add').submit(submitBackend);
 
     $('.btn-delete').click(deleteRepo);
@@ -20,6 +20,7 @@ $(document).ready(function(){
     $('.status-filters a').click(onFilterClick);
 
     $('#edit-name').click(onClickEditName);
+    getInfo();
 });
 
 
@@ -271,25 +272,6 @@ function pad(num, size) {
     return s;
 }
 
-function updateBadgesRepos(repo_arr) {
-    var repos_gh = 0;
-    var repos_gl = 0;
-    var repos_git = 0;
-    repo_arr.forEach(function(repo){
-        if (repo.backend == 'github'){
-            repos_gh += 1;
-        } else if (repo.backend == 'gitlab'){
-            repos_gl += 1;
-        } else if (repo.backend == 'git'){
-            repos_git += 1;
-        }
-    });
-    $('.badge-repos-all').html(repos_git + repos_gh + repos_gl)
-    $('.badge-repos-gh').html(repos_gh)
-    $('.badge-repos-gl').html(repos_gl)
-    $('.badge-repos-git').html(repos_git)
-}
-
 /****************************
  *     LOGS FUNCTIONS       *
  ****************************/
@@ -339,6 +321,7 @@ function updateLogs(id_repo){
  *     GITHUB GITLAB GIT SUBMIT    *
  ****************************/
 function submitBackend(event) {
+    event.preventDefault()
     var addBtn = $(`#${event.target.id} button`);
     addBtn.html(`<div class="spinner-border spinner-border-sm" role="status">
                     <span class="sr-only">Loading...</span>
@@ -349,7 +332,6 @@ function submitBackend(event) {
         .done(function (data) {onDataAdded(data, event.target)})
         .fail(function (data) {onDataFail(data, event.target)})
         .always(function(){addBtn.html('Add')})
-    event.preventDefault()
 }
 
 function onDataAdded(data, target) {
