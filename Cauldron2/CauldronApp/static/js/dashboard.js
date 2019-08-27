@@ -335,9 +335,7 @@ function submitBackend(event) {
 }
 
 function onDataAdded(data, target) {
-    //showToast('Success', `Data added correctly. Reloading the list of repositories...`, 'fas fa-spinner text-success', 5000);
-    console.log(data);
-    //setTimeout(function(){window.location.reload()}, 2000);
+    $(`#${target.id} input[type=text]`).val('');
     window.location.reload()
 }
 

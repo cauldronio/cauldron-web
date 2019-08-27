@@ -86,6 +86,9 @@
           {% if gitlab_enabled %}
           <a class="dropdown-item" id="delete-gl-token" href="">Delete my Gitlab token</a>
           {% endif %}
+          {% if meetup_enabled %}
+          <a class="dropdown-item" id="delete-meetup-token" href="">Delete my Meetup token</a>
+          {% endif %}
           <a class="dropdown-item" href="/logout">Log out</a>
           <!--<a class="dropdown-item" href="/profile">Profile</a>-->
         </div>
@@ -121,6 +124,7 @@
               </button>
             </form>
           </div>
+
           <div class="text-center">
             <form action="{{ gl_uri_identity }}" method="GET">
               <input type="hidden" name="client_id" value="{{ gl_client_id }}">
@@ -132,6 +136,19 @@
               </button>
             </form>
           </div>
+
+          <div class="text-center">
+            <form action="{{ meetup_uri_identity }}" method="GET">
+              <input type="hidden" name="client_id" value="{{ meetup_client_id }}">
+              <input type="hidden" name="response_type" value="code">
+              <input type="hidden" name="redirect_uri" value="{{ meetup_uri_redirect }}">
+              <button type="submit" class="btn btn-meetup btn-block" aria-haspopup="true" aria-expanded="false">
+                <i class="fab fa-meetup"></i>
+                Sign in with <b>Meetup</b>
+              </button>
+            </form>
+          </div>
+
         </div>
         <div class="modal-footer">
           <p class="text-muted">We will store your token for your analysis. You can revoke the use at any time</p>

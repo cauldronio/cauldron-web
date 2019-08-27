@@ -46,6 +46,17 @@
   color: #fff;
 }
 
+.btn-meetup {
+  color: #fff;
+  background-color: #F65858;
+  border-color: #F65858;
+}
+
+.btn-meetup:hover {
+  background-color: #F42C2C;
+  color: #fff;
+}
+
 #modalLogin .modal-body {
   padding-top: 30px;
   padding-bottom: 30px;

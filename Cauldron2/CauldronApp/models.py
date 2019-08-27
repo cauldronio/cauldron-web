@@ -64,7 +64,6 @@ class Repository(models.Model):
     url = models.URLField()
     backend = models.CharField(max_length=100)
     dashboards = models.ManyToManyField(Dashboard)
-    index_name = models.CharField(max_length=100)
 
 
 class Task(models.Model):

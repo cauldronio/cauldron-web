@@ -119,7 +119,7 @@ def request_github_login_callback(request):
     data_add = request.session.get('add_repo', None)
     last_page = request.session.get('last_page', None)
 
-    tricky_authentication(request, GithubUser, username, token, photo_url)
+    tricky_authentication(request, GithubUser, username, username, token, photo_url)
 
     # Get the previous state
     if data_add:
@@ -201,7 +201,7 @@ def request_gitlab_login_callback(request):
     data_add = request.session.get('add_repo', None)
     last_page = request.session.get('last_page', None)
 
-    tricky_authentication(request, GitlabUser, username, token, photo_url)
+    tricky_authentication(request, GitlabUser, username, username, token, photo_url)
 
     # Get the previous state
     if data_add:
@@ -263,9 +263,10 @@ def request_meetup_login_callback(request):
     # Get data from session
     data_add = request.session.get('add_repo', None)
     last_page = request.session.get('last_page', None)
-    # TODO: Change username
-    tricky_authentication(request, MeetupUser, data_user['id'], token, photo)
 
+    tricky_authentication(request, MeetupUser, data_user['id'], data_user['name'], token, photo)
+    request.user.meetupuser.refresh_token = refresh_token
+    request.user.meetupuser.save()
     # Get the previous state
     if data_add:
         dash = Dashboard.objects.filter(id=data_add['dash_id']).first()
@@ -278,12 +279,13 @@ def request_meetup_login_callback(request):
     return HttpResponseRedirect('/')
 
 
-def tricky_authentication(req, BackendUser, username, token, photo_url):
+def tricky_authentication(req, BackendUser, username, name, token, photo_url):
     """
     Tricky authentication ONLY for login callbacks.
     :param req: request from login callback
     :param BackendUser: GitlabUser, GithubUser, MeetupUser... Full model object with the tokens
     :param username: username for the entity
+    :param name: name of the user
     :param token: token for the entity
     :param photo_url: photo for the user and the entity
     :return:
@@ -295,29 +297,30 @@ def tricky_authentication(req, BackendUser, username, token, photo_url):
         dj_ent_user = None
 
     if dj_ent_user:
-        # Django Entity user exists, someone is authenticated and not the same account
         if req.user.is_authenticated and dj_ent_user != req.user:
+            # Django Entity user exists, someone is authenticated and not the same account
             merge_accounts(req.user, dj_ent_user)
             req.user.delete()
             login(req, dj_ent_user)
-        # Django Entity user exists and none is authenticated
         else:
+            # Django Entity user exists and none is authenticated
             login(req, dj_ent_user)
         # Update the token
         ent_user.token.key = token
         ent_user.token.save()
     else:
-        # Django Entity user doesn't exist, someone is authenticated
         if req.user.is_authenticated:
+            # Django Entity user doesn't exist, someone is authenticated
             # Check if is anonymous and delete anonymous tag
             anony_user = AnonymousUser.objects.filter(user=req.user).first()
             if anony_user:
                 anony_user.delete()
-
+                req.user.first_name = name
+                req.user.save()
         # Django Entity user doesn't exist, none is authenticated
         else:
             # Create account
-            dj_user = create_django_user()
+            dj_user = create_django_user(name)
             login(req, dj_user)
         # Create the token entry
         if BackendUser is GitlabUser:
@@ -337,13 +340,14 @@ def tricky_authentication(req, BackendUser, username, token, photo_url):
         bu_entry.save()
 
 
-def create_django_user():
+def create_django_user(name):
     """
     Create a django user with a random name and unusable password
+    :name: first_name for the user
     :return: User object
     """
     dj_name = generate_random_uuid(length=96)
-    dj_user = User.objects.create_user(username=dj_name)
+    dj_user = User.objects.create_user(username=dj_name, first_name=name)
     dj_user.set_unusable_password()
     dj_user.save()
     return dj_user
@@ -746,7 +750,7 @@ def request_new_dashboard(request):
     if not request.user.is_authenticated:
         # Create a user
         dj_name = generate_random_uuid(length=96)
-        dj_user = User.objects.create_user(username=dj_name)
+        dj_user = User.objects.create_user(username=dj_name, first_name="Anonymous")
         dj_user.set_unusable_password()
         dj_user.save()
         # Annotate as anonymous
@@ -837,8 +841,7 @@ def add_to_dashboard(dash, backend, url):
     """
     repo_obj = Repository.objects.filter(url=url, backend=backend).first()
     if not repo_obj:
-        index_name = create_index_name(backend, url)
-        repo_obj = Repository(url=url, backend=backend, index_name=index_name)
+        repo_obj = Repository(url=url, backend=backend)
         repo_obj.save()
     repo_obj.dashboards.add(dash)
     return repo_obj
@@ -859,23 +862,6 @@ def get_enriched_indices(backend):
     elif backend == 'meetup':
         return ["meetup_enriched_{}".format(ES_INDEX_SUFFIX)]
     raise Exception('Unknown backend')
-
-
-# TODO: Check meetup
-def create_index_name(backend, url):
-    return "Deprecated"
-    if backend in ('github', 'gitlab'):
-        owner, repo = parse_url(url)
-        return slugify("{}_{}_{}".format(backend, owner, repo), max_length=100, replacements=[['.', '_dot_']]).lower()
-    else:
-        # Like git
-        try:
-            owner, repo = parse_url(url)
-            txt = slugify("{}_{}_{}".format('git', owner, repo), max_length=100, replacements=[['.', '_dot_']]).lower()
-        except Exception:
-            txt = slugify("{}_{}".format('git', url), max_length=100, replacements=[['.', '_dot_']]).lower()
-
-        return txt
 
 
 def update_role_dashboard(role_name, dash):
@@ -1252,7 +1238,7 @@ def request_delete_token(request):
             for task in tasks:
                 if len(task.tokens) == 1 and not task.worker_id:
                     task.delete()
-            request.user.githubuser.delete()
+            request.user.gitlabuser.delete()
         return JsonResponse({'status': 'ok'})
 
     elif identity == 'meetup':
@@ -1262,7 +1248,7 @@ def request_delete_token(request):
             for task in tasks:
                 if len(task.tokens) == 1 and not task.worker_id:
                     task.delete()
-            request.user.githubuser.delete()
+            request.user.meetupuser.delete()
         return JsonResponse({'status': 'ok'})
 
     else:
@@ -1283,21 +1269,22 @@ def create_context(request):
     context['gl_uri_identity'] = GL_URI_IDENTITY
     context['gl_client_id'] = GL_CLIENT_ID
     context['gl_uri_redirect'] = "https://{}{}".format(request.get_host(), GL_REDIRECT_PATH)
+    context['meetup_uri_identity'] = MEETUP_URI_IDENTITY
+    context['meetup_client_id'] = MEETUP_CLIENT_ID
+    context['meetup_uri_redirect'] = "https://{}{}".format(request.get_host(), MEETUP_REDIRECT_PATH)
 
     # Information for the photo and the profile
     context['authenticated'] = request.user.is_authenticated
-    if hasattr(request.user, 'githubuser'):
-        context['auth_user_username'] = request.user.githubuser.username
-        context['photo_user'] = request.user.githubuser.photo
-    elif hasattr(request.user, 'gitlabuser'):
-        context['auth_user_username'] = request.user.gitlabuser.username
-        context['photo_user'] = request.user.gitlabuser.photo
-    elif hasattr(request.user, 'meetupuser'):
-        context['auth_user_username'] = request.user.meetupuser.username
-        context['photo_user'] = request.user.meetupuser.photo
-    else:
-        context['auth_user_username'] = 'Anonymous'
-        context['photo_user'] = '/static/img/profile-default.png'
+    if request.user.is_authenticated:
+        context['auth_user_username'] = request.user.first_name
+        if hasattr(request.user, 'githubuser'):
+            context['photo_user'] = request.user.githubuser.photo
+        elif hasattr(request.user, 'gitlabuser'):
+            context['photo_user'] = request.user.gitlabuser.photo
+        elif hasattr(request.user, 'meetupuser'):
+            context['photo_user'] = request.user.meetupuser.photo
+        else:
+            context['photo_user'] = '/static/img/profile-default.png'
 
     # Information about the accounts connected
     context['github_enabled'] = hasattr(request.user, 'githubuser')
