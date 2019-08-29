@@ -637,6 +637,7 @@ def guess_data_backend(data_guess, backend):
     gl_user_regex = '([a-zA-Z0-9_\.][a-zA-Z0-9_\-\.]{1,200}[a-zA-Z0-9_\-]|[a-zA-Z0-9_])'
     gl_repo_regex = '([a-zA-Z0-9_\.][a-zA-Z0-9_\-\.]*[a-zA-Z0-9_\-\.])'
     meetup_group_regex = '([a-zA-Z0-9\-]{6,70})'
+    language_code = '(?:/[a-zA-Z0-9\-]{2,5})?'
     data_guess = data_guess.strip()
     if backend == 'github':
         re_user = re.match('^{}$'.format(gh_user_regex), data_guess)
@@ -665,10 +666,11 @@ def guess_data_backend(data_guess, backend):
         if re_user_repo:
             return {'user': re_user_repo.groups()[0], 'repository': re_user_repo.groups()[1]}
     elif backend == 'meetup':
-        group = "https://www.meetup.com/Madrid-Artificial-Intelligence-Deep-Learning/"
-        re_group = re.match('^https?://www\.meetup\.com(?:/[a-zA-Z\-]+)?/{}/?'.format(meetup_group_regex), data_guess)
+        re_url_group = re.match('^https?://www\.meetup\.com{}/{}/?'.format(language_code, meetup_group_regex), data_guess)
+        if re_url_group:
+            return {'group': re_url_group.groups()[0]}
+        re_group = re.match('^{}$'.format(meetup_group_regex), data_guess)
         if re_group:
-            print(re_group.groups()[0])
             return {'group': re_group.groups()[0]}
     return None
 
