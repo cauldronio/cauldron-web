@@ -113,7 +113,7 @@ function deleteRepo(event) {
     $.post(url = window.location.pathname + "/edit",
            data = {'action': 'delete', 'backend': backend, 'data': id_repo})
         .done(function (data) {
-            showToast('Deleted', `The repository <b>${url_repo}</b> was deleted from this dashboard`, 'fas fa-check-circle text-success', 1500);
+            showToast('Deleted', `The data source <b>${url_repo}</b> was deleted from this dashboard`, 'fas fa-check-circle text-success', 1500);
             $(`tr#repo-${id_repo}`).remove();
             filterTable();
         })
@@ -137,10 +137,10 @@ function reanalyzeRepo(event){
            data = {'action': 'reanalyze', 'backend': backend, 'data': id_repo})
         .done(function (data) {
             if (data['status'] == 'reanalyze'){
-                showToast('Reanalyzing', `The repository <b>${url_repo}</b> has refreshed`, 'fas fa-check-circle text-success', 1500);
+                showToast('Reanalyzing', `The data source <b>${url_repo}</b> has refreshed`, 'fas fa-check-circle text-success', 1500);
                 getInfo();
             } else {
-                showToast(data['status'], "The repository couldn't be refreshed", 'fas fa-times-circle text-danger', 1500);
+                showToast(data['status'], "The data source couldn't be refreshed", 'fas fa-times-circle text-danger', 1500);
             }
         })
         .fail(function (data) {
@@ -164,7 +164,7 @@ function reanalyzeEveryRepo(event){
                 showToast('Reanalyzing', `${data.message}`, 'fas fa-check-circle text-success', 3000);
                 getInfo();
             } else {
-                showToast(data['status'], "The repositories couldn't be refreshed", 'fas fa-times-circle text-danger', 3000);
+                showToast(data['status'], "The data sources couldn't be refreshed", 'fas fa-times-circle text-danger', 3000);
             }
         })
         .fail(function (data) {
