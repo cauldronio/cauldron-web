@@ -317,9 +317,9 @@ function updateLogs(id_repo){
 }
 
 
-/****************************
- *     GITHUB GITLAB GIT SUBMIT    *
- ****************************/
+/************************
+ *    BACKEND SUBMIT    *
+ ************************/
 function submitBackend(event) {
     event.preventDefault()
     var addBtn = $(`#${event.target.id} button`);

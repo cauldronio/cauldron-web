@@ -515,7 +515,7 @@ def manage_add_gh_repo(dash, data):
             git_list, github_list = gh_sync.get_repo(data['user'], False)
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': 'Error from GitHub API. ' + str(e)},
-                                status=500)
+                                status=404)
 
         for url in github_list:
             repo = add_to_dashboard(dash, 'github', url)
@@ -561,7 +561,7 @@ def manage_add_gl_repo(dash, data):
         except Exception as e:
             logging.warning("Error for Gitlab owner {}: {}".format(data['user'], e))
             return JsonResponse({'status': 'error', 'message': 'Error from GitLab API. Does that user exist?'},
-                                status=500)
+                                status=404)
 
         for url in gitlab_list:
             repo = add_to_dashboard(dash, 'gitlab', url)
@@ -607,7 +607,8 @@ def manage_add_meetup_repo(dash, data):
         group_info = r.json()
         if 'errors' in group_info:
             error_msg = group_info['errors'][0]['message']
-            return JsonResponse({'status': 'error', 'message': 'Error from Meetup API. {}'.format(error_msg)})
+            return JsonResponse({'status': "error", 'message': 'Error from Meetup API. {}'.format(error_msg)},
+                                status=404)
 
         repo = add_to_dashboard(dash, 'meetup', data['group'])
         start_task(repo, dash.creator.meetupuser.token, False)
