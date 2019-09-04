@@ -1228,7 +1228,7 @@ def request_delete_token(request):
             token = Token.objects.filter(backend=identity, user=request.user).first()
             tasks = Task.objects.filter(tokens=token)
             for task in tasks:
-                if len(task.tokens) == 1 and not task.worker_id:
+                if len(task.tokens.all()) == 1 and not task.worker_id:
                     task.delete()
             request.user.githubuser.delete()
         return JsonResponse({'status': 'ok'})
@@ -1238,7 +1238,7 @@ def request_delete_token(request):
             token = Token.objects.filter(backend=identity, user=request.user).first()
             tasks = Task.objects.filter(tokens=token)
             for task in tasks:
-                if len(task.tokens) == 1 and not task.worker_id:
+                if len(task.tokens.all()) == 1 and not task.worker_id:
                     task.delete()
             request.user.gitlabuser.delete()
         return JsonResponse({'status': 'ok'})
@@ -1248,7 +1248,7 @@ def request_delete_token(request):
             token = Token.objects.filter(backend=identity, user=request.user).first()
             tasks = Task.objects.filter(tokens=token)
             for task in tasks:
-                if len(task.tokens) == 1 and not task.worker_id:
+                if len(task.tokens.all()) == 1 and not task.worker_id:
                     task.delete()
             request.user.meetupuser.delete()
         return JsonResponse({'status': 'ok'})
