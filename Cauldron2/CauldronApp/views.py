@@ -373,7 +373,7 @@ def request_edit_dashboard(request, dash_id):
         return JsonResponse({'status': 'error', 'message': 'Dashboard not found'}, status=404)
     if not request.user.is_authenticated:
         return JsonResponse({'status': 'error', 'message': 'You are not authenticated', 'redirect': '/login?next=/dashboard/' + str(dash_id)}, status=401)
-    if request.user != dash.creator:
+    if request.user != dash.creator and not request.user.is_superuser:
         return JsonResponse({'status': 'error', 'message': 'You cannot edit this dashboard'}, status=403)
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'Only POST method allowed'}, status=405)
@@ -414,7 +414,7 @@ def request_edit_dashboard(request, dash_id):
 
     elif action == 'reanalyze':
         repo = Repository.objects.filter(id=data_in, backend=backend).first()
-        token = Token.objects.filter(user=request.user, backend=backend).first()
+        token = Token.objects.filter(user=dash.creator, backend=backend).first()
         if not repo:
             return JsonResponse({'status': 'error', 'message': 'Repository not found'},
                                 status=404)
@@ -434,7 +434,7 @@ def request_edit_dashboard(request, dash_id):
                                 status=404)
         refreshed_count = 0
         for repo in repos:
-            token = Token.objects.filter(user=request.user, backend=repo.backend).first()
+            token = Token.objects.filter(user=dash.creator, backend=repo.backend).first()
             if token or repo.backend == 'git':
                 started = start_task(repo=repo, token=token, refresh=True)
                 if started:
@@ -458,7 +458,11 @@ def request_edit_dashboard(request, dash_id):
                                         "Valid: URL user, URL repo, user or user/repo"},
                             status=401)
     if backend == 'github':
-        if not hasattr(request.user, 'githubuser'):
+        if not hasattr(dash.creator, 'githubuser'):
+            if request.user != dash.creator:
+                return JsonResponse({'status': 'error',
+                                     'message': 'Dashboard owner needs a GitHub token to analyze this kind of repositories'},
+                                     status=401)
             request.session['add_repo'] = {'data': data, 'backend': backend, 'dash_id': dash.id}
             request.session['last_page'] = '/dashboard/{}'.format(dash_id)
             params = urlencode({'client_id': GH_CLIENT_ID})
@@ -470,7 +474,11 @@ def request_edit_dashboard(request, dash_id):
         return manage_add_gh_repo(dash, data)
 
     elif backend == 'gitlab':
-        if not hasattr(request.user, 'gitlabuser'):
+        if not hasattr(dash.creator, 'gitlabuser'):
+            if request.user != dash.creator:
+                return JsonResponse({'status': 'error',
+                                     'message': 'Dashboard owner needs a GitLab token to analyze this kind of repositories'},
+                                     status=401)
             request.session['add_repo'] = {'data': data, 'backend': backend, 'dash_id': dash.id}
             request.session['last_page'] = '/dashboard/{}'.format(dash_id)
             params = urlencode({'client_id': GL_CLIENT_ID,
@@ -484,7 +492,11 @@ def request_edit_dashboard(request, dash_id):
         return manage_add_gl_repo(dash, data)
 
     elif backend == 'meetup':
-        if not hasattr(request.user, 'meetupuser'):
+        if not hasattr(dash.creator, 'meetupuser'):
+            if request.user != dash.creator:
+                return JsonResponse({'status': 'error',
+                                     'message': 'Dashboard owner needs a Meetup token to analyze this kind of repositories'},
+                                     status=401)
             request.session['add_repo'] = {'data': data, 'backend': backend, 'dash_id': dash.id}
             request.session['last_page'] = '/dashboard/{}'.format(dash_id)
             params = urlencode({'client_id': MEETUP_CLIENT_ID,
@@ -690,7 +702,7 @@ def request_edit_dashboard_name(request, dash_id):
     if not request.user.is_authenticated:
         return JsonResponse({'status': 'error', 'message': 'You are not authenticated', 'redirect': '/login?next=/dashboard/' + str(dash_id)}, status=401)
 
-    if request.user != dash.creator:
+    if request.user != dash.creator and not request.user.is_superuser:
         return JsonResponse({'status': 'error', 'message': 'You cannot edit this dashboard'}, status=403)
 
     if request.method != 'POST':
@@ -706,7 +718,7 @@ def request_edit_dashboard_name(request, dash_id):
         return JsonResponse({'status': 'error', 'message': "The name doesn't fit the allowed length "},
                             status=400)
 
-    dashboards = Dashboard.objects.filter(creator=request.user)
+    dashboards = Dashboard.objects.filter(creator=dash.creator)
     for tmp_dash in dashboards:
         if tmp_dash.name == name:
             return JsonResponse({'status': 'Duplicate name', 'message': 'You have the same name in another Dashboard'},
@@ -1158,7 +1170,7 @@ def request_show_dashboard(request, dash_id):
         context['dashboard'] = dash
         context['repositories'] = Repository.objects.filter(dashboards__id=dash_id).order_by('-id')
 
-    context['editable'] = request.user.is_authenticated and request.user == dash.creator
+    context['editable'] = request.user.is_authenticated and request.user == dash.creator or request.user.is_superuser
     context['dash_id'] = dash_id
 
     return render(request, 'dashboard.html', context=context)
@@ -1178,7 +1190,7 @@ def request_kibana(request, dash_id):
     if not request.user.is_authenticated:
         return JsonResponse({'status': 'error', 'message': 'You are not authenticated'}, status=401)
 
-    if request.user != dash.creator:
+    if request.user != dash.creator and not request.user.is_superuser:
         return JsonResponse({'status': 'error', 'message': 'This is not your dashboard'}, status=403)
 
     if request.method != 'GET':
@@ -1478,3 +1490,36 @@ def generate_random_uuid(length=16, chars=ascii_lowercase + digits, split=4, del
         return generate_random_uuid(length=length, chars=chars, split=split, delimiter=delimiter)
     except User.DoesNotExist:
         return username
+
+def admin_page(request):
+    """
+    View for the administration page to show an overview of each dashboard
+    :param request:
+    :return:
+    """
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return render(request, 'error.html', status=403,
+                      context={'title': 'User Not Allowed',
+                               'description': "Only Admin users allowed"})
+    if request.method != 'GET':
+        return render(request, 'error.html', status=405,
+                      context={'title': 'Method Not Allowed',
+                               'description': "Only GET methods allowed"})
+
+    dashboards = Dashboard.objects.all()
+
+    context = create_context(request)
+    if dashboards:
+        logger.info("Dashboards found!")
+        context['dashboards'] = []
+        for dash in dashboards:
+            dashboard = dict()
+            dashboard['dashboard'] = dash
+            dashboard['repositories'] = Repository.objects.filter(dashboards__id=dash.id).order_by('-id')
+            context['dashboards'].append(dashboard)
+            logger.info("Dasboard found: " + str(dash.name) + " (ID = " + str(dash.id) + ") - Total repositories: " + str(len(dashboard['repositories'])))
+
+    context['editable'] = request.user.is_authenticated and request.user.is_superuser
+
+    # TODO: Redirect to admin.html when it's ready
+    return render(request, 'index.html', context=context)

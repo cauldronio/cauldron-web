@@ -33,6 +33,8 @@ urlpatterns = [
 
     path('repo-logs/<int:repo_id>', views.repo_logs),
 
+    path('admin_page', views.admin_page),
+
     path('', views.homepage),
-    # path('admin/', admin.site.urls),
+    path('admin/', admin.site.urls),
 ]
