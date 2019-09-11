@@ -1244,6 +1244,7 @@ def request_delete_token(request):
                 if len(task.tokens.all()) == 1 and not task.worker_id:
                     task.delete()
             request.user.githubuser.delete()
+            token.delete()
         return JsonResponse({'status': 'ok'})
 
     elif identity == 'gitlab':
@@ -1254,6 +1255,7 @@ def request_delete_token(request):
                 if len(task.tokens.all()) == 1 and not task.worker_id:
                     task.delete()
             request.user.gitlabuser.delete()
+            token.delete()
         return JsonResponse({'status': 'ok'})
 
     elif identity == 'meetup':
@@ -1264,6 +1266,7 @@ def request_delete_token(request):
                 if len(task.tokens.all()) == 1 and not task.worker_id:
                     task.delete()
             request.user.meetupuser.delete()
+            token.delete()
         return JsonResponse({'status': 'ok'})
 
     else:
