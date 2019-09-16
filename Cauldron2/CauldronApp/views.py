@@ -741,6 +741,7 @@ def start_task(repo, token, refresh=False):
     """
     if not Task.objects.filter(repository=repo, tokens=token).first():
         if refresh or not CompletedTask.objects.filter(repository=repo).first():
+            CompletedTask.objects.filter(repository=repo, old=False).update(old=True)
             task = Task.objects.filter(repository=repo).first()
             if not task:
                 task = Task(repository=repo)
@@ -1509,20 +1510,51 @@ def admin_page(request):
                       context={'title': 'Method Not Allowed',
                                'description': "Only GET methods allowed"})
 
-    dashboards = Dashboard.objects.all()
-
     context = create_context(request)
+
+    dashboards = Dashboard.objects.all()
     if dashboards:
-        logger.info("Dashboards found!")
         context['dashboards'] = []
+
         for dash in dashboards:
             dashboard = dict()
             dashboard['dashboard'] = dash
-            dashboard['repositories'] = Repository.objects.filter(dashboards__id=dash.id).order_by('-id')
+            repos = Repository.objects.filter(dashboards=dash)
+            # Tasks
+            dashboard['tasks_count'] = CompletedTask.objects.filter(repository__in=repos,
+                                                                    old=False).count() + \
+                                       Task.objects.filter(repository__in=repos).count()
+            dashboard['completed_tasks_count'] = CompletedTask.objects.filter(repository__in=repos,
+                                                                              status="COMPLETED",
+                                                                              old=False).count()
+            dashboard['running_tasks_count'] = Task.objects.filter(repository__in=repos).exclude(worker_id="").count()
+            dashboard['pending_tasks_count'] = Task.objects.filter(repository__in=repos,
+                                                                   worker_id="").count()
+            dashboard['error_tasks_count'] = CompletedTask.objects.filter(repository__in=repos,
+                                                                          status="ERROR",
+                                                                          old=False).count()
+            # Data sources (Formerly Repositories)
+            dashboard['repos_count'] = repos.count()
+            dashboard['repos_git_count'] = repos.filter(backend="git").count()
+            dashboard['repos_github_count'] = repos.filter(backend="github").count()
+            dashboard['repos_gitlab_count'] = repos.filter(backend="gitlab").count()
+            dashboard['repos_meetup_count'] = repos.filter(backend="meetup").count()
+
             context['dashboards'].append(dashboard)
-            logger.info("Dasboard found: " + str(dash.name) + " (ID = " + str(dash.id) + ") - Total repositories: " + str(len(dashboard['repositories'])))
 
-    context['editable'] = request.user.is_authenticated and request.user.is_superuser
+    # Total Dashboards
+    context['dash_count'] = Dashboard.objects.count()
+    # Total Tasks
+    context['tasks_count'] = Task.objects.count() + CompletedTask.objects.filter(old=False).count()
+    context['completed_tasks_count'] = CompletedTask.objects.filter(status="COMPLETED", old=False).count()
+    context['running_tasks_count'] = Task.objects.exclude(worker_id="").count()
+    context['pending_tasks_count'] = Task.objects.filter(worker_id="").count()
+    context['error_tasks_count'] = CompletedTask.objects.filter(status="ERROR", old=False).count()
+    # Total Data sources (Formerly Repositories)
+    context['repos_count'] = Repository.objects.exclude(dashboards=None).count()
+    context['repos_git_count'] = Repository.objects.exclude(dashboards=None).filter(backend="git").count()
+    context['repos_github_count'] = Repository.objects.exclude(dashboards=None).filter(backend="github").count()
+    context['repos_gitlab_count'] = Repository.objects.exclude(dashboards=None).filter(backend="gitlab").count()
+    context['repos_meetup_count'] = Repository.objects.exclude(dashboards=None).filter(backend="meetup").count()
 
-    # TODO: Redirect to admin.html when it's ready
-    return render(request, 'index.html', context=context)
+    return render(request, 'admin.html', context=context)

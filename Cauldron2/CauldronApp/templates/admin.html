@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block css%}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<!-- DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css"/>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+
+        <!-- WORKERS AND GENERAL SECTION BEGIN -->
+        <div class="col-md-3">
+            <div class="header-dashboard">
+                <h3>General status</h3>
+            </div>
+            <!-- GENERAL STATUS CARD BEGIN -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <div class="title">
+                        <h4>
+                            <strong>Server</strong>: {{request.get_host}}
+                        </h4>
+                        <h5>
+                            <strong>Total Dashboards</strong>: {{dash_count}}
+                        </h5>
+                        <hr>
+                        <h5>
+                            <strong>Total Tasks</strong>: {{tasks_count}}
+                        </h5>
+                        <h6>
+                            <i class="fas fa-check text-success"></i>
+                            <strong>Completed tasks</strong>: {{completed_tasks_count}}
+                        </h6>
+                        <h6>
+                            <div class="spinner-border spinner-border-sm text-secondary"></div>
+                            <strong>Running tasks</strong>: {{running_tasks_count}}
+                        </h6>
+                        <h6>
+                            <div class="spinner-grow spinner-grow-sm text-primary"></div>
+                            <strong>Pending tasks</strong>: {{pending_tasks_count}}
+                        </h6>
+                        <h6>
+                            <i class="fas fa-exclamation-triangle text-warning"></i>
+                            <strong>Error tasks</strong>: {{error_tasks_count}}
+                        </h6>
+                        <hr>
+                        <h5>
+                            <strong>Total Data Sources</strong>: {{repos_count}}
+                        </h5>
+                        <h6>
+                            <i class="fab fa-git-square"></i>
+                            <strong>Git data sources</strong>: {{repos_git_count}}
+                        </h6>
+                        <h6>
+                            <i class="fab fa-github"></i>
+                            <strong>GitHub data sources</strong>: {{repos_github_count}}
+                        </h6>
+                        <h6>
+                            <i class="fab fa-gitlab"></i>
+                            <strong>Gitlab data sources</strong>: {{repos_gitlab_count}}
+                        </h6>
+                        <h6>
+                            <i class="fab fa-meetup"></i>
+                            <strong>Meetup data sources</strong>: {{repos_meetup_count}}
+                        </h6>
+                    </div>
+                </div>
+            </div>
+            <!-- GENERAL STATUS CARD END -->
+            <div class="header-dashboard">
+                <h3>Workers</h3>
+            </div>
+            <!-- WORKER CARD BEGIN -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <div class="title">
+                        <strong>Worker 1</strong>
+                    </div>
+                </div>
+                <div class="card-body">
+                    Here will appear info about the worker
+                </div>
+            </div>
+            <!-- WORKER CARD END -->
+        </div>
+        <!-- WORKERS AND GENERAL SECTION END -->
+
+        <!-- DASHBOARDS SECTION BEGIN -->
+        <div class="col-md-9">
+            <div class="header-dashboard">
+                {% if dashboards %}
+                <h3>Dashboards</h3>
+                {% else %}
+                <h3>No Dashboards to show</h3>
+                {% endif %}
+            </div>
+            {% if dashboards %}
+            <table id="dashboards-table" class="row-border" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Owner</th>
+                        <th>Created (UTC)</th>
+                        <th>Modified (UTC)</th>
+                        <th>Total tasks</th>
+                        <th>Completed tasks</th>
+                        <th>Running tasks</th>
+                        <th>Pending tasks</th>
+                        <th>Error tasks</th>
+                        <th>Total data sources</th>
+                        <th><i class="fab fa-git-square fa-lg"></i></th>
+                        <th><i class="fab fa-github fa-lg"></i></th>
+                        <th><i class="fab fa-gitlab fa-lg"></i></th>
+                        <th><i class="fab fa-meetup fa-lg"></i></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for dashboard in dashboards %}
+                    <tr>
+                        <td><a href="{% url 'show_dashboard' dash_id=dashboard.dashboard.id %}" target="_blank">
+                            {{dashboard.dashboard.name}}
+                        </a></td>
+                        <td>{{dashboard.dashboard.creator.first_name}}</td>
+                        <td>
+                            <span style="display:none;">{{dashboard.dashboard.created|date:"U"}}</span>
+                            {{dashboard.dashboard.created|date:"Y/m/d P"}}
+                        </td>
+                        <td>
+                            <span style="display:none;">{{dashboard.dashboard.modified|date:"U"}}</span>
+                            {{dashboard.dashboard.modified|date:"Y/m/d P"}}
+                        </td>
+                        <td>{{dashboard.tasks_count}}</td>
+                        <td>{{dashboard.completed_tasks_count}}</td>
+                        <td>{{dashboard.running_tasks_count}}</td>
+                        <td>{{dashboard.pending_tasks_count}}</td>
+                        <td>{{dashboard.error_tasks_count}}</td>
+                        <td>{{dashboard.repos_count}}</td>
+                        <td>{{dashboard.repos_git_count}}</td>
+                        <td>{{dashboard.repos_github_count}}</td>
+                        <td>{{dashboard.repos_gitlab_count}}</td>
+                        <td>{{dashboard.repos_meetup_count}}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+        </div>
+        <!-- DASHBOARDS SECTION END -->
+
+    </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+<script src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.5/jquery-ui.min.js'></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+<!-- DataTables JavaScript -->
+<script src="https://code.jquery.com/jquery-3.3.1.js"></script>
+<script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('#dashboards-table').DataTable({
+      columnDefs: [
+        {
+          targets: [-1, -2, -3, -4, -5, -6, -7, -8, -9, -10],
+          className: 'dt-body-center'
+        }
+      ]
+    });
+} );
+</script>
+{% endblock %}

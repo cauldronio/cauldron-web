@@ -42,6 +42,8 @@ class MeetupUser(models.Model):
 
 
 class Dashboard(models.Model):
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
     name = models.CharField(max_length=255)
     creator = models.ForeignKey(User,
                                 on_delete=models.SET_NULL,
@@ -93,3 +95,4 @@ class CompletedTask(models.Model):
     retries = models.IntegerField()
     status = models.CharField(max_length=255)
     log_file = models.CharField(max_length=255, blank=True)
+    old = models.BooleanField(default=False)

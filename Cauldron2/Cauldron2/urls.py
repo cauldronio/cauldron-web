@@ -25,7 +25,7 @@ urlpatterns = [
     path('delete-token', views.request_delete_token),
 
     path('dashboard', views.request_new_dashboard),
-    path('dashboard/<int:dash_id>', views.request_show_dashboard),
+    path('dashboard/<int:dash_id>', views.request_show_dashboard, name="show_dashboard"),
     path('dashboard/<int:dash_id>/edit', views.request_edit_dashboard),
     path('dashboard/<int:dash_id>/edit-name', views.request_edit_dashboard_name),
     path('dashboard/<int:dash_id>/info', views.request_dash_info),
@@ -33,8 +33,8 @@ urlpatterns = [
 
     path('repo-logs/<int:repo_id>', views.repo_logs),
 
-    path('admin_page', views.admin_page),
+    path('admin-page', views.admin_page),
 
-    path('', views.homepage),
+    path('', views.homepage, name="homepage"),
     path('admin/', admin.site.urls),
 ]
