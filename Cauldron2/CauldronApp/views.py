@@ -444,7 +444,9 @@ def request_edit_dashboard(request, dash_id):
 
     # From here the action should be add
     if backend == 'git':
-        repo = add_to_dashboard(dash, backend, data_in)
+        # Remove the spaces to avoid errors
+        data = data_in.strip()
+        repo = add_to_dashboard(dash, backend, data)
         es_user = ESUser.objects.filter(dashboard=dash).first()
         update_role_dashboard(es_user.role, dash)
         start_task(repo=repo, token=None, refresh=False)
