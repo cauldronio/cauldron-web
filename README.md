@@ -17,7 +17,7 @@ Maybe you could want to modify a live-version of Cauldron to see changes in real
 - Next, you will need to modify the file `<deployment_path>/playbooks/roles/run_cauldron/tasks/run_django.yml` from the [deployment repository](https://gitlab.com/cauldron2/cauldron-deployment), adding the next line at the end of the `volumes` section:
 
   ```bash
-  - "<cauldron_path>:/code/cauldron"
+  - "<cauldron_path>:/code/cauldron-web"
   ```
 
 - The next time you run Cauldron, every change made to your local version of this repository will overwrite the one located in the container of the deployment repository.
