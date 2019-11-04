@@ -42,3 +42,12 @@
 .log-content {
     color: white;
 }
+
+#open-kibana {
+    margin: 0 5px;
+    border-radius: 0%;
+}
+
+#open-kibana-public {
+    text-align: center;
+}

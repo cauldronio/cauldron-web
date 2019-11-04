@@ -6,18 +6,13 @@ from django.contrib.auth.models import User
 import os
 import jwt
 import re
-import ssl
 import logging
 import requests
 from random import choice
 from github import Github
 from gitlab import Gitlab
-from slugify import slugify
 from string import ascii_lowercase, digits
 from urllib.parse import urlparse, urlencode
-from elasticsearch import Elasticsearch
-from elasticsearch.client import CatClient
-from elasticsearch.connection import create_ssl_context
 import time
 
 from Cauldron2.settings import GH_CLIENT_ID, GH_CLIENT_SECRET, GL_CLIENT_ID, GL_CLIENT_SECRET, \
@@ -28,6 +23,7 @@ from Cauldron2.settings import GH_CLIENT_ID, GH_CLIENT_SECRET, GL_CLIENT_ID, GL_
 from CauldronApp.models import GithubUser, GitlabUser, MeetupUser, Dashboard, Repository, Task, CompletedTask, AnonymousUser, \
     ESUser, Token
 from CauldronApp.githubsync import GitHubSync
+from CauldronApp.opendistro_utils import OpendistroApi
 
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -393,8 +389,9 @@ def request_edit_dashboard(request, dash_id):
         return JsonResponse({'status': 'error', 'message': 'We need a url or a owner to add/delete'},
                             status=400)
 
-    es_user = ESUser.objects.filter(dashboard=dash).first()
-    if not es_user:
+    es_users = ESUser.objects.filter(dashboard=dash)
+    if len(es_users) != 2:
+        logger.error("We didn't find 2 ES users: {}", es_users)
         return JsonResponse({'status': 'error',
                              'message': 'Internal server error. Kibana user not found for that dashboard'},
                             status=500)
@@ -405,7 +402,7 @@ def request_edit_dashboard(request, dash_id):
             return JsonResponse({'status': 'error', 'message': 'Repository not found'},
                                 status=404)
         repo.dashboards.remove(dash)
-        update_role_dashboard(role_name=es_user.role, dash=dash)
+        update_role_dashboard(role_name=es_users.first().role, dash=dash)
         if backend != 'git':
             task = Task.objects.filter(repository=repo, tokens__user=dash.creator).first()
             if task and not task.worker_id:
@@ -447,8 +444,8 @@ def request_edit_dashboard(request, dash_id):
         # Remove the spaces to avoid errors
         data = data_in.strip()
         repo = add_to_dashboard(dash, backend, data)
-        es_user = ESUser.objects.filter(dashboard=dash).first()
-        update_role_dashboard(es_user.role, dash)
+        es_users = ESUser.objects.filter(dashboard=dash)
+        update_role_dashboard(es_users.first().role, dash)
         start_task(repo=repo, token=None, refresh=False)
 
         return JsonResponse({'status': 'ok'})
@@ -539,8 +536,8 @@ def manage_add_gh_repo(dash, data):
             repo = add_to_dashboard(dash, 'git', url)
             start_task(repo, None, False)
 
-        es_user = ESUser.objects.filter(dashboard=dash).first()
-        update_role_dashboard(es_user.role, dash)
+        es_users = ESUser.objects.filter(dashboard=dash)
+        update_role_dashboard(es_users.first().role, dash)
 
         return JsonResponse({'status': 'ok'})
 
@@ -553,8 +550,8 @@ def manage_add_gh_repo(dash, data):
         repo_git = add_to_dashboard(dash, 'git', url_git)
         start_task(repo_git, None, False)
 
-        es_user = ESUser.objects.filter(dashboard=dash).first()
-        update_role_dashboard(es_user.role, dash)
+        es_users = ESUser.objects.filter(dashboard=dash)
+        update_role_dashboard(es_users.first().role, dash)
 
         return JsonResponse({'status': 'ok'})
 
@@ -585,8 +582,8 @@ def manage_add_gl_repo(dash, data):
             repo = add_to_dashboard(dash, 'git', url)
             start_task(repo, None, False)
 
-        es_user = ESUser.objects.filter(dashboard=dash).first()
-        update_role_dashboard(es_user.role, dash)
+        es_users = ESUser.objects.filter(dashboard=dash)
+        update_role_dashboard(es_users.first().role, dash)
 
         return JsonResponse({'status': 'ok'})
 
@@ -599,8 +596,8 @@ def manage_add_gl_repo(dash, data):
         repo_git = add_to_dashboard(dash, 'git', url_git)
         start_task(repo_git, None, False)
 
-        es_user = ESUser.objects.filter(dashboard=dash).first()
-        update_role_dashboard(es_user.role, dash)
+        es_users = ESUser.objects.filter(dashboard=dash)
+        update_role_dashboard(es_users.first().role, dash)
 
         return JsonResponse({'status': 'ok'})
 
@@ -627,8 +624,8 @@ def manage_add_meetup_repo(dash, data):
         repo = add_to_dashboard(dash, 'meetup', data['group'])
         start_task(repo, dash.creator.meetupuser.token, False)
 
-        es_user = ESUser.objects.filter(dashboard=dash).first()
-        update_role_dashboard(es_user.role, dash)
+        es_users = ESUser.objects.filter(dashboard=dash)
+        update_role_dashboard(es_users.first().role, dash)
 
         return JsonResponse({'status': 'ok'})
 
@@ -777,76 +774,40 @@ def request_new_dashboard(request):
         # Log in
         login(request, dj_user)
 
-    # Create a new dashboard
     dash = Dashboard.objects.create(name=generate_random_uuid(length=12), creator=request.user)
     dash.name = "Dashboard {}".format(dash.id)
     dash.save()
 
-    # Create the Kibana user associated to that dashboard
-    kib_username = "dashboard{}".format(dash.id)
-    kib_pwd = generate_random_uuid(length=32, delimiter='')
-    create_kibana_user(kib_username, kib_pwd, dash)
+    create_kibana_users(dash)
     # TODO: If something is wrong delete the dashboard
     return HttpResponseRedirect('/dashboard/{}'.format(dash.id))
 
 
-def create_kibana_user(name, psw, dashboard):
+def create_kibana_users(dashboard):
     """
-    Create ES user, role and Role mapping
-    :param name: Name for the user
-    :param psw: Password fot the user
+    Create ES users (public and private), a role and Role mapping
+    :param dashboard: dashboard related to the users created
     :return:
     """
-    logging.info('Creating ES user: <{}>'.format(name))
-    headers = {'Content-Type': 'application/json'}
-    r = requests.put("{}/_opendistro/_security/api/internalusers/{}".format(ES_IN_URL, name),
-                     auth=('admin', ES_ADMIN_PSW),
-                     json={"password": psw},
-                     verify=False,
-                     headers=headers)
-    logging.info("{} - {}".format(r.status_code, r.text))
-    r.raise_for_status()
+    private_username = "dashboard{}".format(dashboard.id)
+    private_password = generate_random_uuid(length=32, delimiter='')
+    pub_username = "publicdashboard{}".format(dashboard.id)
+    pub_password = generate_random_uuid(length=32, delimiter='')
+    role_name = "roledashboard{}".format(dashboard.id)
 
-    role_name = "role_{}".format(name)
-    logging.info('Creating ES role for user: <{}>'.format(name))
-    r = requests.put("{}/_opendistro/_security/api/roles/{}".format(ES_IN_URL, role_name),
-                     auth=('admin', ES_ADMIN_PSW),
-                     json={"indices": {'none':  {"*": ["READ"]}}},
-                     verify=False,
-                     headers=headers)
-    logging.info("{} - {}".format(r.status_code, r.text))
-    r.raise_for_status()
+    odfe_api = OpendistroApi(ES_IN_URL, ES_ADMIN_PSW)
+    odfe_api.create_user(private_username, private_password)
+    odfe_api.create_user(pub_username, pub_password)
+    odfe_api.create_role(role_name)
+    odfe_api.create_mapping([private_username, pub_username], role_name)
 
-    logging.info('Creating ES role mapping for user: <{}>'.format(name))
-    r = requests.put("{}/_opendistro/_security/api/rolesmapping/{}".format(ES_IN_URL, role_name),
-                     auth=('admin', ES_ADMIN_PSW),
-                     json={"users": [name]},
-                     verify=False,
-                     headers=headers)
-    logging.info("{} - {}".format(r.status_code, r.text))
-    r.raise_for_status()
+    private_es_user = ESUser(name=private_username, password=private_password,
+                             role=role_name, dashboard=dashboard, private=True)
+    private_es_user.save()
 
-    # We need to force the creation of his index by login in
-    jwt_token = get_kibana_jwt(name, role_name)
-    r = requests.get("{}/?jwtToken={}".format(KIB_IN_URL, jwt_token), verify=False)
-    r.raise_for_status()
-
-    # We need the name of the index created
-    context = create_ssl_context()
-    context.check_hostname = False
-    context.verify_mode = ssl.CERT_NONE
-    es = Elasticsearch([ES_IN_HOST], scheme=ES_IN_PROTO, port=ES_IN_PORT,
-                       http_auth=("admin", ES_ADMIN_PSW), ssl_context=context)
-    cat = CatClient(es)
-    index = cat.indices(index=['.kibana_*_{}'.format(name)], h=["index"]).strip()
-    if not index:
-        raise Exception('Internal server error. Index not found for that kibana user')
-
-    # We copy the default panels here now
-    es.reindex(body={"source": {"index": ".kibana_*_defaultpanels"}, "dest": {"index": index}})
-
-    es_user = ESUser(name=name, password=psw, role=role_name, dashboard=dashboard, index=index)
-    es_user.save()
+    public_es_user = ESUser(name=pub_username, password=pub_password,
+                            role=role_name, dashboard=dashboard, private=False)
+    public_es_user.save()
 
 
 def add_to_dashboard(dash, backend, url):
@@ -924,6 +885,8 @@ def update_role(role_name, indices, repos):
                 dls['terms'][filter_field].append(repo.url)
 
         data[role_name]['indices'][index]['_dls_'] = str(dls).replace("'", "\"")
+
+    data[role_name]['indices']['?kibana'] = {'*': ['READ']}
 
     r = requests.patch("{}/_opendistro/_security/api/roles".format(ES_IN_URL),
                        auth=('admin', ES_ADMIN_PSW),
@@ -1172,6 +1135,13 @@ def request_show_dashboard(request, dash_id):
     if dash:
         context['dashboard'] = dash
         context['repositories'] = Repository.objects.filter(dashboards__id=dash_id).order_by('-id')
+        public_esuser = ESUser.objects.filter(dashboard=dash, private=False).first()
+        if not public_esuser:
+            return render(request, 'error.html', status=405,
+                          context={'title': 'Error with public dashboards',
+                                   'description': "Maybe the data is not migrated. Please open an issue"})
+        jwt_key = get_kibana_jwt(public_esuser.name, public_esuser.role)
+        context['public_link'] = "{}/?jwtToken={}&security_tenant=global".format(KIB_OUT_URL, jwt_key)
 
     context['editable'] = request.user.is_authenticated and request.user == dash.creator or request.user.is_superuser
     context['dash_id'] = dash_id
@@ -1190,21 +1160,21 @@ def request_kibana(request, dash_id):
     if not dash:
         return JsonResponse({'status': 'error', 'message': 'Dashboard not found'}, status=404)
 
-    if not request.user.is_authenticated:
-        return JsonResponse({'status': 'error', 'message': 'You are not authenticated'}, status=401)
-
-    if request.user != dash.creator and not request.user.is_superuser:
-        return JsonResponse({'status': 'error', 'message': 'This is not your dashboard'}, status=403)
-
     if request.method != 'GET':
         return JsonResponse({'status': 'error', 'message': 'Only GET method allowed'}, status=405)
 
-    es_user = ESUser.objects.filter(dashboard=dash).first()
-    if not es_user:
-        return JsonResponse({'status': 'error', 'message': 'Internal server error. Kibana user for that dashboard not found'}, status=500)
+    owner = request.user.is_authenticated and request.user == dash.creator
+
+    if owner or request.user.is_superuser:
+        es_user = ESUser.objects.filter(dashboard=dash, private=True).first()
+    else:
+        es_user = ESUser.objects.filter(dashboard=dash, private=False).first()
+
     jwt_key = get_kibana_jwt(es_user.name, es_user.role)
 
-    return HttpResponseRedirect(KIB_OUT_URL + "/?jwtToken=" + jwt_key)
+    url = "{}/?jwtToken={}&security_tenant=global".format(KIB_OUT_URL, jwt_key)
+
+    return HttpResponseRedirect(url)
 
 
 def get_kibana_jwt(user, roles):
@@ -1496,6 +1466,7 @@ def generate_random_uuid(length=16, chars=ascii_lowercase + digits, split=4, del
         return generate_random_uuid(length=length, chars=chars, split=split, delimiter=delimiter)
     except User.DoesNotExist:
         return username
+
 
 def admin_page(request):
     """

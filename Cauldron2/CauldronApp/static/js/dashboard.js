@@ -20,6 +20,20 @@ $(document).ready(function(){
     $('.status-filters a').click(onFilterClick);
 
     $('#edit-name').click(onClickEditName);
+
+    $("input#url-public-link").click(function () {
+       $(this).select();
+    });
+
+    $('#copy-share-link-kibana').click(function(ev){
+        ev.preventDefault();
+        copy_input('url-public-link-kibana');
+    });
+    $('#copy-share-link-project').click(function(ev){
+        ev.preventDefault('url-public-link-project');
+        copy_input('url-public-link-project');
+    });
+
     getInfo();
 });
 
@@ -54,6 +68,13 @@ function filterTable() {
     $('#btn-filter-status').html(`status: ${StatusFilter}`);
     $('#btn-filter-backend').html(`backend: ${BackendFilter}`);
 }
+
+function copy_input(id_input) {
+    var copyText = document.getElementById(id_input);
+    copyText.select();
+    document.execCommand("copy");
+}
+
 
 function onClickEditName(ev) {
     ev.preventDefault();

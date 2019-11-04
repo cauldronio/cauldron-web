@@ -55,8 +55,8 @@ class ESUser(models.Model):
     name = models.CharField(max_length=255, unique=True)
     password = models.CharField(max_length=255)
     role = models.CharField(max_length=255)
-    dashboard = models.OneToOneField(Dashboard, on_delete=models.CASCADE, unique=True)
-    index = models.CharField(max_length=255, blank=True, default="")
+    dashboard = models.ForeignKey(Dashboard, on_delete=models.CASCADE)
+    private = models.BooleanField(default=True)
 
 
 class Repository(models.Model):

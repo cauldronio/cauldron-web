@@ -18,9 +18,9 @@
         <!-- ADD REPOS SIDE -->
         {% if editable %}
         <div class="col-md-3">
-            <div class="header-dashboard">
-                  <h4>Add data sources</h4>
-              </div>
+          <div class="header-dashboard">
+            <h4>Add data sources</h4>
+          </div>
           <!-- GITHUB CARD -->
           <div class="card shadow-sm">
             <div class="card-header">
@@ -167,7 +167,7 @@
               <div class="header-dashboard">
                 {% if dashboard %}
                   <div class="row">
-                    <div class="col-md-9">
+                    <div class="col-md-7">
                       <h2>
                         <strong><span id="dash_name">{{dashboard.name}}</span></strong>
                         {% if editable %}
@@ -175,15 +175,43 @@
                         {% endif %}
                       </h2>
                     </div>
-                    <div class="col-md-3">
-                      {% if editable %}
-                      <a id="open-kibana"
-                         class="btn btn-primary {% if repositories|length == 0 %}disabled{% endif %}"
-                         href="/dashboard/{{dash_id}}/kibana"
-                         target="_blank">
-                        View project data
-                      </a>
-                      {% endif %}
+                    <div class="col-md-5">
+                      <div class="btn-group btn-group-lg">
+                        <a id="open-kibana"
+                          class="btn btn-primary {% if repositories|length == 0 or not editable %}disabled{% endif %}"
+                          href="/dashboard/{{dash_id}}/kibana"
+                          target="_blank">
+                          Open private visualization
+                        </a>
+
+                        <button type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                          id="btn-public-link"
+                          class="btn btn-primary {% if repositories|length == 0 %}disabled{% endif %}">
+                          Public visualization
+                        </button>
+
+                        <div class="dropdown-menu">
+                          <form class="px-3 py-2">
+                            <div class="form-group">
+                              <a id="open-kibana-public"
+                              class="btn btn-primary btn-block {% if repositories|length == 0 %}disabled{% endif %}"
+                              href="{{public_link}}"
+                              target="_blank">
+                              Open
+                              </a>
+                            </div>
+                            <div class="form-group">
+                              <label for="url-public-link-kibana">Share the visualization:</label>
+                              <div class="input-group">
+                                <input type="text" class="form-control" id="url-public-link-kibana" value="{{public_link}}" readonly>
+                                <div class="input-group-append">
+                                  <button class="btn btn-outline-primary" type="button" id="copy-share-link-kibana" data-toggle="tooltip" data-placement="bottom" title="Copy"><i class="far fa-copy"></i></button>
+                                </div>
+                              </div>
+                            </div>
+                          </form>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 {% else %}
@@ -349,7 +377,7 @@
 
 
 {% block javascript %}
-<script src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.5/jquery-ui.min.js'>
-</script><script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+<script src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.5/jquery-ui.min.js'></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
 <script src="{% static 'js/dashboard.js' %}" charset="utf-8"></script>
 {% endblock %}
