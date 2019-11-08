@@ -26,8 +26,8 @@
             <div class="card-header">
               <div class="title">
                 <i class="fab fa-github"></i><strong> GitHub</strong>
-                <button type="button" class="btn btn-info btn-sm" data-toggle="tooltip" style="float:right" title="This will add GitHub and Git repositories to the analysis">
-                  <i class="fas fa-info"><span class="sr-only"> GitHub info</span></i>
+                <button type="button" class="btn btn-light btn-sm" data-toggle="tooltip" style="float:right" title="This will add GitHub and Git repositories to the analysis">
+                  <i class="fas fa-info-circle"><span class="sr-only"> GitHub info</span></i>
                 </button>
               </div>
             </div>
@@ -57,8 +57,8 @@
             <div class="card-header">
               <div class="title">
                 <i class="fab fa-git-square"></i><strong> Git</strong>
-                <button type="button" class="btn btn-info btn-sm" data-toggle="tooltip" style="float:right" title="This will add Git repositories to the analysis">
-                  <i class="fas fa-info"><span class="sr-only"> Git info</span></i>
+                <button type="button" class="btn btn-light btn-sm" data-toggle="tooltip" style="float:right" title="This will add Git repositories to the analysis">
+                  <i class="fas fa-info-circle"><span class="sr-only"> Git info</span></i>
                 </button>
               </div>
             </div>
@@ -87,8 +87,8 @@
             <div class="card-header">
               <div class="title">
                 <i class="fab fa-gitlab"></i><strong> GitLab</strong>
-                <button type="button" class="btn btn-info btn-sm" data-toggle="tooltip" style="float:right" title="This will add GitLab and Git repositories to the analysis">
-                  <i class="fas fa-info"><span class="sr-only"> GitLab info</span></i>
+                <button type="button" class="btn btn-light btn-sm" data-toggle="tooltip" style="float:right" title="This will add GitLab and Git repositories to the analysis">
+                  <i class="fas fa-info-circle"><span class="sr-only"> GitLab info</span></i>
                 </button>
               </div>
             </div>
@@ -122,8 +122,8 @@
             <div class="card-header">
               <div class="title">
                 <i class="fab fa-meetup"></i><strong> Meetup</strong>
-                <button type="button" class="btn btn-info btn-sm" data-toggle="tooltip" style="float:right" title="This will add Meetup group to the analysis">
-                  <i class="fas fa-info"><span class="sr-only"> Meetup info</span></i>
+                <button type="button" class="btn btn-light btn-sm" data-toggle="tooltip" style="float:right" title="This will add Meetup group to the analysis">
+                  <i class="fas fa-info-circle"><span class="sr-only"> Meetup info</span></i>
                 </button>
               </div>
             </div>
@@ -181,13 +181,13 @@
                           class="btn btn-primary {% if repositories|length == 0 or not editable %}disabled{% endif %}"
                           href="/dashboard/{{dash_id}}/kibana"
                           target="_blank">
-                          Open private visualization
+                          <i class="fa fa-chart-bar"></i> Private dashboard
                         </a>
 
                         <button type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
                           id="btn-public-link"
                           class="btn btn-primary {% if repositories|length == 0 %}disabled{% endif %}">
-                          Public visualization
+                          <i class="fa fa-chart-bar"></i> Public dashboard
                         </button>
 
                         <div class="dropdown-menu">
@@ -201,7 +201,7 @@
                               </a>
                             </div>
                             <div class="form-group">
-                              <label for="url-public-link-kibana">Share the visualization:</label>
+                              <label for="url-public-link-kibana">Share:</label>
                               <div class="input-group">
                                 <input type="text" class="form-control" id="url-public-link-kibana" value="{{public_link}}" readonly>
                                 <div class="input-group-append">
@@ -218,15 +218,14 @@
                   <h3>Dashboard not found</h3>
                 {% endif %}
               </div>
-            <br>
             <div class="body-dashboard pt-2">
               {% if dashboard %}
               <div>
-                <h5>
-                  <strong><span id="num-repos-filter">0</span> data sources found</strong>
+                <div>
+                  <strong><span id="num-repos-filter">0</span></strong> data sources found
 
                   <span class="dropdown backend-filters">
-                    <button class="badge btn btn-primary dropdown-toggle" type="button" id="btn-filter-backend" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <button class="badge btn btn-light dropdown-toggle" type="button" id="btn-filter-backend" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 
                     </button>
                     <div class="dropdown-menu" aria-labelledby="btn-filter-backend">
@@ -239,7 +238,7 @@
                   </span>
 
                   <span class="dropdown status-filters">
-                    <button class="badge btn btn-primary dropdown-toggle" type="button" id="btn-filter-status" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <button class="badge btn btn-light dropdown-toggle" type="button" id="btn-filter-status" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 
                     </button>
                     <div class="dropdown-menu" aria-labelledby="btn-filter-backend">
@@ -257,7 +256,7 @@
                     {% endif %}
                   </p>
 
-                </h5>
+                </div>
                 <div class="table-responsive">
                   <table class="table table-hover repos-table">
                     <thead>
@@ -296,7 +295,7 @@
                         </td>
                         <td>
                           <i class="fas fa-calendar-alt text-muted"></i>
-                          <span class="repo-last-update">
+                          <span class="repo-last-update" style="font-size: small;">
                               <div class="spinner-border spinner-border-sm" role="status">
                                 <span class="sr-only">Loading...</span>
                               </div>
@@ -304,21 +303,27 @@
                         </td>
                         <td>
                           <i class="fas fa-stopwatch text-muted"></i>
-                          <span class="repo-duration">
+                          <span class="repo-duration" style="font-size: small;">
                             <div class="spinner-border spinner-border-sm" role="status">
                               <span class="sr-only">Loading...</span>
                             </div>
                           </span>
                         </td>
                         <td>
-                          <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#logModal" data-repo="{{repo.id}}">Logs</button>
+                          <button type="button" class="btn btn-sm btn-info" data-toggle="modal" data-target="#logModal" data-repo="{{repo.id}}">
+                            <i class="fa fa-info"></i> <small>Logs</small>
+                          </button>
                         </td>
                         {% if editable %}
                         <td>
-                            <button type="button" class="btn btn-danger btn-delete" data-repo="{{repo.id}}">Delete</button>
+                            <button type="button" class="btn btn-sm btn-danger btn-delete" data-repo="{{repo.id}}">
+                              <i class="fa fa-trash-alt"></i> <small>Delete</small>
+                            </button>
                         </td>
                         <td>
-                            <button type="button" class="btn btn-primary btn-reanalyze" data-repo="{{repo.id}}">Refresh</button>
+                            <button type="button" class="btn btn-sm btn-light btn-reanalyze" data-repo="{{repo.id}}">
+                              <i class="fa fa-sync"></i> <small>Refresh</small>
+                            </button>
                         </td>
                         {% endif %}
                       </tr>
