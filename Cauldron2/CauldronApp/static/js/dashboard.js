@@ -122,7 +122,8 @@ function onClickEditName(ev) {
 
 
 function deleteRepo(event) {
-    var id_repo = event.target.dataset['repo'];
+    var button = $(event.currentTarget);
+    var id_repo = button.attr('data-repo');
     var backend = $(`tr#repo-${id_repo}`).attr('data-backend');
     var url_repo = $(`tr#repo-${id_repo} td.repo-url`).html();
 
@@ -146,7 +147,8 @@ function deleteRepo(event) {
 }
 
 function reanalyzeRepo(event){
-    var id_repo = event.target.dataset['repo'];
+    var button = $(event.currentTarget);
+    var id_repo = button.attr('data-repo');
     var backend = $(`tr#repo-${id_repo}`).attr('data-backend');
     var url_repo = $(`tr#repo-${id_repo} td.repo-url`).html();
 
@@ -167,7 +169,7 @@ function reanalyzeRepo(event){
         .fail(function (data) {
             showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', 5000);
         })
-        .always(function(){reanalyzeRepo.html('Refresh')})
+        .always(function(){reanalyzeRepo.html('<i class="fa fa-sync"></i> <small>Refresh</small>')})
 }
 
 function reanalyzeEveryRepo(event){
@@ -297,7 +299,7 @@ function pad(num, size) {
  *     LOGS FUNCTIONS       *
  ****************************/
 function onShowLogsModal(event) {
-    var button = $(event.relatedTarget);
+    var button = $(event.currentTarget);
     var id_repo = button.attr('data-repo');
     if (LogsInterval) {
         clearInterval(LogsInterval);
