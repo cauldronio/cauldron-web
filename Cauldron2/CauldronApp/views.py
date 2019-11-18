@@ -887,6 +887,7 @@ def update_role(role_name, indices, repos):
         data[role_name]['indices'][index]['_dls_'] = str(dls).replace("'", "\"")
 
     data[role_name]['indices']['?kibana'] = {'*': ['READ']}
+    data[role_name]['indices']['?kibana_*_${user_name}'] = {'*': ['INDICES_ALL']}
 
     r = requests.patch("{}/_opendistro/_security/api/roles".format(ES_IN_URL),
                        auth=('admin', ES_ADMIN_PSW),
