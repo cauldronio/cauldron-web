@@ -252,7 +252,7 @@
                   <p>
                     <small id="general-status"></small>
                     {% if editable %}
-                    <button type="button" class="btn btn-light btn-reanalyze-all" style="float:right; margin-bottom:10px" data-repo="{{repo.id}}"><i class="fa fa-sync"></i> Refresh all</button>
+                    <button type="button" class="btn btn-outline-dark btn-reanalyze-all" style="float:right; margin-bottom:10px" data-repo="{{repo.id}}"><i class="fa fa-sync"></i> Refresh all</button>
                     {% endif %}
                   </p>
 
@@ -310,18 +310,18 @@
                           </span>
                         </td>
                         <td>
-                          <button type="button" class="btn btn-sm btn-info" data-toggle="modal" data-target="#logModal" data-repo="{{repo.id}}">
+                          <button type="button" class="btn btn-sm btn-outline-info" data-toggle="modal" data-target="#logModal" data-repo="{{repo.id}}">
                             <i class="fa fa-info"></i> <small>Logs</small>
                           </button>
                         </td>
                         {% if editable %}
                         <td>
-                            <button type="button" class="btn btn-sm btn-danger btn-delete" data-repo="{{repo.id}}">
+                            <button type="button" class="btn btn-sm btn-outline-danger btn-delete" data-repo="{{repo.id}}">
                               <i class="fa fa-trash-alt"></i> <small>Delete</small>
                             </button>
                         </td>
                         <td>
-                            <button type="button" class="btn btn-sm btn-light btn-reanalyze" data-repo="{{repo.id}}">
+                            <button type="button" class="btn btn-sm btn-outline-dark btn-reanalyze" data-repo="{{repo.id}}">
                               <i class="fa fa-sync"></i> <small>Refresh</small>
                             </button>
                         </td>
