@@ -14,40 +14,50 @@ class OpendistroApi:
 
     def create_user(self, username, password):
         """
-        Create a new OpenDistro user with the defined user and password
-        :param username: Name for the OpenDistro user
-        :param password: Password for the user
+        Create a new OpenDistro user with the defined parameters
+        :param username: name for the user
+        :param password: password for the user
         :return:
         """
         headers = {'Content-Type': 'application/json'}
 
+        data = {"password": password}
+
         logger.info('Creating ODFE user: <{}>'.format(username))
         r = requests.put("{}/_opendistro/_security/api/internalusers/{}".format(self.es_url, username),
                          auth=('admin', self.admin_password),
-                         json={"password": password},
+                         json=data,
                          verify=False,
                          headers=headers)
         logger.info("Result creating user: {} - {}".format(r.status_code, r.text))
         return r.ok
 
-    def create_role(self, name, tenant_name=None):
+    def put_role(self, name, permissions=None):
         """
-        Create a new OpenDistro role
+        Creates or replaces the specified role and apply/remove permissions
+        Docs: https://opendistro.github.io/for-elasticsearch-docs/docs/security-access-control/api/#create-role
         :param name: name for the role
-        :param tenant_name: name for the tenant to be included in the role
+        :param permissions: permissions for the role. If not permissions defined, it will
+                            only have read permissions over a index named 'none'
         :return:
         """
-        data = {"indices":
-                {'none': {"*": ["READ"]}},
-                }
-        if tenant_name:
-            data["tenants"]: {tenant_name: 'RW'}
+        if not permissions:
+            permissions = {
+                "index_permissions": [{
+                    "index_patterns": [
+                        "none"
+                    ],
+                    "allowed_actions": [
+                        "read"
+                    ]
+                }]
+            }
         headers = {'Content-Type': 'application/json'}
 
-        logger.info('Creating ODFE role: <{}>'.format(name))
+        logger.info('Put ODFE role: <{}> with permissions'.format(name, permissions))
         r = requests.put("{}/_opendistro/_security/api/roles/{}".format(self.es_url, name),
                          auth=('admin', self.admin_password),
-                         json=data,
+                         json=permissions,
                          verify=False,
                          headers=headers)
         logger.info("{} - {}".format(r.status_code, r.text))
@@ -63,10 +73,12 @@ class OpendistroApi:
 
         headers = {'Content-Type': 'application/json'}
 
+        data = {"users": users}
+
         logger.info('Creating ES role mapping between: <{}> and <{}>'.format(users, role_name))
         r = requests.put("{}/_opendistro/_security/api/rolesmapping/{}".format(self.es_url, role_name),
                          auth=('admin', self.admin_password),
-                         json={"users": users},
+                         json=data,
                          verify=False,
                          headers=headers)
         logging.info("{} - {}".format(r.status_code, r.text))

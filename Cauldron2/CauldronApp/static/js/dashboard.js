@@ -299,7 +299,7 @@ function pad(num, size) {
  *     LOGS FUNCTIONS       *
  ****************************/
 function onShowLogsModal(event) {
-    var button = $(event.currentTarget);
+    var button = $(event.relatedTarget);
     var id_repo = button.attr('data-repo');
     if (LogsInterval) {
         clearInterval(LogsInterval);

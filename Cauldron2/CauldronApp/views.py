@@ -39,6 +39,34 @@ MEETUP_ACCESS_OAUTH = 'https://secure.meetup.com/oauth2/access'
 MEETUP_URI_IDENTITY = 'https://secure.meetup.com/oauth2/authorize'
 MEETUP_REDIRECT_PATH = '/meetup-login'
 
+BACKEND_INDICES = [
+    {
+        "name": "git_aoc_enriched_index",
+        "backend": "git",
+        "url_field": "repository"
+    },
+    {
+        "name": "git_enrich_index",
+        "backend": "git",
+        "url_field": "repo_name"
+    },
+    {
+        "name": "github_enrich_index",
+        "backend": "github",
+        "url_field": "repository"
+    },
+    {
+        "name": "gitlab_enriched_index",
+        "backend": "gitlab",
+        "url_field": "repository"
+    },
+    {
+        "name": "meetup_enriched_index",
+        "backend": "meetup",
+        "url_field": "tag"
+    },
+]
+
 ES_IN_URL = "{}://{}:{}".format(ES_IN_PROTO, ES_IN_HOST, ES_IN_PORT)
 KIB_IN_URL = "{}://{}:{}{}".format(KIB_IN_PROTO, KIB_IN_HOST, KIB_IN_PORT, KIB_PATH)
 
@@ -817,7 +845,7 @@ def create_kibana_users(dashboard):
     odfe_api = OpendistroApi(ES_IN_URL, ES_ADMIN_PSW)
     odfe_api.create_user(private_username, private_password)
     odfe_api.create_user(pub_username, pub_password)
-    odfe_api.create_role(role_name)
+    odfe_api.put_role(role_name)
     odfe_api.create_mapping([private_username, pub_username], role_name)
 
     private_es_user = ESUser(name=private_username, password=private_password,
@@ -845,171 +873,76 @@ def add_to_dashboard(dash, backend, url):
     return repo_obj
 
 
-def get_enriched_indices(backend):
+def update_role_dashboard(role_name, dashboard):
     """
-    Return the names of the enriched indices
-    :param backend: Git, GitHub, GitLab or Meetup
-    :return: A list with the names of the indices
-    """
-    if backend == 'git':
-        return ["git_aoc_enriched_{}".format(ES_INDEX_SUFFIX), "git_enrich_{}".format(ES_INDEX_SUFFIX)]
-    elif backend == 'github':
-        return ["github_enrich_{}".format(ES_INDEX_SUFFIX)]
-    elif backend == 'gitlab':
-        return ["gitlab_enriched_{}".format(ES_INDEX_SUFFIX)]
-    elif backend == 'meetup':
-        return ["meetup_enriched_{}".format(ES_INDEX_SUFFIX)]
-    raise Exception('Unknown backend')
+    Update the role with the current state of a dashboard
+    Include read permission for .kibana
+    Include read/write permissions for private .kibana
 
-
-def update_role_dashboard(role_name, dash):
-    repos = Repository.objects.filter(dashboards=dash)
-    enriched_indices = get_enriched_indices('git') + \
-                       get_enriched_indices('github') + \
-                       get_enriched_indices('gitlab') + \
-                       get_enriched_indices('meetup')
-
-    return update_role(role_name, enriched_indices, repos)
-
-
-def update_role(role_name, indices, repos):
-    """
-    Update the role with the current state of the dashboard
-    :param role_name:
-    :param indices:
-    :param repos:
+    :param role_name: name of the role
+    :param dashboard: dashboard to be updated with the role
     :return:
     """
+    repositories = Repository.objects.filter(dashboards=dashboard)
 
-    headers = {'Content-Type': 'application/json'}
-    r = requests.get("{}/_opendistro/_security/api/roles/{}".format(ES_IN_URL, role_name),
-                     auth=('admin', ES_ADMIN_PSW),
-                     verify=False,
-                     headers=headers)
+    permissions = {
+        "index_permissions": [],
+        "cluster_permissions": [],
+        "tenant_permissions": []
+    }
 
-    data = r.json()
-    data[role_name]['indices'] = dict()
+    for index in BACKEND_INDICES:
+        repos_index = repositories.filter(backend=index['backend'])
+        url_list = [repo.url for repo in repos_index]
 
-    for index in indices:
-        data[role_name]['indices'][index] = {'*': ['READ'],
-                                             '_dls_': '{"terms": {}}'}
+        if len(url_list) == 0:
+            # Include permissions to the repository '0' to avoid errors in visualizations
+            url_list = ["0"]
 
-        filter_field = get_filter_field(index)
+        dls = {
+            'terms': {
+                index['url_field']: url_list
+            }
+        }
+        str_dls = str(dls).replace("'", "\"")
 
-        dls = eval(data[role_name]['indices'][index]['_dls_'])
-        dls['terms'][filter_field] = []
+        index_permissions = {
+            'index_patterns': [index['name']],
+            'dls': str_dls,
+            'allowed_actions': [
+                'read'
+            ]
+        }
+        permissions["index_permissions"].append(index_permissions)
 
-        for repo in repos:
-            if index in get_enriched_indices(repo.backend):
-                dls['terms'][filter_field].append(repo.url)
+    kibana_permissions = {
+        'index_patterns': ['?kibana'],
+        'allowed_actions': [
+            'read'
+        ]
+    }
+    permissions["index_permissions"].append(kibana_permissions)
 
-        data[role_name]['indices'][index]['_dls_'] = str(dls).replace("'", "\"")
+    private_kibana_permissions = {
+        'index_patterns': ['?kibana_*_${user_name}'],
+        'allowed_actions': [
+            'read', 'delete', 'manage', 'index'
+        ]
+    }
+    permissions["index_permissions"].append(private_kibana_permissions)
 
-    data[role_name]['indices']['?kibana'] = {'*': ['READ']}
-    data[role_name]['indices']['?kibana_*_${user_name}'] = {'*': ['INDICES_ALL']}
+    global_tenant_permissions = {
+        "tenant_patterns": [
+            "global_tenant"
+        ],
+        "allowed_actions": [
+            "kibana_all_read"
+        ]
+    }
+    permissions["tenant_permissions"].append(global_tenant_permissions)
 
-    r = requests.patch("{}/_opendistro/_security/api/roles".format(ES_IN_URL),
-                       auth=('admin', ES_ADMIN_PSW),
-                       json=[{"op": "add", "path": "/{}".format(role_name), "value": data[role_name]}],
-                       verify=False,
-                       headers=headers)
-    r.raise_for_status()
-
-
-# TODO: Get all repos in the dashboard, not just the new ones. Same with indices
-def add_role_repos(role_name, indices, repos):
-    """
-    Add multiple repositories to a role
-    :param role_name:
-    :param indices:
-    :param repos:
-    :return:
-    """
-
-    headers = {'Content-Type': 'application/json'}
-    r = requests.get("{}/_opendistro/_security/api/roles/{}".format(ES_IN_URL, role_name),
-                     auth=('admin', ES_ADMIN_PSW),
-                     verify=False,
-                     headers=headers)
-
-    data = r.json()
-    if role_name not in data:
-        data[role_name] = dict()
-        data[role_name]['indices'] = dict()
-
-    for index in indices:
-        if index not in data[role_name]['indices']:
-            data[role_name]['indices'][index] = {'*': ['READ']}
-
-        # TODO: Check meetup indices
-        filter_field = get_filter_field(index)
-
-        if "_dls_" not in data[role_name]['indices'][index]:
-            data[role_name]['indices'][index]["_dls_"] = '{"terms": {}}'
-
-        dls = eval(data[role_name]['indices'][index]["_dls_"])
-        if filter_field not in dls['terms']:
-            dls['terms'][filter_field] = []
-
-        for repo in repos:
-            if index in get_enriched_indices(repo.backend):
-                dls['terms'][filter_field].append(repo.url)
-
-        data[role_name]['indices'][index]["_dls_"] = str(dls).replace("'", "\"")
-
-    r = requests.patch("{}/_opendistro/_security/api/roles".format(ES_IN_URL),
-                       auth=('admin', ES_ADMIN_PSW),
-                       json=[{"op": "add", "path": "/{}".format(role_name), "value": data[role_name]}],
-                       verify=False,
-                       headers=headers)
-    r.raise_for_status()
-
-
-def delete_role_repos(role_name, indices, repos):
-    """
-    Delete multiple repositories from a role
-    :param role_name:
-    :param indices:
-    :param repos:
-    :return:
-    """
-
-    headers = {'Content-Type': 'application/json'}
-    r = requests.get("{}/_opendistro/_security/api/roles/{}".format(ES_IN_URL, role_name),
-                     auth=('admin', ES_ADMIN_PSW),
-                     verify=False,
-                     headers=headers)
-
-    data = r.json()
-    if role_name not in data:
-        return
-
-    for index in indices:
-        if index not in data[role_name]['indices']:
-            continue
-
-        filter_field = get_filter_field(index)
-
-        if "_dls_" not in data[role_name]['indices'][index]:
-            continue
-
-        dls = eval(data[role_name]['indices'][index]["_dls_"])
-        if filter_field not in dls['terms']:
-            continue
-
-        for repo in repos:
-            if repo.url not in dls['terms'][filter_field]:
-                continue
-            dls['terms'][filter_field].remove(repo.url)
-
-        data[role_name]['indices'][index]["_dls_"] = str(dls).replace("'", "\"")
-
-    r = requests.patch("{}/_opendistro/_security/api/roles".format(ES_IN_URL),
-                       auth=('admin', ES_ADMIN_PSW),
-                       json=[{"op": "add", "path": "/{}".format(role_name), "value": data[role_name]}],
-                       verify=False,
-                       headers=headers)
-    r.raise_for_status()
+    odfe_api = OpendistroApi(ES_IN_URL, ES_ADMIN_PSW)
+    odfe_api.put_role(role_name, permissions)
 
 
 def get_dashboard_status(dash_id):
@@ -1064,23 +997,6 @@ def general_stat_dash(repos):
             general = 'COMPLETED'
         # Unknown status not included
     return general
-
-
-def get_filter_field(index):
-    """
-    Get the field where the repository or group
-    is defined in the document
-    :param index: Index name
-    :return:
-    """
-    if index == 'git_enrich_index':
-        return 'repo_name'
-    elif index == 'meetup_enriched_index':
-        return 'tag'
-    elif index in ('git_aoc_enriched_index', 'github_enrich_index', 'gitlab_enriched_index'):
-        return "repository"
-    else:
-        raise Exception('Unknown index: {}'.format(index))
 
 
 def get_dashboard_info(dash_id):
@@ -1359,30 +1275,6 @@ def repo_logs(request, repo_id):
         'more': more
     }
     return JsonResponse(response)
-
-
-def parse_url(url):
-    """
-    Should be validated by valid_github_url
-    :param url:
-    :return:
-    """
-    o = urlparse(url)
-    return o.path.split('/')[1:]
-
-
-def valid_github_url(url):
-    o = urlparse(url)
-    return (o.scheme == 'https' and
-            o.netloc == 'github.com' and
-            len(o.path.split('/')) == 3)
-
-
-def valid_gitlab_url(url):
-    o = urlparse(url)
-    return (o.scheme == 'https' and
-            o.netloc == 'gitlab.com' and
-            len(o.path.split('/')) == 3)
 
 
 def get_repo_status(repo):
