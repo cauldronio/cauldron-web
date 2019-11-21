@@ -81,12 +81,15 @@ def homepage(request):
 
 # TODO: Add state
 def request_github_login_callback(request):
+    context = create_context(request)
+
     # Github authentication
     code = request.GET.get('code', None)
     if not code:
+        context['title'] = "Bad Request"
+        context['description'] = "There isn't a code in the GitHub callback"
         return render(request, 'error.html', status=400,
-                      context={'title': 'Bad Request',
-                               'description': "There isn't a code in the GitHub callback"})
+                      context=context)
 
     r = requests.post(GH_ACCESS_OAUTH,
                       data={'client_id': GH_CLIENT_ID,
@@ -95,15 +98,17 @@ def request_github_login_callback(request):
                       headers={'Accept': 'application/json'})
     if r.status_code != requests.codes.ok:
         logging.error('GitHub API error %s %s %s', r.status_code, r.reason, r.text)
+        context['title'] = "GitHub error"
+        context['description'] = "GitHub API error"
         return render(request, 'error.html', status=500,
-                      context={'title': 'GitHub error',
-                               'description': "GitHub API error"})
+                      context=context)
     token = r.json().get('access_token', None)
     if not token:
         logging.error('ERROR GitHub Token not found. %s', r.text)
+        context['title'] = "GitHub error"
+        context['description'] = "Error getting the token from GitHub endpoint"
         return render(request, 'error.html', status=500,
-                      context={'title': 'GitHub error',
-                               'description': "Error getting the token from GitHub endpoint"})
+                      context=context)
 
     # Authenticate/register an user, and login
     gh = Github(token)
@@ -161,12 +166,15 @@ def merge_accounts(user_origin, user_dest):
 
 # TODO: Add state
 def request_gitlab_login_callback(request):
+    context = create_context(request)
+
     # Gitlab authentication
     code = request.GET.get('code', None)
     if not code:
+        context['title'] = "Bad Request"
+        context['description'] = "There isn't a code in the GitLab callback"
         return render(request, 'error.html', status=400,
-                      context={'title': 'Bad Request',
-                               'description': "There isn't a code in the GitLab callback"})
+                      context=context)
     r = requests.post(GL_ACCESS_OAUTH,
                       params={'client_id': GL_CLIENT_ID,
                               'client_secret': GL_CLIENT_SECRET,
@@ -177,15 +185,17 @@ def request_gitlab_login_callback(request):
 
     if r.status_code != requests.codes.ok:
         logging.error('Gitlab API error %s %s', r.status_code, r.reason)
+        context['title'] = "Gitlab error"
+        context['description'] = "Gitlab API error"
         return render(request, 'error.html', status=500,
-                      context={'title': 'Gitlab error',
-                               'description': "Gitlab API error"})
+                      context=context)
     token = r.json().get('access_token', None)
     if not token:
         logging.error('ERROR Gitlab Token not found. %s', r.text)
+        context['title'] = "Gitlab error"
+        context['description'] = "Error getting the token from Gitlab endpoint"
         return render(request, 'error.html', status=500,
-                      context={'title': 'Gitlab error',
-                               'description': "Error getting the token from Gitlab endpoint"})
+                      context=context)
 
     # Authenticate/register an user, and login
     gl = Gitlab(url='https://gitlab.com', oauth_token=token)
@@ -214,17 +224,21 @@ def request_gitlab_login_callback(request):
 
 # TODO: Add state
 def request_meetup_login_callback(request):
+    context = create_context(request)
+
     # Meetup authentication
     error = request.GET.get('error', None)
     if error:
+        context['title'] = "Error from Meetup Oauth"
+        context['description'] = error
         return render(request, 'error.html', status=400,
-                      context={'title': 'Error from Meetup Oauth',
-                               'description': error})
+                      context=context)
     code = request.GET.get('code', None)
     if not code:
+        context['title'] = "Bad Request"
+        context['description'] = "There isn't a code in the Meetup callback"
         return render(request, 'error.html', status=400,
-                      context={'title': 'Bad Request',
-                               'description': "There isn't a code in the Meetup callback"})
+                      context=context)
     r = requests.post(MEETUP_ACCESS_OAUTH,
                       params={'client_id': MEETUP_CLIENT_ID,
                               'client_secret': MEETUP_CLIENT_SECRET,
@@ -235,17 +249,19 @@ def request_meetup_login_callback(request):
 
     if r.status_code != requests.codes.ok:
         logging.error('Meetup API error %s %s', r.status_code, r.reason)
+        context['title'] = "Meetup error"
+        context['description'] = "Meetup API error"
         return render(request, 'error.html', status=500,
-                      context={'title': 'Meetup error',
-                               'description': "Meetup API error"})
+                      context=context)
     response = r.json()
     token = response.get('access_token', None)
     refresh_token = response.get('refresh_token', None)
     if not token or not refresh_token:
         logging.error('ERROR Meetup Token not found. %s', r.text)
+        context['title'] = "Meetup error"
+        context['description'] = "Error getting the token from Meetup endpoint"
         return render(request, 'error.html', status=500,
-                      context={'title': 'Meetup error',
-                               'description': "Error getting the token from Meetup endpoint"})
+                      context=context)
 
     # Authenticate/register an user, and login
     r = requests.get('https://api.meetup.com/members/self?&sign=true&photo-host=public',
@@ -757,10 +773,13 @@ def request_new_dashboard(request):
     Create a new dashboard
     Redirect to the edit page for the dashboard
     """
+    context = create_context(request)
+
     if request.method != 'POST':
+        context['title'] = "Method Not Allowed"
+        context['description'] = "Only POST methods allowed"
         return render(request, 'error.html', status=405,
-                      context={'title': 'Method Not Allowed',
-                               'description': "Only POST methods allowed"})
+                      context=context)
 
     if not request.user.is_authenticated:
         # Create a user
@@ -1119,28 +1138,32 @@ def request_show_dashboard(request, dash_id):
     :param dash_id:
     :return:
     """
+    context = create_context(request)
+
     if request.method != 'GET':
+        context['title'] = "Method Not Allowed"
+        context['description'] = "Only GET methods allowed"
         return render(request, 'error.html', status=405,
-                      context={'title': 'Method Not Allowed',
-                               'description': "Only GET methods allowed"})
+                      context=context)
 
     dash = Dashboard.objects.filter(id=dash_id).first()
     if not dash:
+        context['title'] = "Dashboard not found"
+        context['description'] = "This dashboard was not found in this server"
         return render(request, 'error.html', status=405,
-                      context={'title': 'Dashboard not found',
-                               'description': "This dashboard was not found in this server"})
+                      context=context)
 
     # CREATE RESPONSE
-    context = create_context(request)
     # Information for the dashboard
     if dash:
         context['dashboard'] = dash
         context['repositories'] = Repository.objects.filter(dashboards__id=dash_id).order_by('-id')
         public_esuser = ESUser.objects.filter(dashboard=dash, private=False).first()
         if not public_esuser:
+            context['title'] = "Error with public dashboards"
+            context['description'] = "Maybe the data is not migrated. Please open an issue"
             return render(request, 'error.html', status=405,
-                          context={'title': 'Error with public dashboards',
-                                   'description': "Maybe the data is not migrated. Please open an issue"})
+                          context=context)
         jwt_key = get_kibana_jwt(public_esuser.name, public_esuser.role)
         context['public_link'] = "{}/?jwtToken={}&security_tenant=global".format(KIB_OUT_URL, jwt_key)
 
@@ -1287,10 +1310,12 @@ def create_context(request):
 
 
 def repo_status(request, repo_id):
+    context = create_context(request)
     if request.method != 'GET':
+        context['title'] = "Method Not Allowed"
+        context['description'] = "Only GET methods allowed"
         return render(request, 'error.html', status=405,
-                      context={'title': 'Method Not Allowed',
-                               'description': "Only GET methods allowed"})
+                      context=context)
     repo = Repository.objects.filter(id=repo_id).first()
     if not repo:
         return JsonResponse({'status': 'UNKNOWN'})
@@ -1475,16 +1500,18 @@ def admin_page(request):
     :param request:
     :return:
     """
-    if not request.user.is_authenticated or not request.user.is_superuser:
-        return render(request, 'error.html', status=403,
-                      context={'title': 'User Not Allowed',
-                               'description': "Only Admin users allowed"})
-    if request.method != 'GET':
-        return render(request, 'error.html', status=405,
-                      context={'title': 'Method Not Allowed',
-                               'description': "Only GET methods allowed"})
-
     context = create_context(request)
+
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        context['title'] = "User Not Allowed"
+        context['description'] = "Only Admin users allowed"
+        return render(request, 'error.html', status=403,
+                      context=context)
+    if request.method != 'GET':
+        context['title'] = "Method Not Allowed"
+        context['description'] = "Only GET methods allowed"
+        return render(request, 'error.html', status=405,
+                      context=context)
 
     dashboards = Dashboard.objects.all()
     if dashboards:
