@@ -30,6 +30,15 @@
         </form>
       </div>
 
+      {% if your_dashboards|length == 0 %}
+      <div class="container">
+        <div class="alert alert-info" role="alert">
+          <p>Cauldron allows you to easily gather, enrich and visualize data from different data sources like Git, GitHub, GitLab or Meetup.</p>
+          <p>You can create your own projects (aka Dashboards) and add data to them. The data will be enriched and you will be able to visualize it in different panels that can be shared just copying its link.</p>
+        </div>
+      </div>
+      {% endif %}
+
       {% if authenticated %}
       <div class="row">
         <div class="col-md-12">
