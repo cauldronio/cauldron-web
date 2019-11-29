@@ -462,7 +462,7 @@ def request_edit_dashboard(request, dash_id):
         elif not token and backend != 'git':
             return JsonResponse({'status': 'error', 'message': 'Token not found for that backend'},
                                 status=404)
-        started = start_task(repo=repo, token=token, refresh=True)
+        started = start_task(repo=repo, token=token)
         if started:
             return JsonResponse({'status': 'reanalyze'})
         else:
@@ -477,7 +477,7 @@ def request_edit_dashboard(request, dash_id):
         for repo in repos:
             token = Token.objects.filter(user=dash.creator, backend=repo.backend).first()
             if token or repo.backend == 'git':
-                started = start_task(repo=repo, token=token, refresh=True)
+                started = start_task(repo=repo, token=token)
                 if started:
                     refreshed_count += 1
         return JsonResponse({'status': 'reanalyze',
@@ -490,7 +490,7 @@ def request_edit_dashboard(request, dash_id):
         repo = add_to_dashboard(dash, backend, data)
         es_users = ESUser.objects.filter(dashboard=dash)
         update_role_dashboard(es_users.first().role, dash)
-        start_task(repo=repo, token=None, refresh=False)
+        start_task(repo=repo, token=None)
 
         return JsonResponse({'status': 'ok'})
 
@@ -574,11 +574,11 @@ def manage_add_gh_repo(dash, data):
 
         for url in github_list:
             repo = add_to_dashboard(dash, 'github', url)
-            start_task(repo, dash.creator.githubuser.token, False)
+            start_task(repo, dash.creator.githubuser.token)
 
         for url in git_list:
             repo = add_to_dashboard(dash, 'git', url)
-            start_task(repo, None, False)
+            start_task(repo, None)
 
         es_users = ESUser.objects.filter(dashboard=dash)
         update_role_dashboard(es_users.first().role, dash)
@@ -588,11 +588,11 @@ def manage_add_gh_repo(dash, data):
     elif data['user'] and data['repository']:
         url_gh = "https://github.com/{}/{}".format(data['user'], data['repository'])
         repo_gh = add_to_dashboard(dash, 'github', url_gh)
-        start_task(repo_gh, dash.creator.githubuser.token, False)
+        start_task(repo_gh, dash.creator.githubuser.token)
 
         url_git = "https://github.com/{}/{}.git".format(data['user'], data['repository'])
         repo_git = add_to_dashboard(dash, 'git', url_git)
-        start_task(repo_git, None, False)
+        start_task(repo_git, None)
 
         es_users = ESUser.objects.filter(dashboard=dash)
         update_role_dashboard(es_users.first().role, dash)
@@ -620,11 +620,11 @@ def manage_add_gl_repo(dash, data):
 
         for url in gitlab_list:
             repo = add_to_dashboard(dash, 'gitlab', url)
-            start_task(repo, dash.creator.gitlabuser.token, False)
+            start_task(repo, dash.creator.gitlabuser.token)
 
         for url in git_list:
             repo = add_to_dashboard(dash, 'git', url)
-            start_task(repo, None, False)
+            start_task(repo, None)
 
         es_users = ESUser.objects.filter(dashboard=dash)
         update_role_dashboard(es_users.first().role, dash)
@@ -634,11 +634,11 @@ def manage_add_gl_repo(dash, data):
     elif data['user'] and data['repository']:
         url_gl = 'https://gitlab.com/{}/{}'.format(data['user'], data['repository'])
         repo_gl = add_to_dashboard(dash, 'gitlab', url_gl)
-        start_task(repo_gl, dash.creator.gitlabuser.token, False)
+        start_task(repo_gl, dash.creator.gitlabuser.token)
 
         url_git = 'https://gitlab.com/{}/{}.git'.format(data['user'], data['repository'])
         repo_git = add_to_dashboard(dash, 'git', url_git)
-        start_task(repo_git, None, False)
+        start_task(repo_git, None)
 
         es_users = ESUser.objects.filter(dashboard=dash)
         update_role_dashboard(es_users.first().role, dash)
@@ -666,7 +666,7 @@ def manage_add_meetup_repo(dash, data):
                                 status=404)
 
         repo = add_to_dashboard(dash, 'meetup', data['group'])
-        start_task(repo, dash.creator.meetupuser.token, False)
+        start_task(repo, dash.creator.meetupuser.token)
 
         es_users = ESUser.objects.filter(dashboard=dash)
         update_role_dashboard(es_users.first().role, dash)
@@ -773,26 +773,24 @@ def request_edit_dashboard_name(request, dash_id):
     return JsonResponse({'status': 'Ok', 'message': 'Name updated from "{}" to "{}"'.format(old_name, name)})
 
 
-def start_task(repo, token, refresh=False):
+def start_task(repo, token):
     """
     Start a new task for the given repository. If the repository has been analyzed,
-    it will not start unless forced with refresh
+    it will be refreshed
     :param repo: Repository object to analyze
     :param token: Token used for the analysis
-    :param refresh: If the task is not pending or running, force the refresh
     :return:
     """
     if not Task.objects.filter(repository=repo, tokens=token).first():
-        if refresh or not CompletedTask.objects.filter(repository=repo).first():
-            CompletedTask.objects.filter(repository=repo, old=False).update(old=True)
-            task = Task.objects.filter(repository=repo).first()
-            if not task:
-                task = Task(repository=repo)
-                task.save()
-            if token:
-                task.tokens.add(token)
+        CompletedTask.objects.filter(repository=repo, old=False).update(old=True)
+        task = Task.objects.filter(repository=repo).first()
+        if not task:
+            task = Task(repository=repo)
+            task.save()
+        if token:
+            task.tokens.add(token)
 
-            return True
+        return True
     return False
 
 
