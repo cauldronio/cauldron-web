@@ -1,0 +1,36 @@
+<div>
+  <strong><span id="num-repos-filter">0</span></strong> data sources found
+
+  <span class="dropdown backend-filters">
+    <button class="badge btn btn-light dropdown-toggle" type="button" id="btn-filter-backend" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+
+    </button>
+    <div class="dropdown-menu" aria-labelledby="btn-filter-backend">
+      <a class="backend-item dropdown-item active" data-filter-type="backend" data-filter="any" href="#">Any</a>
+      <a class="backend-item dropdown-item" data-filter-type="backend" data-filter="git" href="#">Git</a>
+      <a class="backend-item dropdown-item" data-filter-type="backend" data-filter="github" href="#">GitHub</a>
+      <a class="backend-item dropdown-item" data-filter-type="backend" data-filter="gitlab" href="#">GitLab</a>
+      <a class="backend-item dropdown-item" data-filter-type="backend" data-filter="meetup" href="#">Meetup</a>
+    </div>
+  </span>
+
+  <span class="dropdown status-filters">
+    <button class="badge btn btn-light dropdown-toggle" type="button" id="btn-filter-status" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+
+    </button>
+    <div class="dropdown-menu" aria-labelledby="btn-filter-backend">
+      <a class="backend-item dropdown-item active" data-filter-type="status" data-filter="all" href="#">All</a>
+      <a class="backend-item dropdown-item" data-filter-type="status" data-filter="pending" href="#">Pending</a>
+      <a class="backend-item dropdown-item" data-filter-type="status" data-filter="running" href="#">Running</a>
+      <a class="backend-item dropdown-item" data-filter-type="status" data-filter="completed" href="#">Completed</a>
+      <a class="backend-item dropdown-item" data-filter-type="status" data-filter="error" href="#">Error</a>
+    </div>
+  </span>
+  <p>
+    <small id="general-status"></small>
+    {% if editable %}
+    <button type="button" class="btn btn-outline-dark btn-reanalyze-all" style="float:right; margin-bottom:10px" data-repo="{{repo.id}}"><i class="fa fa-sync"></i> Refresh all</button>
+    {% endif %}
+  </p>
+
+</div>

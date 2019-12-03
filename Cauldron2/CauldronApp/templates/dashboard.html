@@ -10,146 +10,18 @@
 
     <div class="container-fluid">
 
-
-
-
       <div class="row">
 
-        <!-- ADD REPOS SIDE -->
         {% if editable %}
         <div class="col-md-3">
           <div class="header-dashboard">
             <h4>Add data sources</h4>
           </div>
-          <!-- GITHUB CARD -->
-          <div class="card shadow-sm">
-            <div class="card-header">
-              <div class="title">
-                <i class="fab fa-github"></i><strong> GitHub</strong>
-                <button type="button" class="btn btn-light btn-sm" data-toggle="tooltip" style="float:right" title="This will add GitHub and Git repositories to the analysis">
-                  <i class="fas fa-info-circle"><span class="sr-only"> GitHub info</span></i>
-                </button>
-              </div>
-            </div>
-            <div class="card-body">
 
-              <form action="" method="post" id="gh_add">
-                {% csrf_token %}
-                <div class="form-group">
-                  <div class="input-group">
-                    <input type="text" class="form-control" id="gh_data" name="data" placeholder="github owner or owner/repository or url">
-                    <input type="hidden" name="backend" value="github">
-                    <input type="hidden" name="action" value="add">
-                    <div class="input-group-append">
-                      <button class="btn btn-primary" type="submit">Add</button>
-                    </div>
-                  </div>
-                </div>
-              </form>
-
-            </div>
-
-          </div>
-          <!-- end GITHUB CARD -->
-
-          <!-- GIT CARD -->
-          <div class="card shadow-sm">
-            <div class="card-header">
-              <div class="title">
-                <i class="fab fa-git-square"></i><strong> Git</strong>
-                <button type="button" class="btn btn-light btn-sm" data-toggle="tooltip" style="float:right" title="This will add Git repositories to the analysis">
-                  <i class="fas fa-info-circle"><span class="sr-only"> Git info</span></i>
-                </button>
-              </div>
-            </div>
-            <div class="card-body">
-
-              <form action="" method="post" id="git_add">
-                {% csrf_token %}
-                <div class="form-group">
-                  <div class="input-group">
-                    <input type="text" class="form-control" id="git_data" placeholder="git repository url" name="data">
-                    <input type="hidden" name="backend" value="git">
-                    <input type="hidden" name="action" value="add">
-                    <div class="input-group-append">
-                      <button class="btn btn-primary" type="submit">Add</button>
-                    </div>
-                  </div>
-                </div>
-              </form>
-            </div>
-          </div>
-          <!-- end GIT CARD -->
-
-          <!-- GITLAB CARD -->
-          <div class="card shadow-sm">
-
-            <div class="card-header">
-              <div class="title">
-                <i class="fab fa-gitlab"></i><strong> GitLab</strong>
-                <button type="button" class="btn btn-light btn-sm" data-toggle="tooltip" style="float:right" title="This will add GitLab and Git repositories to the analysis">
-                  <i class="fas fa-info-circle"><span class="sr-only"> GitLab info</span></i>
-                </button>
-              </div>
-            </div>
-
-            <div class="card-body">
-
-              <form action="" method="post" id="gl_add">
-                {% csrf_token %}
-                <div class="form-group">
-
-                  <div class="input-group">
-                    <input type="text" class="form-control" id="gl_data" name="data" placeholder="gitlab owner or owner/repository or url">
-                    <input type="hidden" name="backend" value="gitlab">
-                    <input type="hidden" name="action" value="add">
-                    <div class="input-group-append">
-                      <button class="btn btn-primary" type="submit">Add</button>
-                    </div>
-                  </div>
-                </div>
-              </form>
-
-
-            </div>
-
-          </div>
-          <!-- end GITLAB CARD -->
-
-          <!-- MEETUP CARD -->
-          <div class="card shadow-sm">
-
-            <div class="card-header">
-              <div class="title">
-                <i class="fab fa-meetup"></i><strong> Meetup</strong>
-                <button type="button" class="btn btn-light btn-sm" data-toggle="tooltip" style="float:right" title="This will add Meetup group to the analysis">
-                  <i class="fas fa-info-circle"><span class="sr-only"> Meetup info</span></i>
-                </button>
-              </div>
-            </div>
-
-            <div class="card-body">
-
-              <form action="" method="post" id="meetup_add">
-                {% csrf_token %}
-                <div class="form-group">
-
-                  <div class="input-group">
-                    <input type="text" class="form-control" id="meetup_data" name="data" placeholder="group url or group id or event url">
-                    <input type="hidden" name="backend" value="meetup">
-                    <input type="hidden" name="action" value="add">
-                    <div class="input-group-append">
-                      <button class="btn btn-primary" type="submit">Add</button>
-                    </div>
-                  </div>
-                </div>
-              </form>
-
-
-            </div>
-
-          </div>
-          <!-- end MEETUP CARD -->
+          {% include "add_datasource/github.html" %}
+          {% include "add_datasource/git.html" %}
+          {% include "add_datasource/gitlab.html" %}
+          {% include "add_datasource/meetup.html" %}
 
           <div class="alert alert-info" role="alert">
             It is planned for the future to add more data sources (like Discourse or Slack), but feel free to suggest any other data source option via the feedback button!
@@ -221,134 +93,14 @@
             <div class="body-dashboard pt-2">
               {% if dashboard %}
               <div>
-                <div>
-                  <strong><span id="num-repos-filter">0</span></strong> data sources found
 
-                  <span class="dropdown backend-filters">
-                    <button class="badge btn btn-light dropdown-toggle" type="button" id="btn-filter-backend" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 
-                    </button>
-                    <div class="dropdown-menu" aria-labelledby="btn-filter-backend">
-                      <a class="backend-item dropdown-item active" data-filter-type="backend" data-filter="any" href="#">Any</a>
-                      <a class="backend-item dropdown-item" data-filter-type="backend" data-filter="git" href="#">Git</a>
-                      <a class="backend-item dropdown-item" data-filter-type="backend" data-filter="github" href="#">GitHub</a>
-                      <a class="backend-item dropdown-item" data-filter-type="backend" data-filter="gitlab" href="#">GitLab</a>
-                      <a class="backend-item dropdown-item" data-filter-type="backend" data-filter="meetup" href="#">Meetup</a>
-                    </div>
-                  </span>
+                {% include "project_header.html" %}
 
-                  <span class="dropdown status-filters">
-                    <button class="badge btn btn-light dropdown-toggle" type="button" id="btn-filter-status" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 
-                    </button>
-                    <div class="dropdown-menu" aria-labelledby="btn-filter-backend">
-                      <a class="backend-item dropdown-item active" data-filter-type="status" data-filter="all" href="#">All</a>
-                      <a class="backend-item dropdown-item" data-filter-type="status" data-filter="pending" href="#">Pending</a>
-                      <a class="backend-item dropdown-item" data-filter-type="status" data-filter="running" href="#">Running</a>
-                      <a class="backend-item dropdown-item" data-filter-type="status" data-filter="completed" href="#">Completed</a>
-                      <a class="backend-item dropdown-item" data-filter-type="status" data-filter="error" href="#">Error</a>
-                    </div>
-                  </span>
-                  <p>
-                    <small id="general-status"></small>
-                    {% if editable %}
-                    <button type="button" class="btn btn-outline-dark btn-reanalyze-all" style="float:right; margin-bottom:10px" data-repo="{{repo.id}}"><i class="fa fa-sync"></i> Refresh all</button>
-                    {% endif %}
-                  </p>
+                {% include "repositories_table.html" %}
 
-                </div>
-                <div class="table-responsive">
-                  <table class="table table-hover repos-table">
-                    <thead>
-                      <tr>
-                        <th scope="col" class="text-muted">Status</th>
-                        <th scope="col">Data source</th>
-                        <th scope="col">Last refresh</th>
-                        <th scope="col">Duration</th>
-                        <th scope="col"></th>
-                        {% if editable %}
-                        <th scope="col"></th>
-                        <th scope="col"></th>
-                        {% endif %}
-                      </tr>
-                    </thead>
 
-                    <tbody>
-                    {% for repo in repositories %}
-                      <tr class="repo-entry" id="repo-{{repo.id}}" data-backend="{{repo.backend}}" data-status="">
-                        <td class="repo-status">
-                          <div class="spinner-border spinner-border-sm" role="status">
-                            <span class="sr-only">Loading...</span>
-                          </div>
-                        </td>
-                        <td class="repo-url">
-                          {% if repo.backend == "github" %}
-                          <i class="fab fa-github"></i>
-                          {% elif repo.backend == "gitlab" %}
-                          <i class="fab fa-gitlab"></i>
-                          {% elif repo.backend == "meetup" %}
-                          <i class="fab fa-meetup"></i>
-                          {% else %}
-                          <i class="fab fa-git-square"></i>
-                          {% endif %}
-                          {{ repo.url }}
-                        </td>
-                        <td>
-                          <i class="fas fa-calendar-alt text-muted"></i>
-                          <span class="repo-last-update" style="font-size: small;">
-                              <div class="spinner-border spinner-border-sm" role="status">
-                                <span class="sr-only">Loading...</span>
-                              </div>
-                          </span>
-                        </td>
-                        <td>
-                          <i class="fas fa-stopwatch text-muted"></i>
-                          <span class="repo-duration" style="font-size: small;">
-                            <div class="spinner-border spinner-border-sm" role="status">
-                              <span class="sr-only">Loading...</span>
-                            </div>
-                          </span>
-                        </td>
-                        <td>
-                          <button type="button" class="btn btn-sm btn-outline-info" data-toggle="modal" data-target="#logModal" data-repo="{{repo.id}}">
-                            <i class="fa fa-info"></i> <small>Logs</small>
-                          </button>
-                        </td>
-                        {% if editable %}
-                        <td>
-                            <button type="button" class="btn btn-sm btn-outline-danger btn-delete" data-repo="{{repo.id}}">
-                              <i class="fa fa-trash-alt"></i> <small>Delete</small>
-                            </button>
-                        </td>
-                        <td>
-                            <button type="button" class="btn btn-sm btn-outline-dark btn-reanalyze" data-repo="{{repo.id}}">
-                              <i class="fa fa-sync"></i> <small>Refresh</small>
-                            </button>
-                        </td>
-                        {% endif %}
-                      </tr>
-                    {% endfor %}
-                    </tbody>
-                  </table>
-                </div>
-                {% if repositories|length == 0 %}
-                  <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                    <div class="row">
-                      <div class="col-sm-2">
-                        <i class="fas fa-arrow-left"></i>
-                      </div>
-                      <div class="col-sm-10">
-                        <p><strong>Start adding data sources!</strong></p>
-                        <p>Projects are defined by set of different data sources. Add them with the tools in the side bar.</p>
-
-                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                          <span aria-hidden="true">&times;</span>
-                        </button>
-
-                      </div>
-                    </div>
-                  </div>
-                  {% endif %}
               </div>
               {% endif %}
           </div>

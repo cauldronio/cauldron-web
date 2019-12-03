@@ -81,5 +81,5 @@ class OpendistroApi:
                          json=data,
                          verify=False,
                          headers=headers)
-        logging.info("{} - {}".format(r.status_code, r.text))
+        logger.info("{} - {}".format(r.status_code, r.text))
         return r.ok

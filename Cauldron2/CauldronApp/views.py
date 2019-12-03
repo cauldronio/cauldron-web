@@ -20,8 +20,8 @@ from Cauldron2.settings import GH_CLIENT_ID, GH_CLIENT_SECRET, GL_CLIENT_ID, GL_
                                 ES_IN_HOST, ES_IN_PORT, ES_IN_PROTO, ES_ADMIN_PSW, \
                                 KIB_IN_HOST, KIB_IN_PORT, KIB_IN_PROTO, KIB_OUT_URL, \
                                 KIB_PATH
-from CauldronApp.models import GithubUser, GitlabUser, MeetupUser, Dashboard, Repository, Task, CompletedTask, AnonymousUser, \
-    ESUser, Token
+from CauldronApp.models import GithubUser, GitlabUser, MeetupUser, Dashboard, Repository, Task, \
+                               CompletedTask, AnonymousUser, ESUser, Token
 from CauldronApp.githubsync import GitHubSync
 from CauldronApp.opendistro_utils import OpendistroApi
 
@@ -155,7 +155,9 @@ def request_github_login_callback(request):
         dash = Dashboard.objects.filter(id=data_add['dash_id']).first()
         # Only GitHub, is the new account added
         if data_add['backend'] == 'github':
-            manage_add_gh_repo(dash, data_add['data'])
+            commits = data_add['commits']
+            issues = data_add['issues']
+            manage_add_gh_repo(dash, data_add['data'], commits, issues)
 
     if last_page:
         return HttpResponseRedirect(last_page)
@@ -242,7 +244,9 @@ def request_gitlab_login_callback(request):
         dash = Dashboard.objects.filter(id=data_add['dash_id']).first()
         # Only GitLab, is the new account added
         if data_add['backend'] == 'gitlab':
-            manage_add_gl_repo(dash, data_add['data'])
+            commits = data_add['commits']
+            issues = data_add['issues']
+            manage_add_gl_repo(dash, data_add['data'], commits, issues)
 
     if last_page:
         return HttpResponseRedirect(last_page)
@@ -293,7 +297,7 @@ def request_meetup_login_callback(request):
 
     # Authenticate/register an user, and login
     r = requests.get('https://api.meetup.com/members/self?&sign=true&photo-host=public',
-                    headers={'Authorization': 'bearer {}'.format(token)})
+                     headers={'Authorization': 'bearer {}'.format(token)})
     data_user = r.json()
     try:
         photo = data_user['photo']['photo_link']
@@ -412,7 +416,8 @@ def request_edit_dashboard(request, dash_id):
     if not dash:
         return JsonResponse({'status': 'error', 'message': 'Dashboard not found'}, status=404)
     if not request.user.is_authenticated:
-        return JsonResponse({'status': 'error', 'message': 'You are not authenticated', 'redirect': '/login?next=/dashboard/' + str(dash_id)}, status=401)
+        return JsonResponse({'status': 'error', 'message': 'You are not authenticated',
+                             'redirect': '/login?next=/dashboard/' + str(dash_id)}, status=401)
     if request.user != dash.creator and not request.user.is_superuser:
         return JsonResponse({'status': 'error', 'message': 'You cannot edit this dashboard'}, status=403)
     if request.method != 'POST':
@@ -446,7 +451,7 @@ def request_edit_dashboard(request, dash_id):
             return JsonResponse({'status': 'error', 'message': 'Repository not found'},
                                 status=404)
         repo.dashboards.remove(dash)
-        update_role_dashboard(role_name=es_users.first().role, dash=dash)
+        update_role_dashboard(es_users.first().role, dash)
         if backend != 'git':
             task = Task.objects.filter(repository=repo, tokens__user=dash.creator).first()
             if task and not task.worker_id:
@@ -501,12 +506,20 @@ def request_edit_dashboard(request, dash_id):
                                         "Valid: URL user, URL repo, user or user/repo"},
                             status=401)
     if backend == 'github':
+        analyze_commits = 'commits' in request.POST
+        analyze_issues = 'issues' in request.POST
         if not hasattr(dash.creator, 'githubuser'):
             if request.user != dash.creator:
+                # Admin and owner didn't add his token
                 return JsonResponse({'status': 'error',
-                                     'message': 'Dashboard owner needs a GitHub token to analyze this kind of repositories'},
-                                     status=401)
-            request.session['add_repo'] = {'data': data, 'backend': backend, 'dash_id': dash.id}
+                                     'message': 'Dashboard owner needs a GitHub token '
+                                                'to analyze this kind of repositories'},
+                                    status=401)
+            request.session['add_repo'] = {'data': data,
+                                           'backend': backend,
+                                           'dash_id': dash.id,
+                                           'commits': analyze_commits,
+                                           'issues': analyze_issues}
             request.session['last_page'] = '/dashboard/{}'.format(dash_id)
             params = urlencode({'client_id': GH_CLIENT_ID})
             gh_url_oauth = "{}?{}".format(GH_URI_IDENTITY, params)
@@ -514,15 +527,22 @@ def request_edit_dashboard(request, dash_id):
                                  'message': 'We need your GitHub token for analyzing this kind of repositories',
                                  'redirect': gh_url_oauth},
                                 status=401)
-        return manage_add_gh_repo(dash, data)
+        return manage_add_gh_repo(dash, data, analyze_commits, analyze_issues)
 
     elif backend == 'gitlab':
+        analyze_commits = 'commits' in request.POST
+        analyze_issues = 'issues' in request.POST
         if not hasattr(dash.creator, 'gitlabuser'):
             if request.user != dash.creator:
                 return JsonResponse({'status': 'error',
-                                     'message': 'Dashboard owner needs a GitLab token to analyze this kind of repositories'},
-                                     status=401)
-            request.session['add_repo'] = {'data': data, 'backend': backend, 'dash_id': dash.id}
+                                     'message': 'Dashboard owner needs a GitLab token to '
+                                                'analyze this kind of repositories'},
+                                    status=401)
+            request.session['add_repo'] = {'data': data,
+                                           'backend': backend,
+                                           'dash_id': dash.id,
+                                           'commits': analyze_commits,
+                                           'issues': analyze_issues}
             request.session['last_page'] = '/dashboard/{}'.format(dash_id)
             params = urlencode({'client_id': GL_CLIENT_ID,
                                 'response_type': 'code',
@@ -532,14 +552,15 @@ def request_edit_dashboard(request, dash_id):
                                  'message': 'We need your GitLab token for analyzing this kind of repositories',
                                  'redirect': gl_url_oauth},
                                 status=401)
-        return manage_add_gl_repo(dash, data)
+        return manage_add_gl_repo(dash, data, analyze_commits, analyze_issues)
 
     elif backend == 'meetup':
         if not hasattr(dash.creator, 'meetupuser'):
             if request.user != dash.creator:
                 return JsonResponse({'status': 'error',
-                                     'message': 'Dashboard owner needs a Meetup token to analyze this kind of repositories'},
-                                     status=401)
+                                     'message': 'Dashboard owner needs a Meetup token to'
+                                                ' analyze this kind of repositories'},
+                                    status=401)
             request.session['add_repo'] = {'data': data, 'backend': backend, 'dash_id': dash.id}
             request.session['last_page'] = '/dashboard/{}'.format(dash_id)
             params = urlencode({'client_id': MEETUP_CLIENT_ID,
@@ -557,11 +578,13 @@ def request_edit_dashboard(request, dash_id):
                             status=400)
 
 
-def manage_add_gh_repo(dash, data):
+def manage_add_gh_repo(dash, data, analyze_commits, analyze_issues_prs):
     """
     Add a repository or a user in a dashboard
     :param dash: Dashboard object for adding
     :param data: Dictionary with the user or the repository to be added. Format: {'user': 'xxx', 'repository': 'yyy'}
+    :param analyze_commits: Analyze commits from the repositories
+    :param analyze_issues_prs: Analyze issues and pull requests from the repositories
     :return:
     """
     if data['user'] and not data['repository']:
@@ -571,43 +594,40 @@ def manage_add_gh_repo(dash, data):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': 'Error from GitHub API. ' + str(e)},
                                 status=404)
-
-        for url in github_list:
-            repo = add_to_dashboard(dash, 'github', url)
-            start_task(repo, dash.creator.githubuser.token)
-
-        for url in git_list:
-            repo = add_to_dashboard(dash, 'git', url)
-            start_task(repo, None)
-
-        es_users = ESUser.objects.filter(dashboard=dash)
-        update_role_dashboard(es_users.first().role, dash)
-
-        return JsonResponse({'status': 'ok'})
-
+        if analyze_issues_prs:
+            for url in github_list:
+                repo = add_to_dashboard(dash, 'github', url)
+                start_task(repo, dash.creator.githubuser.token)
+        if analyze_commits:
+            for url in git_list:
+                repo = add_to_dashboard(dash, 'git', url)
+                start_task(repo, None)
     elif data['user'] and data['repository']:
-        url_gh = "https://github.com/{}/{}".format(data['user'], data['repository'])
-        repo_gh = add_to_dashboard(dash, 'github', url_gh)
-        start_task(repo_gh, dash.creator.githubuser.token)
+        if analyze_issues_prs:
+            url_gh = "https://github.com/{}/{}".format(data['user'], data['repository'])
+            repo_gh = add_to_dashboard(dash, 'github', url_gh)
+            start_task(repo_gh, dash.creator.githubuser.token)
+        if analyze_commits:
+            url_git = "https://github.com/{}/{}.git".format(data['user'], data['repository'])
+            repo_git = add_to_dashboard(dash, 'git', url_git)
+            start_task(repo_git, None)
+    else:
+        return JsonResponse({'status': 'error', 'message': 'Invalid data posted, something is missing'},
+                            status=401)
 
-        url_git = "https://github.com/{}/{}.git".format(data['user'], data['repository'])
-        repo_git = add_to_dashboard(dash, 'git', url_git)
-        start_task(repo_git, None)
+    es_users = ESUser.objects.filter(dashboard=dash)
+    update_role_dashboard(es_users.first().role, dash)
 
-        es_users = ESUser.objects.filter(dashboard=dash)
-        update_role_dashboard(es_users.first().role, dash)
-
-        return JsonResponse({'status': 'ok'})
-
-    return JsonResponse({'status': 'error', 'message': 'Invalid data posted, something is missing'},
-                        status=401)
+    return JsonResponse({'status': 'ok'})
 
 
-def manage_add_gl_repo(dash, data):
+def manage_add_gl_repo(dash, data, analyze_commits, analyze_issues_mrs):
     """
     Add a repository or a user in a dashboard
     :param dash: Dashboard object for adding
     :param data: Dictionary with the user or the repository to be added. Format: {'user': 'xxx', 'repository': 'yyy'}
+    :param analyze_commits: Analyze commits from the repositories
+    :param analyze_issues_mrs: Analyze issues and merge requests from the repositories
     :return:
     """
     if data['user'] and not data['repository']:
@@ -617,36 +637,30 @@ def manage_add_gl_repo(dash, data):
             logging.warning("Error for Gitlab owner {}: {}".format(data['user'], e))
             return JsonResponse({'status': 'error', 'message': 'Error from GitLab API. Does that user exist?'},
                                 status=404)
-
-        for url in gitlab_list:
-            repo = add_to_dashboard(dash, 'gitlab', url)
-            start_task(repo, dash.creator.gitlabuser.token)
-
-        for url in git_list:
-            repo = add_to_dashboard(dash, 'git', url)
-            start_task(repo, None)
-
-        es_users = ESUser.objects.filter(dashboard=dash)
-        update_role_dashboard(es_users.first().role, dash)
-
-        return JsonResponse({'status': 'ok'})
-
+        if analyze_issues_mrs:
+            for url in gitlab_list:
+                repo = add_to_dashboard(dash, 'gitlab', url)
+                start_task(repo, dash.creator.gitlabuser.token)
+        if analyze_commits:
+            for url in git_list:
+                repo = add_to_dashboard(dash, 'git', url)
+                start_task(repo, None)
     elif data['user'] and data['repository']:
-        url_gl = 'https://gitlab.com/{}/{}'.format(data['user'], data['repository'])
-        repo_gl = add_to_dashboard(dash, 'gitlab', url_gl)
-        start_task(repo_gl, dash.creator.gitlabuser.token)
+        if analyze_issues_mrs:
+            url_gl = 'https://gitlab.com/{}/{}'.format(data['user'], data['repository'])
+            repo_gl = add_to_dashboard(dash, 'gitlab', url_gl)
+            start_task(repo_gl, dash.creator.gitlabuser.token)
+        if analyze_commits:
+            url_git = 'https://gitlab.com/{}/{}.git'.format(data['user'], data['repository'])
+            repo_git = add_to_dashboard(dash, 'git', url_git)
+            start_task(repo_git, None)
+    else:
+        return JsonResponse({'status': 'error', 'message': 'Invalid data posted, something is missing'},
+                            status=401)
 
-        url_git = 'https://gitlab.com/{}/{}.git'.format(data['user'], data['repository'])
-        repo_git = add_to_dashboard(dash, 'git', url_git)
-        start_task(repo_git, None)
-
-        es_users = ESUser.objects.filter(dashboard=dash)
-        update_role_dashboard(es_users.first().role, dash)
-
-        return JsonResponse({'status': 'ok'})
-
-    return JsonResponse({'status': 'error', 'message': 'Invalid data posted, something is missing'},
-                        status=401)
+    es_users = ESUser.objects.filter(dashboard=dash)
+    update_role_dashboard(es_users.first().role, dash)
+    return JsonResponse({'status': 'ok'})
 
 
 def manage_add_meetup_repo(dash, data):
@@ -743,7 +757,8 @@ def request_edit_dashboard_name(request, dash_id):
         return JsonResponse({'status': 'error', 'message': 'Dashboard not found'}, status=404)
 
     if not request.user.is_authenticated:
-        return JsonResponse({'status': 'error', 'message': 'You are not authenticated', 'redirect': '/login?next=/dashboard/' + str(dash_id)}, status=401)
+        return JsonResponse({'status': 'error', 'message': 'You are not authenticated',
+                             'redirect': '/login?next=/dashboard/' + str(dash_id)}, status=401)
 
     if request.user != dash.creator and not request.user.is_superuser:
         return JsonResponse({'status': 'error', 'message': 'You cannot edit this dashboard'}, status=403)
@@ -1308,7 +1323,8 @@ def get_gl_repos(owner, token):
     headers = {'Authorization': "Bearer {}".format(token)}
     r_group = requests.get('https://gitlab.com/api/v4/groups/{}'.format(owner), headers=headers)
     if r_group.ok:
-        r = requests.get('https://gitlab.com/api/v4/groups/{}/projects?visibility=public'.format(owner), headers=headers)
+        r = requests.get('https://gitlab.com/api/v4/groups/{}/projects?visibility=public'.format(owner),
+                         headers=headers)
         if not r.ok:
             raise Exception('Projects not found for that group')
         for project in r.json():
@@ -1325,7 +1341,8 @@ def get_gl_repos(owner, token):
     if not r.ok or len(r.json()) <= 0:
         raise Exception('User/group not found in GitLab, or the API is not working')
     user = r.json()[0]
-    r = requests.get("https://gitlab.com/api/v4/users/{}/projects?visibility=public".format(user['id']), headers=headers)
+    r = requests.get("https://gitlab.com/api/v4/users/{}/projects?visibility=public".format(user['id']),
+                     headers=headers)
     if not r.ok:
         raise Exception('Error in GitLab API retrieving user projects')
     for project in r.json():

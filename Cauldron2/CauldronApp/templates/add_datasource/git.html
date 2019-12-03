@@ -1,0 +1,37 @@
+<div class="card shadow-sm">
+  <div class="card-header">
+    <div class="title">
+      <i class="fab fa-git-square"></i><strong> Git</strong>
+    </div>
+  </div>
+  <form action="" method="post" id="git_add">
+    {% csrf_token %}
+    <div class="card-body">
+      <div class="form-group">
+        <div class="input-group">
+          <input type="text" class="form-control" id="git_data" placeholder="git repository url" name="data">
+          <input type="hidden" name="backend" value="git">
+          <input type="hidden" name="action" value="add">
+          <div class="input-group-append">
+            <button class="btn btn-primary" type="submit">Add</button>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <a data-toggle="collapse" href="#advanced-git" role="button" aria-expanded="false" aria-controls="advanced-git">
+          Advanced
+        </a>
+      </div>
+
+      <div class="form-group collapse" id="advanced-git">
+        <div class="custom-control custom-checkbox">
+          <input type="checkbox" name="commits" class="custom-control-input" id="checkbox-git-commits" checked disabled>
+          <label class="custom-control-label" for="checkbox-git-commits">Commits (Git repositories)</label>
+          <span data-toggle="tooltip" style="float:right" title="This will analyze the git repositories">
+            <i class="fas fa-info-circle"></i>
+          </span>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,43 @@
+<div class="card shadow-sm">
+  <div class="card-header">
+    <div class="title">
+      <i class="fab fa-gitlab"></i><strong> GitLab</strong>
+    </div>
+  </div>
+  <form action="" method="post" id="gl_add">
+    {% csrf_token %}
+    <div class="card-body">
+      <div class="form-group">
+        <div class="input-group">
+          <input type="text" class="form-control" id="gl_data" name="data" placeholder="gitlab owner or owner/repository or url">
+          <input type="hidden" name="backend" value="gitlab">
+          <input type="hidden" name="action" value="add">
+          <div class="input-group-append">
+            <button class="btn btn-primary" type="submit">Add</button>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <a data-toggle="collapse" href="#advanced-gitlab" role="button" aria-expanded="false" aria-controls="advanced-gitlab">
+          Advanced
+        </a>
+      </div>
+      <div class="form-group collapse" id="advanced-gitlab">
+        <div class="custom-control custom-checkbox">
+          <input type="checkbox" name="commits" class="custom-control-input" id="checkbox-gitlab-commits" checked>
+          <label class="custom-control-label" for="checkbox-gitlab-commits">Commits (Git repository)</label>
+          <span data-toggle="tooltip" style="float:right" title="This will analyze the git repositories">
+            <i class="fas fa-info-circle"></i>
+          </span>
+        </div>
+        <div class="custom-control custom-checkbox">
+          <input type="checkbox" name="issues" class="custom-control-input" id="checkbox-gitlab-issues-mrs" checked>
+          <label class="custom-control-label" for="checkbox-gitlab-issues-mrs">Issues & Merge requests</label>
+          <span data-toggle="tooltip" style="float:right" title="This will analyze GitLab issues and merge requests from the repositories">
+            <i class="fas fa-info-circle"></i>
+          </span>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>

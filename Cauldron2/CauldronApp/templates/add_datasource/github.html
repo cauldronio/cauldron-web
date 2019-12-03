@@ -1,0 +1,43 @@
+<div class="card shadow-sm">
+  <div class="card-header">
+    <div class="title">
+      <i class="fab fa-github"></i><strong> GitHub</strong>
+    </div>
+  </div>
+  <form action="" method="post" id="gh_add">
+    {% csrf_token %}
+    <div class="card-body">
+      <div class="form-group">
+        <div class="input-group">
+          <input type="text" class="form-control" id="gh_data" name="data" placeholder="github owner or owner/repository or url">
+          <input type="hidden" name="backend" value="github">
+          <input type="hidden" name="action" value="add">
+          <div class="input-group-append">
+            <button class="btn btn-primary" type="submit">Add</button>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <a data-toggle="collapse" href="#advanced-github" role="button" aria-expanded="false" aria-controls="advanced-github">
+          Advanced
+        </a>
+      </div>
+      <div class="form-group collapse" id="advanced-github">
+        <div class="custom-control custom-checkbox">
+          <input type="checkbox" name="commits" class="custom-control-input" id="checkbox-github-commits" checked>
+          <label class="custom-control-label" for="checkbox-github-commits">Commits (Git repository)</label>
+          <span data-toggle="tooltip" style="float:right" title="This will analyze the git repositories">
+            <i class="fas fa-info-circle"></i>
+          </span>
+        </div>
+        <div class="custom-control custom-checkbox">
+          <input type="checkbox" name="issues" class="custom-control-input" id="checkbox-github-issues-prs" checked>
+          <label class="custom-control-label" for="checkbox-github-issues-prs">Issues & Pull requests</label>
+          <span data-toggle="tooltip" style="float:right" title="This will analyze GitHub issues and pull request from the repositories">
+            <i class="fas fa-info-circle"></i>
+          </span>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
