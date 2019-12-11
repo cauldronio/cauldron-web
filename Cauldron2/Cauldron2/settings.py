@@ -29,6 +29,9 @@ KIB_PATH = ''
 KIB_IN_PROTO = ''
 KIB_OUT_URL = ''
 
+HATSTALL_ENABLED = False
+HATSTALL_URL = ''
+
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']

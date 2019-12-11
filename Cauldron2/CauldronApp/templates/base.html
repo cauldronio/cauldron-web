@@ -82,6 +82,9 @@
           {% if request.user.is_superuser %}
           <a class="dropdown-item" href="{% url 'admin_page' %}">Admin page</a>
           {% endif %}
+          {% if request.user.is_superuser and hatstall_url %}
+          <a class="dropdown-item" href="{{ hatstall_url }}">Hatstall</a>
+          {% endif %}
           <a class="dropdown-item" href="/">My dashboards</a>
           {% if github_enabled %}
           <a class="dropdown-item" id="delete-gh-token" class="text-danger" href="">Delete my Github token</a>
