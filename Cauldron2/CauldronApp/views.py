@@ -39,6 +39,8 @@ MEETUP_ACCESS_OAUTH = 'https://secure.meetup.com/oauth2/access'
 MEETUP_URI_IDENTITY = 'https://secure.meetup.com/oauth2/authorize'
 MEETUP_REDIRECT_PATH = '/meetup-login'
 
+DASHBOARD_LOGS = '/dashboard_logs'
+
 BACKEND_INDICES = [
     {
         "name": "git_aoc_enriched_index",
@@ -800,7 +802,8 @@ def start_task(repo, token):
         CompletedTask.objects.filter(repository=repo, old=False).update(old=True)
         task = Task.objects.filter(repository=repo).first()
         if not task:
-            task = Task(repository=repo)
+            file_log = '{}/repo_{}.log'.format(DASHBOARD_LOGS, repo.id)
+            task = Task(repository=repo, log_file=file_log)
             task.save()
         if token:
             task.tokens.add(token)
