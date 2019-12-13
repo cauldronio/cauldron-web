@@ -19,7 +19,7 @@ from Cauldron2.settings import GH_CLIENT_ID, GH_CLIENT_SECRET, GL_CLIENT_ID, GL_
                                 MEETUP_CLIENT_ID, MEETUP_CLIENT_SECRET, \
                                 ES_IN_HOST, ES_IN_PORT, ES_IN_PROTO, ES_ADMIN_PSW, \
                                 KIB_IN_HOST, KIB_IN_PORT, KIB_IN_PROTO, KIB_OUT_URL, \
-                                KIB_PATH, HATSTALL_ENABLED, HATSTALL_URL
+                                KIB_PATH, HATSTALL_ENABLED, HATSTALL_URL, GOOGLE_ANALYTICS_ID
 from CauldronApp.models import GithubUser, GitlabUser, MeetupUser, Dashboard, Repository, Task, \
                                CompletedTask, AnonymousUser, ESUser, Token
 from CauldronApp.githubsync import GitHubSync
@@ -1241,6 +1241,10 @@ def create_context(request):
     # Information about Hatstall
     if HATSTALL_ENABLED:
         context['hatstall_url'] = HATSTALL_URL
+
+    # Google Analytics
+    if GOOGLE_ANALYTICS_ID:
+        context['google_analytics_id'] = GOOGLE_ANALYTICS_ID
 
     return context
 
