@@ -16,8 +16,10 @@ $(document).ready(function(){
     $('.btn-reanalyze').click(reanalyzeRepo);
     $('.btn-reanalyze-all').click(reanalyzeEveryRepo);
 
-    $('.backend-filters a').click(onFilterClick);
-    $('.status-filters a').click(onFilterClick);
+    $('.btn-refresh-table').click(getInfo);
+
+    //$('.backend-filters a').click(onFilterClick);
+    //$('.status-filters a').click(onFilterClick);
 
     $('#edit-name').click(onClickEditName);
 
@@ -34,7 +36,31 @@ $(document).ready(function(){
         copy_input('url-public-link-project');
     });
 
+    $('#repos-table').DataTable({
+      language: {
+        searchPlaceholder: "Search records",
+        search: "",
+      },
+      "lengthMenu": [ [10, 25, 50, -1], [10, 25, 50, "All"] ],
+      "pageLength": 25,
+      "order": [],
+      "columns": [
+        { "orderable": false },
+        null,
+        { "orderable": false },
+        { "orderable": false },
+        { "orderable": false },
+        { "orderable": false },
+        { "orderable": false }
+      ]
+    });
+
+    /*$('#repos-table').on('draw.dt', function() {
+      getInfo();
+    });*/
+
     getInfo();
+    getSummary();
 });
 
 
@@ -137,7 +163,7 @@ function deleteRepo(event) {
         .done(function (data) {
             showToast('Deleted', `The data source <b>${url_repo}</b> was deleted from this dashboard`, 'fas fa-check-circle text-success', 1500);
             $(`tr#repo-${id_repo}`).remove();
-            filterTable();
+            //filterTable();
         })
         .fail(function (data) {
             showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', 5000);
@@ -193,11 +219,24 @@ function reanalyzeEveryRepo(event){
         .fail(function (data) {
             showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', 5000);
         })
-        .always(function(){reanalyzeRepo.html('Refresh all')})
+        .always(function(){reanalyzeRepo.html('<i class="fa fa-sync"></i> Refresh datasources')})
+}
+
+function getSummary() {
+    $.getJSON('/dashboard/' + Dash_ID + "/summary", function(data) {
+        var status_output = "|";
+        for (var key in data.status){
+            status_output += ` <strong>${key}</strong>: ${data.status[key]} |`;
+        }
+
+        $('#num-repos-filter').html(data.total);
+        $('#general-status').html(status_output)
+    });
+    setTimeout(getSummary, 5000, Dash_ID);
 }
 
 function getInfo() {
-    TimeoutInfo = null; // To avoid multiple getInfo calls
+    //TimeoutInfo = null; // To avoid multiple getInfo calls
     $.getJSON('/dashboard/' + Dash_ID + "/info", function(data) {
         var status_dict = {"completed": 0,
                            "pending": 0,
@@ -223,19 +262,19 @@ function getInfo() {
             $('#repo-' + repo.id + " .repo-duration").html(duration);
 
         });
-        $('#general-status').html(data.general);
-        if ((data.general == 'PENDING' || data.general == 'RUNNING') && !TimeoutInfo) {
+        //$('#general-status').html(data.general);
+        /*if ((data.general == 'PENDING' || data.general == 'RUNNING') && !TimeoutInfo) {
             TimeoutInfo = setTimeout(getInfo, 5000, Dash_ID);
-        }
-        var status_output = "<strong>general status</strong>: " + data.general.toLowerCase();
+        }*/
+        /*var status_output = "<strong>general status</strong>: " + data.general.toLowerCase();
         for (var key in status_dict){
             if (status_dict.hasOwnProperty(key)) {
                 status_output += ` | <strong>${key}</strong>: ${status_dict[key]}`;
             }
         }
-        $('#general-status').html(status_output)
+        $('#general-status').html(status_output)*/
     });
-    filterTable();
+    //filterTable();
 }
 
 function setIconStatus(jq_selector, status) {

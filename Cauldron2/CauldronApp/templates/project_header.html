@@ -1,7 +1,8 @@
 <div>
   <strong><span id="num-repos-filter">0</span></strong> data sources found
+  <button type="button" class="btn btn-outline-dark btn-sm btn-refresh-table" style="margin-left:5px"><i class="fa fa-sync"></i> Refresh table</button>
 
-  <span class="dropdown backend-filters">
+  <!--span class="dropdown backend-filters">
     <button class="badge btn btn-light dropdown-toggle" type="button" id="btn-filter-backend" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 
     </button>
@@ -25,11 +26,12 @@
       <a class="backend-item dropdown-item" data-filter-type="status" data-filter="completed" href="#">Completed</a>
       <a class="backend-item dropdown-item" data-filter-type="status" data-filter="error" href="#">Error</a>
     </div>
-  </span>
+  </span-->
+
   <p>
     <small id="general-status"></small>
     {% if editable %}
-    <button type="button" class="btn btn-outline-dark btn-reanalyze-all" style="float:right; margin-bottom:10px" data-repo="{{repo.id}}"><i class="fa fa-sync"></i> Refresh all</button>
+    <button type="button" class="btn btn-outline-dark btn-reanalyze-all" style="float:right; margin-bottom:10px" data-repo="{{repo.id}}"><i class="fa fa-sync"></i> Refresh datasources</button>
     {% endif %}
   </p>
 

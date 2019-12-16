@@ -1063,6 +1063,33 @@ def get_dashboard_info(dash_id):
     return info
 
 
+def get_dashboard_summary(dash_id):
+    """
+    Get a summary about the repositories in a dashboard
+    :param dash_id: id of the dashboard
+    :return:
+    """
+    summary = {
+        'total': 0,
+        'status': {}
+    }
+
+    repos = Repository.objects.filter(dashboards=dash_id)
+
+    summary['total'] = CompletedTask.objects.filter(repository__in=repos, old=False).count() + \
+                       Task.objects.filter(repository__in=repos).count()
+    summary['status']['completed'] = CompletedTask.objects.filter(repository__in=repos,
+                                                                  status="COMPLETED",
+                                                                  old=False).count()
+    summary['status']['pending'] = Task.objects.filter(repository__in=repos,
+                                                       worker_id="").count()
+    summary['status']['running'] = Task.objects.filter(repository__in=repos).exclude(worker_id="").count()
+    summary['status']['error'] = CompletedTask.objects.filter(repository__in=repos,
+                                                              status="ERROR",
+                                                              old=False).count()
+
+    return summary
+
 def request_show_dashboard(request, dash_id):
     """
     View for a dashboard. It can be editable if the user is authenticated and is the creator
@@ -1265,6 +1292,11 @@ def repo_status(request, repo_id):
 def request_dash_info(request, dash_id):
     info = get_dashboard_info(dash_id)
     return JsonResponse(info)
+
+
+def request_dash_summary(request, dash_id):
+    summary = get_dashboard_summary(dash_id)
+    return JsonResponse(summary)
 
 
 def repo_logs(request, repo_id):
