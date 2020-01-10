@@ -1,12 +1,15 @@
+.navbar-line {
+  height: 2rem;
+  border: 1px solid #999C9F;
+  width: 0px;
+  margin: 0 0 0 1rem;
+}
+
 .avatar {
     width: 2.5rem;
     height: 2.5rem;
 }
 
-/* body {
-    background-color: #f3f5fa;
-}
- */
 .nav-link {
   outline: none;
 }
@@ -84,13 +87,6 @@ body {
     }
 }
 
-footer {
-    background-color: #333;
-    color: #fff;
-    padding-top: 2em;
-    padding-bottom: 2em;
-}
-
 @media(min-width: 1000px) {
     .footer-position {
         bottom: 0px;
@@ -105,8 +101,36 @@ footer {
     overflow-y: auto;
 }
 
-footer {
-    max-height: inherit;
-    padding-bottom: 0;
-    padding-top: 1em;
+section.header {
+  color: #ffffff;
+  background-image: url("/static/img/graph_blur.jpg");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-attachment: fixed;
+  background-size: cover;
+}
+
+section.features {
+  padding-top: 100px;
+  padding-bottom: 100px;
+}
+
+section.technical-details {
+  padding-top: 100px;
+  padding-bottom: 100px;
+  background-color: #ddd;
+}
+
+#carouselHeaderIndicators li {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+.header h1 {
+  font-size: 3rem;
+  font-weight: 400;
+  font-family: 'Open Sans', sans-serif;
+}
+
+.header p {
+    font-size: 24px;
 }

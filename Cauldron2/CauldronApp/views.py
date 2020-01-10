@@ -69,6 +69,7 @@ BACKEND_INDICES = [
     },
 ]
 
+
 ES_IN_URL = "{}://{}:{}".format(ES_IN_PROTO, ES_IN_HOST, ES_IN_PORT)
 KIB_IN_URL = "{}://{}:{}{}".format(KIB_IN_PROTO, KIB_IN_HOST, KIB_IN_PORT, KIB_PATH)
 
@@ -107,6 +108,31 @@ def homepage(request):
     context['meetup_allow'] = hasattr(request.user, 'meetupuser')
 
     return render(request, 'index.html', context=context)
+
+
+def request_user_projects(request):
+    context = create_context(request)
+    if not request.user.is_authenticated:
+        context['title'] = "You are not logged in"
+        context['description'] = "You need to login or create a new project to continue"
+        return render(request, 'error.html', status=400, context=context)
+    else:
+        projects = Dashboard.objects.filter(creator=request.user)
+        projects_info = list()
+        for project in projects:
+            repositories = Repository.objects.filter(dashboards=project.pk)
+            n_completed = CompletedTask.objects.filter(repository__in=repositories, status='COMPLETED', old=False).count()
+            n_errors = CompletedTask.objects.filter(repository__in=repositories, status='ERROR', old=False).count()
+            n_pending = Task.objects.filter(repository__in=repositories).count()
+            projects_info.append({
+                'project': project,
+                'completed': n_completed,
+                'errors': n_errors,
+                'pending': n_pending,
+                'total': n_completed + n_errors + n_pending
+            })
+        context['projects_info'] = projects_info
+    return render(request, 'projects.html', context=context)
 
 
 # TODO: Add state
@@ -1089,6 +1115,7 @@ def get_dashboard_summary(dash_id):
                                                               old=False).count()
 
     return summary
+
 
 def request_show_dashboard(request, dash_id):
     """

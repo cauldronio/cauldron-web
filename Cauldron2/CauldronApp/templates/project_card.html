@@ -1,0 +1,44 @@
+<div class="col-lg-4">
+  <div class="card mb-4">
+    <div class="card-header d-flex">
+      <div class="mr-auto font-weight-bold">{{project.project.name}}</div>
+      <a href="/dashboard/{{project.project.id}}" role="button" class="btn btn-sm btn-outline-primary mr-2" data-toggle="tooltip" data-placement="bottom" title="Edit datasources"><i class="fas fa-edit"></i></a>
+      <a href="/dashboard/{{project.project.id}}/kibana" target="_blank" rel="noopener noreferrer" role="button" class="btn btn-sm btn-outline-primary mr-2{% if project.total == 0 %} disabled{% endif %}" data-toggle="tooltip" data-placement="bottom" title="Open Kibana"><i class="fa fa-chart-bar"></i></a>
+      <button type="button" {% if project.total > 0%}onclick="refreshProjectDatasources(this, {{project.project.id}})"{% endif %} role="button" class="btn btn-sm btn-outline-primary mr-2{% if project.total == 0 %} disabled{% endif %}" {% if project.total > 0 %}data-toggle="tooltip" data-placement="bottom" title="Refresh all data sources"{% endif %}><i class="fas fa-sync-alt"></i></button>
+      <!--<a href="#" role="button" class="btn btn-outline-danger mr-2" data-toggle="tooltip" data-placement="bottom" title="Delete project"><i class="fas fa-trash-alt"></i></a>-->
+    </div>
+    <div class="card-body">
+      <div class="row media text-muted">
+        <!--<div class="col-4">
+          <img src="/static/img/default_graph.png" alt="" style="width: 100%;">
+        </div>-->
+        <!--<div class="col-8">-->
+        <div class="col-12">
+          <div class="row py-1 border-bottom">
+            <div class="col-6"><strong>Created</strong></div>
+            <div class="col-6">{{ project.project.created | date:"jS M Y"}}</div>
+          </div>
+          <div class="row py-1 border-bottom">
+            <div class="col-6"><strong>Data sources</strong></div>
+            <div class="col-6">{{ project.total }}</div>
+          </div>
+          <div class="row pt-1">
+              <div class="col-6"><strong>Gathering status</strong></div>
+              <div class="col-6"></div>
+            </div>
+          <div class="py-1">
+            <div class="progress" style="height: 1.2rem;">
+              {% if project.completed %}
+              <div class="progress-bar bg-success" role="progressbar" aria-valuenow="{% widthratio project.completed project.total 100 %}" aria-valuemin="0" aria-valuemax="100" style="width: {% widthratio project.completed project.total 100 %}%" data-toggle="tooltip" data-placement="bottom" title="Completed"><strong>{% widthratio project.completed project.total 100 %}%</strong></div>
+              {% endif %}
+              {% if project.errors %}
+              <div class="progress-bar bg-danger" role="progressbar" aria-valuenow="{% widthratio project.errors project.total 100 %}" aria-valuemin="0" aria-valuemax="100" style="width: {% widthratio project.errors project.total 100 %}%"data-toggle="tooltip" data-placement="bottom" title="Error"><strong>{% widthratio project.errors project.total 100 %}%</strong></div>
+              {% endif %}
+              <!--<div class="progress-bar bg-secondary progress-bar-striped progress-bar-animated" role="progressbar" style="width: {% widthratio project.pending project.total 100 %}%" aria-valuenow="{% widthratio project.pending project.total 100 %}" aria-valuemin="0" aria-valuemax="100" data-toggle="tooltip" data-placement="bottom" title="Pending"><strong>{% widthratio project.pending project.total 100 %}%</strong></div>-->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

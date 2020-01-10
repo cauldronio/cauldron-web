@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load static %}
+
+
+{% block css%}
+
+{% endblock %}
+
+
+{% block content %}
+<div class="container-fluid mt-3">
+	<div class="mb-3 d-flex">
+		<h1 class="mr-4">My projects</h1>
+			<form action="/dashboard" method="post" id="create-dashboard" class="form-inline">
+				{% csrf_token %}
+				<div class="form-group" style="float:right">
+					<div class="input-group">
+						<button class="btn btn-primary" role="button" type="submit">
+							<i class="fas fa-plus"></i>
+							<span>New project</span>
+						</button>
+					</div>
+				</div>
+			</form>
+		</h1>
+	</div>
+	
+	<div class="row">
+		<!-- PROJECT CARD-->
+		{% if projects_info %}
+			{% for project in projects_info %}
+				{% include "project_card.html" %}
+			{% endfor %}
+		{% endif %}
+		<!-- END PROJECT CARD-->
+	</div>
+
+</div>
+{% endblock %}
+
+
+{% block javascript %}
+<script src="{% static 'js/projects.js' %}" charset="utf-8"></script>
+{% endblock %}

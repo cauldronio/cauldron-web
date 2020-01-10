@@ -1,4 +1,8 @@
 {% load static %}
+
+{% url 'projectspage' as projectspage %}
+{% url 'homepage' as homepage %}
+
 <!doctype html>
 <html lang="en">
 
@@ -55,40 +59,66 @@
   {% block css%}
   {% endblock %}
 
-  <title>Cauldron (&alpha; version) - Level Up Software Development Analytics</title>
+  <title>Cauldron - Level Up Software Development Analytics</title>
 </head>
 
 <body>
   <!-- BEGIN NAVBAR -->
-  <nav class="navbar navbar-dark bg-dark shadow-sm mb-3">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
-      <a class="navbar-brand" href="/">
-        <img src="{% static 'img/cauldron-logo-white.png' %}" alt="" style="float:left; margin-right: 5px;" height="28px">
-        Cauldron alpha <sup class="navbar-text">curry</sup>
+      <a class="navbar-brand mr-auto" href="{% url 'homepage' %}">
+        <img src="{% static '/img/cauldron-logo-white.png' %}" width="30" height="30" class="d-inline-block align-top" alt="">
+        Cauldron <sup class="badge badge-secondary">curry</sup>
       </a>
-<div class="btn-toolbar">
-  <button class="btn btn-success" style="margin-right: 5px">
-    <a style="color:white; text-decoration: none" href="https://gitlab.com/cauldron2/cauldron/issues/new" target="_blank">
-      Send us feedback!
-    </a>
-  </button>
       {% if authenticated %}
-      <div class="dropdown">
-        <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown"
-          aria-haspopup="true" aria-expanded="false">
-          <img src="{{ photo_user }}" class="rounded-circle avatar">
-          <span>{{ auth_user_username }}</span>
+      <div class="collapse navbar-collapse">
+        <ul class="navbar-nav mr-auto ml-3">
+          <li class="nav-item {% ifequal request.path homepage %}active{% endifequal %}">
+            <a class="nav-link" href="{% url 'homepage' %}">Home</a>
+          </li>
+          <li class="nav-item {% ifequal request.path projectspage %}active{% endifequal %}">
+            <a class="nav-link" href="{% url 'projectspage' %}">My Projects</a>
+          </li>
+        </ul>
+      </div>
+      {% endif %}
+      <!--<ul class="navbar-nav flew-row ml-md-auto d-none d-md-flex">
+        <li class="nav-item">
+          <a href="https://gitlab.com/cauldron2/cauldron" target="_blank" rel="noopener" aria-label="GitLab" class="nav-link p2">
+            <i class="fab fa-gitlab"></i>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="https://twitter.com/biterg_cauldron" target="_blank" rel="noopener" aria-label="Twitter" class="nav-link p2">
+            <i class="fab fa-twitter"></i>
+          </a>
+        </li>
+      </ul>-->
+
+      <a class="btn btn-outline-success d-none d-lg-inline-block mb-0 ml-md-3" href="https://gitlab.com/cauldron2/cauldron/issues/new" target="_blank">
+        Send us feedback!
+      </a>
+
+      <div class="navbar-line d-none"></div>
+
+      {% if authenticated %}
+      <div class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle navbar-text py-0" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          <span> {{ auth_user_username }} </span>
+          <img src="{{ photo_user }}" class="rounded-circle avatar"> 
         </a>
 
         <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+            
           {% if request.user.is_superuser %}
           <a class="dropdown-item" href="{% url 'admin_page' %}">Admin page</a>
           {% endif %}
           {% if request.user.is_superuser and hatstall_url %}
           <a class="dropdown-item" href="{{ hatstall_url }}">Hatstall</a>
           {% endif %}
-          <a class="dropdown-item" href="/">My dashboards</a>
+          <a class="dropdown-item" href="{% url 'projectspage' %}">My projects</a>
           {% if github_enabled %}
+          <div class="dropdown-divider"></div>
           <a class="dropdown-item" id="delete-gh-token" class="text-danger" href="">Delete my Github token</a>
           {% endif %}
           {% if gitlab_enabled %}
@@ -97,16 +127,17 @@
           {% if meetup_enabled %}
           <a class="dropdown-item" id="delete-meetup-token" href="">Delete my Meetup token</a>
           {% endif %}
+          <div class="dropdown-divider"></div>
           <a class="dropdown-item" href="/logout">Log out</a>
           <!--<a class="dropdown-item" href="/profile">Profile</a>-->
         </div>
       </div>
       {% else %}
-      <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#modalLogin">
+      <a class="btn btn-light d-block d-lg-inline-block mb-0 ml-md-3" href="#" data-toggle="modal" data-target="#modalLogin">
         Login
-      </button>
+      </a>
       {% endif %}
-      </div>
+
     </div>
   </nav>
   <!-- END NAVBAR-->
@@ -205,13 +236,13 @@
   </div>
   <!-- END Toast list for notifications-->
 
-
-
+  <div class="site-content">
   {% block content %}
   {% endblock %}
+  </div>
 
 
-  <footer class="container-fluid footer-position">
+  <footer class="container-fluid footer-position bg-dark text-white pt-3">
 
     <div class="container">
       <div class="row">
@@ -236,7 +267,6 @@
     </div>
   </footer>
 
-
   <!-- Optional JavaScript -->
   <!-- jQuery first, then Popper.js, then Bootstrap JS -->
   <script src="https://code.jquery.com/jquery-3.3.1.js" integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
@@ -245,8 +275,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
     integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
     crossorigin="anonymous"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
-    integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" 
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" 
     crossorigin="anonymous"></script>
 
   <script src="{% static 'js/common.js' %}" charset="utf-8"></script>
