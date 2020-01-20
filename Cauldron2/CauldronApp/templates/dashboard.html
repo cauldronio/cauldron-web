@@ -53,7 +53,7 @@
                       <div class="btn-group btn-group-lg">
                         <a id="open-kibana"
                           class="btn btn-primary {% if repositories|length == 0 or not editable %}disabled{% endif %}"
-                          href="/dashboard/{{dash_id}}/kibana"
+                          href="{% url 'open_kibana' dash_id %}"
                           target="_blank">
                           <i class="fa fa-chart-bar"></i> Private dashboard
                         </a>

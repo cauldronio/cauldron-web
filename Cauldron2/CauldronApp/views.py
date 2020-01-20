@@ -864,7 +864,7 @@ def request_new_dashboard(request):
         login(request, dj_user)
 
     dash = Dashboard.objects.create(name=generate_random_uuid(length=12), creator=request.user)
-    dash.name = "Dashboard {}".format(dash.id)
+    dash.name = "Project {}".format(dash.id)
     dash.save()
 
     create_kibana_users(dash)

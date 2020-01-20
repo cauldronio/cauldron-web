@@ -19,12 +19,12 @@
         <div class="col-lg-5 text-center text-lg-left">
           <h1 class="font-weight-bold my-4">Level Up Software Development Analytics</h1>
           <p class="mb-3">Cauldron allows project managers, analysts, and developers to understand more about the community and processes involved in software development</p>
-          <form action="/dashboard" method="post" id="create-dashboard">
+          <form action="/dashboard" method="post" class="create-dashboard">
             {% csrf_token %}
-            <button type="submit" class="btn btn-outline-light btn-lg my-3" role="button">Analyze a Project</button>
+            <button type="submit" class="btn btn-light btn-lg my-3" role="button">Analyze a Project</button>
           </form>
         </div>
-        <div class="col-lg-4 text-lg-left tex-center">
+        <div class="col-lg-4 text-lg-left">
           <img class="img-fluid" src="{% static 'img/three_images.png' %}" alt="">
         </div>
       </div>
@@ -42,13 +42,13 @@
         </div>
         <div class="col-lg-3">
           <img class="img-fluid mb-3" src="{% static 'img/contributors.png' %}" alt="Contributors graph">
-          <h2>Shareable Reports</h2>
+          <h2>Shareable Dashboards</h2>
           <hr>
           <p><em>"Collecting data is only the first step toward wisdom, but sharing data is the first step toward community"</em> (<a href="https://en.wikipedia.org/wiki/Henry_Louis_Gates_Jr." target="_blank" rel="noopener noreferrer">Henry Louis Gates, Jr.</a>). Cauldron allow users to share reports and metrics about software development.</p>
         </div>
         <div class="col-lg-3">
           <img class="img-fluid mb-3" src="{% static 'img/gitlab_cauldron_repo.png' %}" alt="Cauldron Gitlab source code">
-          <h2>100% Free, Open Source</h2>
+          <h2>Free Open Source Software</h2>
           <hr>
           <p>Cauldron is free, open source software to allow users, contributors, and maintainers to use, study, share, and improve the software openly.</p>
           
@@ -122,6 +122,18 @@
           </p>
         </div>
         
+      </div>
+    </div>
+  </section>
+
+  <section class="start-now">
+    <div class="container-fluid">
+      <div class="row justify-content-center text-center">
+        <form action="/dashboard" method="post" class="create-dashboard">
+          {% csrf_token %}
+          <h2 class=>Start analyzing!</h2>
+          <button type="submit" class="btn btn-primary btn-lg my-3" role="button">Analyze a Project</button>
+        </form>
       </div>
     </div>
   </section>

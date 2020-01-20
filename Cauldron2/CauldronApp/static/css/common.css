@@ -121,6 +121,10 @@ section.technical-details {
   background-color: #ddd;
 }
 
+section.start-now {
+  padding-top: 100px;
+}
+
 #carouselHeaderIndicators li {
   background-color: rgba(0, 0, 0, 0.8);
 }
