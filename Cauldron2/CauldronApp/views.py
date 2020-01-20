@@ -81,32 +81,6 @@ logger = logging.getLogger(__name__)
 def homepage(request):
     context = create_context(request)
 
-    if request.user.is_authenticated:
-        your_dashboards = Dashboard.objects.filter(creator=request.user)
-        context_your_dbs = []
-        for dash in your_dashboards:
-            status = get_dashboard_status(dash.id)
-
-            completed = sum(1 for repo in status['repos'] if repo['status'] == 'COMPLETED')
-            context_your_dbs.append({'status': status['general'],
-                                     'id': dash.id,
-                                     'name': dash.name,
-                                     'completed': completed,
-                                     'total': len(status['repos'])})
-    else:
-        context_your_dbs = []
-
-    # TODO: Generate a state for that session and store it in request.session. More security in Oauth
-    context['your_dashboards'] = context_your_dbs
-    context['gh_uri_identity'] = GH_URI_IDENTITY
-    context['gh_client_id'] = GH_CLIENT_ID
-    context['gl_uri_identity'] = GL_URI_IDENTITY
-    context['gl_client_id'] = GL_CLIENT_ID
-    context['gl_uri_redirect'] = "https://{}{}".format(request.get_host(), GL_REDIRECT_PATH)
-    context['gitlab_allow'] = hasattr(request.user, 'gitlabuser')
-    context['github_allow'] = hasattr(request.user, 'githubuser')
-    context['meetup_allow'] = hasattr(request.user, 'meetupuser')
-
     return render(request, 'index.html', context=context)
 
 
@@ -985,38 +959,6 @@ def update_role_dashboard(role_name, dashboard):
 
     odfe_api = OpendistroApi(ES_IN_URL, ES_ADMIN_PSW)
     odfe_api.put_role(role_name, permissions)
-
-
-def get_dashboard_status(dash_id):
-    """
-    General status:
-    If no repos -> UNKNOWN
-    1. If any repo is running -> return RUNNING
-    2. Else if any repo pending -> return PENDING
-    3. Else if any repo error -> return ERROR
-    4. Else -> return COMPLETED
-    :param dash_id: id of the dashboard
-    :return: Status of the dashboard depending on the the previous rules
-    """
-    repos = Repository.objects.filter(dashboards__id=dash_id)
-    if len(repos) == 0:
-        return {
-            'repos': [],
-            'general': 'UNKNOWN',
-            'exists': False
-        }
-    status = {
-        'repos': [],
-        'general': 'UNKNOWN',
-        'exists': True
-    }
-    for repo in repos:
-        status_repo = get_repo_status(repo)
-        status['repos'].append({'id': repo.id, 'status': status_repo})
-
-    status['general'] = general_stat_dash(repos)
-
-    return status
 
 
 def general_stat_dash(repos):
