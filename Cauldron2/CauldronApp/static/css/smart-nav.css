@@ -378,8 +378,8 @@
   }
 }
 
-#cd-nav div, span, a, ul,
-li, nav {
+#cd-nav div, #cd-nav > span, #cd-nav > a, #cd-nav ul,
+#cd-nav > li, #cd-nav > nav {
 	margin: 0;
 	padding: 0;
 	border: 0;

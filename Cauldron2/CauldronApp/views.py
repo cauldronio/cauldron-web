@@ -2,6 +2,9 @@ from django.shortcuts import render
 from django.http import HttpResponseRedirect, JsonResponse
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import User
+from django.urls import reverse
+from django.db import transaction
+from django.db.models import Count, F
 
 import os
 import jwt
@@ -1099,6 +1102,67 @@ def request_show_dashboard(request, dash_id):
     context['dash_id'] = dash_id
 
     return render(request, 'dashboard.html', context=context)
+
+
+def request_delete_dashboard(request, dash_id):
+    """
+    Delete the project specified by the user
+    """
+    context = create_context(request)
+
+    if request.method != 'POST':
+        context['title'] = "Not allowed"
+        context['description'] = "Method not allowed for this path"
+        return render(request, 'error.html', status=405,
+                      context=context)
+
+    dash = Dashboard.objects.filter(id=dash_id).first()
+    if not dash:
+        context['title'] = "Project not found"
+        context['description'] = "This project was not found in this server"
+        return render(request, 'error.html', status=405,
+                      context=context)
+
+    owner = request.user.is_authenticated and request.user == dash.creator
+    if not owner and not request.user.is_superuser:
+        context['title'] = "Not allowed"
+        context['description'] = "You are not allowed to delete this project."
+        return render(request, 'error.html', status=400,
+                      context=context)
+
+    # Remove tasks in a transaction atomic
+    with transaction.atomic():
+        user_tokens = Token.objects.filter(user=dash.creator)
+        tasks = Task.objects.filter(repository__in=dash.repository_set.all(), tokens__user=dash.creator)
+        for task in tasks:
+            logger.error(task)
+            task.tokens.remove(*user_tokens)
+
+        remove_tasks_no_token()
+
+    es_users = ESUser.objects.filter(dashboard=dash)
+    odfe_api = OpendistroApi(ES_IN_URL, ES_ADMIN_PSW)
+    for esuser in es_users:
+        odfe_api.delete_user(esuser.name)
+    dash.delete()
+    return HttpResponseRedirect(reverse('projectspage'))
+
+
+def remove_tasks_no_token():
+    """
+    Remove the tasks with no token (different from git) and then upgrade the completed tasks
+    with the new old value
+    """
+    tasks = Task.objects.annotate(
+        num_tokens=Count('tokens')
+    ).filter(
+        num_tokens=0
+    ).exclude(
+        repository__backend='git'
+    )
+    for task in tasks:
+        CompletedTask.objects.filter(repository=task.repository).order_by('-completed').update(old=False)
+        task.delete()
 
 
 def request_kibana(request, dash_id):

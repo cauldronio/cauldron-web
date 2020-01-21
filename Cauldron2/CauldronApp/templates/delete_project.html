@@ -1,0 +1,29 @@
+<!-- Modal delete project -->
+<div class="modal fade" id="modal-delete-project" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Are you absolutely sure?</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+				<p>This cannot be undone. The following actions will be performed:</p>
+				<ul>
+					<li>The project will be removed</li>
+					<li>The tasks associated to this project will be stopped as soon as possible</li>
+					<li>You will lose the visualizations created in Kibana</li>
+				</ul>
+				<p>Please, confirm you want to delete the project <span id="delete-project-name" class="font-weight-bold"></span></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <form action="" method="post" id="form-delete-project">
+          {% csrf_token %}
+          <button class="btn btn-danger" type="submit">Delete project</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

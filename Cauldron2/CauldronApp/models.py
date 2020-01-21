@@ -32,6 +32,7 @@ class Token(models.Model):
     def is_ready(self):
         return self.status == self.STATUS_READY
 
+
 class GithubUser(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, unique=True)
     username = models.CharField(max_length=100)

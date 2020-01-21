@@ -33,6 +33,7 @@ urlpatterns = [
     path('dashboard/<int:dash_id>/info', views.request_dash_info),
     path('dashboard/<int:dash_id>/summary', views.request_dash_summary),
     path('dashboard/<int:dash_id>/kibana', views.request_kibana, name="open_kibana"),
+    path('dashboard/<int:dash_id>/delete', views.request_delete_dashboard, name="delete_project_url"),
     path('dashboard/<int:dash_id>/public-kibana', views.request_public_kibana, name="open_public_kibana"),
 
     path('repo-logs/<int:repo_id>', views.repo_logs),

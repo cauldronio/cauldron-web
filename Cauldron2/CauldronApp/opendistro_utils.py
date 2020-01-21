@@ -83,3 +83,19 @@ class OpendistroApi:
                          headers=headers)
         logger.info("{} - {}".format(r.status_code, r.text))
         return r.ok
+
+    def delete_user(self, username):
+        """
+        Delete a OpenDistro user
+        :param username: name of the user
+        :return:
+        """
+        headers = {'Content-Type': 'application/json'}
+
+        logger.info('Delete ODFE user: <{}>'.format(username))
+        r = requests.delete("{}/_opendistro/_security/api/internalusers/{}".format(self.es_url, username),
+                            auth=('admin', self.admin_password),
+                            verify=False,
+                            headers=headers)
+        logger.info("Result deleting user: {} - {}".format(r.status_code, r.text))
+        return r.ok

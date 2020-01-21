@@ -1,3 +1,9 @@
+$('#modal-delete-project').on('show.bs.modal', function (e) {
+    var projectId = $(e.relatedTarget).data('project-id');
+    var urlDelete = `/dashboard/${projectId}/delete`;
+    $('#form-delete-project').attr('action', urlDelete);
+})
+
 function refreshProjectDatasources(button, project_id) {
   var old_html = $(button).html();
   $(button).html(`<div class="spinner-border spinner-border-sm" role="status">
