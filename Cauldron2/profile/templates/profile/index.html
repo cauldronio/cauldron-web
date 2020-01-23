@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block css%}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="h3 mt-5 mb-5 font-weight-bold text-dark text-uppercase">User settings</div>
+
+    <!-- Success message -->
+    {% if message_success %}
+    <div class="alert alert-success">
+        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+        {{ message_success }}
+    </div>
+    {% endif %}
+
+    <!-- Error message -->
+    {% if message_error %}
+    <div class="alert alert-danger">
+        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+        {{ message_error }}
+    </div>
+    {% endif %}
+
+    <!-- Username section -->
+    <div class="mb-1 font-weight-bold text-gray-800 text-uppercase">Change name</div>
+    <form class="input-group" method="post">
+        {% csrf_token %}
+        {{ form.first_name.errors }}
+        {{ form.first_name }}
+        <div class="input-group-append">
+            <button type="submit" class="btn btn-success">Change</button>
+        </div>
+    </form>
+
+    <hr class="my-4">
+
+    <!-- Newsletter section -->
+    <!--div class="mb-1 font-weight-bold text-gray-800 text-uppercase">Newsletter</div>
+    <div class="custom-control custom-switch">
+        <input type="checkbox" class="custom-control-input" id="newsletterSwitch">
+        <label class="custom-control-label" for="newsletterSwitch">Toggle this switch to subscribe to the Cauldron Newsletter</label>
+    </div>
+
+    <hr class="my-4"-->
+
+    <!-- Tokens section -->
+    <div class="mb-1 font-weight-bold text-gray-800 text-uppercase">Tokens</div>
+    <div class="row">
+
+        <!-- GitHub Token Card -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-dark shadow h-100">
+                <!-- Card Header - Dropdown -->
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <div class="text-xs font-weight-bold text-dark text-uppercase">GitHub Token</div>
+                    {% if tokens.github %}
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink">
+                            <div class="dropdown-header">Token actions:</div>
+                            <a class="dropdown-item" id="delete-gh-token" href="#">Revoke</a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <!-- Card Body -->
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% if tokens.github %}
+                                    {% if tokens.github.is_ready %}
+                                    Status: <i class="fas fa-check text-success" data-toggle="tooltip" title="Ready to use"></i>
+                                    {% else %}
+                                    Status: <i class="fas fa-history" data-toggle="tooltip" title="Token in cooldown"></i> (<span data-countdown='{{ tokens.github.rate_time|date:"U000" }}'></span>)
+                                    {% endif %}
+                                {% else %}
+                                Not defined
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fab fa-github fa-2x text-gray-400"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gitlab Token Card -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100">
+                <!-- Card Header - Dropdown -->
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <div class="text-xs font-weight-bold text-warning text-uppercase">Gitlab Token</div>
+                    {% if tokens.gitlab %}
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink">
+                            <div class="dropdown-header">Token actions:</div>
+                            <a class="dropdown-item" id="delete-gl-token" href="#">Revoke</a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <!-- Card Body -->
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% if tokens.gitlab %}
+                                    {% if tokens.gitlab.is_ready %}
+                                    Status: <i class="fas fa-check text-success" data-toggle="tooltip" title="Ready to use"></i>
+                                    {% else %}
+                                    Status: <i class="fas fa-history" data-toggle="tooltip" title="Token in cooldown"></i> (<span data-countdown='{{ tokens.gitlab.rate_time|date:"U000" }}'></span>)
+                                    {% endif %}
+                                {% else %}
+                                Not defined
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fab fa-gitlab fa-2x text-gray-400"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Meetup Token Card -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100">
+                <!-- Card Header - Dropdown -->
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <div class="text-xs font-weight-bold text-danger text-uppercase">Meetup Token</div>
+                    {% if tokens.meetup %}
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink">
+                            <div class="dropdown-header">Token actions:</div>
+                            <a class="dropdown-item" id="delete-meetup-token" href="#">Revoke</a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <!-- Card Body -->
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% if tokens.meetup %}
+                                    {% if tokens.meetup.is_ready %}
+                                    Status: <i class="fas fa-check text-success" data-toggle="tooltip" title="Ready to use"></i>
+                                    {% else %}
+                                    Status: <i class="fas fa-history" data-toggle="tooltip" title="Token in cooldown"></i> (<span data-countdown='{{ tokens.meetup.rate_time|date:"U000" }}'></span>)
+                                    {% endif %}
+                                {% else %}
+                                Not defined
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fab fa-meetup fa-2x text-gray-400"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+<script src="{% static 'profile/jquery.countdown.min.js' %}" charset="utf-8"></script>
+<script type="text/javascript">
+$('[data-countdown]').each(function() {
+  var $this = $(this), finalDate = $(this).data('countdown');
+  $(this).countdown(finalDate, function(event) {
+    var format = '%M:%S';
+    if(event.offset.totalHours > 0) {
+      format = '%H:' + format;
+    }
+    if(event.offset.totalDays > 0) {
+      format = '%-d day%!d ' + format;
+    }
+    if(event.offset.weeks > 0) {
+      format = '%-w week%!w ' + format;
+    }
+    $(this).html(event.strftime(format));
+  })
+  .on('finish.countdown', function(event) {
+    $(this).parent().html('Status: <i class="fas fa-check text-success"></i>');
+  });
+});
+</script>
+{% endblock %}

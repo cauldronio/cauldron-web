@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from django.contrib.auth.models import User
 
 # IMPORTANT: If you are going to modify any User Reference: take a look at merge_accounts in views.py
@@ -13,11 +14,23 @@ class AnonymousUser(models.Model):
 
 
 class Token(models.Model):
+    STATUS_READY = 'ready'
+    STATUS_COOLDOWN = 'cooldown'
+
     backend = models.CharField(max_length=100)
     key = models.CharField(max_length=200)
     rate_time = models.DateTimeField(null=True, auto_now_add=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
+    @property
+    def status(self):
+        if self.rate_time <= timezone.now():
+            return self.STATUS_READY
+
+        return self.STATUS_COOLDOWN
+
+    def is_ready(self):
+        return self.status == self.STATUS_READY
 
 class GithubUser(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, unique=True)

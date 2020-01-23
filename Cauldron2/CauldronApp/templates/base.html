@@ -47,6 +47,8 @@
   </script>
   {% endif %}
 
+  <!-- SB Admin 2 styles -->
+  <link rel="stylesheet" href="{% static 'css/sb-admin-2.min.css' %}">
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
     integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
@@ -104,7 +106,7 @@
       {% if authenticated %}
       <div class="nav-item dropdown">
         <a class="nav-link dropdown-toggle navbar-text py-0" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-          <span> {{ auth_user_username }} </span>
+          <span> {{ request.user.first_name }} </span>
           <img src="{{ photo_user }}" class="rounded-circle avatar">
         </a>
 
@@ -117,16 +119,7 @@
           <a class="dropdown-item" href="{{ hatstall_url }}">Hatstall</a>
           {% endif %}
           <a class="dropdown-item" href="{% url 'projectspage' %}">My projects</a>
-          {% if github_enabled %}
-          <div class="dropdown-divider"></div>
-          <a class="dropdown-item" id="delete-gh-token" class="text-danger" href="">Delete my Github token</a>
-          {% endif %}
-          {% if gitlab_enabled %}
-          <a class="dropdown-item" id="delete-gl-token" href="">Delete my Gitlab token</a>
-          {% endif %}
-          {% if meetup_enabled %}
-          <a class="dropdown-item" id="delete-meetup-token" href="">Delete my Meetup token</a>
-          {% endif %}
+          <a class="dropdown-item" href="{% url 'profile:index' %}">Settings</a>
           <div class="dropdown-divider"></div>
           <a class="dropdown-item" href="/logout">Log out</a>
           <!--<a class="dropdown-item" href="/profile">Profile</a>-->

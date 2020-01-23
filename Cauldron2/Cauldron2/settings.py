@@ -39,6 +39,7 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
+    'profile.apps.ProfileConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -117,5 +118,6 @@ USE_L10N = True
 
 USE_TZ = True
 
+LOGIN_URL = 'homepage'
 
 STATIC_URL = '/static/'
