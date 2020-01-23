@@ -1,6 +1,72 @@
-<div>
-  <strong><span id="num-repos-filter">0</span></strong> data sources found
-  <button type="button" class="btn btn-outline-dark btn-sm btn-refresh-table" style="margin-left:5px"><i class="fa fa-sync"></i> Refresh table</button>
+<div class="header-dashboard">
+{% if dashboard %}
+
+  <div class="row justify-content-between mb-3">
+
+    <h1 id="dash_name">
+      {{dashboard.name}}
+      {% if editable %}
+      <a href="#" id="edit-name"><i class="far fa-xs fa-edit"></i></a>
+      {% endif %}
+    </h1>
+    
+    <div>
+      <a id="open-kibana"
+        class="btn btn-lg btn-primary {% if repositories|length == 0 or not editable %}disabled{% endif %}"
+        href="{% url 'open_kibana' dash_id %}"
+        target="_blank">
+        <i class="fa fa-chart-bar"></i> My Workspace
+      </a>
+    </div>
+
+  </div>
+
+  <div class="row">
+    <div>
+      <form class="form-inline">
+        <span class="font-weight-bold mr-1">Public dashboard link: </span>
+        {% if repositories|length == 0 %}
+        <span class="font-italic">add some datasources first</span>
+        {% else %}
+        <div class="input-group">
+          <input type="text" class="form-control" id="url-public-link-kibana" value="https://{{request.get_host}}{% url 'open_public_kibana' dashboard.id %}" readonly>  
+          <div class="input-group-append">
+            <button class="btn btn-outline-dark" type="button" id="copy-share-link-kibana" data-toggle="tooltip" data-title="copied!" data-trigger="manual" data-placement="bottom"><i class="far fa-copy"></i></button>
+          </div>
+        </div>
+        {% endif %}
+      </form>
+      <div class="mb-2">
+        <span class="font-weight-bold">Data sources found:</span>
+        <span id="num-repos-filter">0</span>
+      </div>
+      <div class="mb-2">
+        <span class="font-weight-bold">Status:</span>
+        <span id="general-status">
+        <!--This content is generated via JS-->
+        </span>
+      </div>
+      {% if editable %}
+      <button type="button" class="btn btn-outline-dark btn-reanalyze-all mb-2" data-repo="{{repo.id}}"><i class="fa fa-sync"></i> Refresh datasources</button>
+      {% endif %}
+    </div>
+    
+    
+  </div>
+
+
+  <div class="row justify-content-lg-end">
+    <button type="button" class="btn btn-outline-dark btn-refresh-table"><i class="fa fa-sync"></i> Update table</button>
+  </div>
+
+  
+
+{% else %}
+
+  <h1>Dashboard not found</h1>
+
+{% endif %}
+</div>
 
   <!--span class="dropdown backend-filters">
     <button class="badge btn btn-light dropdown-toggle" type="button" id="btn-filter-backend" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -27,12 +93,3 @@
       <a class="backend-item dropdown-item" data-filter-type="status" data-filter="error" href="#">Error</a>
     </div>
   </span-->
-
-  <p>
-    <small id="general-status"></small>
-    {% if editable %}
-    <button type="button" class="btn btn-outline-dark btn-reanalyze-all" style="float:right; margin-bottom:10px" data-repo="{{repo.id}}"><i class="fa fa-sync"></i> Refresh datasources</button>
-    {% endif %}
-  </p>
-
-</div>

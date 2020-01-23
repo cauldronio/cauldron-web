@@ -1129,6 +1129,29 @@ def request_kibana(request, dash_id):
     return HttpResponseRedirect(url)
 
 
+def request_public_kibana(request, dash_id):
+    """
+    Redirect to Kibana
+    :param request:
+    :param dash_id:
+    :return:
+    """
+    dash = Dashboard.objects.filter(id=dash_id).first()
+    if not dash:
+        return JsonResponse({'status': 'error', 'message': 'Dashboard not found'}, status=404)
+
+    if request.method != 'GET':
+        return JsonResponse({'status': 'error', 'message': 'Only GET method allowed'}, status=405)
+
+    es_user = ESUser.objects.filter(dashboard=dash, private=False).first()
+
+    jwt_key = get_kibana_jwt(es_user.name, es_user.role)
+
+    url = "{}/?jwtToken={}&security_tenant=global".format(KIB_OUT_URL, jwt_key)
+
+    return HttpResponseRedirect(url)
+
+
 def get_kibana_jwt(user, roles):
     """
     Return the jwt key for a specific user and role

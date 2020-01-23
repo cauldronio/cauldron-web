@@ -29,12 +29,16 @@ $(document).ready(function(){
 
     $('#copy-share-link-kibana').click(function(ev){
         ev.preventDefault();
-        copy_input('url-public-link-kibana');
+        var copyText = document.getElementById('url-public-link-kibana');
+        copyText.select();
+        document.execCommand("copy");
+        $('#copy-share-link-kibana').tooltip('show');
+        setTimeout(function () {$('#copy-share-link-kibana').tooltip('hide')}, 1000)
     });
-    $('#copy-share-link-project').click(function(ev){
-        ev.preventDefault('url-public-link-project');
-        copy_input('url-public-link-project');
-    });
+
+    $('input#url-public-link-kibana').click(function (ev) {
+        ev.target.select()
+    })
 
     $('#repos-table').DataTable({
       language: {
@@ -94,13 +98,6 @@ function filterTable() {
     $('#btn-filter-status').html(`status: ${StatusFilter}`);
     $('#btn-filter-backend').html(`backend: ${BackendFilter}`);
 }
-
-function copy_input(id_input) {
-    var copyText = document.getElementById(id_input);
-    copyText.select();
-    document.execCommand("copy");
-}
-
 
 function onClickEditName(ev) {
     ev.preventDefault();
@@ -224,9 +221,9 @@ function reanalyzeEveryRepo(event){
 
 function getSummary() {
     $.getJSON('/dashboard/' + Dash_ID + "/summary", function(data) {
-        var status_output = "|";
+        var status_output = "";
         for (var key in data.status){
-            status_output += ` <strong>${key}</strong>: ${data.status[key]} |`;
+            status_output += ` ${key}: ${data.status[key]} |`;
         }
 
         $('#num-repos-filter').html(data.total);
