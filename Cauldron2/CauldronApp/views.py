@@ -192,7 +192,7 @@ def merge_accounts(user_origin, user_dest):
         dash.save()
     tokens = Token.objects.filter(user=user_origin)
     for token in tokens:
-        token.user = user_origin
+        token.user = user_dest
         token.save()
 
 
