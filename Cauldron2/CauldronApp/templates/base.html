@@ -55,6 +55,7 @@
   <!-- Awesome icons -->
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css"
     integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+	<link rel="stylesheet" href="{% static 'css/smart-nav.css' %}">
   <link rel="stylesheet" href="{% static 'css/common.css' %}">
   <!-- Favicon.ico -->
   <link rel="shortcut icon" href="{% static 'img/favicon.ico' %}"/>
@@ -97,10 +98,6 @@
         </li>
       </ul>-->
 
-      <a class="btn btn-outline-success d-none d-lg-inline-block mb-0 ml-md-3" href="https://gitlab.com/cauldronio/cauldron/issues/new" target="_blank">
-        Send us feedback!
-      </a>
-
       <div class="navbar-line d-none"></div>
 
       {% if authenticated %}
@@ -135,7 +132,18 @@
   </nav>
   <!-- END NAVBAR-->
 
-
+  <!-- BEGIN Smart Nav-->
+  <div id="cd-nav" class="is-fixed">
+		<a href="#0" class="cd-nav-trigger">Menu<span></span></a>
+		<nav id="cd-main-nav">
+			<ul>
+				<li><a href="https://community.cauldron.io/" target="_blank">Get Support</a></li>
+				<li><a href="https://gitlab.com/cauldronio/cauldron/issues/new" target="_blank">Report an Issue</a></li>
+				<li><a href="https://mailchi.mp/003f1e1f6242/cauldron-newsletter" target="_blank">Join the Newsletter</a></li>
+			</ul>
+		</nav>
+	</div>
+  <!-- END Smart Nav-->
 
   <!-- BEGIN Modal for login -->
   <div class="modal fade" id="modalLogin" tabindex="-1" role="dialog" aria-labelledby="modalLoginTitle"
@@ -255,7 +263,6 @@
           <p class="full-footer">Made with <abbr title="love">&hearts;</abbr> and <strong>free, open source software</strong>:</p>
           <p class="full-footer"><a href="https://chaoss.github.io/grimoirelab/" target="_blank"><img src="/static/img/wizard-y.svg"
                 height="24" alt=""> GrimoireLab</a></p>
-          <a href="https://mailchi.mp/003f1e1f6242/cauldron-newsletter" class="btn btn-outline-light" target="_blank" rel="noopener noreferrer">Join the newsletter</a>
         </div>
       </div>
     </div>
@@ -274,6 +281,7 @@
     crossorigin="anonymous"></script>
 
   <script src="{% static 'js/common.js' %}" charset="utf-8"></script>
+  <script src="{% static 'js/smart-nav.js' %}"></script>
 
   {% block javascript %}
   {% endblock %}
