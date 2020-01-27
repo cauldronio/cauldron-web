@@ -665,7 +665,8 @@ def manage_add_gl_repo(dash, data, analyze_commits, analyze_issues_mrs):
                 start_task(repo, None)
     elif data['user'] and data['repository']:
         if analyze_issues_mrs:
-            url_gl = 'https://gitlab.com/{}/{}'.format(data['user'], data['repository'])
+            repo_encoded = '%2F'.join(data['repository'].strip('/').split('/'))
+            url_gl = 'https://gitlab.com/{}/{}'.format(data['user'], repo_encoded)
             repo_gl = add_to_dashboard(dash, 'gitlab', url_gl)
             start_task(repo_gl, dash.creator.gitlabuser.token)
         if analyze_commits:
@@ -714,8 +715,10 @@ def guess_data_backend(data_guess, backend):
     Guess the following formats:
     - User: "user"
     - User/Repository: "user/repository"
+    - Group/subgroup/repository: "group/subgroup/.../repository"
     - URL of user: "https://backend.com/user"
     - URL of repository: "https://backend.com/user/repository"
+    - URL of repository group: "https://gitlab.com/group/subgroup/subgroup/repository"
     - Meetup group: "https://www.backend.com/one-group/"
     backend: Could be github, gitlab or meetup for git is always the URL
     :return:
@@ -723,9 +726,9 @@ def guess_data_backend(data_guess, backend):
     gh_user_regex = '([a-zA-Z0-9](?:[a-zA-Z0-9]|-[a-zA-Z0-9]){1,38})'
     gh_repo_regex = '([a-zA-Z0-9\.\-\_]{1,100})'
     gl_user_regex = '([a-zA-Z0-9_\.][a-zA-Z0-9_\-\.]{1,200}[a-zA-Z0-9_\-]|[a-zA-Z0-9_])'
-    gl_repo_regex = '([a-zA-Z0-9_\.][a-zA-Z0-9_\-\.]*[a-zA-Z0-9_\-\.])'
+    gl_repo_regex = '((?:[a-zA-Z0-9_\.][a-zA-Z0-9_\-\.]*(?:\/)?)+)'
     meetup_group_regex = '([a-zA-Z0-9\-]{6,70})'
-    language_code = '(?:/[a-zA-Z0-9\-]{2,5})?'
+    language_code = '(?:\/[a-zA-Z0-9\-]{2,5})?'
     data_guess = data_guess.strip()
     if backend == 'github':
         re_user = re.match('^{}$'.format(gh_user_regex), data_guess)
@@ -744,17 +747,17 @@ def guess_data_backend(data_guess, backend):
         re_user = re.match('^{}$'.format(gl_user_regex), data_guess)
         if re_user:
             return {'user': re_user.groups()[0], 'repository': None}
-        re_url_user = re.match('^https?://gitlab\.com/{}\/?$'.format(gl_user_regex), data_guess)
+        re_url_user = re.match('^https?:\/\/gitlab\.com\/{}\/?$'.format(gl_user_regex), data_guess)
         if re_url_user:
             return {'user': re_url_user.groups()[0], 'repository': None}
-        re_url_repo = re.match('^https?://gitlab\.com/{}/{}(?:.git)?$'.format(gl_user_regex, gl_repo_regex), data_guess)
+        re_url_repo = re.match('^https?:\/\/gitlab\.com\/{}\/{}(?:.git)?$'.format(gl_user_regex, gl_repo_regex), data_guess)
         if re_url_repo:
             return {'user': re_url_repo.groups()[0], 'repository': re_url_repo.groups()[1]}
         re_user_repo = re.match('{}/{}$'.format(gl_user_regex, gl_repo_regex), data_guess)
         if re_user_repo:
             return {'user': re_user_repo.groups()[0], 'repository': re_user_repo.groups()[1]}
     elif backend == 'meetup':
-        re_url_group = re.match('^https?://www\.meetup\.com{}/{}/?'.format(language_code, meetup_group_regex), data_guess)
+        re_url_group = re.match('^https?:\/\/www\.meetup\.com{}\/{}\/?'.format(language_code, meetup_group_regex), data_guess)
         if re_url_group:
             return {'group': re_url_group.groups()[0]}
         re_group = re.match('^{}$'.format(meetup_group_regex), data_guess)
