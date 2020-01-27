@@ -167,7 +167,7 @@ def request_github_login_callback(request):
     if last_page:
         return HttpResponseRedirect(last_page)
 
-    return HttpResponseRedirect('/')
+    return HttpResponseRedirect(reverse('projectspage'))
 
 
 def merge_accounts(user_origin, user_dest):
@@ -256,7 +256,7 @@ def request_gitlab_login_callback(request):
     if last_page:
         return HttpResponseRedirect(last_page)
 
-    return HttpResponseRedirect('/')
+    return HttpResponseRedirect(reverse('projectspage'))
 
 
 # TODO: Add state
@@ -325,7 +325,7 @@ def request_meetup_login_callback(request):
     if last_page:
         return HttpResponseRedirect(last_page)
 
-    return HttpResponseRedirect('/')
+    return HttpResponseRedirect(reverse('projectspage'))
 
 
 def tricky_authentication(req, BackendUser, username, name, token, photo_url):

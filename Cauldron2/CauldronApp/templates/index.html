@@ -22,6 +22,9 @@
           <form action="/dashboard" method="post" class="create-dashboard">
             {% csrf_token %}
             <button type="submit" class="btn btn-light btn-lg my-3" role="button">Analyze a Project</button>
+            {% if authenticated %}
+            <a href="{% url 'projectspage' %}" role="button" class="btn btn-primary btn-lg my-3 ml-3">My Projects</a>
+            {% endif %}
           </form>
         </div>
         <div class="col-lg-4 text-lg-left">
@@ -38,7 +41,7 @@
           <h2>All-in-one</h2>
           <hr>
           <p>Cauldron is a SaaS analytics solution that allows users to aggregate information from multiple collaboration platforms as different types of data sources. Because software development is more than just code commits in a single repository, Cauldron allows users define which data sources to include in any analysis.</p>
-          
+
         </div>
         <div class="col-lg-3">
           <img class="img-fluid mb-3" src="{% static 'img/contributors.png' %}" alt="Contributors graph">
@@ -51,16 +54,16 @@
           <h2>Free Open Source Software</h2>
           <hr>
           <p>Cauldron is free, open source software to allow users, contributors, and maintainers to use, study, share, and improve the software openly.</p>
-          
+
         </div>
       </div>
     </div>
   </section>
   <section class="technical-details">
     <div class="container-fluid">
-      
+
       <div class="row justify-content-center mb-3">
-        
+
         <div class="col-sm-4">
           <h2 class="mb-3 text-center">Supported datasources</h2>
           <div class="row">
@@ -96,7 +99,7 @@
                 </div>
               </div>
             </div>
-          </div>          
+          </div>
         </div>
 
         <div class="col-sm-4 text-center">
@@ -121,7 +124,7 @@
             </ul>
           </p>
         </div>
-        
+
       </div>
     </div>
   </section>
