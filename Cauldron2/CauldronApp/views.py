@@ -1135,7 +1135,6 @@ def request_delete_dashboard(request, dash_id):
         user_tokens = Token.objects.filter(user=dash.creator)
         tasks = Task.objects.filter(repository__in=dash.repository_set.all(), tokens__user=dash.creator)
         for task in tasks:
-            logger.error(task)
             task.tokens.remove(*user_tokens)
 
         remove_tasks_no_token()
