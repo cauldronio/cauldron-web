@@ -407,6 +407,19 @@ def request_logout(request):
     return HttpResponseRedirect('/')
 
 
+def generate_request_token_message(backend):
+    return f'For accessing the {backend} API, we need a user token. \
+    If you click "Go", below, we will request a token to {backend} on \
+    your behalf. You will be prompted to login in {backend}, if you \
+    are not already logged in, and then asked to agree on the permissions \
+    for the token that will be provided to us. Once we get the token from \
+    {backend}, we will use it to access their API to retrieve data for the \
+    datasources you intend to analyze. We may use the token to update \
+    data about them in the future, too. You can revoke the token at any \
+    time in {backend}, or remove it from Cauldron ("Settings", option \
+    "Revoke" on the menu for the token to be revoked)'
+
+
 def request_edit_dashboard(request, dash_id):
     """
     Edit a dashboard. Only POST allowed:
@@ -529,7 +542,7 @@ def request_edit_dashboard(request, dash_id):
             params = urlencode({'client_id': GH_CLIENT_ID})
             gh_url_oauth = "{}?{}".format(GH_URI_IDENTITY, params)
             return JsonResponse({'status': 'error',
-                                 'message': 'We need your GitHub token for analyzing this kind of repositories',
+                                 'message': generate_request_token_message("GitHub"),
                                  'redirect': gh_url_oauth},
                                 status=401)
         return manage_add_gh_repo(dash, data, analyze_commits, analyze_issues)
@@ -554,7 +567,7 @@ def request_edit_dashboard(request, dash_id):
                                 'redirect_uri': "https://{}{}".format(request.get_host(), GL_REDIRECT_PATH)})
             gl_url_oauth = "{}?{}".format(GL_URI_IDENTITY, params)
             return JsonResponse({'status': 'error',
-                                 'message': 'We need your GitLab token for analyzing this kind of repositories',
+                                 'message': generate_request_token_message("GitLab"),
                                  'redirect': gl_url_oauth},
                                 status=401)
         return manage_add_gl_repo(dash, data, analyze_commits, analyze_issues)
@@ -573,7 +586,7 @@ def request_edit_dashboard(request, dash_id):
                                 'redirect_uri': "https://{}{}".format(request.get_host(), MEETUP_REDIRECT_PATH)})
             meetup_url_oauth = "{}?{}".format(MEETUP_URI_IDENTITY, params)
             return JsonResponse({'status': 'error',
-                                 'message': 'We need your Meetup token for analyzing this kind of repositories',
+                                 'message': generate_request_token_message("Meetup"),
                                  'redirect': meetup_url_oauth},
                                 status=401)
         return manage_add_meetup_repo(dash, data)
