@@ -410,12 +410,12 @@ def request_logout(request):
 def generate_request_token_message(backend):
     return f'For accessing the {backend} API, we need a user token. \
     If you click "Go", below, we will request a token to {backend} on \
-    your behalf. You will be prompted to login in {backend}, if you \
+    your behalf.<br>You will be prompted to login in {backend}, if you \
     are not already logged in, and then asked to agree on the permissions \
-    for the token that will be provided to us. Once we get the token from \
+    for the token that will be provided to us.<br>Once we get the token from \
     {backend}, we will use it to access their API to retrieve data for the \
     datasources you intend to analyze. We may use the token to update \
-    data about them in the future, too. You can revoke the token at any \
+    data about them in the future, too.<br>You can revoke the token at any \
     time in {backend}, or remove it from Cauldron ("Settings", option \
     "Revoke" on the menu for the token to be revoked)'
 
