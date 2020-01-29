@@ -1112,7 +1112,7 @@ def request_show_dashboard(request, dash_id):
             return render(request, 'error.html', status=405,
                           context=context)
         jwt_key = get_kibana_jwt(public_esuser.name, public_esuser.role)
-        context['public_link'] = "{}/?jwtToken={}&security_tenant=global".format(KIB_OUT_URL, jwt_key)
+        context['public_link'] = "{}/app/kibana#/dashboard/a834f080-41b1-11ea-a32a-715577273fe3?jwtToken={}&security_tenant=global".format(KIB_OUT_URL, jwt_key)
 
     context['editable'] = request.user.is_authenticated and request.user == dash.creator or request.user.is_superuser
     context['dash_id'] = dash_id
@@ -1182,7 +1182,7 @@ def remove_tasks_no_token():
 
 def request_kibana(request, dash_id):
     """
-    Redirect to Kibana
+    Redirect to My Workspace Kibana
     :param request:
     :param dash_id:
     :return:
@@ -1203,7 +1203,7 @@ def request_kibana(request, dash_id):
 
     jwt_key = get_kibana_jwt(es_user.name, es_user.role)
 
-    url = "{}/?jwtToken={}&security_tenant=global".format(KIB_OUT_URL, jwt_key)
+    url = "{}/app/kibana#/dashboard/a9513820-41c0-11ea-a32a-715577273fe3?jwtToken={}&security_tenant=global".format(KIB_OUT_URL, jwt_key)
 
     return HttpResponseRedirect(url)
 
@@ -1226,7 +1226,7 @@ def request_public_kibana(request, dash_id):
 
     jwt_key = get_kibana_jwt(es_user.name, es_user.role)
 
-    url = "{}/?jwtToken={}&security_tenant=global".format(KIB_OUT_URL, jwt_key)
+    url = "{}/app/kibana#/dashboard/a834f080-41b1-11ea-a32a-715577273fe3?jwtToken={}&security_tenant=global".format(KIB_OUT_URL, jwt_key)
 
     return HttpResponseRedirect(url)
 
