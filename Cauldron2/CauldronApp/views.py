@@ -1580,3 +1580,33 @@ def admin_page(request):
     context['repos_meetup_count'] = Repository.objects.exclude(dashboards=None).filter(backend="meetup").count()
 
     return render(request, 'admin.html', context=context)
+
+
+def terms(request):
+    """
+    View to show the Terms and Legal Notice about Cauldron
+    :param request:
+    :return:
+    """
+    context = create_context(request)
+    return render(request, 'terms.html', context=context)
+
+
+def privacy(request):
+    """
+    View to show the Privacy Policy of Cauldron
+    :param request:
+    :return:
+    """
+    context = create_context(request)
+    return render(request, 'privacy.html', context=context)
+
+
+def cookies(request):
+    """
+    View to show the Cookie Policy of Cauldron
+    :param request:
+    :return:
+    """
+    context = create_context(request)
+    return render(request, 'cookies.html', context=context)
