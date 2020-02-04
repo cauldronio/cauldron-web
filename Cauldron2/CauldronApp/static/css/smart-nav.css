@@ -115,7 +115,7 @@
     border-bottom: none;
   }
   #cd-nav li a:hover {
-    color: #00bd9b;
+    color: #224abe;
   }
   #cd-nav.is-fixed ul {
     /* when the user scrolls down, the navigation moves to the bottom right in Fixed position - as on touch devices */
@@ -387,6 +387,11 @@
 	font: inherit;
 	vertical-align: baseline;
 }
+
+a.cd-nav-trigger {
+    background-color: #ff9900;
+}
+
 /* HTML5 display-role reset for older browsers */
 #cd-nav nav {
 	display: block;
