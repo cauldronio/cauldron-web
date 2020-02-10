@@ -45,6 +45,8 @@ urlpatterns = [
     path('admin-page', views.admin_page, name="admin_page"),
     path('profile/', include('profile.urls')),
 
+    path('status/', views.status_page, name="status"),
+
     path('', views.homepage, name="homepage"),
     path('admin/', admin.site.urls),
 ]

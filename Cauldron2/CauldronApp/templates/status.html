@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block css%}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mt-4">
+
+        <!-- GENERAL SECTION BEGIN -->
+        <div class="col-md-3">
+            <div class="header-dashboard">
+                <h3>General status</h3>
+            </div>
+
+            {% include "status_card.html" %}
+
+        </div>
+        <!-- GENERAL SECTION END -->
+
+        <div class="col-md-9">
+            <div class="header-dashboard">
+                <h3>Systems status</h3>
+            </div>
+
+            <div class="card bg-success text-white text-center p-3">
+                <strong>All Systems Operational</strong>
+            </div>
+
+            <div class="mt-4">
+                <em>Under development...</em>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+{% endblock %}

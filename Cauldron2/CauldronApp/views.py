@@ -1515,6 +1515,31 @@ def generate_random_uuid(length=16, chars=ascii_lowercase + digits, split=4, del
         return username
 
 
+def status_info():
+    """
+    Retrieve the status info about the server
+    :return:
+    """
+    context = dict()
+
+    # Total Dashboards
+    context['dash_count'] = Dashboard.objects.count()
+    # Total Tasks
+    context['tasks_count'] = Task.objects.count() + CompletedTask.objects.filter(old=False).count()
+    context['completed_tasks_count'] = CompletedTask.objects.filter(status="COMPLETED", old=False).count()
+    context['running_tasks_count'] = Task.objects.exclude(worker_id="").count()
+    context['pending_tasks_count'] = Task.objects.filter(worker_id="").count()
+    context['error_tasks_count'] = CompletedTask.objects.filter(status="ERROR", old=False).count()
+    # Total Data sources (Formerly Repositories)
+    context['repos_count'] = Repository.objects.exclude(dashboards=None).count()
+    context['repos_git_count'] = Repository.objects.exclude(dashboards=None).filter(backend="git").count()
+    context['repos_github_count'] = Repository.objects.exclude(dashboards=None).filter(backend="github").count()
+    context['repos_gitlab_count'] = Repository.objects.exclude(dashboards=None).filter(backend="gitlab").count()
+    context['repos_meetup_count'] = Repository.objects.exclude(dashboards=None).filter(backend="meetup").count()
+
+    return context
+
+
 def admin_page(request):
     """
     View for the administration page to show an overview of each dashboard
@@ -1580,6 +1605,25 @@ def admin_page(request):
     context['repos_meetup_count'] = Repository.objects.exclude(dashboards=None).filter(backend="meetup").count()
 
     return render(request, 'admin.html', context=context)
+
+
+def status_page(request):
+    """
+    View for the status page to show an overview of the server systems
+    :param request:
+    :return:
+    """
+    context = create_context(request)
+
+    if request.method != 'GET':
+        context['title'] = "Method Not Allowed"
+        context['description'] = "Only GET methods allowed"
+        return render(request, 'error.html', status=405,
+                      context=context)
+
+    context.update(status_info())
+
+    return render(request, 'status.html', context=context)
 
 
 def terms(request):

@@ -1,0 +1,54 @@
+<!-- GENERAL STATUS CARD BEGIN -->
+<div class="card shadow-sm">
+    <div class="card-header">
+        <div class="title">
+            <h4>
+                <strong>Server</strong>: {{request.get_host}}
+            </h4>
+            <h5>
+                <strong>Total Dashboards</strong>: {{dash_count}}
+            </h5>
+            <hr>
+            <h5>
+                <strong>Total Tasks</strong>: {{tasks_count}}
+            </h5>
+            <h6>
+                <i class="fas fa-check text-success"></i>
+                <strong>Completed tasks</strong>: {{completed_tasks_count}}
+            </h6>
+            <h6>
+                <div class="fas fa-spinner"></div>
+                <strong>Running tasks</strong>: {{running_tasks_count}}
+            </h6>
+            <h6>
+                <div class="fas fa-circle" style="color:#0079d3"></div>
+                <strong>Pending tasks</strong>: {{pending_tasks_count}}
+            </h6>
+            <h6>
+                <i class="fas fa-exclamation-triangle text-warning"></i>
+                <strong>Error tasks</strong>: {{error_tasks_count}}
+            </h6>
+            <hr>
+            <h5>
+                <strong>Total Data Sources</strong>: {{repos_count}}
+            </h5>
+            <h6>
+                <i class="fab fa-git-square"></i>
+                <strong>Git data sources</strong>: {{repos_git_count}}
+            </h6>
+            <h6>
+                <i class="fab fa-github"></i>
+                <strong>GitHub data sources</strong>: {{repos_github_count}}
+            </h6>
+            <h6>
+                <i class="fab fa-gitlab"></i>
+                <strong>Gitlab data sources</strong>: {{repos_gitlab_count}}
+            </h6>
+            <h6>
+                <i class="fab fa-meetup"></i>
+                <strong>Meetup data sources</strong>: {{repos_meetup_count}}
+            </h6>
+        </div>
+    </div>
+</div>
+<!-- GENERAL STATUS CARD END -->
