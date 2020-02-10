@@ -1589,22 +1589,110 @@ def admin_page(request):
 
             context['dashboards'].append(dashboard)
 
-    # Total Dashboards
-    context['dash_count'] = Dashboard.objects.count()
-    # Total Tasks
-    context['tasks_count'] = Task.objects.count() + CompletedTask.objects.filter(old=False).count()
-    context['completed_tasks_count'] = CompletedTask.objects.filter(status="COMPLETED", old=False).count()
-    context['running_tasks_count'] = Task.objects.exclude(worker_id="").count()
-    context['pending_tasks_count'] = Task.objects.filter(worker_id="").count()
-    context['error_tasks_count'] = CompletedTask.objects.filter(status="ERROR", old=False).count()
-    # Total Data sources (Formerly Repositories)
-    context['repos_count'] = Repository.objects.exclude(dashboards=None).count()
-    context['repos_git_count'] = Repository.objects.exclude(dashboards=None).filter(backend="git").count()
-    context['repos_github_count'] = Repository.objects.exclude(dashboards=None).filter(backend="github").count()
-    context['repos_gitlab_count'] = Repository.objects.exclude(dashboards=None).filter(backend="gitlab").count()
-    context['repos_meetup_count'] = Repository.objects.exclude(dashboards=None).filter(backend="meetup").count()
+    context.update(status_info())
 
     return render(request, 'admin.html', context=context)
+
+
+def admin_page_users(request):
+    """
+    View for the administration page to show an overview of each user
+    :param request:
+    :return:
+    """
+    context = create_context(request)
+
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        context['title'] = "User Not Allowed"
+        context['description'] = "Only Admin users allowed"
+        return render(request, 'error.html', status=403,
+                      context=context)
+    if request.method != 'GET':
+        context['title'] = "Method Not Allowed"
+        context['description'] = "Only GET methods allowed"
+        return render(request, 'error.html', status=405,
+                      context=context)
+
+    context['users'] = []
+    for user in User.objects.all():
+        user_entry = dict()
+        user_entry['user'] = user
+        user_entry['tokens'] = {
+            'github': Token.objects.filter(backend='github', user=user).first(),
+            'gitlab': Token.objects.filter(backend='gitlab', user=user).first(),
+            'meetup': Token.objects.filter(backend='meetup', user=user).first(),
+        }
+        context['users'].append(user_entry)
+
+    context.update(status_info())
+
+    return render(request, 'admin-users.html', context=context)
+
+
+def upgrade_user(request):
+    """
+    Upgrade user to admin
+    """
+    context = create_context(request)
+
+    if request.method != 'POST':
+        context['title'] = "Not allowed"
+        context['description'] = "Method not allowed for this path"
+        return render(request, 'error.html', status=405,
+                      context=context)
+
+    user_pk = request.POST.get('user_pk', None)
+    user = User.objects.filter(pk=user_pk).first()
+    if not user:
+        context['title'] = "User not found"
+        context['description'] = "The user requested was not found in this server"
+        return render(request, 'error.html', status=405,
+                      context=context)
+
+    if not request.user.is_superuser:
+        context['title'] = "Not allowed"
+        context['description'] = "You are not allowed to make this action"
+        return render(request, 'error.html', status=400,
+                      context=context)
+
+    # Upgrade user to admin
+    user.is_superuser = True
+    user.save()
+
+    return HttpResponseRedirect(reverse('admin_page_users'))
+
+
+def downgrade_user(request):
+    """
+    Downgrade admin to user
+    """
+    context = create_context(request)
+
+    if request.method != 'POST':
+        context['title'] = "Not allowed"
+        context['description'] = "Method not allowed for this path"
+        return render(request, 'error.html', status=405,
+                      context=context)
+
+    user_pk = request.POST.get('user_pk', None)
+    user = User.objects.filter(pk=user_pk).first()
+    if not user:
+        context['title'] = "User not found"
+        context['description'] = "The user requested was not found in this server"
+        return render(request, 'error.html', status=405,
+                      context=context)
+
+    if not request.user.is_superuser:
+        context['title'] = "Not allowed"
+        context['description'] = "You are not allowed to make this action"
+        return render(request, 'error.html', status=400,
+                      context=context)
+
+    # Downgrade admin to user
+    user.is_superuser = False
+    user.save()
+
+    return HttpResponseRedirect(reverse('admin_page_users'))
 
 
 def status_page(request):

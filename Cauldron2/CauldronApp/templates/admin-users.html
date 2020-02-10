@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block css%}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<!-- DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css"/>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+
+        <!-- WORKERS AND GENERAL SECTION BEGIN -->
+        <div class="col-md-3 mt-4">
+            <div class="header-dashboard">
+                <h3>General status</h3>
+            </div>
+
+            {% include "status_card.html" %}
+
+            <div class="header-dashboard">
+                <h3>Workers</h3>
+            </div>
+            <!-- WORKER CARD BEGIN -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <div class="title">
+                        <strong>Worker 1</strong>
+                    </div>
+                </div>
+                <div class="card-body">
+                    Here will appear info about the worker
+                </div>
+            </div>
+            <!-- WORKER CARD END -->
+        </div>
+        <!-- WORKERS AND GENERAL SECTION END -->
+
+        <!-- ADMIN SECTION BEGIN -->
+        <div class="col-md-9 mt-4">
+            <div class="header-dashboard">
+                <h3>Admin settings</h3>
+            </div>
+            <nav>
+                <div class="nav nav-pills nav-justified" id="nav-tab" role="tablist">
+                    <a class="nav-item nav-link" id="nav-dash-tab" href="{% url 'admin_page' %}" role="tab" aria-controls="nav-dash" aria-selected="true"><strong>Dashboards</strong></a>
+
+                    <a class="nav-item nav-link active" id="nav-users-tab" href="{% url 'admin_page_users' %}" role="tab" aria-controls="nav-users" aria-selected="false"><strong>Users</strong></a>
+                </div>
+            </nav>
+            <div class="tab-content mt-4" id="nav-tabContent">
+                <div class="tab-pane fade show active" id="nav-users" role="tabpanel" aria-labelledby="nav-users-tab">
+                    {% if users %}
+                    <table id="users-table" class="row-border" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Date Joined (UTC)</th>
+                                <th>#Dashboards</th>
+                                <th>Tokens</th>
+                                <th>Admin</th>
+                                <!--th>Hatstall</th-->
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td>{{user.user.first_name}}</td>
+                                <td>
+                                    <span style="display:none;">{{user.user.date_joined|date:"U"}}</span>
+                                    {{user.user.date_joined|date:"Y/m/d P"}}
+                                </td>
+                                <td>{{user.user.dashboard_set.all.count}}</td>
+                                <td>
+                                    <span class="mr-4">
+                                        <i class="fab fa-github fa-lg"></i>:
+                                        {% if user.tokens.github %}
+                                            {% if user.tokens.github.is_ready %}
+                                            <i class="fas fa-check text-success" data-toggle="tooltip" title="Ready to use"></i>
+                                            {% else %}
+                                            <i class="fas fa-history" data-toggle="tooltip" title="Token in cooldown until {{user.tokens.github.rate_time}}"></i>
+                                            {% endif %}
+                                        {% else %}
+                                        <i class="fas fa-times text-danger" data-toggle="tooltip" title="Not defined"></i>
+                                        {% endif %}
+                                    </span>
+
+                                    <span class="mr-4">
+                                        <i class="fab fa-gitlab fa-lg"></i>:
+                                        {% if user.tokens.gitlab %}
+                                            {% if user.tokens.gitlab.is_ready %}
+                                            <i class="fas fa-check text-success" data-toggle="tooltip" title="Ready to use"></i>
+                                            {% else %}
+                                            <i class="fas fa-history" data-toggle="tooltip" title="Token in cooldown until {{user.tokens.gitlab.rate_time}}"></i>
+                                            {% endif %}
+                                        {% else %}
+                                        <i class="fas fa-times text-danger" data-toggle="tooltip" title="Not defined"></i>
+                                        {% endif %}
+                                    </span>
+
+                                    <span class="mr-4">
+                                        <i class="fab fa-meetup fa-lg"></i>:
+                                        {% if user.tokens.meetup %}
+                                            {% if user.tokens.meetup.is_ready %}
+                                            <i class="fas fa-check text-success" data-toggle="tooltip" title="Ready to use"></i>
+                                            {% else %}
+                                            <i class="fas fa-history" data-toggle="tooltip" title="Token in cooldown until {{user.tokens.meetup.rate_time}}"></i>
+                                            {% endif %}
+                                        {% else %}
+                                        <i class="fas fa-times text-danger" data-toggle="tooltip" title="Not defined"></i>
+                                        {% endif %}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span style="display:none;">{{user.user.is_superuser}}</span>
+                                    {% if user.user.is_superuser %}
+                                    <form action="{% url 'downgrade_user' %}" method="post">
+                                        <i class="fas fa-check text-success"></i>
+                                        {% csrf_token %}
+                                        <input type="hidden" name="user_pk" value="{{user.user.pk}}">
+                                        <button type="submit" class="btn btn-xs">
+                                            <i class="fas fa-chevron-circle-down" data-toggle="tooltip" title="Downgrade admin to user"></i>
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                    <form action="{% url 'upgrade_user' %}" method="post">
+                                        <i class="fas fa-times text-danger"></i>
+                                        {% csrf_token %}
+                                        <input type="hidden" name="user_pk" value="{{user.user.pk}}">
+                                        <button type="submit" class="btn btn-xs">
+                                            <i class="fas fa-chevron-circle-up" data-toggle="tooltip" title="Upgrade user to admin"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </td>
+                                <!--td>
+                                    <i class="fas fa-question"></i>
+                                </td-->
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <em>No Users to show</em>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <!-- ADMIN SECTION END -->
+
+    </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+<script src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.5/jquery-ui.min.js'></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+<!-- DataTables JavaScript -->
+<script src="https://code.jquery.com/jquery-3.3.1.js"></script>
+<script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('#users-table').DataTable({
+      columnDefs: [
+        {
+          targets: [-1, -2, -3, -4],
+          className: 'dt-body-center'
+        }
+      ]
+    });
+} );
+</script>
+{% endblock %}

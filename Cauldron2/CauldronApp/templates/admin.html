@@ -12,64 +12,13 @@
     <div class="row">
 
         <!-- WORKERS AND GENERAL SECTION BEGIN -->
-        <div class="col-md-3">
+        <div class="col-md-3 mt-4">
             <div class="header-dashboard">
                 <h3>General status</h3>
             </div>
-            <!-- GENERAL STATUS CARD BEGIN -->
-            <div class="card shadow-sm">
-                <div class="card-header">
-                    <div class="title">
-                        <h4>
-                            <strong>Server</strong>: {{request.get_host}}
-                        </h4>
-                        <h5>
-                            <strong>Total Dashboards</strong>: {{dash_count}}
-                        </h5>
-                        <hr>
-                        <h5>
-                            <strong>Total Tasks</strong>: {{tasks_count}}
-                        </h5>
-                        <h6>
-                            <i class="fas fa-check text-success"></i>
-                            <strong>Completed tasks</strong>: {{completed_tasks_count}}
-                        </h6>
-                        <h6>
-                            <div class="fas fa-spinner"></div>
-                            <strong>Running tasks</strong>: {{running_tasks_count}}
-                        </h6>
-                        <h6>
-                            <div class="fas fa-circle" style="color:#0079d3"></div>
-                            <strong>Pending tasks</strong>: {{pending_tasks_count}}
-                        </h6>
-                        <h6>
-                            <i class="fas fa-exclamation-triangle text-warning"></i>
-                            <strong>Error tasks</strong>: {{error_tasks_count}}
-                        </h6>
-                        <hr>
-                        <h5>
-                            <strong>Total Data Sources</strong>: {{repos_count}}
-                        </h5>
-                        <h6>
-                            <i class="fab fa-git-square"></i>
-                            <strong>Git data sources</strong>: {{repos_git_count}}
-                        </h6>
-                        <h6>
-                            <i class="fab fa-github"></i>
-                            <strong>GitHub data sources</strong>: {{repos_github_count}}
-                        </h6>
-                        <h6>
-                            <i class="fab fa-gitlab"></i>
-                            <strong>Gitlab data sources</strong>: {{repos_gitlab_count}}
-                        </h6>
-                        <h6>
-                            <i class="fab fa-meetup"></i>
-                            <strong>Meetup data sources</strong>: {{repos_meetup_count}}
-                        </h6>
-                    </div>
-                </div>
-            </div>
-            <!-- GENERAL STATUS CARD END -->
+
+            {% include "status_card.html" %}
+
             <div class="header-dashboard">
                 <h3>Workers</h3>
             </div>
@@ -88,67 +37,76 @@
         </div>
         <!-- WORKERS AND GENERAL SECTION END -->
 
-        <!-- DASHBOARDS SECTION BEGIN -->
-        <div class="col-md-9">
+        <!-- ADMIN SECTION BEGIN -->
+        <div class="col-md-9 mt-4">
             <div class="header-dashboard">
-                {% if dashboards %}
-                <h3>Dashboards</h3>
-                {% else %}
-                <h3>No Dashboards to show</h3>
-                {% endif %}
+                <h3>Admin settings</h3>
             </div>
-            {% if dashboards %}
-            <table id="dashboards-table" class="row-border" style="width:100%">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Owner</th>
-                        <th>Created (UTC)</th>
-                        <th>Modified (UTC)</th>
-                        <th>Total tasks</th>
-                        <th>Completed tasks</th>
-                        <th>Running tasks</th>
-                        <th>Pending tasks</th>
-                        <th>Error tasks</th>
-                        <th>Total data sources</th>
-                        <th><i class="fab fa-git-square fa-lg"></i></th>
-                        <th><i class="fab fa-github fa-lg"></i></th>
-                        <th><i class="fab fa-gitlab fa-lg"></i></th>
-                        <th><i class="fab fa-meetup fa-lg"></i></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for dashboard in dashboards %}
-                    <tr>
-                        <td><a href="{% url 'show_dashboard' dash_id=dashboard.dashboard.id %}" target="_blank">
-                            {{dashboard.dashboard.name}}
-                        </a></td>
-                        <td>{{dashboard.dashboard.creator.first_name}}</td>
-                        <td>
-                            <span style="display:none;">{{dashboard.dashboard.created|date:"U"}}</span>
-                            {{dashboard.dashboard.created|date:"Y/m/d P"}}
-                        </td>
-                        <td>
-                            <span style="display:none;">{{dashboard.dashboard.modified|date:"U"}}</span>
-                            {{dashboard.dashboard.modified|date:"Y/m/d P"}}
-                        </td>
-                        <td>{{dashboard.tasks_count}}</td>
-                        <td>{{dashboard.completed_tasks_count}}</td>
-                        <td>{{dashboard.running_tasks_count}}</td>
-                        <td>{{dashboard.pending_tasks_count}}</td>
-                        <td>{{dashboard.error_tasks_count}}</td>
-                        <td>{{dashboard.repos_count}}</td>
-                        <td>{{dashboard.repos_git_count}}</td>
-                        <td>{{dashboard.repos_github_count}}</td>
-                        <td>{{dashboard.repos_gitlab_count}}</td>
-                        <td>{{dashboard.repos_meetup_count}}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% endif %}
+            <nav>
+                <div class="nav nav-pills nav-justified" id="nav-tab" role="tablist">
+                    <a class="nav-item nav-link active" id="nav-dash-tab" href="{% url 'admin_page' %}" role="tab" aria-controls="nav-dash" aria-selected="true"><strong>Dashboards</strong></a>
+
+                    <a class="nav-item nav-link" id="nav-users-tab" href="{% url 'admin_page_users' %}" role="tab" aria-controls="nav-users" aria-selected="false"><strong>Users</strong></a>
+                </div>
+            </nav>
+            <div class="tab-content mt-4" id="nav-tabContent">
+                <div class="tab-pane fade show active" id="nav-dash" role="tabpanel" aria-labelledby="nav-dash-tab">
+                    {% if dashboards %}
+                    <table id="dashboards-table" class="row-border" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Owner</th>
+                                <th>Created (UTC)</th>
+                                <th>Modified (UTC)</th>
+                                <th>Total tasks</th>
+                                <th>Completed tasks</th>
+                                <th>Running tasks</th>
+                                <th>Pending tasks</th>
+                                <th>Error tasks</th>
+                                <th>Total data sources</th>
+                                <th><i class="fab fa-git-square fa-lg"></i></th>
+                                <th><i class="fab fa-github fa-lg"></i></th>
+                                <th><i class="fab fa-gitlab fa-lg"></i></th>
+                                <th><i class="fab fa-meetup fa-lg"></i></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for dashboard in dashboards %}
+                            <tr>
+                                <td><a href="{% url 'show_dashboard' dash_id=dashboard.dashboard.id %}" target="_blank">
+                                    {{dashboard.dashboard.name}}
+                                </a></td>
+                                <td>{{dashboard.dashboard.creator.first_name}}</td>
+                                <td>
+                                    <span style="display:none;">{{dashboard.dashboard.created|date:"U"}}</span>
+                                    {{dashboard.dashboard.created|date:"Y/m/d P"}}
+                                </td>
+                                <td>
+                                    <span style="display:none;">{{dashboard.dashboard.modified|date:"U"}}</span>
+                                    {{dashboard.dashboard.modified|date:"Y/m/d P"}}
+                                </td>
+                                <td>{{dashboard.tasks_count}}</td>
+                                <td>{{dashboard.completed_tasks_count}}</td>
+                                <td>{{dashboard.running_tasks_count}}</td>
+                                <td>{{dashboard.pending_tasks_count}}</td>
+                                <td>{{dashboard.error_tasks_count}}</td>
+                                <td>{{dashboard.repos_count}}</td>
+                                <td>{{dashboard.repos_git_count}}</td>
+                                <td>{{dashboard.repos_github_count}}</td>
+                                <td>{{dashboard.repos_gitlab_count}}</td>
+                                <td>{{dashboard.repos_meetup_count}}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <em>No Dashboards to show</em>
+                    {% endif %}
+                </div>
+            </div>
         </div>
-        <!-- DASHBOARDS SECTION END -->
+        <!-- ADMIN SECTION END -->
 
     </div>
 </div>
