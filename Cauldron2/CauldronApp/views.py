@@ -1120,6 +1120,31 @@ def request_show_dashboard(request, dash_id):
     return render(request, 'dashboard.html', context=context)
 
 
+def delete_dashboard(dashboard):
+    # Remove tasks in a transaction atomic
+    with transaction.atomic():
+        user_tokens = Token.objects.filter(user=dashboard.creator)
+        tasks = Task.objects.filter(repository__in=dashboard.repository_set.all(), tokens__user=dashboard.creator)
+        for task in tasks:
+            task.tokens.remove(*user_tokens)
+
+        remove_tasks_no_token()
+
+    es_users = ESUser.objects.filter(dashboard=dashboard)
+    odfe_api = OpendistroApi(ES_IN_URL, ES_ADMIN_PSW)
+    for esuser in es_users:
+        odfe_api.delete_user(esuser.name)
+
+    dashboard.delete()
+
+
+def delete_user(user):
+    for dashboard in user.dashboard_set.all():
+        delete_dashboard(dashboard)
+
+    user.delete()
+
+
 def request_delete_dashboard(request, dash_id):
     """
     Delete the project specified by the user
@@ -1146,20 +1171,8 @@ def request_delete_dashboard(request, dash_id):
         return render(request, 'error.html', status=400,
                       context=context)
 
-    # Remove tasks in a transaction atomic
-    with transaction.atomic():
-        user_tokens = Token.objects.filter(user=dash.creator)
-        tasks = Task.objects.filter(repository__in=dash.repository_set.all(), tokens__user=dash.creator)
-        for task in tasks:
-            task.tokens.remove(*user_tokens)
+    delete_dashboard(dash)
 
-        remove_tasks_no_token()
-
-    es_users = ESUser.objects.filter(dashboard=dash)
-    odfe_api = OpendistroApi(ES_IN_URL, ES_ADMIN_PSW)
-    for esuser in es_users:
-        odfe_api.delete_user(esuser.name)
-    dash.delete()
     return HttpResponseRedirect(reverse('projectspage'))
 
 
@@ -1691,6 +1704,44 @@ def downgrade_user(request):
     # Downgrade admin to user
     user.is_superuser = False
     user.save()
+
+    return HttpResponseRedirect(reverse('admin_page_users'))
+
+
+def request_delete_user(request):
+    """
+    Deletes a user
+    """
+    context = create_context(request)
+
+    if request.method != 'POST':
+        context['title'] = "Not allowed"
+        context['description'] = "Method not allowed for this path"
+        return render(request, 'error.html', status=405,
+                      context=context)
+
+    user_pk = request.POST.get('user_pk', None)
+    user = User.objects.filter(pk=user_pk).first()
+    if not user:
+        context['title'] = "User not found"
+        context['description'] = "The user requested was not found in this server"
+        return render(request, 'error.html', status=404,
+                      context=context)
+
+    if not request.user.is_superuser:
+        context['title'] = "Not allowed"
+        context['description'] = "You are not allowed to make this action"
+        return render(request, 'error.html', status=400,
+                      context=context)
+
+    if user == request.user:
+        context['title'] = "Not allowed"
+        context['description'] = "You are not allowed to delete your own user from the admin page. Please, go to your settings page to make this action."
+        return render(request, 'error.html', status=400,
+                      context=context)
+
+    # Delete the user
+    delete_user(user)
 
     return HttpResponseRedirect(reverse('admin_page_users'))
 

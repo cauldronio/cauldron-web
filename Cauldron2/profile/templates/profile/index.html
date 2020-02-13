@@ -176,6 +176,34 @@
             </div>
         </div>
     </div>
+
+    <hr class="my-4">
+
+    <!-- Account section -->
+    <div class="mb-1 font-weight-bold text-gray-800 text-uppercase">Account</div>
+    <form action="{% url 'profile:delete_user' %}" method="post" id="delete_user">
+        {% csrf_token %}
+        <button type="button" class="btn btn-danger my-3" role="button" data-toggle="modal" data-target="#confirm-delete-user">Delete my account</button>
+    </form>
+
+    <!-- User Delete Modal -->
+    <div class="modal fade" id="confirm-delete-user" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    Confirm Account Deletion
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete your account?
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <a href="#" id="submit" class="btn btn-danger danger">Delete</a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
@@ -200,6 +228,11 @@ $('[data-countdown]').each(function() {
   .on('finish.countdown', function(event) {
     $(this).parent().html('Status: <i class="fas fa-check text-success"></i>');
   });
+});
+</script>
+<script>
+$('#submit').click(function(){
+  $('#delete_user').submit();
 });
 </script>
 {% endblock %}

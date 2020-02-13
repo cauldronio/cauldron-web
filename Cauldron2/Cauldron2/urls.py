@@ -42,10 +42,11 @@ urlpatterns = [
 
     path('repo-logs/<int:repo_id>', views.repo_logs),
 
-    path('admin-page', views.admin_page, name="admin_page"),
+    path('admin-page/', views.admin_page, name="admin_page"),
     path('admin-page/users/', views.admin_page_users, name="admin_page_users"),
     path('admin-page/users/upgrade/', views.upgrade_user, name="upgrade_user"),
     path('admin-page/users/downgrade/', views.downgrade_user, name="downgrade_user"),
+    path('admin-page/users/delete/', views.request_delete_user, name="delete_user"),
     path('profile/', include('profile.urls')),
 
     path('status/', views.status_page, name="status"),
