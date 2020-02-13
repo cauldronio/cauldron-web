@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "cauldronapp/base.html" %}
 {% load static %}
 
 
@@ -29,7 +29,7 @@
 		<!-- PROJECT CARD-->
 		{% if projects_info %}
 			{% for project in projects_info %}
-				{% include "project_card.html" %}
+				{% include "cauldronapp/project_card.html" %}
 			{% endfor %}
 		{% endif %}
 		<!-- END PROJECT CARD-->
@@ -37,7 +37,7 @@
 
 </div>
 
-{% include "delete_project.html" %}
+{% include "cauldronapp/delete_project.html" %}
 
 {% endblock %}
 

@@ -16,6 +16,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from CauldronApp import views
+from Cauldron2 import settings
 
 urlpatterns = [
     path('github-login', views.request_github_login_callback),
@@ -54,3 +55,6 @@ urlpatterns = [
     path('', views.homepage, name="homepage"),
     path('admin/', admin.site.urls),
 ]
+
+if settings.HATSTALL_ENABLED:
+    urlpatterns.insert(0, path('hatstall/', include('hatstall.urls')))

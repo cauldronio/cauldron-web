@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "cauldronapp/base.html" %}
 {% load static %}
 
 {% block css%}
@@ -20,10 +20,10 @@
             <h4>Add data sources</h4>
           </div>
 
-          {% include "add_datasource/github.html" %}
-          {% include "add_datasource/git.html" %}
-          {% include "add_datasource/gitlab.html" %}
-          {% include "add_datasource/meetup.html" %}
+          {% include "cauldronapp/add_datasource/github.html" %}
+          {% include "cauldronapp/add_datasource/git.html" %}
+          {% include "cauldronapp/add_datasource/gitlab.html" %}
+          {% include "cauldronapp/add_datasource/meetup.html" %}
 
           <div class="alert alert-info" role="alert">
             It is planned for the future to add more data sources (like Discourse or Slack), but feel free to suggest any other data source option via the feedback button!
@@ -43,9 +43,9 @@
               {% if dashboard %}
               <div>
 
-                {% include "project_header.html" %}
+                {% include "cauldronapp/project_header.html" %}
 
-                {% include "repositories_table.html" %}
+                {% include "cauldronapp/repositories_table.html" %}
 
               </div>
               {% endif %}

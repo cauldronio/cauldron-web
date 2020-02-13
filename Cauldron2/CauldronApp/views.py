@@ -22,7 +22,7 @@ from Cauldron2.settings import GH_CLIENT_ID, GH_CLIENT_SECRET, GL_CLIENT_ID, GL_
                                 MEETUP_CLIENT_ID, MEETUP_CLIENT_SECRET, \
                                 ES_IN_HOST, ES_IN_PORT, ES_IN_PROTO, ES_ADMIN_PSW, \
                                 KIB_IN_HOST, KIB_IN_PORT, KIB_IN_PROTO, KIB_OUT_URL, \
-                                KIB_PATH, HATSTALL_ENABLED, HATSTALL_URL, GOOGLE_ANALYTICS_ID, \
+                                KIB_PATH, HATSTALL_ENABLED, GOOGLE_ANALYTICS_ID, \
                                 CAULDRON_ADMINS
 from CauldronApp.models import GithubUser, GitlabUser, MeetupUser, Dashboard, Repository, Task, \
                                CompletedTask, AnonymousUser, ESUser, Token
@@ -85,7 +85,7 @@ logger = logging.getLogger(__name__)
 def homepage(request):
     context = create_context(request)
 
-    return render(request, 'index.html', context=context)
+    return render(request, 'cauldronapp/index.html', context=context)
 
 
 def request_user_projects(request):
@@ -93,7 +93,7 @@ def request_user_projects(request):
     if not request.user.is_authenticated:
         context['title'] = "You are not logged in"
         context['description'] = "You need to login or create a new project to continue"
-        return render(request, 'error.html', status=400, context=context)
+        return render(request, 'cauldronapp/error.html', status=400, context=context)
     else:
         projects = Dashboard.objects.filter(creator=request.user)
         projects_info = list()
@@ -110,7 +110,7 @@ def request_user_projects(request):
                 'total': n_completed + n_errors + n_pending
             })
         context['projects_info'] = projects_info
-    return render(request, 'projects.html', context=context)
+    return render(request, 'cauldronapp/projects.html', context=context)
 
 
 # TODO: Add state
@@ -122,7 +122,7 @@ def request_github_login_callback(request):
     if not code:
         context['title'] = "Bad Request"
         context['description'] = "There isn't a code in the GitHub callback"
-        return render(request, 'error.html', status=400,
+        return render(request, 'cauldronapp/error.html', status=400,
                       context=context)
 
     r = requests.post(GH_ACCESS_OAUTH,
@@ -134,14 +134,14 @@ def request_github_login_callback(request):
         logging.error('GitHub API error %s %s %s', r.status_code, r.reason, r.text)
         context['title'] = "GitHub error"
         context['description'] = "GitHub API error"
-        return render(request, 'error.html', status=500,
+        return render(request, 'cauldronapp/error.html', status=500,
                       context=context)
     token = r.json().get('access_token', None)
     if not token:
         logging.error('ERROR GitHub Token not found. %s', r.text)
         context['title'] = "GitHub error"
         context['description'] = "Error getting the token from GitHub endpoint"
-        return render(request, 'error.html', status=500,
+        return render(request, 'cauldronapp/error.html', status=500,
                       context=context)
 
     # Authenticate/register an user, and login
@@ -226,7 +226,7 @@ def request_gitlab_login_callback(request):
     if not code:
         context['title'] = "Bad Request"
         context['description'] = "There isn't a code in the GitLab callback"
-        return render(request, 'error.html', status=400,
+        return render(request, 'cauldronapp/error.html', status=400,
                       context=context)
     r = requests.post(GL_ACCESS_OAUTH,
                       params={'client_id': GL_CLIENT_ID,
@@ -240,14 +240,14 @@ def request_gitlab_login_callback(request):
         logging.error('Gitlab API error %s %s', r.status_code, r.reason)
         context['title'] = "Gitlab error"
         context['description'] = "Gitlab API error"
-        return render(request, 'error.html', status=500,
+        return render(request, 'cauldronapp/error.html', status=500,
                       context=context)
     token = r.json().get('access_token', None)
     if not token:
         logging.error('ERROR Gitlab Token not found. %s', r.text)
         context['title'] = "Gitlab error"
         context['description'] = "Error getting the token from Gitlab endpoint"
-        return render(request, 'error.html', status=500,
+        return render(request, 'cauldronapp/error.html', status=500,
                       context=context)
 
     # Authenticate/register an user, and login
@@ -289,13 +289,13 @@ def request_meetup_login_callback(request):
     if error:
         context['title'] = "Error from Meetup Oauth"
         context['description'] = error
-        return render(request, 'error.html', status=400,
+        return render(request, 'cauldronapp/error.html', status=400,
                       context=context)
     code = request.GET.get('code', None)
     if not code:
         context['title'] = "Bad Request"
         context['description'] = "There isn't a code in the Meetup callback"
-        return render(request, 'error.html', status=400,
+        return render(request, 'cauldronapp/error.html', status=400,
                       context=context)
     r = requests.post(MEETUP_ACCESS_OAUTH,
                       params={'client_id': MEETUP_CLIENT_ID,
@@ -309,7 +309,7 @@ def request_meetup_login_callback(request):
         logging.error('Meetup API error %s %s', r.status_code, r.reason)
         context['title'] = "Meetup error"
         context['description'] = "Meetup API error"
-        return render(request, 'error.html', status=500,
+        return render(request, 'cauldronapp/error.html', status=500,
                       context=context)
     response = r.json()
     token = response.get('access_token', None)
@@ -318,7 +318,7 @@ def request_meetup_login_callback(request):
         logging.error('ERROR Meetup Token not found. %s', r.text)
         context['title'] = "Meetup error"
         context['description'] = "Error getting the token from Meetup endpoint"
-        return render(request, 'error.html', status=500,
+        return render(request, 'cauldronapp/error.html', status=500,
                       context=context)
 
     # Authenticate/register an user, and login
@@ -883,7 +883,7 @@ def request_new_dashboard(request):
     if request.method != 'POST':
         context['title'] = "Method Not Allowed"
         context['description'] = "Only POST methods allowed"
-        return render(request, 'error.html', status=405,
+        return render(request, 'cauldronapp/error.html', status=405,
                       context=context)
 
     if not request.user.is_authenticated:
@@ -1132,14 +1132,14 @@ def request_show_dashboard(request, dash_id):
     if request.method != 'GET':
         context['title'] = "Method Not Allowed"
         context['description'] = "Only GET methods allowed"
-        return render(request, 'error.html', status=405,
+        return render(request, 'cauldronapp/error.html', status=405,
                       context=context)
 
     dash = Dashboard.objects.filter(id=dash_id).first()
     if not dash:
         context['title'] = "Dashboard not found"
         context['description'] = "This dashboard was not found in this server"
-        return render(request, 'error.html', status=405,
+        return render(request, 'cauldronapp/error.html', status=405,
                       context=context)
 
     # CREATE RESPONSE
@@ -1151,7 +1151,7 @@ def request_show_dashboard(request, dash_id):
         if not public_esuser:
             context['title'] = "Error with public dashboards"
             context['description'] = "Maybe the data is not migrated. Please open an issue"
-            return render(request, 'error.html', status=405,
+            return render(request, 'cauldronapp/error.html', status=405,
                           context=context)
         jwt_key = get_kibana_jwt(public_esuser.name, public_esuser.role)
         context['public_link'] = "{}/app/kibana?jwtToken={}&security_tenant=global#/dashboard/a834f080-41b1-11ea-a32a-715577273fe3".format(KIB_OUT_URL, jwt_key)
@@ -1159,7 +1159,7 @@ def request_show_dashboard(request, dash_id):
     context['editable'] = request.user.is_authenticated and request.user == dash.creator or request.user.is_superuser
     context['dash_id'] = dash_id
 
-    return render(request, 'dashboard.html', context=context)
+    return render(request, 'cauldronapp/dashboard.html', context=context)
 
 
 def delete_dashboard(dashboard):
@@ -1196,21 +1196,21 @@ def request_delete_dashboard(request, dash_id):
     if request.method != 'POST':
         context['title'] = "Not allowed"
         context['description'] = "Method not allowed for this path"
-        return render(request, 'error.html', status=405,
+        return render(request, 'cauldronapp/error.html', status=405,
                       context=context)
 
     dash = Dashboard.objects.filter(id=dash_id).first()
     if not dash:
         context['title'] = "Project not found"
         context['description'] = "This project was not found in this server"
-        return render(request, 'error.html', status=405,
+        return render(request, 'cauldronapp/error.html', status=405,
                       context=context)
 
     owner = request.user.is_authenticated and request.user == dash.creator
     if not owner and not request.user.is_superuser:
         context['title'] = "Not allowed"
         context['description'] = "You are not allowed to delete this project."
-        return render(request, 'error.html', status=400,
+        return render(request, 'cauldronapp/error.html', status=400,
                       context=context)
 
     delete_dashboard(dash)
@@ -1393,7 +1393,7 @@ def create_context(request):
 
     # Information about Hatstall
     if HATSTALL_ENABLED:
-        context['hatstall_url'] = HATSTALL_URL
+        context['hatstall_url'] = "/hatstall"
 
     # Google Analytics
     if GOOGLE_ANALYTICS_ID:
@@ -1407,7 +1407,7 @@ def repo_status(request, repo_id):
     if request.method != 'GET':
         context['title'] = "Method Not Allowed"
         context['description'] = "Only GET methods allowed"
-        return render(request, 'error.html', status=405,
+        return render(request, 'cauldronapp/error.html', status=405,
                       context=context)
     repo = Repository.objects.filter(id=repo_id).first()
     if not repo:
@@ -1606,12 +1606,12 @@ def admin_page(request):
     if not request.user.is_authenticated or not request.user.is_superuser:
         context['title'] = "User Not Allowed"
         context['description'] = "Only Admin users allowed"
-        return render(request, 'error.html', status=403,
+        return render(request, 'cauldronapp/error.html', status=403,
                       context=context)
     if request.method != 'GET':
         context['title'] = "Method Not Allowed"
         context['description'] = "Only GET methods allowed"
-        return render(request, 'error.html', status=405,
+        return render(request, 'cauldronapp/error.html', status=405,
                       context=context)
 
     dashboards = Dashboard.objects.all()
@@ -1646,7 +1646,7 @@ def admin_page(request):
 
     context.update(status_info())
 
-    return render(request, 'admin.html', context=context)
+    return render(request, 'cauldronapp/admin.html', context=context)
 
 
 def admin_page_users(request):
@@ -1660,12 +1660,12 @@ def admin_page_users(request):
     if not request.user.is_authenticated or not request.user.is_superuser:
         context['title'] = "User Not Allowed"
         context['description'] = "Only Admin users allowed"
-        return render(request, 'error.html', status=403,
+        return render(request, 'cauldronapp/error.html', status=403,
                       context=context)
     if request.method != 'GET':
         context['title'] = "Method Not Allowed"
         context['description'] = "Only GET methods allowed"
-        return render(request, 'error.html', status=405,
+        return render(request, 'cauldronapp/error.html', status=405,
                       context=context)
 
     context['users'] = []
@@ -1681,7 +1681,7 @@ def admin_page_users(request):
 
     context.update(status_info())
 
-    return render(request, 'admin-users.html', context=context)
+    return render(request, 'cauldronapp/admin-users.html', context=context)
 
 
 def upgrade_user(request):
@@ -1693,7 +1693,7 @@ def upgrade_user(request):
     if request.method != 'POST':
         context['title'] = "Not allowed"
         context['description'] = "Method not allowed for this path"
-        return render(request, 'error.html', status=405,
+        return render(request, 'cauldronapp/error.html', status=405,
                       context=context)
 
     user_pk = request.POST.get('user_pk', None)
@@ -1701,13 +1701,13 @@ def upgrade_user(request):
     if not user:
         context['title'] = "User not found"
         context['description'] = "The user requested was not found in this server"
-        return render(request, 'error.html', status=405,
+        return render(request, 'cauldronapp/error.html', status=405,
                       context=context)
 
     if not request.user.is_superuser:
         context['title'] = "Not allowed"
         context['description'] = "You are not allowed to make this action"
-        return render(request, 'error.html', status=400,
+        return render(request, 'cauldronapp/error.html', status=400,
                       context=context)
 
     # Upgrade user to admin
@@ -1725,7 +1725,7 @@ def downgrade_user(request):
     if request.method != 'POST':
         context['title'] = "Not allowed"
         context['description'] = "Method not allowed for this path"
-        return render(request, 'error.html', status=405,
+        return render(request, 'cauldronapp/error.html', status=405,
                       context=context)
 
     user_pk = request.POST.get('user_pk', None)
@@ -1733,13 +1733,13 @@ def downgrade_user(request):
     if not user:
         context['title'] = "User not found"
         context['description'] = "The user requested was not found in this server"
-        return render(request, 'error.html', status=405,
+        return render(request, 'cauldronapp/error.html', status=405,
                       context=context)
 
     if not request.user.is_superuser:
         context['title'] = "Not allowed"
         context['description'] = "You are not allowed to make this action"
-        return render(request, 'error.html', status=400,
+        return render(request, 'cauldronapp/error.html', status=400,
                       context=context)
 
     # Downgrade admin to user
@@ -1799,12 +1799,12 @@ def status_page(request):
     if request.method != 'GET':
         context['title'] = "Method Not Allowed"
         context['description'] = "Only GET methods allowed"
-        return render(request, 'error.html', status=405,
+        return render(request, 'cauldronapp/error.html', status=405,
                       context=context)
 
     context.update(status_info())
 
-    return render(request, 'status.html', context=context)
+    return render(request, 'cauldronapp/status.html', context=context)
 
 
 def terms(request):
@@ -1814,7 +1814,7 @@ def terms(request):
     :return:
     """
     context = create_context(request)
-    return render(request, 'terms.html', context=context)
+    return render(request, 'cauldronapp/terms.html', context=context)
 
 
 def privacy(request):
@@ -1824,7 +1824,7 @@ def privacy(request):
     :return:
     """
     context = create_context(request)
-    return render(request, 'privacy.html', context=context)
+    return render(request, 'cauldronapp/privacy.html', context=context)
 
 
 def cookies(request):
@@ -1834,4 +1834,4 @@ def cookies(request):
     :return:
     """
     context = create_context(request)
-    return render(request, 'cookies.html', context=context)
+    return render(request, 'cauldronapp/cookies.html', context=context)
