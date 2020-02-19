@@ -34,6 +34,12 @@ HATSTALL_URL = ''
 
 GOOGLE_ANALYTICS_ID = ''
 
+CAULDRON_ADMINS = {
+    'GITHUB': [],
+    'GITLAB': [],
+    'MEETUP': [],
+}
+
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']

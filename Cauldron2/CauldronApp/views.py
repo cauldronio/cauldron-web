@@ -22,7 +22,8 @@ from Cauldron2.settings import GH_CLIENT_ID, GH_CLIENT_SECRET, GL_CLIENT_ID, GL_
                                 MEETUP_CLIENT_ID, MEETUP_CLIENT_SECRET, \
                                 ES_IN_HOST, ES_IN_PORT, ES_IN_PROTO, ES_ADMIN_PSW, \
                                 KIB_IN_HOST, KIB_IN_PORT, KIB_IN_PROTO, KIB_OUT_URL, \
-                                KIB_PATH, HATSTALL_ENABLED, HATSTALL_URL, GOOGLE_ANALYTICS_ID
+                                KIB_PATH, HATSTALL_ENABLED, HATSTALL_URL, GOOGLE_ANALYTICS_ID, \
+                                CAULDRON_ADMINS
 from CauldronApp.models import GithubUser, GitlabUser, MeetupUser, Dashboard, Repository, Task, \
                                CompletedTask, AnonymousUser, ESUser, Token
 from CauldronApp.githubsync import GitHubSync
@@ -153,7 +154,10 @@ def request_github_login_callback(request):
     data_add = request.session.get('add_repo', None)
     last_page = request.session.get('last_page', None)
 
-    tricky_authentication(request, GithubUser, username, username, token, photo_url)
+    # Checks if the username appears in the admin list for the specified backend
+    is_admin = username in CAULDRON_ADMINS['GITHUB']
+
+    tricky_authentication(request, GithubUser, username, username, token, photo_url, is_admin)
 
     # Get the previous state
     if data_add:
@@ -197,6 +201,20 @@ def merge_accounts(user_origin, user_dest):
     for token in tokens:
         token.user = user_dest
         token.save()
+
+    merge_admins(user_origin, user_dest)
+
+
+def merge_admins(old_user, new_user):
+    """
+    Convert the new user to admin if the old one was an admin
+    :param old_user: User to delete
+    :param new_user: User to keep
+    :return:
+    """
+    new_user.is_staff = new_user.is_staff or old_user.is_staff
+    new_user.is_superuser = new_user.is_superuser or old_user.is_superuser
+    new_user.save()
 
 
 # TODO: Add state
@@ -242,7 +260,10 @@ def request_gitlab_login_callback(request):
     data_add = request.session.get('add_repo', None)
     last_page = request.session.get('last_page', None)
 
-    tricky_authentication(request, GitlabUser, username, username, token, photo_url)
+    # Checks if the username appears in the admin list for the specified backend
+    is_admin = username in CAULDRON_ADMINS['GITLAB']
+
+    tricky_authentication(request, GitlabUser, username, username, token, photo_url, is_admin)
 
     # Get the previous state
     if data_add:
@@ -313,7 +334,10 @@ def request_meetup_login_callback(request):
     data_add = request.session.get('add_repo', None)
     last_page = request.session.get('last_page', None)
 
-    tricky_authentication(request, MeetupUser, data_user['id'], data_user['name'], token, photo)
+    # Checks if the username appears in the admin list for the specified backend
+    is_admin = data_user['id'] in CAULDRON_ADMINS['MEETUP']
+
+    tricky_authentication(request, MeetupUser, data_user['id'], data_user['name'], token, photo, is_admin)
     request.user.meetupuser.refresh_token = refresh_token
     request.user.meetupuser.save()
     # Get the previous state
@@ -328,7 +352,7 @@ def request_meetup_login_callback(request):
     return HttpResponseRedirect(reverse('projectspage'))
 
 
-def tricky_authentication(req, BackendUser, username, name, token, photo_url):
+def tricky_authentication(req, BackendUser, username, name, token, photo_url, is_admin=False):
     """
     Tricky authentication ONLY for login callbacks.
     :param req: request from login callback
@@ -337,6 +361,7 @@ def tricky_authentication(req, BackendUser, username, name, token, photo_url):
     :param name: name of the user
     :param token: token for the entity
     :param photo_url: photo for the user and the entity
+    :param is_admin: flag to indicate that the user to authenticate is an admin
     :return:
     """
     ent_user = BackendUser.objects.filter(username=username).first()
@@ -366,11 +391,17 @@ def tricky_authentication(req, BackendUser, username, name, token, photo_url):
                 anony_user.delete()
                 req.user.first_name = name
                 req.user.save()
-        # Django Entity user doesn't exist, none is authenticated
+
         else:
+            # Django Entity user doesn't exist, none is authenticated
             # Create account
             dj_user = create_django_user(name)
             login(req, dj_user)
+
+        # If it is an admin user, upgrade it
+        if is_admin:
+            upgrade_to_admin(req.user)
+
         # Create the token entry
         if BackendUser is GitlabUser:
             token_item = Token(backend='gitlab', key=token, user=req.user)
@@ -400,6 +431,17 @@ def create_django_user(name):
     dj_user.set_unusable_password()
     dj_user.save()
     return dj_user
+
+
+def upgrade_to_admin(user):
+    """
+    Upgrades a user to Cauldron Admin
+    :user: user to be checked
+    :return:
+    """
+    user.is_staff = True
+    user.is_superuser = True
+    user.save()
 
 
 def request_logout(request):
@@ -1669,8 +1711,7 @@ def upgrade_user(request):
                       context=context)
 
     # Upgrade user to admin
-    user.is_superuser = True
-    user.save()
+    upgrade_to_admin(user)
 
     return HttpResponseRedirect(reverse('admin_page_users'))
 
@@ -1703,6 +1744,7 @@ def downgrade_user(request):
 
     # Downgrade admin to user
     user.is_superuser = False
+    user.is_staff = False
     user.save()
 
     return HttpResponseRedirect(reverse('admin_page_users'))
