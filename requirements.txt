@@ -1,4 +1,4 @@
-Django>=2.2,<3
+Django>=3.0,<3.1
 requests>=2.21,<3
 PyGithub>=1.43.7,<1.44
 elasticsearch>=6,<7
