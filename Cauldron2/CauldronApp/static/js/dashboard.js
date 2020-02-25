@@ -405,7 +405,7 @@ function onDataFail(data, target) {
     }
     if (data.responseJSON.hasOwnProperty('redirect')){
         var redirect = `<a href="${data.responseJSON['redirect']}" class="btn btn-primary">Go</a>`;
-        showModalAlert('We need a token', `<p class="text-justify">${data.responseJSON['message']}</p>`,  redirect);
+        showModalAlert('Do you let us?', `<p class="text-justify">${data.responseJSON['message']}</p>`,  redirect);
     } else {
         showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', 5000);
     }

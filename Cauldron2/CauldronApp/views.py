@@ -450,16 +450,12 @@ def request_logout(request):
 
 
 def generate_request_token_message(backend):
-    return f'For accessing the {backend} API, we need a user token. \
-    If you click "Go", below, we will request a token to {backend} on \
-    your behalf.<br>You will be prompted to login in {backend}, if you \
-    are not already logged in, and then asked to agree on the permissions \
-    for the token that will be provided to us.<br>Once we get the token from \
-    {backend}, we will use it to access their API to retrieve data for the \
-    datasources you intend to analyze. We may use the token to update \
-    data about them in the future, too.<br>You can revoke the token at any \
-    time in {backend}, or remove it from Cauldron ("Settings", option \
-    "Revoke" on the menu for the token to be revoked)'
+    return f'When you click "Go", you will be prompted by {backend} to grant ' \
+           f'Cauldron some permissions to retrieve data on your behalf, so ' \
+           f'that we can analyze the repositories you specify.<br> You can revoke ' \
+           f'this permission whenever you may want, either in {backend} or in ' \
+           f'Cauldron.<br> For details, see our <a href="{reverse("terms")}">Terms of service</a> ' \
+           f'and <a href="{reverse("privacy")}">privacy</a> document'
 
 
 def request_edit_dashboard(request, dash_id):
