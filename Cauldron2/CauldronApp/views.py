@@ -1138,22 +1138,9 @@ def request_show_dashboard(request, dash_id):
         return render(request, 'cauldronapp/error.html', status=405,
                       context=context)
 
-    # CREATE RESPONSE
-    # Information for the dashboard
-    if dash:
-        context['dashboard'] = dash
-        context['repositories'] = Repository.objects.filter(dashboards__id=dash_id).order_by('-id')
-        public_esuser = ESUser.objects.filter(dashboard=dash, private=False).first()
-        if not public_esuser:
-            context['title'] = "Error with public dashboards"
-            context['description'] = "Maybe the data is not migrated. Please open an issue"
-            return render(request, 'cauldronapp/error.html', status=405,
-                          context=context)
-        jwt_key = get_kibana_jwt(public_esuser.name, public_esuser.role)
-        context['public_link'] = "{}/app/kibana?jwtToken={}&security_tenant=global#/dashboard/a834f080-41b1-11ea-a32a-715577273fe3".format(KIB_OUT_URL, jwt_key)
-
+    context['dashboard'] = dash
+    context['repositories'] = Repository.objects.filter(dashboards__id=dash_id).order_by('-id')
     context['editable'] = request.user.is_authenticated and request.user == dash.creator or request.user.is_superuser
-    context['dash_id'] = dash_id
 
     return render(request, 'cauldronapp/dashboard.html', context=context)
 
