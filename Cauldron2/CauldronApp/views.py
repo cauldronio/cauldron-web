@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from django.db import transaction
 from django.db.models import Count, F
+from CauldronApp.pages import Pages
 
 import os
 import jwt
@@ -1131,15 +1132,23 @@ def request_show_dashboard(request, dash_id):
         return render(request, 'cauldronapp/error.html', status=405,
                       context=context)
 
-    dash = Dashboard.objects.filter(id=dash_id).first()
-    if not dash:
+    try:
+        dash = Dashboard.objects.get(pk=dash_id)
+    except Dashboard.DoesNotExist:
         context['title'] = "Dashboard not found"
         context['description'] = "This dashboard was not found in this server"
         return render(request, 'cauldronapp/error.html', status=405,
                       context=context)
 
     context['dashboard'] = dash
-    context['repositories'] = Repository.objects.filter(dashboards__id=dash_id).order_by('-id')
+
+    repositories = dash.repository_set.all()
+    p = Pages(repositories, 10)
+
+    page_number = request.GET.get('page', 1)
+    context['page_obj'] = p.pages.get_page(page_number)
+    context['pages_to_show'] = p.pages_to_show(int(page_number))
+
     context['editable'] = request.user.is_authenticated and request.user == dash.creator or request.user.is_superuser
 
     return render(request, 'cauldronapp/dashboard.html', context=context)

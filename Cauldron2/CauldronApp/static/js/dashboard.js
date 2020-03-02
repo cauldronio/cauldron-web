@@ -40,25 +40,6 @@ $(document).ready(function(){
         ev.target.select()
     })
 
-    $('#repos-table').DataTable({
-      language: {
-        searchPlaceholder: "Search records",
-        search: "",
-      },
-      "lengthMenu": [ [10, 25, 50, -1], [10, 25, 50, "All"] ],
-      "pageLength": 10,
-      "order": [],
-      "columns": [
-        { "orderable": false },
-        null,
-        { "orderable": false },
-        { "orderable": false },
-        { "orderable": false },
-        { "orderable": false },
-        { "orderable": false }
-      ]
-    });
-
     $('#repos-table').on('draw.dt', function() {
       getInfo();
     });
