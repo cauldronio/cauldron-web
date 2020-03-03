@@ -24,7 +24,7 @@
 			</form>
 		</h1>
 	</div>
-	
+
 	<div class="row">
 		<!-- PROJECT CARD-->
 		{% if projects_info %}
@@ -34,6 +34,10 @@
 		{% endif %}
 		<!-- END PROJECT CARD-->
 	</div>
+
+  {% if projects_info %}
+    {% include "cauldronapp/nav_pagination.html" %}
+  {% endif %}
 
 </div>
 

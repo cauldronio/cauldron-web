@@ -98,7 +98,14 @@ def request_user_projects(request):
     else:
         projects = Dashboard.objects.filter(creator=request.user)
         projects_info = list()
-        for project in projects:
+
+        p = Pages(projects, 9)
+        page_number = request.GET.get('page', 1)
+        page_obj = p.pages.get_page(page_number)
+        context['page_obj'] = page_obj
+        context['pages_to_show'] = p.pages_to_show(page_obj.number)
+
+        for project in page_obj.object_list:
             repositories = Repository.objects.filter(dashboards=project.pk)
             n_completed = CompletedTask.objects.filter(repository__in=repositories, status='COMPLETED', old=False).count()
             n_errors = CompletedTask.objects.filter(repository__in=repositories, status='ERROR', old=False).count()
@@ -1143,11 +1150,12 @@ def request_show_dashboard(request, dash_id):
     context['dashboard'] = dash
 
     repositories = dash.repository_set.all()
-    p = Pages(repositories, 10)
 
+    p = Pages(repositories, 10)
     page_number = request.GET.get('page', 1)
-    context['page_obj'] = p.pages.get_page(page_number)
-    context['pages_to_show'] = p.pages_to_show(int(page_number))
+    page_obj = p.pages.get_page(page_number)
+    context['page_obj'] = page_obj
+    context['pages_to_show'] = p.pages_to_show(page_obj.number)
 
     context['editable'] = request.user.is_authenticated and request.user == dash.creator or request.user.is_superuser
 
