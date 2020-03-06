@@ -57,7 +57,11 @@
 
   {% if page_obj.paginator.count > 0 %}
   <div class="row justify-content-lg-end">
-    <button type="button" class="btn btn-outline-dark btn-refresh-table"><i class="fa fa-sync"></i> Update table</button>
+    <div class="alert alert-info mb-2 mr-3" role="alert">
+      For now, the update of the status of the repositories is done manually
+      <i class="fas fa-arrow-right"></i>
+    </div>
+    <button type="button" class="btn btn-outline-dark btn-refresh-table mb-2"><i class="fa fa-sync"></i> Update table</button>
   </div>
   {% endif %}
 
