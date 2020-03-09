@@ -165,3 +165,13 @@ function deleteToken(identity) {
  function on_create_dashboard(event) {
     showToast('Creating...', `Your project analytics environment is being set up. Wait a second.`, 'fas fa-spinner text-success', 10000);
 }
+
+
+$('#copy-share-link-kibana').click(function(ev){
+    ev.preventDefault();
+    var copyText = document.getElementById('url-public-link-kibana');
+    copyText.select();
+    document.execCommand("copy");
+    $('#copy-share-link-kibana').tooltip('show');
+    setTimeout(function () {$('#copy-share-link-kibana').tooltip('hide')}, 1000)
+});

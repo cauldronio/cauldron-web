@@ -138,3 +138,23 @@ section.start-now {
 .header p {
     font-size: 24px;
 }
+
+.btn-twitter, .fa-twitter {
+    background: #55ACEE;
+    color: white;
+}
+
+.btn-facebook, .fa-facebook {
+    background: #3B5998;
+    color: white;
+}
+
+.btn-envelope, .fa-envelope {
+    background: royalblue;
+    color: white;
+}
+
+.btn-linkedin, .fa-linkedin-in {
+    background: #007bb5;
+    color: white;
+}

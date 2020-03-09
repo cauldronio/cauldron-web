@@ -23,19 +23,16 @@
 
   <div class="row">
     <div>
+      {% if page_obj.paginator.count == 0 %}
       <form class="form-inline">
         <span class="font-weight-bold mr-1">Public dashboard link: </span>
-        {% if page_obj.paginator.count == 0 %}
         <span class="font-italic">add some datasources first</span>
-        {% else %}
-        <div class="input-group">
-          <input type="text" class="form-control" id="url-public-link-kibana" value="https://{{request.get_host}}{% url 'open_public_kibana' dashboard.id %}" readonly>
-          <div class="input-group-append">
-            <button class="btn btn-outline-dark" type="button" id="copy-share-link-kibana" data-toggle="tooltip" data-title="copied!" data-trigger="manual" data-placement="bottom"><i class="far fa-copy"></i></button>
-          </div>
-        </div>
-        {% endif %}
       </form>
+      {% else %}
+        {% with project_name=dashboard.name project_id=dashboard.id %}
+          {% include "cauldronapp/share_buttons.html" %}
+        {% endwith %}
+      {% endif %}
       <div class="mb-2">
         <span class="font-weight-bold">Data sources found:</span>
         <span id="num-repos-filter">0</span>

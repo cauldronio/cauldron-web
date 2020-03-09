@@ -37,6 +37,15 @@
               <!--<div class="progress-bar bg-secondary progress-bar-striped progress-bar-animated" role="progressbar" style="width: {% widthratio project.pending project.total 100 %}%" aria-valuenow="{% widthratio project.pending project.total 100 %}" aria-valuemin="0" aria-valuemax="100" data-toggle="tooltip" data-placement="bottom" title="Pending"><strong>{% widthratio project.pending project.total 100 %}%</strong></div>-->
             </div>
           </div>
+          <div class="row py-1">
+            <div class="col-12">
+            {% if project.total > 0%}
+              {% with project_name=project.project.name project_id=project.project.id%}
+                {% include "cauldronapp/share_buttons.html" %}
+              {% endwith %}
+            {% endif %}
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -27,15 +27,6 @@ $(document).ready(function(){
        $(this).select();
     });
 
-    $('#copy-share-link-kibana').click(function(ev){
-        ev.preventDefault();
-        var copyText = document.getElementById('url-public-link-kibana');
-        copyText.select();
-        document.execCommand("copy");
-        $('#copy-share-link-kibana').tooltip('show');
-        setTimeout(function () {$('#copy-share-link-kibana').tooltip('hide')}, 1000)
-    });
-
     $('input#url-public-link-kibana').click(function (ev) {
         ev.target.select()
     })
