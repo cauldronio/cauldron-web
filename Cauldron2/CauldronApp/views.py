@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from django.db import transaction
 from django.db.models import Count, F
+from django.views.decorators.http import require_http_methods
 from CauldronApp.pages import Pages
 
 import os
@@ -812,47 +813,41 @@ def guess_data_backend(data_guess, backend):
     return None
 
 
-def request_edit_dashboard_name(request, dash_id):
+@require_http_methods(["POST"])
+def request_rename_project(request, dash_id):
     """
-    Update the name for a dashboard
+    Update the name for a project
     :param request: Object from Django
-    :param dash_id: ID for the dashboard to change
+    :param dash_id: ID for the project to change
     :return:
     """
-    dash = Dashboard.objects.filter(id=dash_id).first()
-    if not dash:
-        return JsonResponse({'status': 'error', 'message': 'Dashboard not found'}, status=404)
+    context = create_context(request)
+    try:
+        dash = Dashboard.objects.get(id=dash_id)
+    except Dashboard.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': f"Project {dash_id} doesn't exist"},
+                            status=404)
 
-    if not request.user.is_authenticated:
-        return JsonResponse({'status': 'error', 'message': 'You are not authenticated',
-                             'redirect': '/login?next=/dashboard/' + str(dash_id)}, status=401)
-
-    if request.user != dash.creator and not request.user.is_superuser:
-        return JsonResponse({'status': 'error', 'message': 'You cannot edit this dashboard'}, status=403)
-
-    if request.method != 'POST':
-        return JsonResponse({'status': 'error', 'message': 'Only POST method allowed'}, status=405)
-
-    name = request.POST.get('name', None)
-
-    if not name:
-        return JsonResponse({'status': 'error', 'message': 'New name not found in the POST or action not allowed'},
+    if not request.user.is_authenticated and request.user != dash.creator and not request.user.is_superuser:
+        return JsonResponse({'status': 'error', 'message': f'You cannot edit project {dash_id}, you are not the owner'},
                             status=400)
+
+    name = request.POST.get('name', '')
+
+    name = name.strip()
 
     if len(name) < 4 or len(name) > 32:
         return JsonResponse({'status': 'error', 'message': "The name doesn't fit the allowed length "},
                             status=400)
 
-    dashboards = Dashboard.objects.filter(creator=dash.creator)
-    for tmp_dash in dashboards:
-        if tmp_dash.name == name:
-            return JsonResponse({'status': 'Duplicate name', 'message': 'You have the same name in another Dashboard'},
-                                status=400)
-    old_name = dash.name
+    if Dashboard.objects.filter(creator=dash.creator, name=name).exists():
+        return JsonResponse({'status': 'Duplicated name', 'message': 'You have the same name in another Dashboard'},
+                            status=400)
+
     dash.name = name
     dash.save()
 
-    return JsonResponse({'status': 'Ok', 'message': 'Name updated from "{}" to "{}"'.format(old_name, name)})
+    return JsonResponse({'status': 'Ok', 'message': 'Name updated successfully'})
 
 
 def start_task(repo, token):

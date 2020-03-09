@@ -30,7 +30,7 @@ urlpatterns = [
     path('dashboard', views.request_new_dashboard),
     path('dashboard/<int:dash_id>', views.request_show_dashboard, name="show_dashboard"),
     path('dashboard/<int:dash_id>/edit', views.request_edit_dashboard),
-    path('dashboard/<int:dash_id>/edit-name', views.request_edit_dashboard_name),
+    path('dashboard/<int:dash_id>/rename', views.request_rename_project, name="rename_project"),
     path('dashboard/<int:dash_id>/info', views.request_dash_info),
     path('dashboard/<int:dash_id>/summary', views.request_dash_summary),
     path('dashboard/<int:dash_id>/kibana', views.request_kibana, name="open_kibana"),

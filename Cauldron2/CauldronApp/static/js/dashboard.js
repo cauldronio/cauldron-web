@@ -21,7 +21,9 @@ $(document).ready(function(){
     //$('.backend-filters a').click(onFilterClick);
     //$('.status-filters a').click(onFilterClick);
 
-    $('#edit-name').click(onClickEditName);
+    $('#rename').click(onClickEditName);
+
+    $('form#change-name').on('submit', onSubmitRename);
 
     $("input#url-public-link").click(function () {
        $(this).select();
@@ -73,46 +75,14 @@ function filterTable() {
 
 function onClickEditName(ev) {
     ev.preventDefault();
-    var this_a = $(this)
-    var old_name = $('#dash_name').text()
-    this_a.hide();
+    var old_name = $('#dash-name').text();
 
-    var name_input = `<form class="input-group mb-3" id="change-name">
-                          <input type="text" class="form-control" id="new-name" name="name" placeholder="${old_name}" data-container="body" data-toggle="popover" data-trigger="focus" data-placement="bottom" data-html="true" data-content="4-32 characters long">
-                          <div class="input-group-append">
-                            <button class="btn btn-primary" type="submit">Change</button>
-                          </div>
-                        </form>`
+    $('#dash-name-container').hide();
+    $('#change-name').show();
 
-    $('#dash_name').html(name_input);
     $('input#new-name').popover();
     $('input#new-name').focus();
-
-    $('form#change-name').submit(function (ev) {
-        ev.preventDefault();
-        $('input#new-name').popover('dispose')
-
-        var name = $('#new-name').val();
-        if (!name){
-            showToast('Empty input', 'We are keeping the same name', 'fas fa-check-circle text-success', 5000);
-            this_a.show();
-            $('#dash_name').text(old_name);
-            return
-        }
-
-        $.post(url = window.location.pathname + "/edit-name",
-           data = {'name': name})
-        .done(function (data) {
-            showToast('Name updated', `${data.message}`, 'fas fa-check-circle text-success', 5000);
-            this_a.show();
-            $('#dash_name').text(name);
-        })
-        .fail(function (data) {
-            showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', 5000);
-            this_a.show();
-            $('#dash_name').text(old_name);
-        })
-    });
+    $('input#new-name').val(old_name);
 }
 
 
@@ -202,6 +172,31 @@ function getSummary() {
         $('#general-status').html(status_output)
     });
     setTimeout(getSummary, 5000, Dash_ID);
+}
+
+function onSubmitRename(ev) {
+    ev.preventDefault();
+
+    $('input#new-name').popover('dispose');
+
+    var url = $(this).attr("action");
+    var data = $(this).serialize();
+    var name = $('#new-name').val();
+
+    $.post(url=url, data=data)
+    .done(function (result) {
+        $('#dash-name').text(name);
+
+        $('#dash-name-container').show();
+        $('#change-name').hide();
+
+        showToast('Name updated', `${result.message}`, 'fas fa-check-circle text-success', 5000);
+    })
+    .fail(function (data) {
+        showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', 5000);
+        $('#dash-name-container').show();
+        $('#change-name').hide();
+    })
 }
 
 function getInfo() {

@@ -3,12 +3,21 @@
 
   <div class="row justify-content-between mb-3">
 
-    <h1 id="dash_name">
-      {{dashboard.name}}
+    <h1 id="dash-name-container">
+      <span id="dash-name">{{dashboard.name}}</span>
       {% if editable %}
-      <a href="#" id="edit-name"><i class="far fa-xs fa-edit"></i></a>
+      <a href="#" id="rename"><i class="far fa-xs fa-edit"></i></a>
       {% endif %}
     </h1>
+    <div>
+      <form class="input-group mb-3 form-inline" id="change-name" method='post' action="{% url 'rename_project' dashboard.id %}" style="display: none;">
+        {% csrf_token %}
+        <input type="text" class="form-control" id="new-name" name="name" placeholder="" data-container="body" data-toggle="popover" data-trigger="focus" data-placement="bottom" data-html="true" data-content="4-32 characters long">
+        <div class="input-group-append">
+          <button class="btn btn-primary" type="submit">Change</button>
+        </div>
+      </form>
+    </div>
 
     <div>
       <a id="open-kibana"
