@@ -1783,9 +1783,9 @@ def request_delete_user(request):
     return HttpResponseRedirect(reverse('admin_page_users'))
 
 
-def status_page(request):
+def stats_page(request):
     """
-    View for the status page to show an overview of the server systems
+    View for the stats page to show an overview of the server stats
     :param request:
     :return:
     """
@@ -1799,7 +1799,7 @@ def status_page(request):
 
     context.update(status_info())
 
-    return render(request, 'cauldronapp/status.html', context=context)
+    return render(request, 'cauldronapp/stats.html', context=context)
 
 
 def terms(request):

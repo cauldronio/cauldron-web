@@ -50,7 +50,7 @@ urlpatterns = [
     path('admin-page/users/delete/', views.request_delete_user, name="delete_user"),
     path('profile/', include('profile.urls')),
 
-    path('status/', views.status_page, name="status"),
+    path('stats/', views.stats_page, name="stats"),
 
     path('', views.homepage, name="homepage"),
     path('admin/', admin.site.urls),

@@ -1,0 +1,16 @@
+{% extends "cauldronapp/base.html" %}
+{% load static %}
+
+{% block css%}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="h3 mt-5 mb-5 font-weight-bold text-dark text-uppercase">General stats</div>
+
+    {% include "cauldronapp/status_card.html" %}
+</div>
+{% endblock %}
+
+{% block javascript %}
+{% endblock %}
