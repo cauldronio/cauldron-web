@@ -21,7 +21,7 @@
 
     <div>
       <a id="open-kibana"
-        class="btn btn-lg btn-primary {% if page_obj.paginator.count == 0 or not editable %}disabled{% endif %}"
+        class="btn btn-lg btn-primary {% if repositories_count == 0 or not editable %}disabled{% endif %}"
         href="{% url 'open_kibana' dashboard.id %}"
         target="_blank">
         <i class="fa fa-chart-bar"></i> My Workspace
@@ -32,7 +32,7 @@
 
   <div class="row">
     <div>
-      {% if page_obj.paginator.count == 0 %}
+      {% if repositories_count == 0 %}
       <form class="form-inline">
         <span class="font-weight-bold mr-1">Public dashboard link: </span>
         <span class="font-italic">add some datasources first</span>
@@ -53,7 +53,7 @@
         </span>
       </div>
       {% if editable %}
-        {% if page_obj.paginator.count > 0 %}
+        {% if repositories_count > 0 %}
         <button type="button" class="btn btn-outline-dark btn-reanalyze-all mb-2" data-repo="{{repo.id}}"><i class="fa fa-sync"></i> Refresh datasources</button>
         {% endif %}
       {% endif %}
@@ -61,14 +61,14 @@
   </div>
 
 
-  {% if page_obj.paginator.count > 0 %}
-  <div class="row justify-content-lg-end">
+  {% if repositories_count > 0 %}
+  <!--div class="row justify-content-lg-end">
     <div class="alert alert-info mb-2 mr-3" role="alert">
       For now, the update of the status of the repositories is done manually
       <i class="fas fa-arrow-right"></i>
     </div>
     <button type="button" class="btn btn-outline-dark btn-refresh-table mb-2"><i class="fa fa-sync"></i> Update table</button>
-  </div>
+  </div-->
   {% endif %}
 
 {% else %}

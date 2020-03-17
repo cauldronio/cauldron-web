@@ -77,9 +77,82 @@ class Repository(models.Model):
     """
     Available backends: github, gitlab, meetup and git
     """
+    BACKEND_CHOICES = [
+        'git',
+        'github',
+        'gitlab',
+        'meetup',
+    ]
+
+    STATUS_CHOICES = [
+        'completed',
+        'running',
+        'pending',
+        'error',
+        'unknown',
+    ]
+
+    SORT_CHOICES = [
+        'status',
+        '-status',
+        'kind',
+        '-kind',
+        'refresh',
+        '-refresh',
+        'duration',
+        '-duration',
+    ]
+
     url = models.URLField()
     backend = models.CharField(max_length=100)
     dashboards = models.ManyToManyField(Dashboard)
+
+    @property
+    def status(self):
+        try:
+            task = Task.objects.get(repository=self)
+            if task.worker_id:
+                return 'running'
+            else:
+                return 'pending'
+        except Task.DoesNotExist:
+            try:
+                c_task = CompletedTask.objects.get(repository=self, old=False)
+                return c_task.status.lower()
+            except CompletedTask.DoesNotExist:
+                return 'unknown'
+
+    @property
+    def last_refresh(self):
+        try:
+            c_task = CompletedTask.objects.get(repository=self, old=False)
+            return c_task.completed
+        except CompletedTask.DoesNotExist:
+            return timezone.now()
+
+    @property
+    def duration(self):
+        started = completed = timezone.now()
+
+        try:
+            task = Task.objects.get(repository=self)
+
+            # If the status is different from 'running', it will
+            # return a zero value for this field
+            if self.status == 'running':
+                started = task.started
+                completed = timezone.now()
+
+        except Task.DoesNotExist:
+            try:
+                c_task = CompletedTask.objects.get(repository=self, old=False)
+
+                started = c_task.started
+                completed = c_task.completed
+            except CompletedTask.DoesNotExist:
+                pass
+
+        return completed - started
 
 
 class Task(models.Model):

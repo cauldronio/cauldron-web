@@ -1146,6 +1146,32 @@ def request_show_dashboard(request, dash_id):
 
     repositories = dash.repository_set.all()
 
+    context['repositories_count'] = repositories.count()
+
+    kind = request.GET.get('kind')
+    if kind is not None and kind in Repository.BACKEND_CHOICES:
+        repositories = repositories.filter(backend=kind)
+
+    status = request.GET.get('status')
+    if status is not None and status in Repository.STATUS_CHOICES:
+        repositories = [obj for obj in repositories.all() if obj.status == status]
+
+    sort_by = request.GET.get('sort_by')
+    if sort_by is not None and sort_by in Repository.SORT_CHOICES:
+        reverse = False
+        if sort_by[0] == '-':
+            reverse = True
+            sort_by = sort_by[1:]
+
+        if sort_by == 'kind':
+            repositories = sorted(repositories, key=lambda r: r.backend, reverse=reverse)
+        elif sort_by == 'status':
+            repositories = sorted(repositories, key=lambda r: r.status, reverse=reverse)
+        elif sort_by == 'refresh':
+            repositories = sorted(repositories, key=lambda r: r.last_refresh, reverse=not reverse)
+        elif sort_by == 'duration':
+            repositories = sorted(repositories, key=lambda r: r.duration, reverse=reverse)
+
     p = Pages(repositories, 10)
     page_number = request.GET.get('page', 1)
     page_obj = p.pages.get_page(page_number)
