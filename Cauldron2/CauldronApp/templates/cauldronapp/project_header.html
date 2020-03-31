@@ -22,7 +22,7 @@
     <div>
       <a id="open-kibana"
         class="btn btn-lg btn-primary {% if repositories_count == 0 or not editable %}disabled{% endif %}"
-        href="{% url 'open_kibana' dashboard.id %}"
+        href="{% url 'open_workspace' dashboard.id %}"
         target="_blank">
         <i class="fa fa-chart-bar"></i> My Workspace
       </a>

@@ -3,7 +3,7 @@
     <div class="card-header d-flex">
       <div class="mr-auto font-weight-bold"><a href="{% url 'show_dashboard' project.project.id %}">{{project.project.name}}</a></div>
       <a href="{% url 'show_dashboard' project.project.id %}" role="button" class="btn btn-sm btn-outline-primary mr-2" data-toggle="tooltip" data-placement="bottom" title="Edit datasources"><i class="fas fa-edit"></i></a>
-      <a href="{% url 'open_kibana' project.project.id %}" target="_blank" rel="noopener noreferrer" role="button" class="btn btn-sm btn-outline-primary mr-2{% if project.total == 0 %} disabled{% endif %}" data-toggle="tooltip" data-placement="bottom" title="My Workspace"><i class="fa fa-chart-bar"></i></a>
+      <a href="{% url 'open_workspace' project.project.id %}" target="_blank" rel="noopener noreferrer" role="button" class="btn btn-sm btn-outline-primary mr-2{% if project.total == 0 %} disabled{% endif %}" data-toggle="tooltip" data-placement="bottom" title="My Workspace"><i class="fa fa-chart-bar"></i></a>
       <button type="button" {% if project.total > 0%}onclick="refreshProjectDatasources(this, {{project.project.id}})"{% endif %} role="button" class="btn btn-sm btn-outline-primary mr-2{% if project.total == 0 %} disabled{% endif %}" {% if project.total > 0 %}data-toggle="tooltip" data-placement="bottom" title="Refresh all data sources"{% endif %}><i class="fas fa-sync-alt"></i></button>
       <span data-toggle="tooltip" data-placement="bottom" title="Delete project"><button type="button" data-toggle="modal" data-target="#modal-delete-project" data-project-id="{{project.project.id}}" role="button" class="open-deleteProjectModal btn btn-sm btn-outline-danger mr-2"><i class="fas fa-trash-alt"></i></button></span>
     </div>

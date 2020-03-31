@@ -13,6 +13,17 @@ class AnonymousUser(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, unique=True)
 
 
+class UserWorkspace(models.Model):
+    """
+    This field indicates if the user has created the workspace
+    in Kibana and the name
+    """
+    user = models.OneToOneField(User, on_delete=models.CASCADE, unique=True)
+    tenant_name = models.CharField(max_length=100)
+    tenant_role = models.CharField(max_length=100)
+    backend_role = models.CharField(max_length=100)
+
+
 class Token(models.Model):
     STATUS_READY = 'ready'
     STATUS_COOLDOWN = 'cooldown'
@@ -65,12 +76,10 @@ class Dashboard(models.Model):
                                 null=True)
 
 
-class ESUser(models.Model):
-    name = models.CharField(max_length=255, unique=True)
-    password = models.CharField(max_length=255)
-    role = models.CharField(max_length=255)
-    dashboard = models.ForeignKey(Dashboard, on_delete=models.CASCADE)
-    private = models.BooleanField(default=True)
+class ProjectRole(models.Model):
+    role = models.CharField(max_length=255, unique=True)
+    backend_role = models.CharField(max_length=255, unique=True)
+    dashboard = models.OneToOneField(Dashboard, on_delete=models.CASCADE, unique=True)
 
 
 class Repository(models.Model):

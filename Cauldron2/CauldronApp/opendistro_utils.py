@@ -2,6 +2,7 @@ import logging
 import requests
 
 logger = logging.getLogger(__name__)
+# logging.basicConfig(level=logging.DEBUG)
 
 
 class OpendistroApi:
@@ -32,7 +33,7 @@ class OpendistroApi:
         logger.info("Result creating user: {} - {}".format(r.status_code, r.text))
         return r.ok
 
-    def put_role(self, name, permissions=None):
+    def create_role(self, name, permissions=None):
         """
         Creates or replaces the specified role and apply/remove permissions
         Docs: https://opendistro.github.io/for-elasticsearch-docs/docs/security-access-control/api/#create-role
@@ -63,25 +64,56 @@ class OpendistroApi:
         logger.info("{} - {}".format(r.status_code, r.text))
         return r.ok
 
-    def create_mapping(self, users, role_name):
+    def delete_role(self, name):
         """
-        Create a role mapping in OpenDistro
-        :param users: A list of users that are added to the rolemapping
-        :param role_name: Name for the role to be included
+        Delete a OpenDistro role
+        :param name: name of the role
         :return:
         """
-
         headers = {'Content-Type': 'application/json'}
 
-        data = {"users": users}
+        logger.info('Delete ODFE role: <{}>'.format(name))
+        r = requests.delete("{}/_opendistro/_security/api/roles/{}".format(self.es_url, name),
+                            auth=('admin', self.admin_password),
+                            verify=False,
+                            headers=headers)
+        logger.info("Result deleting roles: {} - {}".format(r.status_code, r.text))
+        return r.ok
 
-        logger.info('Creating ES role mapping between: <{}> and <{}>'.format(users, role_name))
-        r = requests.put("{}/_opendistro/_security/api/rolesmapping/{}".format(self.es_url, role_name),
+    def create_mapping(self, role, backend_roles=None, hosts=None, users=None):
+        """
+        Include the users, hosts and backend_roles that are linked with the desired role
+        :return:
+        """
+        headers = {'Content-Type': 'application/json'}
+        data = dict()
+        data['backend_roles'] = backend_roles if backend_roles else []
+        data['hosts'] = hosts if hosts else []
+        data['users'] = users if users else []
+
+        logger.info('Creating ES role mapping between: <{}> and <{}>'.format(data, role))
+        r = requests.put("{}/_opendistro/_security/api/rolesmapping/{}".format(self.es_url, role),
                          auth=('admin', self.admin_password),
                          json=data,
                          verify=False,
                          headers=headers)
         logger.info("{} - {}".format(r.status_code, r.text))
+        return r.ok
+
+    def delete_mapping(self, role_name):
+        """
+        Delete a OpenDistro role mapping
+        :param role_name: name of the role
+        :return:
+        """
+        headers = {'Content-Type': 'application/json'}
+
+        logger.info('Delete ODFE role mapping: <{}>'.format(role_name))
+        r = requests.delete("{}/_opendistro/_security/api/rolesmapping/{}".format(self.es_url, role_name),
+                            auth=('admin', self.admin_password),
+                            verify=False,
+                            headers=headers)
+        logger.info("Result deleting role mapping: {} - {}".format(r.status_code, r.text))
         return r.ok
 
     def delete_user(self, username):
@@ -98,4 +130,39 @@ class OpendistroApi:
                             verify=False,
                             headers=headers)
         logger.info("Result deleting user: {} - {}".format(r.status_code, r.text))
+        return r.ok
+
+    def create_tenant(self, name):
+        """
+        Creates a new tenant for the user
+        :param name:
+        :return:
+        """
+        headers = {'Content-Type': 'application/json'}
+
+        data = {"description": "Workspace of the user"}
+
+        logger.info('Creating ODFE tenant: <{}>'.format(name))
+        r = requests.put("{}/_opendistro/_security/api/tenants/{}".format(self.es_url, name),
+                         auth=('admin', self.admin_password),
+                         json=data,
+                         verify=False,
+                         headers=headers)
+        logger.info("Result creating user: {} - {}".format(r.status_code, r.text))
+        return r.ok
+
+    def delete_tenant(self, name):
+        """
+        Deletes a specific tenant
+        :param name:
+        :return:
+        """
+        headers = {'Content-Type': 'application/json'}
+
+        logger.info('Delete ODFE tenant: <{}>'.format(name))
+        r = requests.delete("{}/_opendistro/_security/api/tenants/{}".format(self.es_url, name),
+                            auth=('admin', self.admin_password),
+                            verify=False,
+                            headers=headers)
+        logger.info("Result deleting tenant: {} - {}".format(r.status_code, r.text))
         return r.ok

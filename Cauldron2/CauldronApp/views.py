@@ -7,6 +7,7 @@ from django.db import transaction
 from django.db.models import Count, F
 from django.views.decorators.http import require_http_methods
 from CauldronApp.pages import Pages
+from CauldronApp import kibana_objects
 
 import os
 import jwt
@@ -27,7 +28,7 @@ from Cauldron2.settings import GH_CLIENT_ID, GH_CLIENT_SECRET, GL_CLIENT_ID, GL_
                                 KIB_PATH, HATSTALL_ENABLED, GOOGLE_ANALYTICS_ID, \
                                 CAULDRON_ADMINS
 from CauldronApp.models import GithubUser, GitlabUser, MeetupUser, Dashboard, Repository, Task, \
-                               CompletedTask, AnonymousUser, ESUser, Token
+                               CompletedTask, AnonymousUser, ProjectRole, Token, UserWorkspace
 from CauldronApp.githubsync import GitHubSync
 from CauldronApp.opendistro_utils import OpendistroApi
 
@@ -210,7 +211,7 @@ def merge_accounts(user_origin, user_dest):
     for token in tokens:
         token.user = user_dest
         token.save()
-
+    merge_workspaces(user_origin, user_dest)
     merge_admins(user_origin, user_dest)
 
 
@@ -224,6 +225,22 @@ def merge_admins(old_user, new_user):
     new_user.is_staff = new_user.is_staff or old_user.is_staff
     new_user.is_superuser = new_user.is_superuser or old_user.is_superuser
     new_user.save()
+
+
+def merge_workspaces(old_user, new_user):
+    """
+    Try to copy all the visualizations from one tenant to the other one
+    :param old_user:
+    :param new_user:
+    :return:
+    """
+    if not hasattr(old_user, 'userworkspace'):
+        return
+    if not hasattr(new_user, 'userworkspace'):
+        create_workspace(new_user)
+
+    obj = kibana_objects.export_all_objects(KIB_IN_URL, ES_ADMIN_PSW, old_user.userworkspace.tenant_name)
+    kibana_objects.import_object(KIB_IN_URL, ES_ADMIN_PSW, obj, new_user.userworkspace.tenant_name)
 
 
 # TODO: Add state
@@ -503,13 +520,6 @@ def request_edit_dashboard(request, dash_id):
         return JsonResponse({'status': 'error', 'message': 'We need a url or a owner to add/delete'},
                             status=400)
 
-    es_users = ESUser.objects.filter(dashboard=dash)
-    if len(es_users) != 2:
-        logger.error("We didn't find 2 ES users: {}", es_users)
-        return JsonResponse({'status': 'error',
-                             'message': 'Internal server error. Kibana user not found for that dashboard'},
-                            status=500)
-
     if action == 'delete':
         repo = Repository.objects.filter(id=data_in, backend=backend).first()
         if not repo:
@@ -558,8 +568,7 @@ def request_edit_dashboard(request, dash_id):
         # Remove the spaces to avoid errors
         data = data_in.strip()
         repo = add_to_dashboard(dash, backend, data)
-        es_users = ESUser.objects.filter(dashboard=dash)
-        update_role_dashboard(es_users.first().role, dash)
+        update_role_dashboard(dash.projectrole.role, dash)
         start_task(repo=repo, token=None)
 
         return JsonResponse({'status': 'ok'})
@@ -680,8 +689,7 @@ def manage_add_gh_repo(dash, data, analyze_commits, analyze_issues_prs):
         return JsonResponse({'status': 'error', 'message': 'Invalid data posted, something is missing'},
                             status=401)
 
-    es_users = ESUser.objects.filter(dashboard=dash)
-    update_role_dashboard(es_users.first().role, dash)
+    update_role_dashboard(dash.projectrole.role, dash)
 
     return JsonResponse({'status': 'ok'})
 
@@ -724,8 +732,7 @@ def manage_add_gl_repo(dash, data, analyze_commits, analyze_issues_mrs):
         return JsonResponse({'status': 'error', 'message': 'Invalid data posted, something is missing'},
                             status=401)
 
-    es_users = ESUser.objects.filter(dashboard=dash)
-    update_role_dashboard(es_users.first().role, dash)
+    update_role_dashboard(dash.projectrole.role, dash)
     return JsonResponse({'status': 'ok'})
 
 
@@ -748,8 +755,7 @@ def manage_add_meetup_repo(dash, data):
         repo = add_to_dashboard(dash, 'meetup', data['group'])
         start_task(repo, dash.creator.meetupuser.token)
 
-        es_users = ESUser.objects.filter(dashboard=dash)
-        update_role_dashboard(es_users.first().role, dash)
+        update_role_dashboard(dash.projectrole.role, dash)
 
         return JsonResponse({'status': 'ok'})
 
@@ -901,36 +907,25 @@ def request_new_dashboard(request):
     dash.name = "Project {}".format(dash.id)
     dash.save()
 
-    create_kibana_users(dash)
+    create_project_elastic_role(dash)
     # TODO: If something is wrong delete the dashboard
     return HttpResponseRedirect('/dashboard/{}'.format(dash.id))
 
 
-def create_kibana_users(dashboard):
+def create_project_elastic_role(dashboard):
     """
-    Create ES users (public and private), a role and Role mapping
-    :param dashboard: dashboard related to the users created
+    Create a Elastic Role and the mapping for a Backend Role for the project,
+    :param dashboard:
     :return:
     """
-    private_username = "dashboard{}".format(dashboard.id)
-    private_password = generate_random_uuid(length=32, delimiter='')
-    pub_username = "publicdashboard{}".format(dashboard.id)
-    pub_password = generate_random_uuid(length=32, delimiter='')
-    role_name = "roledashboard{}".format(dashboard.id)
+    role = f"role_project_{dashboard.id}"
+    backend_role = f"br_project_{dashboard.id}"
 
     odfe_api = OpendistroApi(ES_IN_URL, ES_ADMIN_PSW)
-    odfe_api.create_user(private_username, private_password)
-    odfe_api.create_user(pub_username, pub_password)
-    odfe_api.put_role(role_name)
-    odfe_api.create_mapping([private_username, pub_username], role_name)
+    odfe_api.create_role(role)
+    odfe_api.create_mapping(role, backend_roles=[backend_role])
 
-    private_es_user = ESUser(name=private_username, password=private_password,
-                             role=role_name, dashboard=dashboard, private=True)
-    private_es_user.save()
-
-    public_es_user = ESUser(name=pub_username, password=pub_password,
-                            role=role_name, dashboard=dashboard, private=False)
-    public_es_user.save()
+    ProjectRole.objects.create(role=role, backend_role=backend_role, dashboard=dashboard)
 
 
 def add_to_dashboard(dash, backend, url):
@@ -953,7 +948,6 @@ def update_role_dashboard(role_name, dashboard):
     """
     Update the role with the current state of a dashboard
     Include read permission for .kibana
-    Include read/write permissions for private .kibana
 
     :param role_name: name of the role
     :param dashboard: dashboard to be updated with the role
@@ -999,14 +993,6 @@ def update_role_dashboard(role_name, dashboard):
     }
     permissions["index_permissions"].append(kibana_permissions)
 
-    private_kibana_permissions = {
-        'index_patterns': ['?kibana_*_${user_name}'],
-        'allowed_actions': [
-            'read', 'delete', 'manage', 'index'
-        ]
-    }
-    permissions["index_permissions"].append(private_kibana_permissions)
-
     global_tenant_permissions = {
         "tenant_patterns": [
             "global_tenant"
@@ -1018,7 +1004,7 @@ def update_role_dashboard(role_name, dashboard):
     permissions["tenant_permissions"].append(global_tenant_permissions)
 
     odfe_api = OpendistroApi(ES_IN_URL, ES_ADMIN_PSW)
-    odfe_api.put_role(role_name, permissions)
+    odfe_api.create_role(role_name, permissions)
 
 
 def general_stat_dash(repos):
@@ -1193,17 +1179,16 @@ def delete_dashboard(dashboard):
 
         remove_tasks_no_token()
 
-    es_users = ESUser.objects.filter(dashboard=dashboard)
     odfe_api = OpendistroApi(ES_IN_URL, ES_ADMIN_PSW)
-    for esuser in es_users:
-        odfe_api.delete_user(esuser.name)
-
+    odfe_api.delete_mapping(dashboard.projectrole.role)
+    odfe_api.delete_role(dashboard.projectrole.role)
     dashboard.delete()
 
 
 def delete_user(user):
     for dashboard in user.dashboard_set.all():
         delete_dashboard(dashboard)
+    remove_workspace(user)
 
     user.delete()
 
@@ -1256,32 +1241,90 @@ def remove_tasks_no_token():
         task.delete()
 
 
-def request_kibana(request, dash_id):
+def request_workspace(request, dash_id):
     """
-    Redirect to My Workspace Kibana
+    Redirect to My workspace of the requested project or create it
     :param request:
-    :param dash_id:
+    :param dash_id: ID of the project
     :return:
     """
     dash = Dashboard.objects.filter(id=dash_id).first()
     if not dash:
-        return JsonResponse({'status': 'error', 'message': 'Dashboard not found'}, status=404)
+        return custom_404(request, "The project requested was not found in this server")
+
+    is_owner = request.user.is_authenticated and request.user == dash.creator
+    if not is_owner and not request.user.is_superuser:
+        return custom_403(request)
 
     if request.method != 'GET':
-        return JsonResponse({'status': 'error', 'message': 'Only GET method allowed'}, status=405)
+        return custom_405(request, request.method)
 
-    owner = request.user.is_authenticated and request.user == dash.creator
+    if not hasattr(dash.creator, 'userworkspace'):
+        create_workspace(dash.creator)
 
-    if owner or request.user.is_superuser:
-        es_user = ESUser.objects.filter(dashboard=dash, private=True).first()
-    else:
-        es_user = ESUser.objects.filter(dashboard=dash, private=False).first()
+    name = dash.creator.first_name.encode('utf-8', 'ignore').decode('ascii', 'ignore')
+    jwt_key = get_kibana_jwt(name, [dash.projectrole.backend_role, dash.creator.userworkspace.backend_role])
 
-    jwt_key = get_kibana_jwt(es_user.name, es_user.role)
-
-    url = "{}/app/kibana?jwtToken={}&security_tenant=global#/dashboard/a9513820-41c0-11ea-a32a-715577273fe3".format(KIB_OUT_URL, jwt_key)
+    url = "{}/app/kibana?jwtToken={}&security_tenant={}#/dashboard/a9513820-41c0-11ea-a32a-715577273fe3".format(
+        KIB_OUT_URL,
+        jwt_key,
+        dash.creator.userworkspace.tenant_name
+    )
 
     return HttpResponseRedirect(url)
+
+
+def create_workspace(user):
+    """
+    Create a Tenant for the user and the necessary roles associated
+    :param user:
+    :return:
+    """
+    tenant_name = f'tenant_workspace_{user.id}'
+    tenant_role = f'role_workspace_{user.id}'
+    backend_role = f'br_workspace_{user.id}'
+    UserWorkspace.objects.create(user=user,
+                                 tenant_name=tenant_name,
+                                 tenant_role=tenant_role,
+                                 backend_role=backend_role)
+    odfe_api = OpendistroApi(ES_IN_URL, ES_ADMIN_PSW)
+    odfe_api.create_tenant(tenant_name)
+    permissions = {
+        "index_permissions": [{
+            'index_patterns': [f'?kibana_*_tenantworkspace{user.id}'],
+            'allowed_actions': [
+                'read', 'delete', 'manage', 'index'
+            ]
+        }],
+        "cluster_permissions": [],
+        "tenant_permissions": [{
+            "tenant_patterns": [
+                tenant_name
+            ],
+            "allowed_actions": [
+                "kibana_all_write"
+            ]
+        }]
+    }
+    odfe_api.create_role(tenant_role, permissions=permissions)
+    odfe_api.create_mapping(role=tenant_role, backend_roles=[backend_role])
+
+    # Import global objects
+    obj = kibana_objects.export_all_objects(KIB_IN_URL, ES_ADMIN_PSW, "global")
+    kibana_objects.import_object(KIB_IN_URL, ES_ADMIN_PSW, obj, tenant_name)
+
+
+def remove_workspace(user):
+    """
+    Remove the Tenant of a user and all the roles associated
+    :param user:
+    :return:
+    """
+    odfe_api = OpendistroApi(ES_IN_URL, ES_ADMIN_PSW)
+    odfe_api.delete_mapping(user.userworkspace.tenant_role)
+    odfe_api.delete_role(user.userworkspace.tenant_role)
+    odfe_api.delete_tenant(user.userworkspace.tenant_name)
+    user.userworkspace.delete()
 
 
 def request_public_kibana(request, dash_id):
@@ -1293,25 +1336,23 @@ def request_public_kibana(request, dash_id):
     """
     dash = Dashboard.objects.filter(id=dash_id).first()
     if not dash:
-        return JsonResponse({'status': 'error', 'message': 'Dashboard not found'}, status=404)
+        return custom_404(request, "The project requested was not found in this server")
 
     if request.method != 'GET':
-        return JsonResponse({'status': 'error', 'message': 'Only GET method allowed'}, status=405)
+        return custom_405(request, request.method)
 
-    es_user = ESUser.objects.filter(dashboard=dash, private=False).first()
-
-    jwt_key = get_kibana_jwt(es_user.name, es_user.role)
+    jwt_key = get_kibana_jwt(f"Public {dash_id}", dash.projectrole.backend_role)
 
     url = "{}/app/kibana?jwtToken={}&security_tenant=global#/dashboard/a834f080-41b1-11ea-a32a-715577273fe3".format(KIB_OUT_URL, jwt_key)
 
     return HttpResponseRedirect(url)
 
 
-def get_kibana_jwt(user, roles):
+def get_kibana_jwt(user, backend_roles):
     """
     Return the jwt key for a specific user and role
     :param user:
-    :param roles: String or list of roles
+    :param backend_roles: String or list of backend roles
     :return:
     """
     dirname = os.path.dirname(os.path.abspath(__file__))
@@ -1320,7 +1361,7 @@ def get_kibana_jwt(user, roles):
         private_key = f_private.read()
     claims = {
         "user": user,
-        "roles": roles
+        "roles": backend_roles
     }
     return jwt.encode(claims, private_key, algorithm='RS256').decode('utf-8')
 
@@ -1856,3 +1897,41 @@ def cookies(request):
     """
     context = create_context(request)
     return render(request, 'cauldronapp/cookies.html', context=context)
+
+
+def custom_403(request):
+    """
+    View to show the default 403 template
+    :param request:
+    :return:
+    """
+    context = create_context(request)
+    context['title'] = "403 Forbidden"
+    context['description'] = "You do not have the necessary permissions to access this resource"
+    return render(request, 'cauldronapp/error.html', status=403, context=context)
+
+
+def custom_404(request, message):
+    """
+    View to show the default 404 template
+    :param request:
+    :param message:
+    :return:
+    """
+    context = create_context(request)
+    context['title'] = "404 Not Found"
+    context['description'] = message
+    return render(request, 'cauldronapp/error.html', status=404, context=context)
+
+
+def custom_405(request, method):
+    """
+    View to show the default 405 template
+    :param request:
+    :param method:
+    :return:
+    """
+    context = create_context(request)
+    context['title'] = "405 Method not allowed"
+    context['description'] = f"Method {method} is not allowed in this resource"
+    return render(request, 'cauldronapp/error.html', status=405, context=context)
