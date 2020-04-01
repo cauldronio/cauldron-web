@@ -158,3 +158,12 @@ section.start-now {
     background: #007bb5;
     color: white;
 }
+footer a {
+  color: #eee;
+  text-decoration: underline;
+}
+
+footer a:hover {
+  color: #ccc;
+  text-decoration: underline;
+}

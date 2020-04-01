@@ -247,32 +247,40 @@
 
   <footer class="container-fluid footer-position bg-dark text-white pt-3">
 
-    <div class="container">
+    
       <div class="row">
-        <div class="col-md-4">
-          <div class="full-footer"><a href="https://bitergia.com" target="_blank"><img class="mx-auto d-block" src="/static/img/bitergia-w-logo-s.png" style="float:left" alt="Bitergia"></a></div>
+        <div class="col-md-3 offset-md-1">
+          <div><a href="https://bitergia.com" target="_blank"><img src="/static/img/bitergia-w-logo-s.png" alt="Bitergia" width="120"></a></div>
             <p style="display:inline-block">Copyright &copy; 2020 <a href="https://bitergia.com">Bitergium SLL.</a> and its
               contributors.</p>
-            <p class="full-footer">Some Rights Reserved.</p>
-        </div>
-        <div class="col-md-4">
-          <p class="text-justify full-footer">Unless otherwise stated, this work is licensed under a <strong>Creative
-              Commons Attribution-ShareAlike 4.0 Unported License</strong>. Cauldron and the Cauldron logo are
-            trademarks of <a href="https://bitergia.com" target="_blank">Bitergium SLL.</a> in the European Union and/or
-            other jurisdictions. All other trademarks are the property of their respective holders.</p>
-        </div>
-        <div class="col-md-4">
-          <p class="full-footer">Made with <abbr title="love">&hearts;</abbr> and <strong>free, open source software</strong>:</p>
-          <p class="full-footer"><a href="https://chaoss.github.io/grimoirelab/" target="_blank"><img src="/static/img/wizard-y.svg"
-                height="24" alt=""> GrimoireLab</a></p>
-          <p class="full-footer">
+            <p>Some Rights Reserved.</p>
+            <p>
               <a href="{% url 'terms' %}" target="_blank">Terms</a> |
               <a href="{% url 'privacy' %}" target="_blank">Privacy</a> |
               <a href="{% url 'cookies' %}" target="_blank">Cookies Policy</a>
           </p>
         </div>
+        <div class="col-md-4">
+          <p><a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank">
+            <img src="/static/img/by-sa.png" width="120" alt="Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)">
+          </a></p>
+          <p>Cauldron and the Cauldron logo are
+            trademarks of <a href="https://bitergia.com" target="_blank">Bitergium SLL.</a> in the European Union and/or
+            other jurisdictions. All other trademarks are the property of their respective holders.</p>
+        </div>
+        <div class="col-md-4">
+          <p>Made with <abbr title="love"><span style="color: red; font-size: 1.2rem;">&hearts;</span></abbr> and <strong><a href="https://cauldronio.gitlab.io" target="_blank">free, open source software</a></strong> based on:</p>
+          <p>
+            <a href="https://chaoss.github.io/grimoirelab/" target="_blank"><img src="/static/img/wizard-y.svg"
+                height="24" alt=""> GrimoireLab</a> |
+            <a href="https://www.djangoproject.com/" target="_blank">Django</a> |
+            <a href="https://opendistro.github.io/for-elasticsearch/" target="_blank">Open Distro for Elasticsearch</a>
+          </p>
+          <p><a href="https://status.cauldron.io/">Status</a></p>
+          
+        </div>
       </div>
-    </div>
+    
   </footer>
 
   <!-- Optional JavaScript -->
