@@ -526,7 +526,7 @@ def request_edit_dashboard(request, dash_id):
             return JsonResponse({'status': 'error', 'message': 'Repository not found'},
                                 status=404)
         repo.dashboards.remove(dash)
-        update_role_dashboard(es_users.first().role, dash)
+        update_role_dashboard(dash.projectrole.role, dash)
         if backend != 'git':
             task = Task.objects.filter(repository=repo, tokens__user=dash.creator).first()
             if task and not task.worker_id:
