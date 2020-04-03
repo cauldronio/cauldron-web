@@ -19,60 +19,60 @@
       </form>
     </div>
 
+    {% if repositories_count > 0 and editable %}
     <div>
-      <a id="open-kibana"
-        class="btn btn-lg btn-primary {% if repositories_count == 0 or not editable %}disabled{% endif %}"
-        href="{% url 'open_workspace' dashboard.id %}"
-        target="_blank">
-        <i class="fa fa-chart-bar"></i> My Workspace
+      <a class="btn btn-lg btn-outline-dark"
+         data-toggle="tooltip" title="Visualize the data in Kibana"
+         href="{% url 'open_public_kibana' dashboard.id %}"
+         target="_blank">
+        <i class="fa fa-chart-bar"></i> Public Dashboard
+      </a>
+
+      <span data-toggle="modal" data-target="#shareModal">
+        <button type="button" class="btn btn-lg btn-success"
+           data-toggle="tooltip" title="Share options">
+          <i class="fas fa-share-alt"></i>
+        </button>
+      </span>
+    </div>
+
+    <div data-toggle="tooltip" title="Edit your dashboards in Kibana">
+      <a class="btn btn-lg btn-outline-dark"
+         href="{% url 'open_workspace' dashboard.id %}"
+         target="_blank">
+        <i class="fas fa-wrench"></i> My Workspace
       </a>
     </div>
-
+    {% endif %}
   </div>
 
-  <div class="row">
+  {% if repositories_count > 0 and editable %}
+  <div class="row justify-content-between align-items-end mt-4">
     <div>
-      {% if repositories_count == 0 %}
-      <form class="form-inline">
-        <span class="font-weight-bold mr-1">Public dashboard link: </span>
-        <span class="font-italic">add some datasources first</span>
-      </form>
-      {% else %}
-        {% with project_name=dashboard.name project_id=dashboard.id %}
-          {% include "cauldronapp/share_buttons.html" %}
-        {% endwith %}
-      {% endif %}
-      <div class="mb-2">
-        <span class="font-weight-bold">Data sources found:</span>
-        <span id="num-repos-filter">0</span>
-      </div>
-      <div class="mb-2">
-        <span class="font-weight-bold">Status:</span>
-        <span id="general-status">
-        <!--This content is generated via JS-->
-        </span>
-      </div>
-      {% if editable %}
-        {% if repositories_count > 0 %}
-        <button type="button" class="btn btn-outline-dark btn-reanalyze-all mb-2" data-repo="{{repo.id}}"><i class="fa fa-sync"></i> Refresh datasources</button>
+      <span class="h4 font-weight-bold">Data Sources:</span>
+      <span class="h5" id="num-repos-filter">0</span>
+      <span class="h5">
+      (<span id="general-status"><!--This content is generated via JS--></span>)
+      </span>
+      <span class="h5 font-weight-bold ml-2">
+        {% if render_table %}
+        <a class="btn btn-outline-dark" href="{% url 'show_dashboard' dashboard.id %}">
+          <i class="fas fa-eye-slash"></i> Hide details
+        </a>
+        {% else %}
+        <a class="btn btn-outline-dark" href="{% url 'show_dashboard' dashboard.id %}?kind=any">
+          <i class="fas fa-eye"></i> Details
+        </a>
         {% endif %}
-      {% endif %}
+      </span>
+    </div>
+    <div>
+      <button type="button" data-toggle="tooltip" title="Refresh all the Data Sources" class="btn btn-outline-dark btn-reanalyze-all" data-repo="{{repo.id}}">
+        <i class="fa fa-sync"></i> Refresh all
+      </button>
     </div>
   </div>
-
-
-  {% if repositories_count > 0 %}
-  <!--div class="row justify-content-lg-end">
-    <div class="alert alert-info mb-2 mr-3" role="alert">
-      For now, the update of the status of the repositories is done manually
-      <i class="fas fa-arrow-right"></i>
-    </div>
-    <button type="button" class="btn btn-outline-dark btn-refresh-table mb-2"><i class="fa fa-sync"></i> Update table</button>
-  </div-->
   {% endif %}
-
-{% else %}
-  <h1>Dashboard not found</h1>
 {% endif %}
 </div>
 

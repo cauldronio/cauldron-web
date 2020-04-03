@@ -1133,6 +1133,7 @@ def request_show_dashboard(request, dash_id):
     repositories = dash.repository_set.all()
 
     context['repositories_count'] = repositories.count()
+    context['render_table'] = False
 
     kind = request.GET.get('kind')
     if kind is not None and kind in Repository.BACKEND_CHOICES:
@@ -1141,6 +1142,9 @@ def request_show_dashboard(request, dash_id):
     status = request.GET.get('status')
     if status is not None and status in Repository.STATUS_CHOICES:
         repositories = [obj for obj in repositories.all() if obj.status == status]
+
+    if kind or status:
+        context['render_table'] = True
 
     sort_by = request.GET.get('sort_by')
     if sort_by is not None and sort_by in Repository.SORT_CHOICES:
@@ -1163,6 +1167,12 @@ def request_show_dashboard(request, dash_id):
     page_obj = p.pages.get_page(page_number)
     context['page_obj'] = page_obj
     context['pages_to_show'] = p.pages_to_show(page_obj.number)
+
+    summary = get_dashboard_summary(dash_id)
+    context['total'] = summary['total']
+    context['completed'] = summary['status']['completed']
+    context['error'] = summary['status']['error']
+    context['running'] = summary['status']['running']
 
     context['editable'] = request.user.is_authenticated and request.user == dash.creator or request.user.is_superuser
 

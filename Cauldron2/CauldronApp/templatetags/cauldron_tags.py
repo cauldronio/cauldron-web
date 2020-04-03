@@ -17,20 +17,20 @@ def url_replace(request, field, value):
 @register.simple_tag
 def get_filter_value(request, filter):
     '''
-    This tag returns the value of the specified filter or returns 'all'
+    This tag returns the value of the specified filter or returns 'any'
     if the filter does not meet the requirements
     '''
     dict_ = request.GET.copy()
     filter_ = dict_.get(filter, None)
 
-    if filter_ is None:
-        return 'all'
-
     if filter == 'kind' and filter_ not in Repository.BACKEND_CHOICES:
-        return 'all'
+        return 'Any Data Source'
 
     if filter == 'status' and filter_ not in Repository.STATUS_CHOICES:
-        return 'all'
+        return 'Any Status'
+
+    if filter_ is None:
+        return 'any'
 
     return filter_
 

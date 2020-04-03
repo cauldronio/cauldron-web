@@ -40,6 +40,8 @@ $(document).ready(function () {
     $('form.create-dashboard').on('submit', on_create_dashboard);
 
     $('[data-toggle="tooltip"]').tooltip();
+
+    $('.copy-share-link-kibana').click(copy_kibana_public_link);
 });
 
 
@@ -166,12 +168,13 @@ function deleteToken(identity) {
     showToast('Creating...', `Your project analytics environment is being set up. Wait a second.`, 'fas fa-spinner text-success', 10000);
 }
 
+function copy_kibana_public_link() {
+  var project_id = this.getAttribute("data-project-id");
+  var copyText = document.getElementById('url-public-link-kibana_' + project_id);
+  copyText.select();
+  document.execCommand("copy");
 
-$('#copy-share-link-kibana').click(function(ev){
-    ev.preventDefault();
-    var copyText = document.getElementById('url-public-link-kibana');
-    copyText.select();
-    document.execCommand("copy");
-    $('#copy-share-link-kibana').tooltip('show');
-    setTimeout(function () {$('#copy-share-link-kibana').tooltip('hide')}, 1000)
-});
+  share_button = $(this);
+  share_button.tooltip('show');
+  setTimeout(function () {share_button.tooltip('hide')}, 1000)
+}

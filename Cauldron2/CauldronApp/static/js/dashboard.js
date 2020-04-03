@@ -158,14 +158,19 @@ function reanalyzeEveryRepo(event){
         .fail(function (data) {
             showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', 5000);
         })
-        .always(function(){reanalyzeRepo.html('<i class="fa fa-sync"></i> Refresh datasources')})
+        .always(function(){reanalyzeRepo.html('<i class="fa fa-sync"></i> Refresh')})
 }
 
 function getSummary() {
     $.getJSON('/dashboard/' + Dash_ID + "/summary", function(data) {
         var status_output = "";
+        var i = 0;
         for (var key in data.status){
-            status_output += ` ${key}: ${data.status[key]} |`;
+            status_output += `${key}: ${data.status[key]}`;
+            if(i < Object.keys(data.status).length - 1) {
+              status_output += ` | `;
+            }
+            i++;
         }
 
         $('#num-repos-filter').html(data.total);

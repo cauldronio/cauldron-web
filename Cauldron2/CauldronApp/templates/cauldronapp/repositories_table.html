@@ -1,30 +1,33 @@
 {% load cauldron_tags %}
 
 {% if repositories_count > 0 %}
+{% if render_table %}
+<span class="font-weight-bold">Filter by: </span>
+
 <div class="btn-group mb-2">
   <button class="btn btn-outline-dark btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-    <strong>Status:</strong> {% get_filter_value request 'status' %}
+    <strong>{% get_filter_value request 'kind' %}</strong>
   </button>
   <div class="dropdown-menu">
-    <a class="dropdown-item" href="?{% url_replace request 'status' 'all' %}"><i class="fas fa-asterisk"></i> All</a>
-    <a class="dropdown-item" href="?{% url_replace request 'status' 'completed' %}"><i class="fas fa-check text-success"></i> Completed</a>
-    <a class="dropdown-item" href="?{% url_replace request 'status' 'running' %}"><i class="fas fa-spinner"></i> Running</a>
-    <a class="dropdown-item" href="?{% url_replace request 'status' 'pending' %}"><i class="fas fa-circle" style="color:#0079d3"></i> Pending</a>
-    <a class="dropdown-item" href="?{% url_replace request 'status' 'error' %}"><i class="fas fa-exclamation-triangle text-warning"></i> Error</a>
-    <a class="dropdown-item" href="?{% url_replace request 'status' 'unknown' %}"><i class="fas fa-question text-warning"></i> Unknown</a>
+    <a class="dropdown-item" href="?{% url_replace request 'kind' 'any' %}"><i class="fas fa-asterisk"></i> Any</a>
+    <a class="dropdown-item" href="?{% url_replace request 'kind' 'git' %}"><i class="fab fa-git-square"></i> Git</a>
+    <a class="dropdown-item" href="?{% url_replace request 'kind' 'github' %}"><i class="fab fa-github"></i> GitHub</a>
+    <a class="dropdown-item" href="?{% url_replace request 'kind' 'gitlab' %}"><i class="fab fa-gitlab"></i> Gitlab</a>
+    <a class="dropdown-item" href="?{% url_replace request 'kind' 'meetup' %}"><i class="fab fa-meetup"></i> Meetup</a>
   </div>
 </div>
 
 <div class="btn-group mb-2">
   <button class="btn btn-outline-dark btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-    <strong>Kind of datasource:</strong> {% get_filter_value request 'kind' %}
+    <strong>{% get_filter_value request 'status' %}</strong>
   </button>
   <div class="dropdown-menu">
-    <a class="dropdown-item" href="?{% url_replace request 'kind' 'all' %}"><i class="fas fa-asterisk"></i> All</a>
-    <a class="dropdown-item" href="?{% url_replace request 'kind' 'git' %}"><i class="fab fa-git-square"></i> Git</a>
-    <a class="dropdown-item" href="?{% url_replace request 'kind' 'github' %}"><i class="fab fa-github"></i> GitHub</a>
-    <a class="dropdown-item" href="?{% url_replace request 'kind' 'gitlab' %}"><i class="fab fa-gitlab"></i> Gitlab</a>
-    <a class="dropdown-item" href="?{% url_replace request 'kind' 'meetup' %}"><i class="fab fa-meetup"></i> Meetup</a>
+    <a class="dropdown-item" href="?{% url_replace request 'status' 'any' %}"><i class="fas fa-asterisk"></i> Any</a>
+    <a class="dropdown-item" href="?{% url_replace request 'status' 'completed' %}"><i class="fas fa-check text-success"></i> Completed</a>
+    <a class="dropdown-item" href="?{% url_replace request 'status' 'running' %}"><i class="fas fa-spinner"></i> Running</a>
+    <a class="dropdown-item" href="?{% url_replace request 'status' 'pending' %}"><i class="fas fa-circle" style="color:#0079d3"></i> Pending</a>
+    <a class="dropdown-item" href="?{% url_replace request 'status' 'error' %}"><i class="fas fa-exclamation-triangle text-warning"></i> Error</a>
+    <a class="dropdown-item" href="?{% url_replace request 'status' 'unknown' %}"><i class="fas fa-question text-warning"></i> Unknown</a>
   </div>
 </div>
 
@@ -129,6 +132,8 @@
 {% endif %}
 
 {% include "cauldronapp/nav_pagination.html" %}
+
+{% endif %}
 
 {% else %}
 <div class="alert alert-warning alert-dismissible fade show" role="alert">
