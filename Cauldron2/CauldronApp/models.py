@@ -45,6 +45,7 @@ class Token(models.Model):
 
 
 class GithubUser(models.Model):
+    BACKEND_NAME = 'github'
     user = models.OneToOneField(User, on_delete=models.CASCADE, unique=True)
     username = models.CharField(max_length=100)
     token = models.ForeignKey(Token, on_delete=models.CASCADE)
@@ -52,6 +53,7 @@ class GithubUser(models.Model):
 
 
 class GitlabUser(models.Model):
+    BACKEND_NAME = 'gitlab'
     user = models.OneToOneField(User, on_delete=models.CASCADE, unique=True)
     username = models.CharField(max_length=100)
     token = models.ForeignKey(Token, on_delete=models.CASCADE)
@@ -59,6 +61,7 @@ class GitlabUser(models.Model):
 
 
 class MeetupUser(models.Model):
+    BACKEND_NAME = 'meetup'
     user = models.OneToOneField(User, on_delete=models.CASCADE, unique=True)
     username = models.CharField(max_length=100)
     token = models.ForeignKey(Token, on_delete=models.CASCADE)

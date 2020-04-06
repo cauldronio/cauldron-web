@@ -19,9 +19,9 @@ from CauldronApp import views
 from Cauldron2 import settings
 
 urlpatterns = [
-    path('github-login', views.request_github_login_callback),
-    path('gitlab-login', views.request_gitlab_login_callback),
-    path('meetup-login', views.request_meetup_login_callback),
+    path('github-login', views.request_github_oauth),
+    path('gitlab-login', views.request_gitlab_oauth),
+    path('meetup-login', views.request_meetup_oauth),
     path('logout', views.request_logout),
     path('delete-token', views.request_delete_token),
 

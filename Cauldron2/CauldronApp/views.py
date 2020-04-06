@@ -4,7 +4,7 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django.db import transaction
-from django.db.models import Count, F
+from django.db.models import Count
 from django.views.decorators.http import require_http_methods
 from CauldronApp.pages import Pages
 from CauldronApp import kibana_objects
@@ -15,36 +15,25 @@ import re
 import logging
 import requests
 from random import choice
-from github import Github
-from gitlab import Gitlab
 from string import ascii_lowercase, digits
-from urllib.parse import urlparse, urlencode
+from urllib.parse import urlencode
 import time
 
-from Cauldron2.settings import GH_CLIENT_ID, GH_CLIENT_SECRET, GL_CLIENT_ID, GL_CLIENT_SECRET, \
-                                MEETUP_CLIENT_ID, MEETUP_CLIENT_SECRET, \
-                                ES_IN_HOST, ES_IN_PORT, ES_IN_PROTO, ES_ADMIN_PSW, \
-                                KIB_IN_HOST, KIB_IN_PORT, KIB_IN_PROTO, KIB_OUT_URL, \
-                                KIB_PATH, HATSTALL_ENABLED, GOOGLE_ANALYTICS_ID, \
-                                CAULDRON_ADMINS
+from Cauldron2.settings import ES_IN_HOST, ES_IN_PORT, ES_IN_PROTO, ES_ADMIN_PSW, \
+                               KIB_IN_HOST, KIB_IN_PORT, KIB_IN_PROTO, KIB_OUT_URL, \
+                               KIB_PATH, HATSTALL_ENABLED, GOOGLE_ANALYTICS_ID
+from Cauldron2 import settings
+
 from CauldronApp.models import GithubUser, GitlabUser, MeetupUser, Dashboard, Repository, Task, \
                                CompletedTask, AnonymousUser, ProjectRole, Token, UserWorkspace
 from CauldronApp.githubsync import GitHubSync
 from CauldronApp.opendistro_utils import OpendistroApi
+from CauldronApp.oauth.github import GitHubOAuth
+from CauldronApp.oauth.gitlab import GitLabOAuth
+from CauldronApp.oauth.meetup import MeetupOAuth
 
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-GH_ACCESS_OAUTH = 'https://github.com/login/oauth/access_token'
-GH_URI_IDENTITY = 'https://github.com/login/oauth/authorize'
-
-GL_ACCESS_OAUTH = 'https://gitlab.com/oauth/token'
-GL_URI_IDENTITY = 'https://gitlab.com/oauth/authorize'
-GL_REDIRECT_PATH = '/gitlab-login'
-
-MEETUP_ACCESS_OAUTH = 'https://secure.meetup.com/oauth2/access'
-MEETUP_URI_IDENTITY = 'https://secure.meetup.com/oauth2/authorize'
-MEETUP_REDIRECT_PATH = '/meetup-login'
 
 DASHBOARD_LOGS = '/dashboard_logs'
 
@@ -79,8 +68,6 @@ BACKEND_INDICES = [
 
 ES_IN_URL = "{}://{}:{}".format(ES_IN_PROTO, ES_IN_HOST, ES_IN_PORT)
 KIB_IN_URL = "{}://{}:{}{}".format(KIB_IN_PROTO, KIB_IN_HOST, KIB_IN_PORT, KIB_PATH)
-
-ES_INDEX_SUFFIX = "index"
 
 logger = logging.getLogger(__name__)
 
@@ -124,52 +111,25 @@ def request_user_projects(request):
 
 
 # TODO: Add state
-def request_github_login_callback(request):
-    context = create_context(request)
-
-    # Github authentication
+def request_github_oauth(request):
     code = request.GET.get('code', None)
     if not code:
-        context['title'] = "Bad Request"
-        context['description'] = "There isn't a code in the GitHub callback"
-        return render(request, 'cauldronapp/error.html', status=400,
-                      context=context)
+        return custom_404(request, "Code not found in the GitHub callback")
 
-    r = requests.post(GH_ACCESS_OAUTH,
-                      data={'client_id': GH_CLIENT_ID,
-                            'client_secret': GH_CLIENT_SECRET,
-                            'code': code},
-                      headers={'Accept': 'application/json'})
-    if r.status_code != requests.codes.ok:
-        logging.error('GitHub API error %s %s %s', r.status_code, r.reason, r.text)
-        context['title'] = "GitHub error"
-        context['description'] = "GitHub API error"
-        return render(request, 'cauldronapp/error.html', status=500,
-                      context=context)
-    token = r.json().get('access_token', None)
-    if not token:
-        logging.error('ERROR GitHub Token not found. %s', r.text)
-        context['title'] = "GitHub error"
-        context['description'] = "Error getting the token from GitHub endpoint"
-        return render(request, 'cauldronapp/error.html', status=500,
-                      context=context)
+    github = GitHubOAuth(settings.GH_CLIENT_ID, settings.GH_CLIENT_SECRET)
+    error = github.authenticate(code)
+    if error:
+        return custom_500(request, error)
+    oauth_user = github.user_data()
 
-    # Authenticate/register an user, and login
-    gh = Github(token)
-    gh_user = gh.get_user()
-    username = gh_user.login
-    photo_url = gh_user.avatar_url
+    is_admin = oauth_user.username in settings.CAULDRON_ADMINS['GITHUB']
 
-    # Get data from session
+    # Save the state of the session
     data_add = request.session.get('add_repo', None)
     last_page = request.session.get('last_page', None)
 
-    # Checks if the username appears in the admin list for the specified backend
-    is_admin = username in CAULDRON_ADMINS['GITHUB']
+    authenticate_user(request, GithubUser, oauth_user, is_admin)
 
-    tricky_authentication(request, GithubUser, username, username, token, photo_url, is_admin)
-
-    # Get the previous state
     if data_add:
         dash = Dashboard.objects.filter(id=data_add['dash_id']).first()
         # Only GitHub, is the new account added
@@ -244,54 +204,25 @@ def merge_workspaces(old_user, new_user):
 
 
 # TODO: Add state
-def request_gitlab_login_callback(request):
-    context = create_context(request)
-
-    # Gitlab authentication
+def request_gitlab_oauth(request):
     code = request.GET.get('code', None)
     if not code:
-        context['title'] = "Bad Request"
-        context['description'] = "There isn't a code in the GitLab callback"
-        return render(request, 'cauldronapp/error.html', status=400,
-                      context=context)
-    r = requests.post(GL_ACCESS_OAUTH,
-                      params={'client_id': GL_CLIENT_ID,
-                              'client_secret': GL_CLIENT_SECRET,
-                              'code': code,
-                              'grant_type': 'authorization_code',
-                              'redirect_uri': "https://{}{}".format(request.get_host(), GL_REDIRECT_PATH)},
-                      headers={'Accept': 'application/json'})
+        return custom_404(request, "Code not found in the GitLab callback")
+    redirect_uri = "https://{}{}".format(request.get_host(), GitLabOAuth.REDIRECT_PATH)
+    gitlab = GitLabOAuth(settings.GL_CLIENT_ID, settings.GL_CLIENT_SECRET, redirect_uri)
+    error = gitlab.authenticate(code)
+    if error:
+        return custom_500(request, error)
+    oauth_user = gitlab.user_data()
 
-    if r.status_code != requests.codes.ok:
-        logging.error('Gitlab API error %s %s', r.status_code, r.reason)
-        context['title'] = "Gitlab error"
-        context['description'] = "Gitlab API error"
-        return render(request, 'cauldronapp/error.html', status=500,
-                      context=context)
-    token = r.json().get('access_token', None)
-    if not token:
-        logging.error('ERROR Gitlab Token not found. %s', r.text)
-        context['title'] = "Gitlab error"
-        context['description'] = "Error getting the token from Gitlab endpoint"
-        return render(request, 'cauldronapp/error.html', status=500,
-                      context=context)
+    is_admin = oauth_user.username in settings.CAULDRON_ADMINS['GITLAB']
 
-    # Authenticate/register an user, and login
-    gl = Gitlab(url='https://gitlab.com', oauth_token=token)
-    gl.auth()
-    username = gl.user.attributes['username']
-    photo_url = gl.user.attributes['avatar_url']
-
-    # Get data from session
+    # Save the state of the session
     data_add = request.session.get('add_repo', None)
     last_page = request.session.get('last_page', None)
 
-    # Checks if the username appears in the admin list for the specified backend
-    is_admin = username in CAULDRON_ADMINS['GITLAB']
+    authenticate_user(request, GitlabUser, oauth_user, is_admin)
 
-    tricky_authentication(request, GitlabUser, username, username, token, photo_url, is_admin)
-
-    # Get the previous state
     if data_add:
         dash = Dashboard.objects.filter(id=data_add['dash_id']).first()
         # Only GitLab, is the new account added
@@ -307,66 +238,31 @@ def request_gitlab_login_callback(request):
 
 
 # TODO: Add state
-def request_meetup_login_callback(request):
-    context = create_context(request)
-
-    # Meetup authentication
+def request_meetup_oauth(request):
     error = request.GET.get('error', None)
     if error:
-        context['title'] = "Error from Meetup Oauth"
-        context['description'] = error
-        return render(request, 'cauldronapp/error.html', status=400,
-                      context=context)
+        return custom_404(f"Meetup callback error. {error}")
     code = request.GET.get('code', None)
     if not code:
-        context['title'] = "Bad Request"
-        context['description'] = "There isn't a code in the Meetup callback"
-        return render(request, 'cauldronapp/error.html', status=400,
-                      context=context)
-    r = requests.post(MEETUP_ACCESS_OAUTH,
-                      params={'client_id': MEETUP_CLIENT_ID,
-                              'client_secret': MEETUP_CLIENT_SECRET,
-                              'code': code,
-                              'grant_type': 'authorization_code',
-                              'redirect_uri': "https://{}{}".format(request.get_host(), MEETUP_REDIRECT_PATH)},
-                      headers={'Accept': 'application/json'})
+        return custom_404(request, "Code not found in the Meetup callback")
+    redirect_uri = "https://{}{}".format(request.get_host(), MeetupOAuth.REDIRECT_PATH)
+    meetup = MeetupOAuth(settings.MEETUP_CLIENT_ID, settings.MEETUP_CLIENT_SECRET, redirect_uri)
+    error = meetup.authenticate(code)
+    if error:
+        return custom_500(request, error)
+    oauth_user = meetup.user_data()
 
-    if r.status_code != requests.codes.ok:
-        logging.error('Meetup API error %s %s', r.status_code, r.reason)
-        context['title'] = "Meetup error"
-        context['description'] = "Meetup API error"
-        return render(request, 'cauldronapp/error.html', status=500,
-                      context=context)
-    response = r.json()
-    token = response.get('access_token', None)
-    refresh_token = response.get('refresh_token', None)
-    if not token or not refresh_token:
-        logging.error('ERROR Meetup Token not found. %s', r.text)
-        context['title'] = "Meetup error"
-        context['description'] = "Error getting the token from Meetup endpoint"
-        return render(request, 'cauldronapp/error.html', status=500,
-                      context=context)
+    is_admin = oauth_user.username in settings.CAULDRON_ADMINS['MEETUP']
 
-    # Authenticate/register an user, and login
-    r = requests.get('https://api.meetup.com/members/self?&sign=true&photo-host=public',
-                     headers={'Authorization': 'bearer {}'.format(token)})
-    data_user = r.json()
-    try:
-        photo = data_user['photo']['photo_link']
-    except KeyError:
-        photo = '/static/img/profile-default.png'
-
-    # Get data from session
+    # Save the state of the session
     data_add = request.session.get('add_repo', None)
     last_page = request.session.get('last_page', None)
 
-    # Checks if the username appears in the admin list for the specified backend
-    is_admin = data_user['id'] in CAULDRON_ADMINS['MEETUP']
+    authenticate_user(request, MeetupUser, oauth_user, is_admin)
 
-    tricky_authentication(request, MeetupUser, data_user['id'], data_user['name'], token, photo, is_admin)
-    request.user.meetupuser.refresh_token = refresh_token
+    request.user.meetupuser.refresh_token = oauth_user.refresh_token
     request.user.meetupuser.save()
-    # Get the previous state
+
     if data_add:
         dash = Dashboard.objects.filter(id=data_add['dash_id']).first()
         if data_add['backend'] == 'meetup':
@@ -378,72 +274,56 @@ def request_meetup_login_callback(request):
     return HttpResponseRedirect(reverse('projectspage'))
 
 
-def tricky_authentication(req, BackendUser, username, name, token, photo_url, is_admin=False):
+def authenticate_user(request, backend_model, oauth_user, is_admin=False):
     """
-    Tricky authentication ONLY for login callbacks.
-    :param req: request from login callback
-    :param BackendUser: GitlabUser, GithubUser, MeetupUser... Full model object with the tokens
-    :param username: username for the entity
-    :param name: name of the user
-    :param token: token for the entity
-    :param photo_url: photo for the user and the entity
+    Authenticate an oauth request and merge with existent accounts if needed
+    :param request: request from login callback
+    :param backend_model: GitlabUser, GithubUser, MeetupUser ...
+    :param oauth_user: user information obtained from the backend
     :param is_admin: flag to indicate that the user to authenticate is an admin
     :return:
     """
-    ent_user = BackendUser.objects.filter(username=username).first()
-    if ent_user:
-        dj_ent_user = ent_user.user
-    else:
-        dj_ent_user = None
+    backend_entity = backend_model.objects.filter(username=oauth_user.username).first()
+    backend_user = backend_entity.user if backend_entity else None
 
-    if dj_ent_user:
-        if req.user.is_authenticated and dj_ent_user != req.user:
-            # Django Entity user exists, someone is authenticated and not the same account
-            merge_accounts(req.user, dj_ent_user)
-            req.user.delete()
-            login(req, dj_ent_user)
+    if backend_user:
+        if request.user.is_authenticated and backend_user != request.user:
+            # Someone is authenticated, backend user exists and not are the same account
+            merge_accounts(user_origin=request.user, user_dest=backend_user)
+            request.user.delete()
+            login(request, backend_user)
         else:
-            # Django Entity user exists and none is authenticated
-            login(req, dj_ent_user)
+            # No one is authenticated and backend user exists
+            login(request, backend_user)
         # Update the token
-        ent_user.token.key = token
-        ent_user.token.save()
+        backend_entity.token.key = oauth_user.token
+        backend_entity.token.save()
     else:
-        if req.user.is_authenticated:
-            # Django Entity user doesn't exist, someone is authenticated
+        if request.user.is_authenticated:
+            # Someone is authenticated and backend user doesn't exist
             # Check if is anonymous and delete anonymous tag
-            anony_user = AnonymousUser.objects.filter(user=req.user).first()
+            anony_user = AnonymousUser.objects.filter(user=request.user).first()
             if anony_user:
                 anony_user.delete()
-                req.user.first_name = name
-                req.user.save()
+                request.user.first_name = oauth_user.name
+                request.user.save()
 
         else:
-            # Django Entity user doesn't exist, none is authenticated
+            # No one is authenticated and backend user doesn't exist
             # Create account
-            dj_user = create_django_user(name)
-            login(req, dj_user)
+            dj_user = create_django_user(oauth_user.name)
+            login(request, dj_user)
 
         # If it is an admin user, upgrade it
         if is_admin:
-            upgrade_to_admin(req.user)
+            upgrade_to_admin(request.user)
 
         # Create the token entry
-        if BackendUser is GitlabUser:
-            token_item = Token(backend='gitlab', key=token, user=req.user)
-            token_item.save()
-        elif BackendUser is GithubUser:
-            token_item = Token(backend='github', key=token, user=req.user)
-            token_item.save()
-        elif BackendUser is MeetupUser:
-            token_item = Token(backend='meetup', key=token, user=req.user)
-            token_item.save()
-        else:
-            raise Exception("Internal server error, BackendUser unknown")
+        token = Token.objects.create(backend=backend_model.BACKEND_NAME, key=oauth_user.token, user=request.user)
 
-        # Create the BackendUser entry and associate with the account
-        bu_entry = BackendUser(user=req.user, username=username, token=token_item, photo=photo_url)
-        bu_entry.save()
+        # Create the backend entity and associate with the account
+        backend_model.objects.create(user=request.user, username=oauth_user.username,
+                                     token=token, photo=oauth_user.photo)
 
 
 def create_django_user(name):
@@ -595,8 +475,8 @@ def request_edit_dashboard(request, dash_id):
                                            'commits': analyze_commits,
                                            'issues': analyze_issues}
             request.session['last_page'] = '/dashboard/{}'.format(dash_id)
-            params = urlencode({'client_id': GH_CLIENT_ID})
-            gh_url_oauth = "{}?{}".format(GH_URI_IDENTITY, params)
+            params = urlencode({'client_id': settings.GH_CLIENT_ID})
+            gh_url_oauth = "{}?{}".format(GitHubOAuth.AUTH_URL, params)
             return JsonResponse({'status': 'error',
                                  'message': generate_request_token_message("GitHub"),
                                  'redirect': gh_url_oauth},
@@ -618,10 +498,11 @@ def request_edit_dashboard(request, dash_id):
                                            'commits': analyze_commits,
                                            'issues': analyze_issues}
             request.session['last_page'] = '/dashboard/{}'.format(dash_id)
-            params = urlencode({'client_id': GL_CLIENT_ID,
+            params = urlencode({'client_id': settings.GL_CLIENT_ID,
                                 'response_type': 'code',
-                                'redirect_uri': "https://{}{}".format(request.get_host(), GL_REDIRECT_PATH)})
-            gl_url_oauth = "{}?{}".format(GL_URI_IDENTITY, params)
+                                'redirect_uri': "https://{}{}".format(request.get_host(),
+                                                                      GitLabOAuth.REDIRECT_PATH)})
+            gl_url_oauth = "{}?{}".format(GitLabOAuth.AUTH_URL, params)
             return JsonResponse({'status': 'error',
                                  'message': generate_request_token_message("GitLab"),
                                  'redirect': gl_url_oauth},
@@ -637,10 +518,11 @@ def request_edit_dashboard(request, dash_id):
                                     status=401)
             request.session['add_repo'] = {'data': data, 'backend': backend, 'dash_id': dash.id}
             request.session['last_page'] = '/dashboard/{}'.format(dash_id)
-            params = urlencode({'client_id': MEETUP_CLIENT_ID,
+            params = urlencode({'client_id': settings.MEETUP_CLIENT_ID,
                                 'response_type': 'code',
-                                'redirect_uri': "https://{}{}".format(request.get_host(), MEETUP_REDIRECT_PATH)})
-            meetup_url_oauth = "{}?{}".format(MEETUP_URI_IDENTITY, params)
+                                'redirect_uri': "https://{}{}".format(request.get_host(),
+                                                                      MeetupOAuth.REDIRECT_PATH)})
+            meetup_url_oauth = "{}?{}".format(MeetupOAuth.AUTH_URL, params)
             return JsonResponse({'status': 'error',
                                  'message': generate_request_token_message("Meetup"),
                                  'redirect': meetup_url_oauth},
@@ -1436,14 +1318,14 @@ def create_context(request):
     context = dict()
 
     # Generate information for identities
-    context['gh_uri_identity'] = GH_URI_IDENTITY
-    context['gh_client_id'] = GH_CLIENT_ID
-    context['gl_uri_identity'] = GL_URI_IDENTITY
-    context['gl_client_id'] = GL_CLIENT_ID
-    context['gl_uri_redirect'] = "https://{}{}".format(request.get_host(), GL_REDIRECT_PATH)
-    context['meetup_uri_identity'] = MEETUP_URI_IDENTITY
-    context['meetup_client_id'] = MEETUP_CLIENT_ID
-    context['meetup_uri_redirect'] = "https://{}{}".format(request.get_host(), MEETUP_REDIRECT_PATH)
+    context['gh_uri_identity'] = GitHubOAuth.AUTH_URL
+    context['gh_client_id'] = settings.GH_CLIENT_ID
+    context['gl_uri_identity'] = GitLabOAuth.AUTH_URL
+    context['gl_client_id'] = settings.GL_CLIENT_ID
+    context['gl_uri_redirect'] = "https://{}{}".format(request.get_host(), GitLabOAuth.REDIRECT_PATH)
+    context['meetup_uri_identity'] = MeetupOAuth.AUTH_URL
+    context['meetup_client_id'] = settings.MEETUP_CLIENT_ID
+    context['meetup_uri_redirect'] = "https://{}{}".format(request.get_host(), MeetupOAuth.REDIRECT_PATH)
 
     # Information for the photo and the profile
     context['authenticated'] = request.user.is_authenticated
@@ -1945,3 +1827,16 @@ def custom_405(request, method):
     context['title'] = "405 Method not allowed"
     context['description'] = f"Method {method} is not allowed in this resource"
     return render(request, 'cauldronapp/error.html', status=405, context=context)
+
+
+def custom_500(request, message):
+    """
+    View to show the default 500 template
+    :param request:
+    :param message:
+    :return:
+    """
+    context = create_context(request)
+    context['title'] = "500 Internal server error"
+    context['description'] = message
+    return render(request, 'cauldronapp/error.html', status=500, context=context)
