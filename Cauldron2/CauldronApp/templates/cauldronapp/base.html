@@ -300,6 +300,12 @@
 
   {% block javascript %}
   {% endblock %}
+  {% if alert_notification %}
+  <script>
+    showModalAlert("{{ alert_notification.title }}", "{{alert_notification.message}}", '<button type="button" class="btn btn-info" data-dismiss="modal">OK</button>')
+  </script>
+  {% endif %}
+
 </body>
 
 </html>

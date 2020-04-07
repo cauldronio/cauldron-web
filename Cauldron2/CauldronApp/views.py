@@ -125,10 +125,10 @@ def request_github_oauth(request):
     is_admin = oauth_user.username in settings.CAULDRON_ADMINS['GITHUB']
 
     # Save the state of the session
-    data_add = request.session.get('add_repo', None)
-    last_page = request.session.get('last_page', None)
+    data_add = request.session.pop('add_repo', None)
+    last_page = request.session.pop('last_page', None)
 
-    authenticate_user(request, GithubUser, oauth_user, is_admin)
+    merged = authenticate_user(request, GithubUser, oauth_user, is_admin)
 
     if data_add:
         dash = Dashboard.objects.filter(id=data_add['dash_id']).first()
@@ -137,6 +137,13 @@ def request_github_oauth(request):
             commits = data_add['commits']
             issues = data_add['issues']
             manage_add_gh_repo(dash, data_add['data'], commits, issues)
+
+    if merged:
+        request.session['alert_notification'] = {'title': 'Account merged',
+                                                 'message': f"You already had a Cauldron user with this GitHub account."
+                                                            f" We have proceeded to merge all the projects and "
+                                                            f"visualization in you current account so that you do not "
+                                                            f"loose anything"}
 
     if last_page:
         return HttpResponseRedirect(last_page)
@@ -218,10 +225,10 @@ def request_gitlab_oauth(request):
     is_admin = oauth_user.username in settings.CAULDRON_ADMINS['GITLAB']
 
     # Save the state of the session
-    data_add = request.session.get('add_repo', None)
-    last_page = request.session.get('last_page', None)
+    data_add = request.session.pop('add_repo', None)
+    last_page = request.session.pop('last_page', None)
 
-    authenticate_user(request, GitlabUser, oauth_user, is_admin)
+    merged = authenticate_user(request, GitlabUser, oauth_user, is_admin)
 
     if data_add:
         dash = Dashboard.objects.filter(id=data_add['dash_id']).first()
@@ -230,6 +237,13 @@ def request_gitlab_oauth(request):
             commits = data_add['commits']
             issues = data_add['issues']
             manage_add_gl_repo(dash, data_add['data'], commits, issues)
+
+    if merged:
+        request.session['alert_notification'] = {'title': 'Account merged',
+                                                 'message': f"You already had a Cauldron user with this GitLab account."
+                                                            f" We have proceeded to merge all the projects and "
+                                                            f"visualization in you current account so that you do not "
+                                                            f"loose anything"}
 
     if last_page:
         return HttpResponseRedirect(last_page)
@@ -255,10 +269,10 @@ def request_meetup_oauth(request):
     is_admin = oauth_user.username in settings.CAULDRON_ADMINS['MEETUP']
 
     # Save the state of the session
-    data_add = request.session.get('add_repo', None)
-    last_page = request.session.get('last_page', None)
+    data_add = request.session.pop('add_repo', None)
+    last_page = request.session.pop('last_page', None)
 
-    authenticate_user(request, MeetupUser, oauth_user, is_admin)
+    merged = authenticate_user(request, MeetupUser, oauth_user, is_admin)
 
     request.user.meetupuser.refresh_token = oauth_user.refresh_token
     request.user.meetupuser.save()
@@ -267,6 +281,14 @@ def request_meetup_oauth(request):
         dash = Dashboard.objects.filter(id=data_add['dash_id']).first()
         if data_add['backend'] == 'meetup':
             manage_add_meetup_repo(dash, data_add['data'])
+
+    if merged:
+        request.session['alert_notification'] = {'title': 'Account merged',
+                                                 'message': f"You already had a Cauldron user with this Meetup account."
+                                                            f" We have proceeded to merge all the projects and "
+                                                            f"visualization in you current account so that you do not "
+                                                            f"loose anything"}
+
 
     if last_page:
         return HttpResponseRedirect(last_page)
@@ -281,8 +303,9 @@ def authenticate_user(request, backend_model, oauth_user, is_admin=False):
     :param backend_model: GitlabUser, GithubUser, MeetupUser ...
     :param oauth_user: user information obtained from the backend
     :param is_admin: flag to indicate that the user to authenticate is an admin
-    :return:
+    :return: boolean. The user has been merged
     """
+    merged = False
     backend_entity = backend_model.objects.filter(username=oauth_user.username).first()
     backend_user = backend_entity.user if backend_entity else None
 
@@ -292,6 +315,7 @@ def authenticate_user(request, backend_model, oauth_user, is_admin=False):
             merge_accounts(user_origin=request.user, user_dest=backend_user)
             request.user.delete()
             login(request, backend_user)
+            merged = True
         else:
             # No one is authenticated and backend user exists
             login(request, backend_user)
@@ -324,6 +348,8 @@ def authenticate_user(request, backend_model, oauth_user, is_admin=False):
         # Create the backend entity and associate with the account
         backend_model.objects.create(user=request.user, username=oauth_user.username,
                                      token=token, photo=oauth_user.photo)
+
+    return merged
 
 
 def create_django_user(name):
@@ -1339,6 +1365,9 @@ def create_context(request):
             context['photo_user'] = request.user.meetupuser.photo
         else:
             context['photo_user'] = '/static/img/profile-default.png'
+
+    # Message that should be shown to the user
+    context['alert_notification'] = request.session.pop('alert_notification', None)
 
     # Information about the accounts connected
     context['github_enabled'] = hasattr(request.user, 'githubuser')
