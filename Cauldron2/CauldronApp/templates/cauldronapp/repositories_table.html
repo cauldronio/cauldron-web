@@ -136,8 +136,10 @@
 {% endif %}
 
 {% else %}
+
 <div class="alert alert-warning alert-dismissible fade show" role="alert">
   <div class="row">
+    {% if editable %}
     <div class="col-sm-2">
       <i class="fas fa-arrow-left"></i>
     </div>
@@ -150,6 +152,17 @@
       </button>
 
     </div>
+    {% else %}
+    <div class="col-sm-12">
+      <p><strong>No repositories found for this project</strong></p>
+      <p>The owner of this project has not added repositories yet. Check back later to see if they have been added.</p>
+
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    {% endif %}
+
   </div>
 </div>
 {% endif %}
