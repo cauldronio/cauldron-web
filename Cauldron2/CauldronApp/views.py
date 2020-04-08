@@ -1106,7 +1106,8 @@ def delete_dashboard(dashboard):
 def delete_user(user):
     for dashboard in user.dashboard_set.all():
         delete_dashboard(dashboard)
-    remove_workspace(user)
+    if hasattr(user, 'userworkspace'):
+        remove_workspace(user)
 
     user.delete()
 
