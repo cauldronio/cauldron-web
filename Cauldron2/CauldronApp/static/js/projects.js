@@ -16,7 +16,7 @@ function refreshProjectDatasources(button, project_id) {
     if (data['status'] == 'reanalyze'){
       showToast('Reanalyzing', `${data.message}`, 'fas fa-check-circle text-success', 3000);
     } else {
-      showToast(data['status'], "The data sources couldn't be refreshed", 'fas fa-times-circle text-danger', 3000);
+      showToast(data['status'], "The repositories couldn't be refreshed", 'fas fa-times-circle text-danger', 3000);
     }
   })
   .fail(function (data) {

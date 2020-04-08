@@ -41,7 +41,7 @@
             <i class="{% get_sorting_icon request 'status' %}"></i>
           </a>
         </th>
-        <th scope="col">Data source
+        <th scope="col">Repository
           {% get_sorting_link request 'kind' as kind_link %}
           <a href="?{% url_replace request 'sort_by' kind_link %}">
             <i class="{% get_sorting_icon request 'kind' %}"></i>
