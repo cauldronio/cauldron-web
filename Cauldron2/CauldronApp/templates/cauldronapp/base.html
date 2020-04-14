@@ -55,7 +55,6 @@
   <!-- Awesome icons -->
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css"
     integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
-	<link rel="stylesheet" href="{% static 'css/smart-nav.css' %}">
   <link rel="stylesheet" href="{% static 'css/common.css' %}">
   <!-- Favicon.ico -->
   <link rel="shortcut icon" href="{% static 'img/favicon.ico' %}"/>
@@ -73,30 +72,29 @@
         <img src="{% static '/img/cauldron-logo-white.png' %}" width="30" height="30" class="d-inline-block align-top" alt="">
         Cauldron <sup class="badge badge-secondary">honey</sup>
       </a>
-      {% if authenticated %}
       <div class="collapse navbar-collapse">
         <ul class="navbar-nav mr-auto ml-3">
+          {% if authenticated %}
           <li class="nav-item {% ifequal request.path homepage %}active{% endifequal %}">
             <a class="nav-link" href="{% url 'homepage' %}">Home</a>
           </li>
           <li class="nav-item {% ifequal request.path projectspage %}active{% endifequal %}">
             <a class="nav-link" href="{% url 'projectspage' %}">My Projects</a>
           </li>
+          {% endif %}
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle navbar-text" href="#" id="dropdownCommunityMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Community
+            </a>
+            <div class="dropdown-menu" aria-labelledby="dropdownCommunityMenu">
+              <a class="dropdown-item" href="https://community.cauldron.io/" target="_blank">Get Support</a>
+              <a class="dropdown-item" href="https://gitlab.com/cauldronio/cauldron/issues/new" target="_blank">Report an Issue</a>
+				      <a class="dropdown-item" href="https://mailchi.mp/003f1e1f6242/cauldron-newsletter" target="_blank">Join the Newsletter</a>
+              <a class="dropdown-item" href="{% url 'stats' %}" target="_blank">Cauldron Stats</a>
+            </div>
+          </li>
         </ul>
       </div>
-      {% endif %}
-      <!--<ul class="navbar-nav flew-row ml-md-auto d-none d-md-flex">
-        <li class="nav-item">
-          <a href="https://gitlab.com/cauldronio/cauldron" target="_blank" rel="noopener" aria-label="GitLab" class="nav-link p2">
-            <i class="fab fa-gitlab"></i>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="https://twitter.com/biterg_cauldron" target="_blank" rel="noopener" aria-label="Twitter" class="nav-link p2">
-            <i class="fab fa-twitter"></i>
-          </a>
-        </li>
-      </ul>-->
 
       <div class="navbar-line d-none"></div>
 
@@ -131,21 +129,6 @@
     </div>
   </nav>
   <!-- END NAVBAR-->
-
-  <!-- BEGIN Smart Nav-->
-  <div id="cd-nav" class="is-fixed">
-		<a href="#0" class="cd-nav-trigger">Menu<span></span></a>
-		<nav id="cd-main-nav">
-			<ul>
-				<li><a href="https://community.cauldron.io/" target="_blank">Get Support</a></li>
-				<li><a href="https://gitlab.com/cauldronio/cauldron/issues/new" target="_blank">Report an Issue</a></li>
-				<li><a href="https://mailchi.mp/003f1e1f6242/cauldron-newsletter" target="_blank">Join the Newsletter</a></li>
-        <li><a href="{% url 'stats' %}" target="_blank">Cauldron Stats</a></li>
-        <li><a href="https://status.cauldron.io" target="_blank">Cauldron Status</a></li>
-			</ul>
-		</nav>
-	</div>
-  <!-- END Smart Nav-->
 
   <!-- BEGIN Modal for login -->
   <div class="modal fade" id="modalLogin" tabindex="-1" role="dialog" aria-labelledby="modalLoginTitle"
@@ -300,8 +283,7 @@
     crossorigin="anonymous"></script>
 
   <script src="{% static 'js/common.js' %}" charset="utf-8"></script>
-  <script src="{% static 'js/smart-nav.js' %}"></script>
-
+  
   {% block javascript %}
   {% endblock %}
   {% if alert_notification %}
