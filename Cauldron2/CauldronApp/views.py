@@ -39,11 +39,6 @@ DASHBOARD_LOGS = '/dashboard_logs'
 
 BACKEND_INDICES = [
     {
-        "name": "git_aoc_enriched_index",
-        "backend": "git",
-        "url_field": "repository"
-    },
-    {
         "name": "git_enrich_index",
         "backend": "git",
         "url_field": "repo_name"
@@ -54,7 +49,32 @@ BACKEND_INDICES = [
         "url_field": "repository"
     },
     {
+        "name": "github_pull_enrich_index",
+        "backend": "github",
+        "url_field": "repository"
+    },
+    {
+        "name": "github_repos_enrich_index",
+        "backend": "github",
+        "url_field": "repository"
+    },
+    {
+        "name": "github2_issues_enriched_index",
+        "backend": "github",
+        "url_field": "repository"
+    },
+    {
+        "name": "github2_pull_enrich_index",
+        "backend": "github",
+        "url_field": "repository"
+    },
+    {
         "name": "gitlab_enriched_index",
+        "backend": "gitlab",
+        "url_field": "repository"
+    },
+    {
+        "name": "gitlab_mrs_enriched_index",
         "backend": "gitlab",
         "url_field": "repository"
     },
@@ -878,8 +898,8 @@ def update_role_dashboard(role_name, dashboard):
     }
 
     for index in BACKEND_INDICES:
-        repos_index = repositories.filter(backend=index['backend'])
-        url_list = [repo.url for repo in repos_index]
+        repos_index = repositories.filter(backend=index['backend']).values('url')
+        url_list = [repo['url'] for repo in repos_index]
 
         if len(url_list) == 0:
             # Include permissions to the repository '0' to avoid errors in visualizations
