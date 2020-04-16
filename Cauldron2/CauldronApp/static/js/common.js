@@ -39,6 +39,23 @@ $(document).ready(function () {
 
     $('form.create-dashboard').on('submit', on_create_dashboard);
 
+    /**
+    * Send data to Share modal
+    */
+    $('.sharedashboard').click(function () {
+        var projname = $(this).data('projname');
+        var projid = $(this).data('projid');
+        var projurl = $(this).data('projurl');
+        //console.log(projname +','+ projid);
+        $('.modal-title').text('Share ' + projname + ' public dashboard');
+        $('.modal-body input').attr('id', 'url-public-link-kibana_'+projid);
+        $('.modal-body input').attr('value', projurl);
+        $('.modal-body button.copy-share-link-kibana').attr('data-project-id', projid);
+        $('.modal-body .btn-group .shareontwitter').attr('href', 'https://twitter.com/intent/tweet?text=Watch+the+public+metrics+about+'+projname+'+development+provided+by+@cauldronio:&url='+projurl+'&hashtags=LevelUp,OpenSource,DevAnalytics');
+        $('.modal-body .btn-group .shareonlinkedin').attr('href', 'https://www.linkedin.com/shareArticle?mini=true&text=Watch+this+amazing+visualizations+of+'+projname+'+made+with+@cauldronio&url='+projurl);
+        $('.modal-body .btn-group .shareonemail').attr('href', 'mailto:?subject='+projname+' visualizations by Cauldronio&body='+projurl);
+    })
+
     $('[data-toggle="tooltip"]').tooltip();
 
     $('.copy-share-link-kibana').click(copy_kibana_public_link);
@@ -169,11 +186,18 @@ function deleteToken(identity) {
 }
 
 function copy_kibana_public_link() {
-  var project_id = this.getAttribute("data-project-id");
-  var copyText = document.getElementById('url-public-link-kibana_' + project_id);
+  var project_id = $(this).attr('data-project-id');
+  var copyText = $('#url-public-link-kibana_' + project_id)[0];
+  copyText.focus();
   copyText.select();
-  document.execCommand("copy");
-
+  try {
+    var successful = document.execCommand('copy');
+    var msg = successful ? 'successful' : 'unsuccessful';
+    console.log('Copying text command was ' + msg);
+  } catch (err) {
+    console.log('Oops, unable to copy');
+  }
+    
   share_button = $(this);
   share_button.tooltip('show');
   setTimeout(function () {share_button.tooltip('hide')}, 1000)
