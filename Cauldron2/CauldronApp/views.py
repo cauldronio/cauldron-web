@@ -38,6 +38,11 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 DASHBOARD_LOGS = '/dashboard_logs'
 
 BACKEND_INDICES = [
+    # {
+    #     "name": "git_aoc_enriched_index",
+    #     "backend": "git",
+    #     "url_field": "repository"
+    # },
     {
         "name": "git_enrich_index",
         "backend": "git",
@@ -48,26 +53,26 @@ BACKEND_INDICES = [
         "backend": "github",
         "url_field": "repository"
     },
+    # {
+    #     "name": "github_pull_enrich_index",
+    #     "backend": "github",
+    #     "url_field": "repository"
+    # },
     {
-        "name": "github_pull_enrich_index",
+        "name": "github_repo_enrich_index",
+        "backend": "github",
+        "url_field": "origin"
+    },
+    {
+        "name": "github2_enrich_index",
         "backend": "github",
         "url_field": "repository"
     },
-    {
-        "name": "github_repos_enrich_index",
-        "backend": "github",
-        "url_field": "repository"
-    },
-    {
-        "name": "github2_issues_enriched_index",
-        "backend": "github",
-        "url_field": "repository"
-    },
-    {
-        "name": "github2_pull_enrich_index",
-        "backend": "github",
-        "url_field": "repository"
-    },
+    # {
+    #     "name": "github2_pull_enrich_index",
+    #     "backend": "github",
+    #     "url_field": "repository"
+    # },
     {
         "name": "gitlab_enriched_index",
         "backend": "gitlab",

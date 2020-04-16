@@ -3,7 +3,7 @@ import logging
 import tempfile
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.WARNING)
 
 
 def import_object(kibana_url, admin_password, obj, tenant):
@@ -15,7 +15,7 @@ def import_object(kibana_url, admin_password, obj, tenant):
 
     headers = {'kbn-xsrf': 'true',
                'securitytenant': tenant}
-    saved_objects_api = f"{kibana_url}/api/saved_objects/_import"
+    saved_objects_api = f"{kibana_url}/api/saved_objects/_import?overwrite=true"
     f = tempfile.NamedTemporaryFile(suffix='.ndjson')
     f.write(obj)
     f.seek(0)
