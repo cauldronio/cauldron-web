@@ -96,6 +96,10 @@ def request_user_projects(request):
 
         for project in page_obj.object_list:
             repositories = Repository.objects.filter(dashboards=project.pk)
+            n_github = repositories.filter(backend='github').count()
+            n_git = repositories.filter(backend='git').count()
+            n_gitlab = repositories.filter(backend='gitlab').count()
+            n_meetup = repositories.filter(backend='meetup').count()
             n_completed = CompletedTask.objects.filter(repository__in=repositories, status='COMPLETED', old=False).count()
             n_errors = CompletedTask.objects.filter(repository__in=repositories, status='ERROR', old=False).count()
             n_pending = Task.objects.filter(repository__in=repositories).count()
@@ -104,6 +108,10 @@ def request_user_projects(request):
                 'completed': n_completed,
                 'errors': n_errors,
                 'pending': n_pending,
+                'github': n_github,
+                'git': n_git,
+                'gitlab': n_gitlab,
+                'meetup': n_meetup,
                 'total': n_completed + n_errors + n_pending
             })
         context['projects_info'] = projects_info

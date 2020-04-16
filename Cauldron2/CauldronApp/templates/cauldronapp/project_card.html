@@ -11,56 +11,88 @@
     <!-- ./card header -->
     <!-- card Body -->
     <div class="card-body">
-      <!-- publlic dashboard -->
-      <div class="row py-1 border-bottom">
-        <div class="col-11">
-          <strong>Public dashboard</strong>:
-          {% if project.total > 0%}
-            <a href="https://{{request.get_host}}{% url 'open_public_kibana' project.project.id %}" 
-              target="_blank">https://{{request.get_host}}{% url 'open_public_kibana' project.project.id %}</a>
-          {% endif %}
-        </div>
-        <div class="col-1">
-          {% if project.total > 0%}
-            <span class="sharedashboard" data-toggle="modal" data-target="#shareModal" 
-            data-projname="{{project.project.name}}" 
-            data-projid="{{project.project.id}}"
-            data-projurl="https://{{request.get_host}}{% url 'open_public_kibana' project.project.id %}">
-              <button type="button" class="btn btn-sm btn-outline-success"
-               data-toggle="tooltip" title="Share options">
-              <i class="fas fa-share-alt"></i>
-              </button>
-            </span>
-          {% endif %}
-        </div>
-      </div>
-      
-      <!-- data sources -->
-      <div class="row py-1 border-bottom">
-        <div class="col-6"><strong>Data sources</strong></div>
-        <div class="col-6">{{ project.total }}</div>
-      </div>
-      
-      <!-- status -->
-      <div class="row pt-1">
-        <div class="col-6"><strong>Created</strong>: {{ project.project.created | date:"M jS, Y"}}</div>
-        <div class="col-5"><strong>Last update</strong>: {{ project.project.created | date:"M jS, Y"}}</div>
-        <div class="col-1">
-          <button type="button" {% if project.total > 0%}onclick="refreshProjectDatasources(this, {{project.project.id}})"{% endif %} role="button" class="float-right btn btn-sm btn-outline-primary mr-2{% if project.total == 0 %} disabled{% endif %}" {% if project.total > 0 %}data-toggle="tooltip" data-placement="bottom" title="Refresh all data sources"{% endif %}><i class="fas fa-sync-alt"></i></button>
-        </div>
-        <div class="col-2"><strong>Status</strong></div>
-        <div class="col-10 py-1">
-          <div class="progress" style="height: 1.2rem;">
-              {% if project.completed %}
-            <div class="progress-bar bg-success" role="progressbar" aria-valuenow="{% widthratio project.completed project.total 100 %}" aria-valuemin="0" aria-valuemax="100" style="width: {% widthratio project.completed project.total 100 %}%" data-toggle="tooltip" data-placement="bottom" title="Completed"><strong>{% widthratio project.completed project.total 100 %}%</strong></div>
-              {% endif %}
-              {% if project.errors %}
-            <div class="progress-bar bg-danger" role="progressbar" aria-valuenow="{% widthratio project.errors project.total 100 %}" aria-valuemin="0" aria-valuemax="100" style="width: {% widthratio project.errors project.total 100 %}%"data-toggle="tooltip" data-placement="bottom" title="Error"><strong>{% widthratio project.errors project.total 100 %}%</strong></div>
-              {% endif %}
+      <!-- public dashboard -->
+      <div class="container">
+        <div class="row justify-content-between">
+          <div>
+            <strong>Public dashboard</strong>:
+            {% if project.total > 0%}
+              <a href="https://{{request.get_host}}{% url 'open_public_kibana' project.project.id %}"
+                target="_blank">https://{{request.get_host}}{% url 'open_public_kibana' project.project.id %}</a>
+            {% endif %}
+          </div>
+          <div>
+            {% if project.total > 0%}
+              <span class="sharedashboard" data-toggle="modal" data-target="#shareModal"
+              data-projname="{{project.project.name}}"
+              data-projid="{{project.project.id}}"
+              data-projurl="https://{{request.get_host}}{% url 'open_public_kibana' project.project.id %}">
+                <button type="button" class="btn btn-sm btn-outline-success"
+                 data-toggle="tooltip" title="Share options">
+                <i class="fas fa-share-alt"></i>
+                </button>
+              </span>
+            {% endif %}
           </div>
         </div>
-        
       </div>
+      <hr class="my-2">
+      <!-- creation date -->
+
+      <div class="row">
+        <div class="col-5"><strong>Created</strong></div>
+        <div class="col-7">{{ project.project.created | date:"jS M Y"}}</div>
+      </div>
+
+      <hr class="my-2">
+      <!-- data sources -->
+      <div class="row">
+        <div class="col-5"><strong>Data sources</strong></div>
+        <div class="col-7">
+          <div class="container">
+            <div class="row justify-content-between">
+              <div>
+                <i class="fab fa-git-square"></i> <span>{{project.git}}</span>
+              </div>
+              <div>
+                <i class="fab fa-github"></i> <span>{{project.github}}</span>
+              </div>
+              <div>
+                <i class="fab fa-gitlab"></i> <span>{{project.gitlab}}</span>
+              </div>
+              <div>
+                <i class="fab fa-meetup"></i> <span>{{project.meetup}}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="my-2">
+      <!-- status -->
+      <div class="row">
+        <div class="col-5"><strong>Gathering status</strong></div>
+        <div class="col-7">
+          <div class="container">
+            <div class="row justify-content-between">
+              <div>
+                <i class="fas fa-check text-success"></i> <span>{{project.completed}}</span>
+              </div>
+              <div>
+                <i class="fas fa-times text-danger"></i> <span>{{project.errors}}</span>
+              </div>
+              <div>
+                <i class="fas fa-spinner"></i> <span>{{project.pending}}</span>
+              </div>
+              <div>
+                <button type="button" {% if project.total > 0%}onclick="refreshProjectDatasources(this, {{project.project.id}})"{% endif %} role="button" class="float-right btn btn-sm btn-outline-primary mr-2{% if project.total == 0 %} disabled{% endif %}" {% if project.total > 0 %}data-toggle="tooltip" data-placement="bottom" title="Refresh all data sources"{% endif %}><i class="fas fa-sync-alt"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!---->
+
     
     </div>
     <!-- ./card body -->
