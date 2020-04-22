@@ -47,13 +47,13 @@ $(document).ready(function () {
         var projid = $(this).data('projid');
         var projurl = $(this).data('projurl');
         //console.log(projname +','+ projid);
-        $('.modal-title').text('Share ' + projname + ' public dashboard');
-        $('.modal-body input').attr('id', 'url-public-link-kibana_'+projid);
-        $('.modal-body input').attr('value', projurl);
-        $('.modal-body button.copy-share-link-kibana').attr('data-project-id', projid);
-        $('.modal-body .btn-group .shareontwitter').attr('href', 'https://twitter.com/intent/tweet?text=Watch+the+public+metrics+about+'+projname+'+development+provided+by+@cauldronio:&url='+projurl+'&hashtags=LevelUp,OpenSource,DevAnalytics');
-        $('.modal-body .btn-group .shareonlinkedin').attr('href', 'https://www.linkedin.com/shareArticle?mini=true&text=Watch+this+amazing+visualizations+of+'+projname+'+made+with+@cauldronio&url='+projurl);
-        $('.modal-body .btn-group .shareonemail').attr('href', 'mailto:?subject='+projname+' visualizations by Cauldronio&body='+projurl);
+        $('#shareModal .modal-title').text('Share ' + projname + ' public dashboard');
+        $('#shareModal .modal-body input').attr('id', 'url-public-link-kibana_'+projid);
+        $('#shareModal .modal-body input').attr('value', projurl);
+        $('#shareModal .modal-body button.copy-share-link-kibana').attr('data-project-id', projid);
+        $('#shareModal .modal-body .btn-group .shareontwitter').attr('href', 'https://twitter.com/intent/tweet?text=Watch+the+public+metrics+about+'+projname+'+development+provided+by+@cauldronio:&url='+projurl+'&hashtags=LevelUp,OpenSource,DevAnalytics');
+        $('#shareModal .modal-body .btn-group .shareonlinkedin').attr('href', 'https://www.linkedin.com/shareArticle?mini=true&text=Watch+this+amazing+visualizations+of+'+projname+'+made+with+@cauldronio&url='+projurl);
+        $('#shareModal .modal-body .btn-group .shareonemail').attr('href', 'mailto:?subject='+projname+' visualizations by Cauldronio&body='+projurl);
     })
 
     $('[data-toggle="tooltip"]').tooltip();
