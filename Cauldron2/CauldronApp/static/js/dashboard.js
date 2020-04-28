@@ -105,7 +105,7 @@ function deleteRepo(event) {
             //filterTable();
         })
         .fail(function (data) {
-            showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', 5000);
+            showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
         })
         .always(function(){deleteBtn.html('Delete')})
 
@@ -128,11 +128,11 @@ function reanalyzeRepo(event){
                 showToast('Reanalyzing', `The repository <b>${url_repo}</b> has refreshed`, 'fas fa-check-circle text-success', 1500);
                 getInfo();
             } else {
-                showToast(data['status'], "The repository couldn't be refreshed", 'fas fa-times-circle text-danger', 1500);
+                showToast(data['status'],  `The repository <b>${url_repo}</b> can not be refreshed`, 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
             }
         })
         .fail(function (data) {
-            showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', 5000);
+            showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
         })
         .always(function(){reanalyzeRepo.html('<i class="fa fa-sync"></i> <small>Refresh</small>')})
 }
@@ -152,11 +152,11 @@ function reanalyzeEveryRepo(event){
                 showToast('Reanalyzing', `${data.message}`, 'fas fa-check-circle text-success', 3000);
                 getInfo();
             } else {
-                showToast(data['status'], "The repositories couldn't be refreshed", 'fas fa-times-circle text-danger', 3000);
+                showToast(data['status'], "The repositories couldn't be refreshed", 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
             }
         })
         .fail(function (data) {
-            showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', 5000);
+            showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
         })
         .always(function(){reanalyzeRepo.html('<i class="fa fa-sync"></i> Refresh')})
 }
@@ -198,7 +198,7 @@ function onSubmitRename(ev) {
         showToast('Name updated', `${result.message}`, 'fas fa-check-circle text-success', 5000);
     })
     .fail(function (data) {
-        showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', 5000);
+        showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
         $('#dash-name-container').show();
         $('#change-name').hide();
     })
@@ -372,13 +372,13 @@ function onDataAdded(data, target) {
 
 function onDataFail(data, target) {
     if(!data.hasOwnProperty('responseJSON')){
-        showToast('Unknown error from server', `${data.responseText}`, 'fas fa-question-circle text-danger', 5000);
+        showToast('Unknown error from server', `${data.responseText}`, 'fas fa-question-circle text-danger', ERROR_TIMEOUT_MS);
         return;
     }
     if (data.responseJSON.hasOwnProperty('redirect')){
         var redirect = `<a href="${data.responseJSON['redirect']}" class="btn btn-primary">Go</a>`;
         showModalAlert('Do you let us?', `<p class="text-justify">${data.responseJSON['message']}</p>`,  redirect);
     } else {
-        showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', 5000);
+        showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
     }
 }

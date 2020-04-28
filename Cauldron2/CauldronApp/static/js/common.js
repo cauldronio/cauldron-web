@@ -1,4 +1,4 @@
-LocalStorageAvailable = false;
+ERROR_TIMEOUT_MS = 60000;
 
 $(document).ready(function () {
     // Configure ajax for using the CSRF token
@@ -10,7 +10,6 @@ $(document).ready(function () {
             }
         }
     });
-    LocalStorageAvailable = checkLocalStorage()
 
     $('#delete-gh-token').click(function(ev){
         showModalAlert('Do you want to delete your GitHub token?',
@@ -61,19 +60,6 @@ $(document).ready(function () {
     $('.copy-share-link-kibana').click(copy_kibana_public_link);
 });
 
-
-/**
- * Check if LocalStorage works in this browser
- */
-function checkLocalStorage() {
-    try {
-        localStorage.setItem('test', 'test');
-        localStorage.removeItem('test');
-        return true;
-    } catch (e) {
-        return false;
-    }
-}
 
 /**
  *   Django function to adquire a cookie
@@ -170,11 +156,11 @@ function deleteToken(identity) {
         })
         .fail(function (data) {
             if(!data.hasOwnProperty('responseJSON')){
-                showToast('Unknown error from server', `Internal error.`, 'fas fa-question-circle text-danger', 5000);
+                showToast('Unknown error from server', `Internal error.`, 'fas fa-question-circle text-danger', ERROR_TIMEOUT_MS);
                 console.log(data.responseText);
                 return;
             }
-            showToast('Failed', `There was a problem: ${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', 5000);
+            showToast('Failed', `There was a problem: ${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
         })
         .always(function(){
             setTimeout(window.location.reload.bind(window.location), 2000)

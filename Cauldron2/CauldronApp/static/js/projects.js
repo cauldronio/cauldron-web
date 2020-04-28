@@ -16,11 +16,11 @@ function refreshProjectDatasources(button, project_id) {
     if (data['status'] == 'reanalyze'){
       showToast('Reanalyzing', `${data.message}`, 'fas fa-check-circle text-success', 3000);
     } else {
-      showToast(data['status'], "The repositories couldn't be refreshed", 'fas fa-times-circle text-danger', 3000);
+      showToast(data['status'], "The repositories couldn't be refreshed", 'fas fa-times-circle text-danger', 10000);
     }
   })
   .fail(function (data) {
-    showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', 5000);
+    showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', 15000);
   })
   .always(function(){
     $(button).html(old_html)
