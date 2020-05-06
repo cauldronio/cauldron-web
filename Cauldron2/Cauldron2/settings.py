@@ -51,7 +51,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'CauldronApp',
+    'CauldronApp.apps.CauldronAppConfig',
+    'metrics.apps.MetricsConfig',
 ]
 
 MIDDLEWARE = [
@@ -94,6 +95,9 @@ DATABASES = {
         'PORT': 'db_port',
         'OPTIONS': {
             'sql_mode': 'traditional'
+        },
+        'TEST': {
+            'CHARSET': 'utf8'
         }
     }
 }
