@@ -1,0 +1,127 @@
+<div class="row">
+  {% if metrics.git %}
+  <div class="col">
+    <div class="card border-left-primary shadow">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Git Commits</div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">{{metrics.git.commits}}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if metrics.github %}
+  <div class="col">
+    <div class="card border-left-primary shadow">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">GitHub Issues</div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ metrics.github.issues }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card border-left-primary shadow">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">GitHub PRs</div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ metrics.github.prs }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if metrics.gitlab %}
+  <div class="col">
+    <div class="card border-left-primary shadow">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">GitLab Issues</div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ metrics.gitlab.issues }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card border-left-primary shadow">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">GitLab MRs</div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ metrics.gitlab.mrs }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if metrics.meetup %}
+  <div class="col">
+    <div class="card border-left-primary shadow">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Meetup events</div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">{{metrics.meetup.events}}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+
+</div>
+
+<div class="row">
+
+  {% if metrics.git %}
+  <div class="col">
+    <div class="card shadow">
+      <div class="card-body">
+        <div id="chart-commits"></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', function(event) {
+      item_text = '{{ metrics.git.commits_graph | safe }}';
+      item = JSON.parse(item_text);
+      Bokeh.embed.embed_item(item, "chart-commits");
+    })
+  </script>
+  {% endif %}
+
+  {% if metrics.authors %}
+  <div class="col">
+    <div class="card shadow">
+      <div class="card-body">
+        <div id="chart-authors"></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', function(event) {
+      item_text = '{{ metrics.authors | safe }}';
+      item = JSON.parse(item_text);
+      Bokeh.embed.embed_item(item, "chart-authors");
+    })
+  </script>
+  {% endif %}
+
+</div>

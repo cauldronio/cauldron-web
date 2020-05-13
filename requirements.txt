@@ -1,9 +1,11 @@
 Django>=3.0,<3.1
 requests>=2.21,<3
 PyGithub>=1.43.7,<1.44
-elasticsearch>=6,<7
+elasticsearch>=7.0.0,<8.0.0
+elasticsearch-dsl>=7.0.0,<8.0.0
 mysqlclient
 python-gitlab>=1.15,<2.0
 python-slugify==3.0.2
 cryptography>=2.7,<3
 PyJWT>=1.7,<2
+bokeh>=2.0.2

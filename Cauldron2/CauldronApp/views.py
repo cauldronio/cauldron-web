@@ -7,10 +7,9 @@ from django.db import transaction
 from django.db.models import Count
 from django.views.decorators.http import require_http_methods
 from CauldronApp.pages import Pages
-from CauldronApp import kibana_objects
+from CauldronApp import kibana_objects, project_metrics, utils
 
 import os
-import jwt
 import re
 import logging
 import requests
@@ -1065,6 +1064,8 @@ def request_show_dashboard(request, dash_id):
 
     context['dashboard'] = dash
 
+    context['metrics'] = project_metrics.get_metrics(dash)
+
     repositories = dash.repository_set.all()
 
     context['repositories_count'] = repositories.count()
@@ -1199,7 +1200,7 @@ def request_workspace(request, dash_id):
         create_workspace(dash.creator)
 
     name = dash.creator.first_name.encode('utf-8', 'ignore').decode('ascii', 'ignore')
-    jwt_key = get_kibana_jwt(name, [dash.projectrole.backend_role, dash.creator.userworkspace.backend_role])
+    jwt_key = utils.get_jwt_key(name, [dash.projectrole.backend_role, dash.creator.userworkspace.backend_role])
 
     url = "{}/app/kibana?jwtToken={}&security_tenant={}#/dashboard/a9513820-41c0-11ea-a32a-715577273fe3".format(
         KIB_OUT_URL,
@@ -1277,29 +1278,12 @@ def request_public_kibana(request, dash_id):
     if request.method != 'GET':
         return custom_405(request, request.method)
 
-    jwt_key = get_kibana_jwt(f"Public {dash_id}", dash.projectrole.backend_role)
+    jwt_key = utils.get_jwt_key(f"Public {dash_id}", dash.projectrole.backend_role)
 
-    url = "{}/app/kibana?jwtToken={}&security_tenant=global#/dashboard/a834f080-41b1-11ea-a32a-715577273fe3".format(KIB_OUT_URL, jwt_key)
+    url = f"{KIB_OUT_URL}/app/kibana" \
+          f"?jwtToken={jwt_key}&security_tenant=global#/dashboard/a834f080-41b1-11ea-a32a-715577273fe3"
 
     return HttpResponseRedirect(url)
-
-
-def get_kibana_jwt(user, backend_roles):
-    """
-    Return the jwt key for a specific user and role
-    :param user:
-    :param backend_roles: String or list of backend roles
-    :return:
-    """
-    dirname = os.path.dirname(os.path.abspath(__file__))
-    key_location = os.path.join(dirname, 'jwtR256.key')
-    with open(key_location, 'r') as f_private:
-        private_key = f_private.read()
-    claims = {
-        "user": user,
-        "roles": backend_roles
-    }
-    return jwt.encode(claims, private_key, algorithm='RS256').decode('utf-8')
 
 
 def request_delete_token(request):

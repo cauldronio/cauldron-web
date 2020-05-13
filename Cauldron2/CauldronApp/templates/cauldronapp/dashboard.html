@@ -43,6 +43,8 @@
 
                 {% include "cauldronapp/project_header.html" %}
 
+                {% include "cauldronapp/project_metrics.html" %}
+
                 {% include "cauldronapp/repositories_table.html" %}
 
               </div>
@@ -97,6 +99,10 @@
 
 
 {% block javascript %}
+<script src="https://cdn.bokeh.org/bokeh/release/bokeh-2.0.2.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-2.0.2.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-2.0.2.min.js" crossorigin="anonymous"></script>
+
 <script src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.5/jquery-ui.min.js'></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
 <script src="{% static 'js/dashboard.js' %}" charset="utf-8"></script>
