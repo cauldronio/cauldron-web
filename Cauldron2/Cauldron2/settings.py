@@ -20,7 +20,7 @@ MEETUP_CLIENT_SECRET = ''
 ES_IN_HOST = 'localhost?'
 ES_IN_PORT = '9200'
 ES_IN_PROTO = 'https'
-ES_ADMIN_PSW = 'admin'
+ES_ADMIN_PASSWORD = 'admin'
 
 # Kiban info
 KIB_IN_HOST = ''

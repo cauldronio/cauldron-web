@@ -19,7 +19,7 @@ from string import ascii_lowercase, digits
 from urllib.parse import urlencode
 import time
 
-from Cauldron2.settings import ES_IN_HOST, ES_IN_PORT, ES_IN_PROTO, ES_ADMIN_PSW, \
+from Cauldron2.settings import ES_IN_HOST, ES_IN_PORT, ES_IN_PROTO, ES_ADMIN_PASSWORD, \
                                KIB_IN_HOST, KIB_IN_PORT, KIB_IN_PROTO, KIB_OUT_URL, \
                                KIB_PATH, HATSTALL_ENABLED, GOOGLE_ANALYTICS_ID
 from Cauldron2 import settings
@@ -239,8 +239,8 @@ def merge_workspaces(old_user, new_user):
     if not hasattr(new_user, 'userworkspace'):
         create_workspace(new_user)
 
-    obj = kibana_objects.export_all_objects(KIB_IN_URL, ES_ADMIN_PSW, old_user.userworkspace.tenant_name)
-    kibana_objects.import_object(KIB_IN_URL, ES_ADMIN_PSW, obj, new_user.userworkspace.tenant_name)
+    obj = kibana_objects.export_all_objects(KIB_IN_URL, ES_ADMIN_PASSWORD, old_user.userworkspace.tenant_name)
+    kibana_objects.import_object(KIB_IN_URL, ES_ADMIN_PASSWORD, obj, new_user.userworkspace.tenant_name)
 
 
 # TODO: Add state
@@ -862,7 +862,7 @@ def create_project_elastic_role(dashboard):
     role = f"role_project_{dashboard.id}"
     backend_role = f"br_project_{dashboard.id}"
 
-    odfe_api = OpendistroApi(ES_IN_URL, ES_ADMIN_PSW)
+    odfe_api = OpendistroApi(ES_IN_URL, ES_ADMIN_PASSWORD)
     odfe_api.create_role(role)
     odfe_api.create_mapping(role, backend_roles=[backend_role])
 
@@ -944,7 +944,7 @@ def update_role_dashboard(role_name, dashboard):
     }
     permissions["tenant_permissions"].append(global_tenant_permissions)
 
-    odfe_api = OpendistroApi(ES_IN_URL, ES_ADMIN_PSW)
+    odfe_api = OpendistroApi(ES_IN_URL, ES_ADMIN_PASSWORD)
     odfe_api.create_role(role_name, permissions)
 
 
@@ -1056,18 +1056,12 @@ def request_show_dashboard(request, dash_id):
     context = create_context(request)
 
     if request.method != 'GET':
-        context['title'] = "Method Not Allowed"
-        context['description'] = "Only GET methods allowed"
-        return render(request, 'cauldronapp/error.html', status=405,
-                      context=context)
+        return custom_405(request, request.method)
 
     try:
         dash = Dashboard.objects.get(pk=dash_id)
     except Dashboard.DoesNotExist:
-        context['title'] = "Dashboard not found"
-        context['description'] = "This dashboard was not found in this server"
-        return render(request, 'cauldronapp/error.html', status=405,
-                      context=context)
+        return custom_404(request, "The project requested was not found in this server")
 
     context['dashboard'] = dash
 
@@ -1130,7 +1124,7 @@ def delete_dashboard(dashboard):
 
         remove_tasks_no_token()
 
-    odfe_api = OpendistroApi(ES_IN_URL, ES_ADMIN_PSW)
+    odfe_api = OpendistroApi(ES_IN_URL, ES_ADMIN_PASSWORD)
     odfe_api.delete_mapping(dashboard.projectrole.role)
     odfe_api.delete_role(dashboard.projectrole.role)
     dashboard.delete()
@@ -1149,27 +1143,17 @@ def request_delete_dashboard(request, dash_id):
     """
     Delete the project specified by the user
     """
-    context = create_context(request)
-
     if request.method != 'POST':
-        context['title'] = "Not allowed"
-        context['description'] = "Method not allowed for this path"
-        return render(request, 'cauldronapp/error.html', status=405,
-                      context=context)
+        return custom_405(request, request.method)
 
-    dash = Dashboard.objects.filter(id=dash_id).first()
-    if not dash:
-        context['title'] = "Project not found"
-        context['description'] = "This project was not found in this server"
-        return render(request, 'cauldronapp/error.html', status=405,
-                      context=context)
+    try:
+        dash = Dashboard.objects.get(id=dash_id)
+    except Dashboard.DoesNotExist:
+        return custom_404(request, "The project requested was not found in this server")
 
     owner = request.user.is_authenticated and request.user == dash.creator
     if not owner and not request.user.is_superuser:
-        context['title'] = "Not allowed"
-        context['description'] = "You are not allowed to delete this project."
-        return render(request, 'cauldronapp/error.html', status=400,
-                      context=context)
+        return custom_403(request)
 
     delete_dashboard(dash)
 
@@ -1239,7 +1223,7 @@ def create_workspace(user):
                                  tenant_name=tenant_name,
                                  tenant_role=tenant_role,
                                  backend_role=backend_role)
-    odfe_api = OpendistroApi(ES_IN_URL, ES_ADMIN_PSW)
+    odfe_api = OpendistroApi(ES_IN_URL, ES_ADMIN_PASSWORD)
     odfe_api.create_tenant(tenant_name)
     permissions = {
         "index_permissions": [{
@@ -1262,8 +1246,8 @@ def create_workspace(user):
     odfe_api.create_mapping(role=tenant_role, backend_roles=[backend_role])
 
     # Import global objects
-    obj = kibana_objects.export_all_objects(KIB_IN_URL, ES_ADMIN_PSW, "global")
-    kibana_objects.import_object(KIB_IN_URL, ES_ADMIN_PSW, obj, tenant_name)
+    obj = kibana_objects.export_all_objects(KIB_IN_URL, ES_ADMIN_PASSWORD, "global")
+    kibana_objects.import_object(KIB_IN_URL, ES_ADMIN_PASSWORD, obj, tenant_name)
 
 
 def remove_workspace(user):
@@ -1272,7 +1256,7 @@ def remove_workspace(user):
     :param user:
     :return:
     """
-    odfe_api = OpendistroApi(ES_IN_URL, ES_ADMIN_PSW)
+    odfe_api = OpendistroApi(ES_IN_URL, ES_ADMIN_PASSWORD)
     odfe_api.delete_mapping(user.userworkspace.tenant_role)
     odfe_api.delete_role(user.userworkspace.tenant_role)
     odfe_api.delete_tenant(user.userworkspace.tenant_name)
@@ -1882,7 +1866,7 @@ def custom_403(request):
     """
     context = create_context(request)
     context['title'] = "403 Forbidden"
-    context['description'] = "You do not have the necessary permissions to access this resource"
+    context['description'] = "You do not have the necessary permissions to perform this action"
     return render(request, 'cauldronapp/error.html', status=403, context=context)
 
 
