@@ -11,18 +11,13 @@
 <div class="container-fluid mt-3">
 	<div class="mb-3 d-flex">
 		<h1 class="mr-4">My projects</h1>
-			<form action="/dashboard" method="post" class="create-dashboard form-inline">
-				{% csrf_token %}
-				<div class="form-group" style="float:right">
-					<div class="input-group">
-						<button class="btn btn-primary" role="button" type="submit">
-							<i class="fas fa-plus"></i>
-							<span>New project</span>
-						</button>
-					</div>
-				</div>
-			</form>
-		</h1>
+		<form action="/dashboard" method="post" class="create-dashboard form-inline">
+			{% csrf_token %}
+			<button class="btn btn-icon-split btn-primary" role="button" type="submit">
+				<span class="icon"><i class="fas fa-plus"></i></span>
+				<span class="text">New project</span>
+			</button>
+		</form>
 	</div>
 
 	<div class="row">

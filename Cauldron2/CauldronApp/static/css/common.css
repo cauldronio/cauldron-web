@@ -1,3 +1,7 @@
+.bg-dark {
+  background-color: #333!important;
+}
+
 .navbar-line {
   height: 2rem;
   border: 1px solid #999C9F;
@@ -76,6 +80,7 @@
 body {
     position: relative;
     margin: 0;
+    color: #333!important;
 }
 
 @media(min-width: 1000px) {
@@ -166,4 +171,8 @@ footer a {
 footer a:hover {
   color: #ccc;
   text-decoration: underline;
+}
+
+table {
+   color: #333!important;
 }
