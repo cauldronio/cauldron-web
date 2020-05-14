@@ -1442,6 +1442,26 @@ def request_dash_summary(request, dash_id):
     return JsonResponse(summary)
 
 
+def request_repos_info(request):
+    info = []
+
+    repos_ids = request.GET.getlist('repos_ids')
+    try:
+        repos = Repository.objects.filter(pk__in=repos_ids)
+    except ValueError:
+        return JsonResponse(info, safe=False)
+
+    for repo in repos:
+        info.append({
+            'id': repo.id,
+            'status': repo.status,
+            'last_refresh': repo.last_refresh,
+            'duration': repo.duration,
+        })
+
+    return JsonResponse(info, safe=False)
+
+
 def repo_logs(request, repo_id):
     """
     Get the latest logs for a repository

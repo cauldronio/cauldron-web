@@ -164,7 +164,7 @@ class Repository(models.Model):
             except CompletedTask.DoesNotExist:
                 pass
 
-        return completed - started
+        return (completed - started).total_seconds()
 
 
 class Task(models.Model):

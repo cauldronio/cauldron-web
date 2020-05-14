@@ -1,7 +1,6 @@
 var LogsInterval;
 var BackendFilter = 'any';
 var StatusFilter = 'all';
-var TimeoutInfo = null; // To avoid multiple getInfo calls with timeouts
 var Dash_ID = window.location.pathname.split('/')[2];
 
 $(document).ready(function(){
@@ -15,8 +14,6 @@ $(document).ready(function(){
     $('.btn-delete').click(deleteRepo);
     $('.btn-reanalyze').click(reanalyzeRepo);
     $('.btn-reanalyze-all').click(reanalyzeEveryRepo);
-
-    $('.btn-refresh-table').click(getInfo);
 
     //$('.backend-filters a').click(onFilterClick);
     //$('.status-filters a').click(onFilterClick);
@@ -33,11 +30,7 @@ $(document).ready(function(){
         ev.target.select()
     })
 
-    $('#repos-table').on('draw.dt', function() {
-      getInfo();
-    });
-
-    getInfo();
+    refreshTable();
     getSummary();
 });
 
@@ -126,7 +119,6 @@ function reanalyzeRepo(event){
         .done(function (data) {
             if (data['status'] == 'reanalyze'){
                 showToast('Reanalyzing', `The repository <b>${url_repo}</b> has refreshed`, 'fas fa-check-circle text-success', 1500);
-                getInfo();
             } else {
                 showToast(data['status'],  `The repository <b>${url_repo}</b> can not be refreshed`, 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
             }
@@ -150,7 +142,6 @@ function reanalyzeEveryRepo(event){
         .done(function (data) {
             if (data['status'] == 'reanalyze'){
                 showToast('Reanalyzing', `${data.message}`, 'fas fa-check-circle text-success', 3000);
-                getInfo();
             } else {
                 showToast(data['status'], "The repositories couldn't be refreshed", 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
             }
@@ -159,6 +150,33 @@ function reanalyzeEveryRepo(event){
             showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
         })
         .always(function(){reanalyzeRepo.html('<i class="fa fa-sync"></i> Refresh')})
+}
+
+function refreshTable() {
+  var repos_ids = []
+  $('#repos-table tbody tr').each(function(){
+    repos_ids.push($(this).attr('data-repo-id'));
+  })
+
+  if(repos_ids.length > 0) {
+    var query_string = '?repos_ids='.concat(repos_ids.join('&repos_ids='));
+
+    $.getJSON('/repositories/info' + query_string, function(data) {
+        data.forEach(function(repo){
+            setIconStatus('#repo-' + repo.id + ' .repo-status', repo.status);
+            $('#repo-' + repo.id).attr('data-status', repo.status.toLowerCase());
+            if (repo.status == 'completed'){
+                $('#repo-' + repo.id + " .repo-last-update").html(moment(repo.last_refresh).fromNow());
+            } else {
+                $('#repo-' + repo.id + " .repo-last-update").html("Not completed");
+            }
+            var duration = get_duration(repo);
+            $('#repo-' + repo.id + " .repo-duration").html(duration);
+
+        });
+    });
+    setTimeout(refreshTable, 5000);
+  }
 }
 
 function getSummary() {
@@ -204,67 +222,25 @@ function onSubmitRename(ev) {
     })
 }
 
-function getInfo() {
-    //TimeoutInfo = null; // To avoid multiple getInfo calls
-    $.getJSON('/dashboard/' + Dash_ID + "/info", function(data) {
-        var status_dict = {"completed": 0,
-                           "pending": 0,
-                           "running": 0,
-                           "error": 0}
-        if (!data || !data.exists){
-            return
-        }
-        data.repos.forEach(function(repo){
-            if (!(repo.status.toLowerCase() in status_dict)){
-                status_dict[repo.status.toLowerCase()] = 1;
-            } else {
-                status_dict[repo.status.toLowerCase()]++;
-            }
-            setIconStatus('#repo-' + repo.id + ' .repo-status', repo.status);
-            $('#repo-' + repo.id).attr('data-status', repo.status.toLowerCase());
-            if (repo.completed){
-                $('#repo-' + repo.id + " .repo-last-update").html(moment(repo.completed).fromNow());
-            } else {
-                $('#repo-' + repo.id + " .repo-last-update").html("Not completed");
-            }
-            var duration = get_duration(repo);
-            $('#repo-' + repo.id + " .repo-duration").html(duration);
-
-        });
-        //$('#general-status').html(data.general);
-        /*if ((data.general == 'PENDING' || data.general == 'RUNNING') && !TimeoutInfo) {
-            TimeoutInfo = setTimeout(getInfo, 5000, Dash_ID);
-        }*/
-        /*var status_output = "<strong>general status</strong>: " + data.general.toLowerCase();
-        for (var key in status_dict){
-            if (status_dict.hasOwnProperty(key)) {
-                status_output += ` | <strong>${key}</strong>: ${status_dict[key]}`;
-            }
-        }
-        $('#general-status').html(status_output)*/
-    });
-    //filterTable();
-}
-
 function setIconStatus(jq_selector, status) {
     /**
-     * Status could be UNKNOWN, RUNNING, PENDING, COMPLETED OR ERROR
+     * Status could be completed, running, pending, error or unknown
      */
     var icon;
     switch (status) {
-        case 'COMPLETED':
+        case 'completed':
             icon = '<i class="fas fa-check text-success"></i>';
             break;
-        case 'PENDING':
+        case 'pending':
             icon = '<div class="spinner-grow spinner-grow-sm text-primary" role="status"><span class="sr-only">...</span></div> Pending...';
             break;
-        case 'RUNNING':
+        case 'running':
             icon = '<div class="spinner-border spinner-border-sm text-secondary" role="status"><span class="sr-only">...</span></div> Running...';
             break;
-        case 'ERROR':
+        case 'error':
             icon = '<i class="fas fa-exclamation text-warning"></i> Error.';
             break;
-        case 'UNKNOWN':
+        case 'unknown':
             icon = '<i class="fas fa-question text-warning"></i>';
             break;
         default:
@@ -275,21 +251,13 @@ function setIconStatus(jq_selector, status) {
 
 function get_duration(repo) {
     var output = "";
-    if (repo.started){
-        if (repo.status == 'PENDING'){
+    if (repo.duration > 0){
+        if (repo.status == 'pending'){
           return "Waiting token"
         }
-        var start = moment(repo.started);
-        var finish = "";
-        if (repo.status == 'RUNNING'){
-            finish = moment();
-        } else {
-            finish = moment(repo.completed);
-        }
-        var duration = moment.duration(finish.diff(start));
-        var h = Math.floor(duration.asHours());
-        var m = Math.floor(duration.asMinutes()) % 60;
-        var s = Math.floor(duration.asSeconds()) % 60;
+        var h = Math.floor(repo.duration / 3600);
+        var m = Math.floor(repo.duration / 60) % 60;
+        var s = Math.floor(repo.duration) % 60;
         output = `${pad(h, 2)}:${pad(m, 2)}:${pad(s, 2)}`
     } else {
         output = "Not started";

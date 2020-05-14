@@ -68,7 +68,7 @@
     </thead>
     <tbody>
       {% for repo in page_obj.object_list %}
-      <tr id="repo-{{repo.id}}" data-backend="{{repo.backend}}" data-status="">
+      <tr id="repo-{{repo.id}}" data-backend="{{repo.backend}}" data-status="" data-repo-id="{{repo.id}}">
         <td class="repo-status">
           <div class="spinner-border spinner-border-sm" role="status">
             <span class="sr-only">Loading...</span>
