@@ -947,76 +947,6 @@ def update_role_dashboard(role_name, dashboard):
     odfe_api.create_role(role_name, permissions)
 
 
-def general_stat_dash(repos):
-    """
-    General status from repos rows
-    :param repos: list of repos from database
-    :return:
-    """
-    general = 'UNKNOWN'
-    for repo in repos:
-        status_repo = get_repo_status(repo)
-
-        if status_repo == 'RUNNING':
-            general = 'RUNNING'
-        elif status_repo == 'PENDING' and (general != 'RUNNING'):
-            general = 'PENDING'
-        elif (status_repo == 'ERROR') and (general not in ('RUNNING', 'PENDING')):
-            general = 'ERROR'
-        elif (status_repo == 'COMPLETED') and (general not in ('RUNNING', 'PENDING', 'ERROR')):
-            general = 'COMPLETED'
-        # Unknown status not included
-    return general
-
-
-def get_dashboard_info(dash_id):
-    """
-    Get information about the repositories that are analyzed / being analyzed
-    :param dash_id: id of the dashboard
-    :return:
-    """
-    info = {
-        'repos': list(),
-        'exists': True
-    }
-    repos = Repository.objects.filter(dashboards__id=dash_id)
-
-    info['general'] = general_stat_dash(repos)
-    if len(repos) == 0:
-        info['exists'] = False
-        return info
-
-    for repo in repos:
-        item = dict()
-        item['id'] = repo.id
-        item['url'] = repo.url
-        item['backend'] = repo.backend
-        item['status'] = get_repo_status(repo)
-
-        task = Task.objects.filter(repository=repo).first()
-        compl_task = CompletedTask.objects.filter(repository=repo).order_by('-completed').first()
-        if task:
-            item['created'] = task.created
-            item['started'] = task.started
-            if compl_task:
-                item['completed'] = compl_task.completed
-            else:
-                item['completed'] = None
-
-        elif compl_task and not task:
-            item['created'] = compl_task.created
-            item['started'] = compl_task.started
-            item['completed'] = compl_task.completed
-
-        else:
-            item['created'] = None
-            item['started'] = None
-            item['completed'] = None
-        info['repos'].append(item)
-
-    return info
-
-
 def get_dashboard_summary(dash_id):
     """
     Get a summary about the repositories in a dashboard
@@ -1387,24 +1317,6 @@ def create_context(request):
     return context
 
 
-def repo_status(request, repo_id):
-    context = create_context(request)
-    if request.method != 'GET':
-        context['title'] = "Method Not Allowed"
-        context['description'] = "Only GET methods allowed"
-        return render(request, 'cauldronapp/error.html', status=405,
-                      context=context)
-    repo = Repository.objects.filter(id=repo_id).first()
-    if not repo:
-        return JsonResponse({'status': 'UNKNOWN'})
-    return JsonResponse({'status': get_repo_status(repo)})
-
-
-def request_dash_info(request, dash_id):
-    info = get_dashboard_info(dash_id)
-    return JsonResponse(info)
-
-
 def request_dash_summary(request, dash_id):
     summary = get_dashboard_summary(dash_id)
     return JsonResponse(summary)
@@ -1462,24 +1374,6 @@ def repo_logs(request, repo_id):
         'more': more
     }
     return JsonResponse(response)
-
-
-def get_repo_status(repo):
-    """
-    Check if there is a task associated or it has been completed
-    :param repo: Repository object from the database
-    :return: status (PENDING, RUNNING, COMPLETED)
-    """
-    task_repo = Task.objects.filter(repository=repo).first()
-    if task_repo and task_repo.worker_id:
-        return 'RUNNING'
-    elif task_repo:
-        return 'PENDING'
-    c_task = CompletedTask.objects.filter(repository=repo).order_by('completed').last()
-    if c_task:
-        return c_task.status
-    else:
-        return 'UNKNOWN'
 
 
 def get_gl_repos(owner, token):

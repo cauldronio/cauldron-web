@@ -31,7 +31,6 @@ urlpatterns = [
     path('dashboard/<int:dash_id>', views.request_show_dashboard, name="show_dashboard"),
     path('dashboard/<int:dash_id>/edit', views.request_edit_dashboard),
     path('dashboard/<int:dash_id>/rename', views.request_rename_project, name="rename_project"),
-    path('dashboard/<int:dash_id>/info', views.request_dash_info),
     path('dashboard/<int:dash_id>/summary', views.request_dash_summary),
     path('dashboard/<int:dash_id>/workspace', views.request_workspace, name="open_workspace"),
     path('dashboard/<int:dash_id>/delete', views.request_delete_dashboard, name="delete_project_url"),
