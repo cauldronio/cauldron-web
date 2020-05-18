@@ -17,8 +17,8 @@ def url_replace(request, field, value):
 @register.simple_tag
 def get_filter_value(request, filter):
     '''
-    This tag returns the value of the specified filter or returns 'any'
-    if the filter does not meet the requirements
+    This tag returns the value of the specified filter or returns
+    a default value if the filter does not meet the requirements
     '''
     dict_ = request.GET.copy()
     filter_ = dict_.get(filter, None)
@@ -28,6 +28,9 @@ def get_filter_value(request, filter):
 
     if filter == 'status' and filter_ not in Repository.STATUS_CHOICES:
         return 'Any Status'
+
+    if filter == 'search' and filter_ is None:
+        return ''
 
     if filter_ is None:
         return 'any'

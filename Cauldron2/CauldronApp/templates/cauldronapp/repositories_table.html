@@ -31,6 +31,15 @@
   </div>
 </div>
 
+<div class="btn-group mb-2 float-right">
+  <form method="GET" action="">
+    <input class="searchfield" name="search" type="text" value="{{ request.GET.search }}" placeholder="Search..."/>
+    <input class="searchfield" name="kind" type="hidden" value="{{ request.GET.kind }}"/>
+    <input class="searchfield" name="status" type="hidden" value="{{ request.GET.status }}"/>
+    <input class="searchfield" name="sort_by" type="hidden" value="{{ request.GET.sort_by }}"/>
+  </form>
+</div>
+
 <div class="table-responsive">
   <table id="repos-table" class="table table-hover">
     <thead>

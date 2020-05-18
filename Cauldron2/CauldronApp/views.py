@@ -1004,6 +1004,10 @@ def request_show_dashboard(request, dash_id):
     context['repositories_count'] = repositories.count()
     context['render_table'] = False
 
+    search = request.GET.get('search')
+    if search is not None:
+        repositories = repositories.filter(url__icontains=search)
+
     kind = request.GET.get('kind')
     if kind is not None and kind in Repository.BACKEND_CHOICES:
         repositories = repositories.filter(backend=kind)
@@ -1012,7 +1016,7 @@ def request_show_dashboard(request, dash_id):
     if status is not None and status in Repository.STATUS_CHOICES:
         repositories = [obj for obj in repositories.all() if obj.status == status]
 
-    if kind or status:
+    if kind or status or search:
         context['render_table'] = True
 
     sort_by = request.GET.get('sort_by')
