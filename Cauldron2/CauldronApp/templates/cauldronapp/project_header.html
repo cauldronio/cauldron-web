@@ -21,7 +21,7 @@
     </div>
 
     {% if repositories_count > 0 %}
-    <div>
+    <div class="pb-1">
       <a class="btn btn-icon-split btn-outline-dark"
          data-toggle="tooltip" title="Visualize the data in Kibana"
          href="{% url 'open_public_kibana' dashboard.id %}"
@@ -39,8 +39,9 @@
     </div>
 
     {% if editable %}
-    <div data-toggle="tooltip" title="Edit your dashboards in Kibana">
+    <div>
       <a class="btn btn-icon-split btn-outline-dark"
+         data-toggle="tooltip" title="Edit your dashboards in Kibana"
          href="{% url 'open_workspace' dashboard.id %}"
          target="_blank">
          <span class="icon"><i class="fas fa-wrench"></i></span>
