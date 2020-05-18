@@ -1306,6 +1306,10 @@ def create_context(request):
     context['gitlab_enabled'] = hasattr(request.user, 'gitlabuser')
     context['meetup_enabled'] = hasattr(request.user, 'meetupuser')
 
+    # Matomo link
+    context['matomo_url'] = settings.MATOMO_URL
+
+
     # Information about Hatstall
     if HATSTALL_ENABLED:
         context['hatstall_url'] = "/hatstall"

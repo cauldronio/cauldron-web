@@ -123,6 +123,7 @@
 
           {% if request.user.is_superuser %}
           <a class="dropdown-item" href="{% url 'admin_page' %}">Admin page</a>
+          <a class="dropdown-item" href="{{ matomo_url }}">Matomo</a>
           {% endif %}
           {% if request.user.is_superuser and hatstall_url %}
           <a class="dropdown-item" href="{{ hatstall_url }}">Hatstall</a>
