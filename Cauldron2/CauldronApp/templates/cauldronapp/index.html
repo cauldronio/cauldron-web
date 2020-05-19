@@ -22,9 +22,6 @@
           <form action="/dashboard" method="post" class="create-dashboard">
             {% csrf_token %}
             <button type="submit" class="btn btn-light btn-lg my-3" role="button">Analyze a Project</button>
-            {% if authenticated %}
-            <a href="{% url 'projectspage' %}" role="button" class="btn btn-primary btn-lg my-3 ml-3">My Projects</a>
-            {% endif %}
           </form>
         </div>
         <div class="col-lg-4 text-lg-left">

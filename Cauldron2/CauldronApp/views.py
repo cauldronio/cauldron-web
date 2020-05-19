@@ -97,6 +97,10 @@ logger = logging.getLogger(__name__)
 
 
 def homepage(request):
+    # If user is authenticated, homepage is My projects page
+    if request.user.is_authenticated:
+        return request_user_projects(request)
+
     context = create_context(request)
 
     return render(request, 'cauldronapp/index.html', context=context)
@@ -180,7 +184,7 @@ def request_github_oauth(request):
     if last_page:
         return HttpResponseRedirect(last_page)
 
-    return HttpResponseRedirect(reverse('projectspage'))
+    return HttpResponseRedirect(reverse('homepage'))
 
 
 def merge_accounts(user_origin, user_dest):
@@ -280,7 +284,7 @@ def request_gitlab_oauth(request):
     if last_page:
         return HttpResponseRedirect(last_page)
 
-    return HttpResponseRedirect(reverse('projectspage'))
+    return HttpResponseRedirect(reverse('homepage'))
 
 
 # TODO: Add state
@@ -321,11 +325,10 @@ def request_meetup_oauth(request):
                                                             f"visualization in you current account so that you do not "
                                                             f"loose anything"}
 
-
     if last_page:
         return HttpResponseRedirect(last_page)
 
-    return HttpResponseRedirect(reverse('projectspage'))
+    return HttpResponseRedirect(reverse('homepage'))
 
 
 def authenticate_user(request, backend_model, oauth_user, is_admin=False):
@@ -1088,7 +1091,7 @@ def request_delete_dashboard(request, dash_id):
 
     delete_dashboard(dash)
 
-    return HttpResponseRedirect(reverse('projectspage'))
+    return HttpResponseRedirect(reverse('homepage'))
 
 
 def remove_tasks_no_token():

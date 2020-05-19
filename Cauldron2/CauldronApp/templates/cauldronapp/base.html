@@ -1,6 +1,5 @@
 {% load static %}
 
-{% url 'projectspage' as projectspage %}
 {% url 'homepage' as homepage %}
 
 <!doctype html>
@@ -88,12 +87,9 @@
       </a>
       <div class="collapse navbar-collapse">
         <ul class="navbar-nav mr-auto ml-3">
-          {% if authenticated %}
-          <li class="nav-item {% ifequal request.path homepage %}active{% endifequal %}">
-            <a class="nav-link" href="{% url 'homepage' %}">Home</a>
-          </li>
-          <li class="nav-item {% ifequal request.path projectspage %}active{% endifequal %}">
-            <a class="nav-link" href="{% url 'projectspage' %}">My Projects</a>
+          {% if authenticated and request.path != homepage %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'homepage' %}">My Projects</a>
           </li>
           {% endif %}
           <li class="nav-item dropdown">
@@ -128,7 +124,7 @@
           {% if request.user.is_superuser and hatstall_url %}
           <a class="dropdown-item" href="{{ hatstall_url }}">Hatstall</a>
           {% endif %}
-          <a class="dropdown-item" href="{% url 'projectspage' %}">My projects</a>
+          <a class="dropdown-item" href="{% url 'homepage' %}">My projects</a>
           <a class="dropdown-item" href="{% url 'profile:index' %}">Settings</a>
           <div class="dropdown-divider"></div>
           <a class="dropdown-item" href="/logout">Log out</a>
