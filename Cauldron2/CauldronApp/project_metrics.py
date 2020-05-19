@@ -77,7 +77,7 @@ def git_metrics(elastic):
         metrics['commits'] = 'timeout'
 
     try:
-        s = Search(using=elastic, index='git').filter('range', grimoire_creation_date={'gte': "now-1y/d"}).extra(size=0)
+        s = Search(using=elastic, index='git').filter('range', grimoire_creation_date={'gte': "now-1y/d", "lte": "now"}).extra(size=0)
         s.aggs.bucket("commits_per_day", 'date_histogram', field='grimoire_creation_date', calendar_interval='1d')
         response = s.execute()
         response_unpacked = response.aggregations['commits_per_day']['buckets']
@@ -162,7 +162,7 @@ def author_metrics(elastic):
     The elastic connection should contain the authorization header
     """
     s = Search(using=elastic, index='all')\
-        .filter('range', grimoire_creation_date={'gte': "now-1y/d"}).extra(size=0)
+        .filter('range', grimoire_creation_date={'gte': "now-1y/d", "lte": "now"}).extra(size=0)
     s.aggs.bucket('bucket1', 'date_histogram', field='grimoire_creation_date', calendar_interval='1w')\
           .bucket('bucket2', 'filters',
                   filters={'Maintainers': Q('bool', must=[Q('query_string', query="is_git_commit:1")]),
