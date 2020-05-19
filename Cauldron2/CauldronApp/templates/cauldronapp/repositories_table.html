@@ -2,43 +2,36 @@
 
 {% if repositories_count > 0 %}
 {% if render_table %}
-<span class="font-weight-bold d-block d-md-inline">Filter by: </span>
+<form method="GET" action ="" class="form-inline">
+  <span class="font-weight-bold d-block d-md-inline">Filter by: </span>
 
-<div class="btn-group mb-2">
-  <button class="btn btn-outline-dark btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-    <strong>{% get_filter_value request 'kind' %}</strong>
-  </button>
-  <div class="dropdown-menu">
-    <a class="dropdown-item" href="?{% url_replace request 'kind' 'any' %}"><i class="fas fa-asterisk"></i> Any</a>
-    <a class="dropdown-item" href="?{% url_replace request 'kind' 'git' %}"><i class="fab fa-git-square"></i> Git</a>
-    <a class="dropdown-item" href="?{% url_replace request 'kind' 'github' %}"><i class="fab fa-github"></i> GitHub</a>
-    <a class="dropdown-item" href="?{% url_replace request 'kind' 'gitlab' %}"><i class="fab fa-gitlab"></i> Gitlab</a>
-    <a class="dropdown-item" href="?{% url_replace request 'kind' 'meetup' %}"><i class="fab fa-meetup"></i> Meetup</a>
+  <div class="form-group mx-1 mb-2">
+    <select name="kind" class="selectpicker" title="Select a Data Source..." multiple data-actions-box="true" data-style="btn-outline-dark" data-selected-text-format="count > 2">
+      <option value="git" data-icon="fab fa-git-square">Git</option>
+      <option value="github" data-icon="fab fa-github">GitHub</option>
+      <option value="gitlab" data-icon="fab fa-gitlab">Gitlab</option>
+      <option value="meetup" data-icon="fab fa-meetup">Meetup</option>
+    </select>
   </div>
-</div>
 
-<div class="btn-group mb-2">
-  <button class="btn btn-outline-dark btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-    <strong>{% get_filter_value request 'status' %}</strong>
-  </button>
-  <div class="dropdown-menu">
-    <a class="dropdown-item" href="?{% url_replace request 'status' 'any' %}"><i class="fas fa-asterisk"></i> Any</a>
-    <a class="dropdown-item" href="?{% url_replace request 'status' 'completed' %}"><i class="fas fa-check text-success"></i> Completed</a>
-    <a class="dropdown-item" href="?{% url_replace request 'status' 'running' %}"><i class="fas fa-spinner"></i> Running</a>
-    <a class="dropdown-item" href="?{% url_replace request 'status' 'pending' %}"><i class="fas fa-circle" style="color:#0079d3"></i> Pending</a>
-    <a class="dropdown-item" href="?{% url_replace request 'status' 'error' %}"><i class="fas fa-exclamation-triangle text-warning"></i> Error</a>
-    <a class="dropdown-item" href="?{% url_replace request 'status' 'unknown' %}"><i class="fas fa-question text-warning"></i> Unknown</a>
+  <div class="form-group mx-1 mb-2">
+    <select name="status" class="selectpicker" title="Select a Status..." multiple data-actions-box="true" data-style="btn-outline-dark" data-selected-text-format="count > 2">
+      <option value="completed" data-icon="fas fa-check text-success">Completed</option>
+      <option value="running" data-icon="fas fa-spinner">Running</option>
+      <option value="pending" data-icon="fas fa-circle text-primary">Pending</option>
+      <option value="error" data-icon="fas fa-exclamation-triangle text-warning">Error</option>
+      <option value="unknown" data-icon="fas fa-question text-warning">Unknown</option>
+    </select>
   </div>
-</div>
 
-<div class="btn-group mb-2 float-right">
-  <form method="GET" action="">
+  <div class="form-group mx-1">
+    <button type="submit" class="btn btn-outline-dark btn-sm"><strong>Apply filters</strong></button>
+  </div>
+
+  <div class="form-group mx-5">
     <input class="searchfield" name="search" type="text" value="{{ request.GET.search }}" placeholder="Search..."/>
-    <input class="searchfield" name="kind" type="hidden" value="{{ request.GET.kind }}"/>
-    <input class="searchfield" name="status" type="hidden" value="{{ request.GET.status }}"/>
-    <input class="searchfield" name="sort_by" type="hidden" value="{{ request.GET.sort_by }}"/>
-  </form>
-</div>
+  </div>
+</form>
 
 <div class="table-responsive">
   <table id="repos-table" class="table table-hover">

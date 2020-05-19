@@ -47,7 +47,7 @@ def get_sorting_icon(request, field):
     dict_ = request.GET.copy()
     sort_by = dict_.get('sort_by', None)
 
-    if sort_by is None:
+    if not sort_by:
         return 'fas fa-sort text-secondary'
 
     reverse = False
@@ -73,7 +73,7 @@ def get_sorting_link(request, field):
     dict_ = request.GET.copy()
     sort_by = dict_.get('sort_by', None)
 
-    if sort_by is None:
+    if not sort_by:
         return field
 
     reverse = False
