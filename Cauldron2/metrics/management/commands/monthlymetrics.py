@@ -1,8 +1,13 @@
 from django.core.management.base import BaseCommand
-from CauldronApp.models import User, Dashboard, CompletedTask
-from metrics import models
 
+from elasticsearch_dsl.connections import connections
+from elasticsearch.connection import create_ssl_context
 import datetime
+import ssl
+
+from CauldronApp.models import User, Dashboard, CompletedTask
+from Cauldron2 import settings
+from metrics import models, elastic_models
 
 
 class Command(BaseCommand):
@@ -20,6 +25,12 @@ class Command(BaseCommand):
             '--date',
             type=lambda s: datetime.datetime.strptime(s, '%Y-%m').date(),
             help="metrics from a specific month (YYYY-MM)"
+        )
+
+        parser.add_argument(
+            '--save-elastic',
+            action='store_true',
+            help="store results in Elastic Search"
         )
 
         parser.add_argument(
@@ -69,3 +80,24 @@ class Command(BaseCommand):
                                                                   defaults={'total': completed_tasks})
 
             self.stdout.write(self.style.SUCCESS("Results stored in the database"))
+
+        if options['save_elastic']:
+            context = create_ssl_context()
+            context.check_hostname = False
+            context.verify_mode = ssl.CERT_NONE
+            connections.create_connection(hosts=[settings.ES_IN_HOST],
+                                          scheme=settings.ES_IN_PROTO,
+                                          port=settings.ES_IN_PORT,
+                                          http_auth=("admin", settings.ES_ADMIN_PASSWORD),
+                                          ssl_context=context)
+
+            elastic_models.MonthlyMetrics.init()
+            elastic_models.MonthlyMetrics(meta={'id': date_metrics},
+                                          date=date_metrics,
+                                          created_users=users_created,
+                                          logged_users=active_users,
+                                          created_projects=projects_created,
+                                          completed_tasks=completed_tasks).save()
+
+            self.stdout.write(self.style.SUCCESS("Results stored in ElasticSearch"))
+
