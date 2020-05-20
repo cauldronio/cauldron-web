@@ -2,34 +2,39 @@
 
 {% if repositories_count > 0 %}
 {% if render_table %}
-<form method="GET" action ="" class="form-inline">
-  <span class="font-weight-bold d-block d-md-inline">Filter by: </span>
+<form method="GET" action ="" class="form-inline justify-content-between">
+  <div class="form-group mb-2">
+    <span class="font-weight-bold d-block d-md-inline mr-2">Filter by: </span>
 
-  <div class="form-group mx-1 mb-2">
-    <select name="kind" class="selectpicker" title="Select a Data Source..." multiple data-actions-box="true" data-style="btn-outline-dark" data-selected-text-format="count > 2">
+    <select name="kind" class="selectpicker mr-2" title="Select a Data Source..." multiple data-actions-box="true" data-style="btn-outline-dark" data-selected-text-format="count > 2">
       <option value="git" data-icon="fab fa-git-square">Git</option>
       <option value="github" data-icon="fab fa-github">GitHub</option>
       <option value="gitlab" data-icon="fab fa-gitlab">Gitlab</option>
       <option value="meetup" data-icon="fab fa-meetup">Meetup</option>
     </select>
-  </div>
 
-  <div class="form-group mx-1 mb-2">
-    <select name="status" class="selectpicker" title="Select a Status..." multiple data-actions-box="true" data-style="btn-outline-dark" data-selected-text-format="count > 2">
+    <select name="status" class="selectpicker mr-2" title="Select a Status..." multiple data-actions-box="true" data-style="btn-outline-dark" data-selected-text-format="count > 2">
       <option value="completed" data-icon="fas fa-check text-success">Completed</option>
       <option value="running" data-icon="fas fa-spinner">Running</option>
       <option value="pending" data-icon="fas fa-circle text-primary">Pending</option>
       <option value="error" data-icon="fas fa-exclamation-triangle text-warning">Error</option>
       <option value="unknown" data-icon="fas fa-question text-warning">Unknown</option>
     </select>
+
+    <button type="submit" class="btn btn-outline-dark"><strong>Apply filters</strong></button>
   </div>
 
-  <div class="form-group mx-1">
-    <button type="submit" class="btn btn-outline-dark btn-sm"><strong>Apply filters</strong></button>
-  </div>
+  <div class="form-group ml-2 mb-2">
+    <span class="font-weight-bold d-block d-md-inline mr-2">Search: </span>
 
-  <div class="form-group mx-5">
-    <input class="searchfield" name="search" type="text" value="{{ request.GET.search }}" placeholder="Search..."/>
+    <div class="input-group">
+      <input class="form-control" name="search" type="text" value="{{ request.GET.search }}" placeholder="Search..."/>
+      <div class="input-group-append">
+        <button class="btn btn-outline-dark" type="submit">
+          <i class="fas fa-search"></i>
+        </button>
+      </div>
+    </div>
   </div>
 </form>
 
