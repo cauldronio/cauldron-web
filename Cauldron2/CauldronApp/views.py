@@ -116,6 +116,10 @@ def request_user_projects(request):
         projects = Dashboard.objects.filter(creator=request.user)
         projects_info = list()
 
+        search = request.GET.get('search')
+        if search is not None:
+            projects = projects.filter(name__icontains=search)
+
         p = Pages(projects, 9)
         page_number = request.GET.get('page', 1)
         page_obj = p.pages.get_page(page_number)

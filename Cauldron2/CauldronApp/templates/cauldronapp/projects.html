@@ -9,15 +9,29 @@
 
 {% block content %}
 <div class="container-fluid mt-3">
-	<div class="mb-3 d-md-flex">
-		<h1 class="mr-4">My projects</h1>
+	<div class="mb-3 d-md-flex justify-content-between">
 		<form action="/dashboard" method="post" class="create-dashboard form-inline">
-			{% csrf_token %}
+      {% csrf_token %}
+      <h1 class="mr-4">My projects</h1>
+
 			<button class="btn btn-icon-split btn-primary" role="button" type="submit">
 				<span class="icon"><i class="fas fa-plus"></i></span>
 				<span class="text">New project</span>
 			</button>
 		</form>
+
+    <form method="GET" action ="" class="form-inline">
+        <span class="font-weight-bold d-block mr-2">Search: </span>
+
+        <div class="input-group">
+          <input class="form-control" name="search" type="text" value="{{ request.GET.search }}" placeholder="Search..."/>
+          <div class="input-group-append">
+            <button class="btn btn-outline-dark" type="submit">
+              <i class="fas fa-search"></i>
+            </button>
+          </div>
+        </div>
+    </form>
 	</div>
 
 	<div class="row">
