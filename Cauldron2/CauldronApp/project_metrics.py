@@ -3,7 +3,7 @@ import json
 
 from elasticsearch_dsl import Search, Q
 from elasticsearch.connection import create_ssl_context
-from elasticsearch import exceptions as elastic_exceptions
+from elasticsearch.exceptions import ElasticsearchException
 from elasticsearch import Elasticsearch
 
 from bokeh.plotting import figure, ColumnDataSource
@@ -71,10 +71,8 @@ def git_metrics(elastic):
     metrics = {}
     try:
         metrics['commits'] = Search(using=elastic, index="git").count()
-    except elastic_exceptions.AuthorizationException:
-        metrics['commits'] = 'unauthorized'
-    except elastic_exceptions.ConnectionTimeout:
-        metrics['commits'] = 'timeout'
+    except ElasticsearchException:
+        metrics['commits'] = 'error'
 
     try:
         s = Search(using=elastic, index='git').filter('range', grimoire_creation_date={'gte': "now-1y/d", "lte": "now"}).extra(size=0)
@@ -86,10 +84,8 @@ def git_metrics(elastic):
         metrics['commits_graph'] = bokeh_vbar_figure(x, y,
                                                      title="# Commits last year",
                                                      x_axis_type="datetime")
-    except elastic_exceptions.AuthorizationException:
-        metrics['commits_graph'] = 'unauthorized'
-    except elastic_exceptions.ConnectionTimeout:
-        metrics['commits_graph'] = 'timeout'
+    except ElasticsearchException:
+        metrics['commits_graph'] = 'error'
 
     return metrics
 
@@ -102,17 +98,13 @@ def github_metrics(elastic):
     metrics = {}
     try:
         metrics['issues'] = Search(using=elastic, index="github").filter("term", pull_request=False).count()
-    except elastic_exceptions.AuthorizationException:
-        metrics['issues'] = 'unauthorized'
-    except elastic_exceptions.ConnectionTimeout:
-        metrics['issues'] = 'timeout'
+    except ElasticsearchException:
+        metrics['issues'] = 'error'
 
     try:
         metrics['prs'] = Search(using=elastic, index="github").filter("term", pull_request=True).count()
-    except elastic_exceptions.AuthorizationException:
-        metrics['prs'] = 'unauthorized'
-    except elastic_exceptions.ConnectionTimeout:
-        metrics['prs'] = 'timeout'
+    except ElasticsearchException:
+        metrics['prs'] = 'error'
 
     return metrics
 
@@ -125,17 +117,13 @@ def gitlab_metrics(elastic):
     metrics = {}
     try:
         metrics['issues'] = Search(using=elastic, index="gitlab_issues").count()
-    except elastic_exceptions.AuthorizationException:
-        metrics['issues'] = 'unauthorized'
-    except elastic_exceptions.ConnectionTimeout:
-        metrics['issues'] = 'timeout'
+    except ElasticsearchException:
+        metrics['issues'] = 'error'
 
     try:
         metrics['mrs'] = Search(using=elastic, index="gitlab_mrs").count()
-    except elastic_exceptions.AuthorizationException:
-        metrics['mrs'] = 'unauthorized'
-    except elastic_exceptions.ConnectionTimeout:
-        metrics['mrs'] = 'timeout'
+    except ElasticsearchException:
+        metrics['mrs'] = 'error'
 
     return metrics
 
@@ -148,10 +136,8 @@ def meetup_metrics(elastic):
     metrics = {}
     try:
         metrics['events'] = Search(using=elastic, index="meetup").count()
-    except elastic_exceptions.AuthorizationException:
-        metrics['events'] = 'unauthorized'
-    except elastic_exceptions.ConnectionTimeout:
-        metrics['events'] = 'timeout'
+    except ElasticsearchException:
+        metrics['events'] = 'error'
 
     return metrics
 
@@ -174,9 +160,7 @@ def author_metrics(elastic):
           .bucket('bucket3', 'cardinality', field='author_uuid')
     try:
         response = s.execute()
-    except elastic_exceptions.AuthorizationException:
-        response = None
-    except elastic_exceptions.ConnectionTimeout:
+    except ElasticsearchException:
         response = None
 
     if response is not None and response.success():
