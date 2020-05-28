@@ -350,3 +350,73 @@ function onDataFail(data, target) {
         showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
     }
 }
+
+
+/************************
+ *    DASHBOARD BOKEH   *
+ ************************/
+$(function() {
+
+    var start = moment().subtract(1, 'year');
+    var end = moment();
+
+    function updateMetricsData(start, end) {
+        $.getJSON(`${window.location.pathname}/metrics`,
+        {"from": start.format('YYYY-MM-DD'), "to": end.format('YYYY-MM-DD')},
+        function(data){
+            $('#metric-commits').text(data.commits);
+            $('#metric-reviews').text(data.reviews);
+            $('#metric-avg-review').text(data.avg_review);
+            $('#metric-open-issues').text(data.open_issues);
+            $('#metric-closed-issues').text(data.closed_issues);
+            $('#metric-issue-avg-close').text(data.issue_avg_close);
+
+            $('#chart-authors').empty();
+            item = JSON.parse(data.author_evolution_bokeh);
+            Bokeh.embed.embed_item(item, "chart-authors");
+
+            $('#chart-issues').empty();
+            item = JSON.parse(data.issue_evolution_bokeh);
+            Bokeh.embed.embed_item(item, "chart-issues");
+
+            $('#chart-commits').empty();
+            item = JSON.parse(data.commits_evolution_bokeh);
+            Bokeh.embed.embed_item(item, "chart-commits");
+
+            $('#chart-contrib').empty();
+            item = JSON.parse(data.prs_mrs_evolution_bokeh);
+            Bokeh.embed.embed_item(item, "chart-contrib");
+
+        });
+    }
+
+    function cb(start, end) {
+        $('#date-picker-input').val(start.format('YYYY-MM-DD') + ' - ' + end.format('YYYY-MM-DD'));
+        updateMetricsData(start, end);
+    }
+
+    $('#date-picker').daterangepicker({
+        startDate: start,
+        endDate: end,
+        maxDate: moment(),
+        opens: 'left',
+        ranges: {
+           'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+           'Last 6 months': [moment().subtract(6, 'months'), moment()],
+           'Last Year': [moment().subtract(1, 'year'), moment()],
+           'Last 3 Years': [moment().subtract(3, 'years'), moment()],
+           'All (20 years)': [moment().subtract(20, 'years'), moment()]
+        },
+        showCustomRangeLabel: false
+    }, cb);
+
+    $('#date-picker-input').daterangepicker({
+        startDate: start,
+        endDate: end,
+        maxDate: moment(),
+        opens: 'left'
+    }, cb);
+
+    $('#date-picker-input').val(start.format('YYYY-MM-DD') + ' - ' + end.format('YYYY-MM-DD'));
+
+});

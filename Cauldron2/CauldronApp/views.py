@@ -1056,6 +1056,22 @@ def request_show_dashboard(request, dash_id):
     return render(request, 'cauldronapp/dashboard.html', context=context)
 
 
+def request_project_metrics(request, dash_id):
+    """Obtain the metrics related to a project"""
+    if request.method != 'GET':
+        return custom_405(request, request.method)
+
+    from_date = request.GET.get('from', 'now-1y')
+    to_date = request.GET.get('to', 'now')
+
+    try:
+        dashboard = Dashboard.objects.get(pk=dash_id)
+    except Dashboard.DoesNotExist:
+        return custom_404(request, "The project requested was not found in this server")
+
+    return JsonResponse(project_metrics.get_metrics(dashboard, from_date, to_date))
+
+
 def delete_dashboard(dashboard):
     # Remove tasks in a transaction atomic
     with transaction.atomic():

@@ -1,7 +1,5 @@
 {% load cauldron_tags %}
 
-{% if repositories_count > 0 %}
-{% if render_table %}
 <form method="GET" action ="" class="form-inline justify-content-between">
   <div class="form-group mb-2">
     <span class="font-weight-bold d-block d-md-inline mr-2">Filter by: </span>
@@ -139,37 +137,3 @@
 {% endif %}
 
 {% include "cauldronapp/nav_pagination.html" %}
-
-{% endif %}
-
-{% else %}
-
-<div class="alert alert-warning alert-dismissible fade show" role="alert">
-  <div class="row">
-    {% if editable %}
-    <div class="col-sm-2">
-      <i class="fas fa-arrow-left"></i>
-    </div>
-    <div class="col-sm-10">
-      <p><strong>Start adding data sources!</strong></p>
-      <p>Projects are defined by set of different data sources. Add them with the tools in the side bar.</p>
-
-      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-      </button>
-
-    </div>
-    {% else %}
-    <div class="col-sm-12">
-      <p><strong>No repositories found for this project</strong></p>
-      <p>The owner of this project has not added repositories yet. Check back later to see if they have been added.</p>
-
-      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-      </button>
-    </div>
-    {% endif %}
-
-  </div>
-</div>
-{% endif %}

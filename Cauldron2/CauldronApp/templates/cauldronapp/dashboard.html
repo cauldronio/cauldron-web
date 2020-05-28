@@ -2,6 +2,7 @@
 {% load static %}
 
 {% block css%}
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
 <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
 {% endblock %}
 
@@ -38,15 +39,48 @@
         <div class="col-lg-12 order-lg-2 order-1">
         {% endif %}
           <div class="pt-2">
-            {% if dashboard %}
-
               {% include "cauldronapp/project_header.html" %}
 
-              {% include "cauldronapp/project_metrics.html" %}
+              <!-- Check if there are repositories, if not, include a warning -->
+              {% if repositories_count > 0%}
+                <!-- Table OR visualizations -->
+                {% if render_table %}
+                  {% include "cauldronapp/repositories_table.html" %}
+                {% else %}
+                  {% include "cauldronapp/project_metrics.html" %}
+                {% endif %}
+              <!-- Include a warning: 0 data sources defined -->
+              {% else %}
+              <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                <div class="row">
+                  {% if editable %}
+                  <div class="col-sm-2">
+                    <i class="fas fa-arrow-left"></i>
+                  </div>
+                  <div class="col-sm-10">
+                    <p><strong>Start adding data sources!</strong></p>
+                    <p>Projects are defined by set of different data sources. Add them with the tools in the side bar.</p>
 
-              {% include "cauldronapp/repositories_table.html" %}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
 
-            {% endif %}
+                  </div>
+                  {% else %}
+                  <div class="col-sm-12">
+                    <p><strong>No repositories found for this project</strong></p>
+                    <p>The owner of this project has not added repositories yet. Check back later to see if they have been added.</p>
+
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  {% endif %}
+
+                </div>
+              </div>
+              {% endif %}
+
           </div>
         </div>
         <!--END main part project page-->
@@ -101,5 +135,6 @@
 <script src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-2.0.2.min.js" crossorigin="anonymous"></script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.25.3/moment.min.js" integrity="sha256-C66CaAImteEKZPYvgng9j10J/45e9sAuZyfPYCwp4gE=" crossorigin="anonymous"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
 <script src="{% static 'js/dashboard.js' %}" charset="utf-8"></script>
 {% endblock %}

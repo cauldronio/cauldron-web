@@ -1,127 +1,174 @@
-<div class="row">
-  {% if metrics.git %}
-  <div class="col">
-    <div class="card border-left-primary shadow">
-      <div class="card-body">
-        <div class="row no-gutters align-items-center">
-          <div class="col mr-2">
-            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Git Commits</div>
-            <div class="h5 mb-0 font-weight-bold text-gray-800">{{metrics.git.commits}}</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  {% endif %}
-
-  {% if metrics.github %}
-  <div class="col">
-    <div class="card border-left-primary shadow">
-      <div class="card-body">
-        <div class="row no-gutters align-items-center">
-          <div class="col mr-2">
-            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">GitHub Issues</div>
-            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ metrics.github.issues }}</div>
-          </div>
+<div>
+  <div class="d-flex flex-row justify-content-between py-4">
+    <h3 class="">Dashboard preview</h3>
+    <div class="form-group">
+      <div class="input-group">
+        <input type="text" class="form-control"  id="date-picker-input">
+        <div class="input-group-append">
+          <button class="btn btn-outline-secondary" type="button" id="date-picker">
+            <i class="fa fa-calendar"></i>&nbsp;
+            <i class="fa fa-caret-down"></i>
+          </button>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="col">
-    <div class="card border-left-primary shadow">
-      <div class="card-body">
-        <div class="row no-gutters align-items-center">
-          <div class="col mr-2">
-            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">GitHub PRs</div>
-            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ metrics.github.prs }}</div>
+  <div>
+    <div class="row">
+      <div class="col">
+        <div class="card border-left-primary shadow">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-sm font-weight-bold text-primary mb-1">Code Changes</div>
+                <div id="metric-commits" class="h5 mb-0 font-weight-bold text-gray-800">{{metrics.commits}}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="card border-left-primary shadow">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-sm font-weight-bold text-primary mb-1">Pull requests</div>
+                <div id="metric-reviews" class="h5 mb-0 font-weight-bold text-gray-800">{{ metrics.reviews }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="card border-left-primary shadow">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-sm font-weight-bold text-primary mb-1">Review duration</div>
+                <div id="metric-avg-review" class="h5 mb-0 font-weight-bold text-gray-800">{{ metrics.avg_review }} days</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="card border-left-primary shadow">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-sm font-weight-bold text-primary mb-1">New issues</div>
+                <div id="metric-open-issues" class="h5 mb-0 font-weight-bold text-gray-800">{{ metrics.open_issues }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="card border-left-primary shadow">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-sm font-weight-bold text-primary mb-1">Issues closed</div>
+                <div id="metric-closed-issues" class="h5 mb-0 font-weight-bold text-gray-800">{{ metrics.closed_issues }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="card border-left-primary shadow">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-sm font-weight-bold text-primary mb-1">Avg. Time to close</div>
+                <div id="metric-issue-avg-close" class="h5 mb-0 font-weight-bold text-gray-800">{{metrics.issue_avg_close}} days</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-  {% endif %}
 
-  {% if metrics.gitlab %}
-  <div class="col">
-    <div class="card border-left-primary shadow">
-      <div class="card-body">
-        <div class="row no-gutters align-items-center">
-          <div class="col mr-2">
-            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">GitLab Issues</div>
-            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ metrics.gitlab.issues }}</div>
+    <div class="row">
+
+      <div class="col-md-6">
+        <div class="card shadow">
+          <div class="card-header font-weight-bold text-primary">
+            Contributions
+          </div>
+          <div class="card-body">
+            <div id="chart-commits" style="height: 300px"></div>
           </div>
         </div>
       </div>
-    </div>
-  </div>
+      <script>
+        document.addEventListener('DOMContentLoaded', function(event) {
+          item_text = '{{ metrics.commits_evolution_bokeh | safe }}';
+          item = JSON.parse(item_text);
+          Bokeh.embed.embed_item(item, "chart-commits");
+        })
+      </script>
 
-  <div class="col">
-    <div class="card border-left-primary shadow">
-      <div class="card-body">
-        <div class="row no-gutters align-items-center">
-          <div class="col mr-2">
-            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">GitLab MRs</div>
-            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ metrics.gitlab.mrs }}</div>
+      <div class="col-md-6">
+        <div class="card shadow">
+          <div class="card-header font-weight-bold text-primary">
+            People
+          </div>
+          <div class="card-body">
+            <div id="chart-authors" style="height: 300px"></div>
           </div>
         </div>
       </div>
-    </div>
-  </div>
-  {% endif %}
+      <script>
+        document.addEventListener('DOMContentLoaded', function(event) {
+          item_text = '{{ metrics.author_evolution_bokeh | safe }}';
+          item = JSON.parse(item_text);
+          Bokeh.embed.embed_item(item, "chart-authors");
+        })
+      </script>
 
-  {% if metrics.meetup %}
-  <div class="col">
-    <div class="card border-left-primary shadow">
-      <div class="card-body">
-        <div class="row no-gutters align-items-center">
-          <div class="col mr-2">
-            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Meetup events</div>
-            <div class="h5 mb-0 font-weight-bold text-gray-800">{{metrics.meetup.events}}</div>
+      <div class="col-md-6">
+        <div class="card shadow">
+          <div class="card-header font-weight-bold text-primary">
+            Issues created vs closed
+          </div>
+          <div class="card-body">
+            <div id="chart-issues" style="height: 300px"></div>
           </div>
         </div>
       </div>
-    </div>
-  </div>
-  {% endif %}
+      <script>
+        document.addEventListener('DOMContentLoaded', function(event) {
+          item_text = '{{ metrics.issue_evolution_bokeh | safe }}';
+          item = JSON.parse(item_text);
+          Bokeh.embed.embed_item(item, "chart-issues");
+        })
+      </script>
 
-
-</div>
-
-<div class="row">
-
-  {% if metrics.git %}
-  <div class="col-md-6">
-    <div class="card shadow">
-      <div class="card-body">
-        <div id="chart-commits"></div>
+      <div class="col-md-6">
+        <div class="card shadow">
+          <div class="card-header font-weight-bold text-primary">
+            Pull/Merge requests
+          </div>
+          <div class="card-body">
+            <div id="chart-contrib" style="height: 300px"></div>
+          </div>
+        </div>
       </div>
+      <script>
+        document.addEventListener('DOMContentLoaded', function(event) {
+          item_text = '{{ metrics.prs_mrs_evolution_bokeh | safe }}';
+          item = JSON.parse(item_text);
+          Bokeh.embed.embed_item(item, "chart-contrib");
+        })
+      </script>
+
     </div>
   </div>
-  <script>
-    document.addEventListener('DOMContentLoaded', function(event) {
-      item_text = '{{ metrics.git.commits_graph | safe }}';
-      item = JSON.parse(item_text);
-      Bokeh.embed.embed_item(item, "chart-commits");
-    })
-  </script>
-  {% endif %}
-
-  {% if metrics.authors %}
-  <div class="col-md-6">
-    <div class="card shadow">
-      <div class="card-body">
-        <div id="chart-authors"></div>
-      </div>
-    </div>
-  </div>
-  <script>
-    document.addEventListener('DOMContentLoaded', function(event) {
-      item_text = '{{ metrics.authors | safe }}';
-      item = JSON.parse(item_text);
-      Bokeh.embed.embed_item(item, "chart-authors");
-    })
-  </script>
-  {% endif %}
-
 </div>
