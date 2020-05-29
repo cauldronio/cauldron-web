@@ -206,6 +206,19 @@
   </div>
   <!-- END Container for alerts-->
 
+  <!-- BEGIN Toast list for notifications-->
+  <div aria-live="polite" aria-atomic="true" style="position: fixed; width: 100%; bottom: 50px; z-index: 9999;">
+    <!-- Position it -->
+    <div id="toast-container">
+
+    </div>
+  </div>
+  <!-- END Toast list for notifications-->
+
+  <div class="site-content">
+  {% block content %}
+  {% endblock %}
+  </div>
 
   <!-- BEGIN Container for modals -->
   <div class="modal" tabindex="-1" role="dialog" id="modal-alert">
@@ -225,21 +238,6 @@
     </div>
   </div>
   <!-- END Container for modals-->
-
-
-  <!-- BEGIN Toast list for notifications-->
-  <div aria-live="polite" aria-atomic="true" style="position: fixed; width: 100%; bottom: 50px; z-index: 9999;">
-    <!-- Position it -->
-    <div id="toast-container">
-
-    </div>
-  </div>
-  <!-- END Toast list for notifications-->
-
-  <div class="site-content">
-  {% block content %}
-  {% endblock %}
-  </div>
 
 
   <footer class="container-fluid footer-position bg-dark text-white pt-3">

@@ -1,0 +1,46 @@
+<div class="modal fade" id="add-meetup-modal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Add a data source (2/2)</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="container-fluid">
+          <form action="" method="post" id="meetup_add">
+            {% csrf_token %}
+            <div class="card-body">
+              <div class="form-group">
+                <label for="meetup_data">
+                  <span class="font-weight-bold">Group ID</span> or
+                  <span class="font-weight-bold">group URL</span> or
+                  <span class="font-weight-bold">event URL</span>
+                </label>
+                <div class="input-group">
+                  <input type="text" class="form-control" id="meetup_data" name="data">
+                  <input type="hidden" name="backend" value="meetup">
+                  <input type="hidden" name="action" value="add">
+                  <div class="input-group-append">
+                    <button class="btn btn-primary" type="submit">Add</button>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="custom-control custom-checkbox">
+                  <input type="checkbox" name="events" class="custom-control-input" id="checkbox-meetup-events" checked disabled>
+                  <label class="custom-control-label" for="checkbox-meetup-events">Group events</label>
+                  <span data-toggle="tooltip" style="float:right" title="This will analyze Meetup events">
+                    <i class="fas fa-info-circle"></i>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

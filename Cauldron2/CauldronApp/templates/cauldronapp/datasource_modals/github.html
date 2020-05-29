@@ -1,0 +1,55 @@
+<div class="modal fade" id="add-github-modal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Add a data source (2/2)</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="container-fluid">
+          <form action="" method="post" id="gh_add">
+            {% csrf_token %}
+            <div class="card-body">
+              <div class="form-group">
+                <label for="gh_data">
+                  <span class="font-weight-bold">GitHub owner</span> or
+                  <span class="font-weight-bold">owner/repository</span> or
+                  <span class="font-weight-bold">URL</span>
+                </label>
+                <div class="input-group">
+                  <input type="text" class="form-control" id="gh_data" name="data">
+                  <input type="hidden" name="backend" value="github">
+                  <input type="hidden" name="action" value="add">
+                  <div class="input-group-append">
+                    <button class="btn btn-primary" type="submit">Add</button>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="custom-control custom-checkbox">
+                  <input type="checkbox" name="commits" class="custom-control-input" id="checkbox-github-commits" checked>
+                  <label class="custom-control-label" for="checkbox-github-commits">Commits (Git repository)</label>
+                  <span data-toggle="tooltip" style="float:right" title="This will analyze the git repositories">
+                    <i class="fas fa-info-circle"></i>
+                  </span>
+                </div>
+                <div class="custom-control custom-checkbox">
+                  <input type="checkbox" name="issues" class="custom-control-input" id="checkbox-github-issues-prs" checked>
+                  <label class="custom-control-label" for="checkbox-github-issues-prs">Issues & Pull requests</label>
+                  <span data-toggle="tooltip" style="float:right" title="This will analyze GitHub issues and pull request from the repositories">
+                    <i class="fas fa-info-circle"></i>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+

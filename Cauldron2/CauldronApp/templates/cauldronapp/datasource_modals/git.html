@@ -1,0 +1,45 @@
+<div class="modal fade" id="add-git-modal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Add a data source (2/2)</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="container-fluid">
+          <form action="" method="post" id="git_add">
+            {% csrf_token %}
+            <div class="card-body">
+              <div class="form-group">
+                <label for="git_data">
+                  <span class="font-weight-bold">Git repository url</span>
+                </label>
+                <div class="input-group">
+                  <input type="text" class="form-control" id="git_data" placeholder="git repository url" name="data">
+                  <input type="hidden" name="backend" value="git">
+                  <input type="hidden" name="action" value="add">
+                  <div class="input-group-append">
+                    <button class="btn btn-primary" type="submit">Add</button>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="custom-control custom-checkbox">
+                  <input type="checkbox" name="commits" class="custom-control-input" id="checkbox-git-commits" checked disabled>
+                  <label class="custom-control-label" for="checkbox-git-commits">Commits (Git repositories)</label>
+                  <span data-toggle="tooltip" style="float:right" title="This will analyze the git repositories">
+                    <i class="fas fa-info-circle"></i>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+

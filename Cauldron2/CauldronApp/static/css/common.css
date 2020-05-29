@@ -31,6 +31,17 @@
   min-width: 15px;
 }
 
+.btn-git {
+  color: #fff;
+  background-color: #E94E31;
+  border-color: #E94E31;
+}
+
+.btn-git:hover {
+  background-color: #e03718;
+  color: #fff;
+}
+
 .btn-github {
   color: #fff;
   background-color: #555555;
@@ -62,6 +73,16 @@
 .btn-meetup:hover {
   background-color: #F42C2C;
   color: #fff;
+}
+
+.btn-orange {
+    background-color: #F79C31;
+    color: #fff;
+}
+
+.btn-orange:hover {
+    background-color: #ec8409;
+    color: #fff;
 }
 
 #modalLogin .modal-body {

@@ -6,6 +6,7 @@ var Dash_ID = window.location.pathname.split('/')[2];
 $(document).ready(function(){
     $('#logModal').on('show.bs.modal', onShowLogsModal);
     $('#logModal').on('hidden.bs.modal', OnHideLogsModal);
+
     $('form#gh_add').submit(submitBackend);
     $('form#gl_add').submit(submitBackend);
     $('form#meetup_add').submit(submitBackend);
@@ -15,56 +16,16 @@ $(document).ready(function(){
     $('.btn-reanalyze').click(reanalyzeRepo);
     $('.btn-reanalyze-all').click(reanalyzeEveryRepo);
 
-    //$('.backend-filters a').click(onFilterClick);
-    //$('.status-filters a').click(onFilterClick);
-
     $('#rename').click(onClickEditName);
 
     $('form#change-name').on('submit', onSubmitRename);
 
-    $("input#url-public-link").click(function () {
-       $(this).select();
-    });
-
-    $('input#url-public-link-kibana').click(function (ev) {
-        ev.target.select()
-    })
+    $('.btn-datasource').click(onSelectDataSource);
 
     refreshTable();
     getSummary();
 });
 
-
-function onFilterClick(ev) {
-    ev.preventDefault();
-    $('.backend-item').removeClass('active');
-    $(this).addClass('active');
-    var filterType = $(this).attr('data-filter-type');
-
-    if(filterType == 'status'){
-        StatusFilter = $(this).attr('data-filter');
-    } else if (filterType == 'backend'){
-        BackendFilter = $(this).attr('data-filter');
-    }
-    filterTable();
-}
-
-function filterTable() {
-    var num_filtered = 0;
-    $('table.repos-table tbody tr').each(function(i, elem){
-        var statusOK = (StatusFilter == 'all' || $(elem).attr('data-status') == StatusFilter);
-        var backendOK = (BackendFilter == 'any' || $(elem).attr('data-backend') == BackendFilter);
-        if ( statusOK && backendOK ){
-            $(elem).show();
-            num_filtered += 1;
-        } else {
-            $(elem).hide();
-        }
-    })
-    $('#num-repos-filter').html(num_filtered);
-    $('#btn-filter-status').html(`status: ${StatusFilter}`);
-    $('#btn-filter-backend').html(`backend: ${BackendFilter}`);
-}
 
 function onClickEditName(ev) {
     ev.preventDefault();
@@ -95,7 +56,6 @@ function deleteRepo(event) {
         .done(function (data) {
             showToast('Deleted', `The repository <b>${url_repo}</b> was deleted from this dashboard`, 'fas fa-check-circle text-success', 1500);
             $(`tr#repo-${id_repo}`).remove();
-            //filterTable();
         })
         .fail(function (data) {
             showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
@@ -316,9 +276,14 @@ function updateLogs(id_repo){
 }
 
 
-/************************
- *    BACKEND SUBMIT    *
- ************************/
+/****************************
+ *    ADD DATA SOURCES      *
+ ****************************/
+
+function onSelectDataSource(event) {
+    $('#add-datasource-modal').modal('hide');
+}
+
 function submitBackend(event) {
     event.preventDefault()
     var addBtn = $(`#${event.target.id} button`);

@@ -11,81 +11,39 @@
 
     <div class="container-fluid">
 
-      <div class="row">
+      <div class="p-4">
+        {% include "cauldronapp/project_header.html" %}
 
-        <!-- Add data sources -->
-        {% if editable %}
-        <div class="col-lg-3 order-lg-1 order-2">
-          <div class="header-dashboard">
-            <h4>Add data sources</h4>
-          </div>
-
-          {% include "cauldronapp/add_datasource/github.html" %}
-          {% include "cauldronapp/add_datasource/git.html" %}
-          {% include "cauldronapp/add_datasource/gitlab.html" %}
-          {% include "cauldronapp/add_datasource/meetup.html" %}
-
-          <div class="alert alert-info" role="alert">
-            It is planned for the future to add more data sources (like Discourse or Slack), but feel free to suggest any other data source option via the feedback button!
-          </div>
-        </div>
-        {% endif %}
-        <!-- End add data sources -->
-
-        <!-- Main part project page -->
-        {% if editable %}
-        <div class="col-lg-9 order-lg-2 order-1">
+        <!-- Check if there are repositories, if not, include a warning -->
+        {% if repositories_count > 0%}
+          <!-- Table OR visualizations -->
+          {% if render_table %}
+            {% include "cauldronapp/repositories_table.html" %}
+          {% else %}
+            {% include "cauldronapp/project_metrics.html" %}
+          {% endif %}
         {% else %}
-        <div class="col-lg-12 order-lg-2 order-1">
-        {% endif %}
-          <div class="pt-2">
-              {% include "cauldronapp/project_header.html" %}
-
-              <!-- Check if there are repositories, if not, include a warning -->
-              {% if repositories_count > 0%}
-                <!-- Table OR visualizations -->
-                {% if render_table %}
-                  {% include "cauldronapp/repositories_table.html" %}
-                {% else %}
-                  {% include "cauldronapp/project_metrics.html" %}
-                {% endif %}
-              <!-- Include a warning: 0 data sources defined -->
+          <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <div class="row">
+              {% if editable %}
+              <div class="col-sm-10 offset-sm-1">
+                <p class="font-weight-bold">Start adding data sources!</p>
+                <p>Projects are defined by set of different data sources. To add information include some of them.</p>
+              </div>
               {% else %}
-              <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                <div class="row">
-                  {% if editable %}
-                  <div class="col-sm-2">
-                    <i class="fas fa-arrow-left"></i>
-                  </div>
-                  <div class="col-sm-10">
-                    <p><strong>Start adding data sources!</strong></p>
-                    <p>Projects are defined by set of different data sources. Add them with the tools in the side bar.</p>
-
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                      <span aria-hidden="true">&times;</span>
-                    </button>
-
-                  </div>
-                  {% else %}
-                  <div class="col-sm-12">
-                    <p><strong>No repositories found for this project</strong></p>
-                    <p>The owner of this project has not added repositories yet. Check back later to see if they have been added.</p>
-
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                      <span aria-hidden="true">&times;</span>
-                    </button>
-                  </div>
-                  {% endif %}
-
-                </div>
+              <div class="col-sm-12">
+                <p class="font-weight-bold">No repositories found for this project</p>
+                <p>The owner of this project has not added repositories yet. Check back later to see if they have been added.</p>
               </div>
               {% endif %}
-
+            </div>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
           </div>
-        </div>
-        <!--END main part project page-->
-
+        {% endif %}
       </div>
+
     </div>
 
     <div class="modal fade" id="shareModal" tabindex="-1" role="dialog">
@@ -124,7 +82,12 @@
       </div>
     </div>
 
-
+    <!-- Data source modals -->
+    {% include "cauldronapp/datasource_modals/global.html" %}
+    {% include "cauldronapp/datasource_modals/github.html" %}
+    {% include "cauldronapp/datasource_modals/gitlab.html" %}
+    {% include "cauldronapp/datasource_modals/git.html" %}
+    {% include "cauldronapp/datasource_modals/meetup.html" %}
 
 {% endblock %}
 
