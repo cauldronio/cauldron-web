@@ -4,7 +4,7 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.views.decorators.http import require_http_methods
 from CauldronApp.pages import Pages
 from CauldronApp import kibana_objects, project_metrics, utils
@@ -1546,33 +1546,53 @@ def admin_page(request):
 
     dashboards = Dashboard.objects.all()
     if dashboards:
-        context['dashboards'] = []
+        search = request.GET.get('search')
+        if search is not None:
+            query = Q(creator__first_name__icontains=search) | Q(name__icontains=search)
+            dashboards = dashboards.filter(query)
 
-        for dash in dashboards:
-            dashboard = dict()
-            dashboard['dashboard'] = dash
-            repos = Repository.objects.filter(dashboards=dash)
-            # Tasks
-            dashboard['tasks_count'] = CompletedTask.objects.filter(repository__in=repos,
-                                                                    old=False).count() + \
-                                       Task.objects.filter(repository__in=repos).count()
-            dashboard['completed_tasks_count'] = CompletedTask.objects.filter(repository__in=repos,
-                                                                              status="COMPLETED",
-                                                                              old=False).count()
-            dashboard['running_tasks_count'] = Task.objects.filter(repository__in=repos).exclude(worker_id="").count()
-            dashboard['pending_tasks_count'] = Task.objects.filter(repository__in=repos,
-                                                                   worker_id="").count()
-            dashboard['error_tasks_count'] = CompletedTask.objects.filter(repository__in=repos,
-                                                                          status="ERROR",
-                                                                          old=False).count()
-            # Data sources (Formerly Repositories)
-            dashboard['repos_count'] = repos.count()
-            dashboard['repos_git_count'] = repos.filter(backend="git").count()
-            dashboard['repos_github_count'] = repos.filter(backend="github").count()
-            dashboard['repos_gitlab_count'] = repos.filter(backend="gitlab").count()
-            dashboard['repos_meetup_count'] = repos.filter(backend="meetup").count()
+        sort_by = request.GET.get('sort_by')
+        if sort_by is not None and sort_by in Dashboard.SORT_CHOICES:
+            reverse = False
+            if sort_by[0] == '-':
+                reverse = True
+                sort_by = sort_by[1:]
 
-            context['dashboards'].append(dashboard)
+            if sort_by == 'name':
+                dashboards = sorted(dashboards, key=lambda d: d.name, reverse=reverse)
+            elif sort_by == 'owner':
+                dashboards = sorted(dashboards, key=lambda d: d.creator.first_name, reverse=reverse)
+            elif sort_by == 'created':
+                dashboards = sorted(dashboards, key=lambda d: d.created, reverse=reverse)
+            elif sort_by == 'modified':
+                dashboards = sorted(dashboards, key=lambda d: d.modified, reverse=reverse)
+            elif sort_by == 'total_tasks':
+                dashboards = sorted(dashboards, key=lambda d: d.tasks_count, reverse=reverse)
+            elif sort_by == 'completed_tasks':
+                dashboards = sorted(dashboards, key=lambda d: d.completed_tasks_count, reverse=reverse)
+            elif sort_by == 'running_tasks':
+                dashboards = sorted(dashboards, key=lambda d: d.running_tasks_count, reverse=reverse)
+            elif sort_by == 'pending_tasks':
+                dashboards = sorted(dashboards, key=lambda d: d.pending_tasks_count, reverse=reverse)
+            elif sort_by == 'error_tasks':
+                dashboards = sorted(dashboards, key=lambda d: d.error_tasks_count, reverse=reverse)
+            elif sort_by == 'total_repositories':
+                dashboards = sorted(dashboards, key=lambda d: d.repos_count, reverse=reverse)
+            elif sort_by == 'git':
+                dashboards = sorted(dashboards, key=lambda d: d.repos_git_count, reverse=reverse)
+            elif sort_by == 'github':
+                dashboards = sorted(dashboards, key=lambda d: d.repos_github_count, reverse=reverse)
+            elif sort_by == 'gitlab':
+                dashboards = sorted(dashboards, key=lambda d: d.repos_gitlab_count, reverse=reverse)
+            elif sort_by == 'meetup':
+                dashboards = sorted(dashboards, key=lambda d: d.repos_meetup_count, reverse=reverse)
+
+        p = Pages(dashboards, 10)
+        page_number = request.GET.get('page', 1)
+        page_obj = p.pages.get_page(page_number)
+        context['page_obj'] = page_obj
+        context['pages_to_show'] = p.pages_to_show(page_obj.number)
+        context['dashboards'] = page_obj.object_list
 
     context.update(status_info())
 
@@ -1598,8 +1618,36 @@ def admin_page_users(request):
         return render(request, 'cauldronapp/error.html', status=405,
                       context=context)
 
+    users = User.objects.all()
+
+    search = request.GET.get('search')
+    if search is not None:
+        users = users.filter(first_name__icontains=search)
+
+    sort_by = request.GET.get('sort_by')
+    if sort_by is not None:
+        reverse = False
+        if sort_by[0] == '-':
+            reverse = True
+            sort_by = sort_by[1:]
+
+        if sort_by == 'name':
+            users = sorted(users, key=lambda u: u.first_name, reverse=reverse)
+        elif sort_by == 'joined':
+            users = sorted(users, key=lambda u: u.date_joined, reverse=reverse)
+        elif sort_by == 'dashboards':
+            users = sorted(users, key=lambda u: u.dashboard_set.count(), reverse=reverse)
+        elif sort_by == 'admin':
+            users = sorted(users, key=lambda u: u.is_superuser, reverse=reverse)
+
+    p = Pages(users, 10)
+    page_number = request.GET.get('page', 1)
+    page_obj = p.pages.get_page(page_number)
+    context['page_obj'] = page_obj
+    context['pages_to_show'] = p.pages_to_show(page_obj.number)
+
     context['users'] = []
-    for user in User.objects.all():
+    for user in page_obj.object_list:
         user_entry = dict()
         user_entry['user'] = user
         user_entry['tokens'] = {

@@ -70,6 +70,37 @@ class MeetupUser(models.Model):
 
 
 class Dashboard(models.Model):
+    SORT_CHOICES = [
+        'name',
+        '-name',
+        'owner',
+        '-owner',
+        'created',
+        '-created',
+        'modified',
+        '-modified',
+        'total_tasks',
+        '-total_tasks',
+        'completed_tasks',
+        '-completed_tasks',
+        'running_tasks',
+        '-running_tasks',
+        'pending_tasks',
+        '-pending_tasks',
+        'error_tasks',
+        '-error_tasks',
+        'total_repositories',
+        '-total_repositories',
+        'git',
+        '-git',
+        'github',
+        '-github',
+        'gitlab',
+        '-gitlab',
+        'meetup',
+        '-meetup',
+    ]
+
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
     name = models.CharField(max_length=255)
@@ -77,6 +108,56 @@ class Dashboard(models.Model):
                                 on_delete=models.SET_NULL,
                                 blank=True,
                                 null=True)
+
+    @property
+    def tasks_count(self):
+        repos = self.repository_set.all()
+        return CompletedTask.objects.filter(repository__in=repos, old=False).count() + \
+                Task.objects.filter(repository__in=repos).count()
+
+    @property
+    def completed_tasks_count(self):
+        repos = self.repository_set.all()
+        return CompletedTask.objects.filter(repository__in=repos,
+                                            status="COMPLETED",
+                                            old=False).count()
+
+    @property
+    def running_tasks_count(self):
+        repos = self.repository_set.all()
+        return Task.objects.filter(repository__in=repos).exclude(worker_id="").count()
+
+    @property
+    def pending_tasks_count(self):
+        repos = self.repository_set.all()
+        return Task.objects.filter(repository__in=repos, worker_id="").count()
+
+    @property
+    def error_tasks_count(self):
+        repos = self.repository_set.all()
+        return CompletedTask.objects.filter(repository__in=repos,
+                                            status="ERROR",
+                                            old=False).count()
+
+    @property
+    def repos_count(self):
+        return self.repository_set.count()
+
+    @property
+    def repos_git_count(self):
+        return self.repository_set.filter(backend="git").count()
+
+    @property
+    def repos_github_count(self):
+        return self.repository_set.filter(backend="github").count()
+
+    @property
+    def repos_gitlab_count(self):
+        return self.repository_set.filter(backend="gitlab").count()
+
+    @property
+    def repos_meetup_count(self):
+        return self.repository_set.filter(backend="meetup").count()
 
 
 class ProjectRole(models.Model):

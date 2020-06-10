@@ -1,10 +1,9 @@
 {% extends "cauldronapp/base.html" %}
+{% load cauldron_tags %}
 {% load static %}
 
 {% block css%}
 <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-<!-- DataTables CSS -->
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css"/>
 {% endblock %}
 
 {% block content %}
@@ -51,58 +50,148 @@
             </nav>
             <div class="tab-content mt-4" id="nav-tabContent">
                 <div class="tab-pane fade show active" id="nav-dash" role="tabpanel" aria-labelledby="nav-dash-tab">
-                    {% if dashboards %}
-                    <table id="dashboards-table" class="row-border" style="width:100%">
+                    <form method="GET" action ="" class="form-inline float-right">
+                      <div class="form-group ml-2 mb-2">
+
+                        <div class="input-group">
+                          <input class="form-control" name="search" type="text" value="{{ request.GET.search }}" placeholder="Search..."/>
+                          <div class="input-group-append">
+                            <button class="btn btn-outline-dark" type="submit">
+                              <i class="fas fa-search"></i>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </form>
+
+                    <div class="table-responsive">
+                      <table id="dashboards-table" class="table table-hover">
                         <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Owner</th>
-                                <th>Created (UTC)</th>
-                                <th>Modified (UTC)</th>
-                                <th>Total tasks</th>
-                                <th>Completed tasks</th>
-                                <th>Running tasks</th>
-                                <th>Pending tasks</th>
-                                <th>Error tasks</th>
-                                <th>Total repositories</th>
-                                <th><i class="fab fa-git-square fa-lg"></i></th>
-                                <th><i class="fab fa-github fa-lg"></i></th>
-                                <th><i class="fab fa-gitlab fa-lg"></i></th>
-                                <th><i class="fab fa-meetup fa-lg"></i></th>
-                            </tr>
+                          <tr>
+                            <th scope="col">Name
+                              {% get_sorting_link request 'name' as name_sorting_link %}
+                              <a href="?{% url_replace request 'sort_by' name_sorting_link %}">
+                                <i class="{% get_sorting_icon request 'name' %}"></i>
+                              </a>
+                            </th>
+                            <th scope="col">Owner
+                              {% get_sorting_link request 'owner' as owner_sorting_link %}
+                              <a href="?{% url_replace request 'sort_by' owner_sorting_link %}">
+                                <i class="{% get_sorting_icon request 'owner' %}"></i>
+                              </a>
+                            </th>
+                            <th scope="col">Created date (UTC)
+                              {% get_sorting_link request 'created' as created_sorting_link %}
+                              <a href="?{% url_replace request 'sort_by' created_sorting_link %}">
+                                <i class="{% get_sorting_icon request 'created' %}"></i>
+                              </a>
+                            </th>
+                            <th scope="col">Modified date (UTC)
+                              {% get_sorting_link request 'modified' as modified_sorting_link %}
+                              <a href="?{% url_replace request 'sort_by' modified_sorting_link %}">
+                                <i class="{% get_sorting_icon request 'modified' %}"></i>
+                              </a>
+                            </th>
+                            <th scope="col">Total tasks
+                              {% get_sorting_link request 'total_tasks' as total_tasks_sorting_link %}
+                              <a href="?{% url_replace request 'sort_by' total_tasks_sorting_link %}">
+                                <i class="{% get_sorting_icon request 'total_tasks' %}"></i>
+                              </a>
+                            </th>
+                            <th scope="col">Completed tasks
+                              {% get_sorting_link request 'completed_tasks' as completed_tasks_sorting_link %}
+                              <a href="?{% url_replace request 'sort_by' completed_tasks_sorting_link %}">
+                                <i class="{% get_sorting_icon request 'completed_tasks' %}"></i>
+                              </a>
+                            </th>
+                            <th scope="col">Running tasks
+                              {% get_sorting_link request 'running_tasks' as running_tasks_sorting_link %}
+                              <a href="?{% url_replace request 'sort_by' running_tasks_sorting_link %}">
+                                <i class="{% get_sorting_icon request 'running_tasks' %}"></i>
+                              </a>
+                            </th>
+                            <th scope="col">Pending tasks
+                              {% get_sorting_link request 'pending_tasks' as pending_tasks_sorting_link %}
+                              <a href="?{% url_replace request 'sort_by' pending_tasks_sorting_link %}">
+                                <i class="{% get_sorting_icon request 'pending_tasks' %}"></i>
+                              </a>
+                            </th>
+                            <th scope="col">Error tasks
+                              {% get_sorting_link request 'error_tasks' as error_tasks_sorting_link %}
+                              <a href="?{% url_replace request 'sort_by' error_tasks_sorting_link %}">
+                                <i class="{% get_sorting_icon request 'error_tasks' %}"></i>
+                              </a>
+                            </th>
+                            <th scope="col">Total repositories
+                              {% get_sorting_link request 'total_repositories' as total_repositories_sorting_link %}
+                              <a href="?{% url_replace request 'sort_by' total_repositories_sorting_link %}">
+                                <i class="{% get_sorting_icon request 'total_repositories' %}"></i>
+                              </a>
+                            </th>
+                            <th class="text-center" scope="col"><i class="fab fa-git-square fa-lg"></i>
+                              {% get_sorting_link request 'git' as git_sorting_link %}
+                              <a href="?{% url_replace request 'sort_by' git_sorting_link %}">
+                                <i class="{% get_sorting_icon request 'git' %}"></i>
+                              </a>
+                            </th>
+                            <th class="text-center" scope="col"><i class="fab fa-github fa-lg"></i>
+                              {% get_sorting_link request 'github' as github_sorting_link %}
+                              <a href="?{% url_replace request 'sort_by' github_sorting_link %}">
+                                <i class="{% get_sorting_icon request 'github' %}"></i>
+                              </a>
+                            </th>
+                            <th class="text-center" scope="col"><i class="fab fa-gitlab fa-lg"></i>
+                              {% get_sorting_link request 'gitlab' as gitlab_sorting_link %}
+                              <a href="?{% url_replace request 'sort_by' gitlab_sorting_link %}">
+                                <i class="{% get_sorting_icon request 'gitlab' %}"></i>
+                              </a>
+                            </th>
+                            <th class="text-center" scope="col"><i class="fab fa-meetup fa-lg"></i>
+                              {% get_sorting_link request 'meetup' as meetup_sorting_link %}
+                              <a href="?{% url_replace request 'sort_by' meetup_sorting_link %}">
+                                <i class="{% get_sorting_icon request 'meetup' %}"></i>
+                              </a>
+                            </th>
+                          </tr>
                         </thead>
                         <tbody>
-                            {% for dashboard in dashboards %}
+                          {% for dashboard in dashboards %}
                             <tr>
-                                <td><a href="{% url 'show_dashboard' dash_id=dashboard.dashboard.id %}" target="_blank">
-                                    {{dashboard.dashboard.name}}
-                                </a></td>
-                                <td>{{dashboard.dashboard.creator.first_name}}</td>
-                                <td>
-                                    <span style="display:none;">{{dashboard.dashboard.created|date:"U"}}</span>
-                                    {{dashboard.dashboard.created|date:"Y/m/d P"}}
-                                </td>
-                                <td>
-                                    <span style="display:none;">{{dashboard.dashboard.modified|date:"U"}}</span>
-                                    {{dashboard.dashboard.modified|date:"Y/m/d P"}}
-                                </td>
-                                <td>{{dashboard.tasks_count}}</td>
-                                <td>{{dashboard.completed_tasks_count}}</td>
-                                <td>{{dashboard.running_tasks_count}}</td>
-                                <td>{{dashboard.pending_tasks_count}}</td>
-                                <td>{{dashboard.error_tasks_count}}</td>
-                                <td>{{dashboard.repos_count}}</td>
-                                <td>{{dashboard.repos_git_count}}</td>
-                                <td>{{dashboard.repos_github_count}}</td>
-                                <td>{{dashboard.repos_gitlab_count}}</td>
-                                <td>{{dashboard.repos_meetup_count}}</td>
+                              <td><a href="{% url 'show_dashboard' dash_id=dashboard.id %}" target="_blank">
+                                {{dashboard.name}}
+                              </a></td>
+                              <td>{{dashboard.creator.first_name}}</td>
+                              <td>
+                                <span style="display:none;">{{dashboard.created|date:"U"}}</span>
+                                {{dashboard.created|date:"Y/m/d P"}}
+                              </td>
+                              <td>
+                                <span style="display:none;">{{dashboard.modified|date:"U"}}</span>
+                                {{dashboard.modified|date:"Y/m/d P"}}
+                              </td>
+                              <td class="text-center">{{dashboard.tasks_count}}</td>
+                              <td class="text-center">{{dashboard.completed_tasks_count}}</td>
+                              <td class="text-center">{{dashboard.running_tasks_count}}</td>
+                              <td class="text-center">{{dashboard.pending_tasks_count}}</td>
+                              <td class="text-center">{{dashboard.error_tasks_count}}</td>
+                              <td class="text-center">{{dashboard.repos_count}}</td>
+                              <td class="text-center">{{dashboard.repos_git_count}}</td>
+                              <td class="text-center">{{dashboard.repos_github_count}}</td>
+                              <td class="text-center">{{dashboard.repos_gitlab_count}}</td>
+                              <td class="text-center">{{dashboard.repos_meetup_count}}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
-                    </table>
-                    {% else %}
-                    <em>No Dashboards to show</em>
+                      </table>
+                    </div>
+
+                    {% if page_obj.paginator.count == 0 %}
+                    <div>
+                        <em>There are no entries for the selected filters</em>
+                    </div>
                     {% endif %}
+
+                    {% include "cauldronapp/nav_pagination.html" %}
                 </div>
             </div>
         </div>
@@ -114,18 +203,4 @@
 
 {% block javascript %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.25.3/moment.min.js" integrity="sha256-C66CaAImteEKZPYvgng9j10J/45e9sAuZyfPYCwp4gE=" crossorigin="anonymous"></script>
-<!-- DataTables JavaScript -->
-<script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
-<script>
-$(document).ready(function() {
-    $('#dashboards-table').DataTable({
-      columnDefs: [
-        {
-          targets: [-1, -2, -3, -4, -5, -6, -7, -8, -9, -10],
-          className: 'dt-body-center'
-        }
-      ]
-    });
-} );
-</script>
 {% endblock %}

@@ -1,10 +1,9 @@
 {% extends "cauldronapp/base.html" %}
+{% load cauldron_tags %}
 {% load static %}
 
 {% block css%}
 <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-<!-- DataTables CSS -->
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css"/>
 {% endblock %}
 
 {% block content %}
@@ -51,112 +50,148 @@
             </nav>
             <div class="tab-content mt-4" id="nav-tabContent">
                 <div class="tab-pane fade show active" id="nav-users" role="tabpanel" aria-labelledby="nav-users-tab">
-                    {% if users %}
-                    <table id="users-table" class="row-border" style="width:100%">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Date Joined (UTC)</th>
-                                <th>#Dashboards</th>
-                                <th>Tokens</th>
-                                <th>Admin</th>
-                                <!--th>Hatstall</th-->
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for user in users %}
-                            <tr>
-                                <td>
-                                    {% if user.user != request.user %}
-                                    <form action="{% url 'delete_user' %}" method="post" id="delete_user">
-                                        {{user.user.first_name}}
-                                        {% csrf_token %}
-                                        <input type="hidden" name="user_pk" value="{{user.user.pk}}">
-                                        <button type="button" class="btn btn-xs" data-toggle="modal" data-target="#confirm-delete-user">
-                                            <i class="fas fa-trash-alt text-danger" data-toggle="tooltip" title="Delete this user"></i>
-                                        </button>
-                                    </form>
-                                    {% else %}
+                  <form method="GET" action ="" class="form-inline float-right">
+                    <div class="form-group ml-2 mb-2">
+
+                      <div class="input-group">
+                        <input class="form-control" name="search" type="text" value="{{ request.GET.search }}" placeholder="Search..."/>
+                        <div class="input-group-append">
+                          <button class="btn btn-outline-dark" type="submit">
+                            <i class="fas fa-search"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </form>
+
+                  <div class="table-responsive">
+                    <table id="users-table" class="table table-hover">
+                      <thead>
+                        <tr>
+                          <th scope="col">Name
+                            {% get_sorting_link request 'name' as name_sorting_link %}
+                            <a href="?{% url_replace request 'sort_by' name_sorting_link %}">
+                              <i class="{% get_sorting_icon request 'name' %}"></i>
+                            </a>
+                          </th>
+                          <th class="text-center" scope="col">Date Joined (UTC)
+                            {% get_sorting_link request 'joined' as joined_sorting_link %}
+                            <a href="?{% url_replace request 'sort_by' joined_sorting_link %}">
+                              <i class="{% get_sorting_icon request 'joined' %}"></i>
+                            </a>
+                          </th>
+                          <th class="text-center" scope="col">#Dashboards
+                            {% get_sorting_link request 'dashboards' as dashboards_sorting_link %}
+                            <a href="?{% url_replace request 'sort_by' dashboards_sorting_link %}">
+                              <i class="{% get_sorting_icon request 'dashboards' %}"></i>
+                            </a>
+                          </th>
+                          <th class="text-center" scope="col">Tokens</th>
+                          <th class="text-center" scope="col">Admin
+                            {% get_sorting_link request 'admin' as admin_sorting_link %}
+                            <a href="?{% url_replace request 'sort_by' admin_sorting_link %}">
+                              <i class="{% get_sorting_icon request 'admin' %}"></i>
+                            </a>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>
+                                {% if user.user != request.user %}
+                                <form action="{% url 'delete_user' %}" method="post" id="delete_user">
                                     {{user.user.first_name}}
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <span style="display:none;">{{user.user.date_joined|date:"U"}}</span>
-                                    {{user.user.date_joined|date:"Y/m/d P"}}
-                                </td>
-                                <td>{{user.user.dashboard_set.all.count}}</td>
-                                <td>
-                                    <span class="mr-4">
-                                        <i class="fab fa-github fa-lg"></i>:
-                                        {% if user.tokens.github %}
-                                            {% if user.tokens.github.is_ready %}
-                                            <i class="fas fa-check text-success" data-toggle="tooltip" title="Ready to use"></i>
-                                            {% else %}
-                                            <i class="fas fa-history" data-toggle="tooltip" title="Token in cooldown until {{user.tokens.github.rate_time}}"></i>
-                                            {% endif %}
+                                    {% csrf_token %}
+                                    <input type="hidden" name="user_pk" value="{{user.user.pk}}">
+                                    <button type="button" class="btn btn-xs" data-toggle="modal" data-target="#confirm-delete-user">
+                                        <i class="fas fa-trash-alt text-danger" data-toggle="tooltip" title="Delete this user"></i>
+                                    </button>
+                                </form>
+                                {% else %}
+                                {{user.user.first_name}}
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <span style="display:none;">{{user.user.date_joined|date:"U"}}</span>
+                                {{user.user.date_joined|date:"Y/m/d P"}}
+                            </td>
+                            <td class="text-center">{{user.user.dashboard_set.all.count}}</td>
+                            <td class="text-center">
+                                <span class="mr-4">
+                                    <i class="fab fa-github fa-lg"></i>:
+                                    {% if user.tokens.github %}
+                                        {% if user.tokens.github.is_ready %}
+                                        <i class="fas fa-check text-success" data-toggle="tooltip" title="Ready to use"></i>
                                         {% else %}
-                                        <i class="fas fa-times text-danger" data-toggle="tooltip" title="Not defined"></i>
+                                        <i class="fas fa-history" data-toggle="tooltip" title="Token in cooldown until {{user.tokens.github.rate_time}}"></i>
                                         {% endif %}
-                                    </span>
-
-                                    <span class="mr-4">
-                                        <i class="fab fa-gitlab fa-lg"></i>:
-                                        {% if user.tokens.gitlab %}
-                                            {% if user.tokens.gitlab.is_ready %}
-                                            <i class="fas fa-check text-success" data-toggle="tooltip" title="Ready to use"></i>
-                                            {% else %}
-                                            <i class="fas fa-history" data-toggle="tooltip" title="Token in cooldown until {{user.tokens.gitlab.rate_time}}"></i>
-                                            {% endif %}
-                                        {% else %}
-                                        <i class="fas fa-times text-danger" data-toggle="tooltip" title="Not defined"></i>
-                                        {% endif %}
-                                    </span>
-
-                                    <span class="mr-4">
-                                        <i class="fab fa-meetup fa-lg"></i>:
-                                        {% if user.tokens.meetup %}
-                                            {% if user.tokens.meetup.is_ready %}
-                                            <i class="fas fa-check text-success" data-toggle="tooltip" title="Ready to use"></i>
-                                            {% else %}
-                                            <i class="fas fa-history" data-toggle="tooltip" title="Token in cooldown until {{user.tokens.meetup.rate_time}}"></i>
-                                            {% endif %}
-                                        {% else %}
-                                        <i class="fas fa-times text-danger" data-toggle="tooltip" title="Not defined"></i>
-                                        {% endif %}
-                                    </span>
-                                </td>
-                                <td>
-                                    <span style="display:none;">{{user.user.is_superuser}}</span>
-                                    {% if user.user.is_superuser %}
-                                    <form action="{% url 'downgrade_user' %}" method="post">
-                                        <i class="fas fa-check text-success"></i>
-                                        {% csrf_token %}
-                                        <input type="hidden" name="user_pk" value="{{user.user.pk}}">
-                                        <button type="submit" class="btn btn-xs">
-                                            <i class="fas fa-chevron-circle-down" data-toggle="tooltip" title="Downgrade admin to user"></i>
-                                        </button>
-                                    </form>
                                     {% else %}
-                                    <form action="{% url 'upgrade_user' %}" method="post">
-                                        <i class="fas fa-times text-danger"></i>
-                                        {% csrf_token %}
-                                        <input type="hidden" name="user_pk" value="{{user.user.pk}}">
-                                        <button type="submit" class="btn btn-xs">
-                                            <i class="fas fa-chevron-circle-up" data-toggle="tooltip" title="Upgrade user to admin"></i>
-                                        </button>
-                                    </form>
+                                    <i class="fas fa-times text-danger" data-toggle="tooltip" title="Not defined"></i>
                                     {% endif %}
-                                </td>
-                                <!--td>
-                                    <i class="fas fa-question"></i>
-                                </td-->
-                            </tr>
-                            {% endfor %}
-                        </tbody>
+                                </span>
+
+                                <span class="mr-4">
+                                    <i class="fab fa-gitlab fa-lg"></i>:
+                                    {% if user.tokens.gitlab %}
+                                        {% if user.tokens.gitlab.is_ready %}
+                                        <i class="fas fa-check text-success" data-toggle="tooltip" title="Ready to use"></i>
+                                        {% else %}
+                                        <i class="fas fa-history" data-toggle="tooltip" title="Token in cooldown until {{user.tokens.gitlab.rate_time}}"></i>
+                                        {% endif %}
+                                    {% else %}
+                                    <i class="fas fa-times text-danger" data-toggle="tooltip" title="Not defined"></i>
+                                    {% endif %}
+                                </span>
+
+                                <span class="mr-4">
+                                    <i class="fab fa-meetup fa-lg"></i>:
+                                    {% if user.tokens.meetup %}
+                                        {% if user.tokens.meetup.is_ready %}
+                                        <i class="fas fa-check text-success" data-toggle="tooltip" title="Ready to use"></i>
+                                        {% else %}
+                                        <i class="fas fa-history" data-toggle="tooltip" title="Token in cooldown until {{user.tokens.meetup.rate_time}}"></i>
+                                        {% endif %}
+                                    {% else %}
+                                    <i class="fas fa-times text-danger" data-toggle="tooltip" title="Not defined"></i>
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <span style="display:none;">{{user.user.is_superuser}}</span>
+                                {% if user.user.is_superuser %}
+                                <form action="{% url 'downgrade_user' %}" method="post">
+                                    <i class="fas fa-check text-success"></i>
+                                    {% csrf_token %}
+                                    <input type="hidden" name="user_pk" value="{{user.user.pk}}">
+                                    <button type="submit" class="btn btn-xs">
+                                        <i class="fas fa-chevron-circle-down" data-toggle="tooltip" title="Downgrade admin to user"></i>
+                                    </button>
+                                </form>
+                                {% else %}
+                                <form action="{% url 'upgrade_user' %}" method="post">
+                                    <i class="fas fa-times text-danger"></i>
+                                    {% csrf_token %}
+                                    <input type="hidden" name="user_pk" value="{{user.user.pk}}">
+                                    <button type="submit" class="btn btn-xs">
+                                        <i class="fas fa-chevron-circle-up" data-toggle="tooltip" title="Upgrade user to admin"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
                     </table>
-                    {% else %}
-                    <em>No Users to show</em>
-                    {% endif %}
+                  </div>
+
+                  {% if page_obj.paginator.count == 0 %}
+                  <div>
+                      <em>There are no entries for the selected filters</em>
+                  </div>
+                  {% endif %}
+
+                  {% include "cauldronapp/nav_pagination.html" %}
                 </div>
             </div>
         </div>
@@ -188,20 +223,6 @@
 
 {% block javascript %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.25.3/moment.min.js" integrity="sha256-C66CaAImteEKZPYvgng9j10J/45e9sAuZyfPYCwp4gE=" crossorigin="anonymous"></script>
-<!-- DataTables JavaScript -->
-<script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
-<script>
-$(document).ready(function() {
-    $('#users-table').DataTable({
-      columnDefs: [
-        {
-          targets: [-1, -2, -3, -4],
-          className: 'dt-body-center'
-        }
-      ]
-    });
-} );
-</script>
 <script>
 $(document).ready(function() {
   $('#submit').click(function(){
