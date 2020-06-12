@@ -325,33 +325,33 @@ $(function() {
     var start = moment().subtract(1, 'year');
     var end = moment();
 
+    //"html_id": "key from Django"
+    var VIZ_KEYS = {
+        "chart-commits": 'commits_bokeh',
+        "chart-commits-hour": 'commits_hour_day_bokeh',
+        "chart-commits-weekday": 'commits_weekday_bokeh',
+        "chart-lines-touched": 'commits_lines_changed_boked',
+        "chart-issues-open-closed": 'issues_open_closed_bokeh',
+        "chart-issues-open-age": 'issues_open_age_bokeh',
+        "chart-issues-open-weekday": 'issues_open_weekday_bokeh',
+        "chart-issues-closed-weekday": 'issues_closed_weekday_bokeh',
+        "chart-reviews-open-closed": 'reviews_open_closed_bokeh',
+        "chart-reviews-open-age": 'reviews_open_age_bokeh',
+        "chart-reviews-open-weekday": 'reviews_open_weekday_bokeh',
+        "chart-reviews-closed-weekday": 'reviews_closed_weekday_bokeh',
+    }
+
+
     function updateMetricsData(start, end) {
         $.getJSON(`${window.location.pathname}/metrics`,
         {"from": start.format('YYYY-MM-DD'), "to": end.format('YYYY-MM-DD')},
         function(data){
-            $('#metric-commits').text(data.commits);
-            $('#metric-reviews').text(data.reviews);
-            $('#metric-avg-review').text(data.avg_review);
-            $('#metric-open-issues').text(data.open_issues);
-            $('#metric-closed-issues').text(data.closed_issues);
-            $('#metric-issue-avg-close').text(data.issue_avg_close);
-
-            $('#chart-authors').empty();
-            item = JSON.parse(data.author_evolution_bokeh);
-            Bokeh.embed.embed_item(item, "chart-authors");
-
-            $('#chart-issues').empty();
-            item = JSON.parse(data.issue_evolution_bokeh);
-            Bokeh.embed.embed_item(item, "chart-issues");
-
-            $('#chart-commits').empty();
-            item = JSON.parse(data.commits_evolution_bokeh);
-            Bokeh.embed.embed_item(item, "chart-commits");
-
-            $('#chart-contrib').empty();
-            item = JSON.parse(data.prs_mrs_evolution_bokeh);
-            Bokeh.embed.embed_item(item, "chart-contrib");
-
+            for (var k in VIZ_KEYS) {
+                var id_html = `#${k}`;
+                var item = JSON.parse(data[VIZ_KEYS[k]]);
+                $(id_html).empty();
+                Bokeh.embed.embed_item(item, k);
+            }
         });
     }
 
@@ -379,7 +379,10 @@ $(function() {
         startDate: start,
         endDate: end,
         maxDate: moment(),
-        opens: 'left'
+        opens: 'left',
+        locale: {
+            format: 'YYYY-MM-DD'
+        }
     }, cb);
 
     $('#date-picker-input').val(start.format('YYYY-MM-DD') + ' - ' + end.format('YYYY-MM-DD'));

@@ -7,7 +7,8 @@ from django.db import transaction
 from django.db.models import Count, Q
 from django.views.decorators.http import require_http_methods
 from CauldronApp.pages import Pages
-from CauldronApp import kibana_objects, project_metrics, utils
+from CauldronApp import kibana_objects, utils
+from CauldronApp.project_metrics import metrics
 
 import os
 import re
@@ -1001,8 +1002,6 @@ def request_show_dashboard(request, dash_id):
 
     context['dashboard'] = dash
 
-    context['metrics'] = project_metrics.get_metrics(dash)
-
     repositories = dash.repository_set.all()
 
     context['repositories_count'] = repositories.count()
@@ -1053,6 +1052,9 @@ def request_show_dashboard(request, dash_id):
 
     context['editable'] = request.user.is_authenticated and request.user == dash.creator or request.user.is_superuser
 
+    if not context['render_table'] and context['repositories_count'] > 0:
+        context['metrics'] = metrics.get_metrics(dash)
+
     return render(request, 'cauldronapp/dashboard.html', context=context)
 
 
@@ -1069,7 +1071,7 @@ def request_project_metrics(request, dash_id):
     except Dashboard.DoesNotExist:
         return custom_404(request, "The project requested was not found in this server")
 
-    return JsonResponse(project_metrics.get_metrics(dashboard, from_date, to_date))
+    return JsonResponse(metrics.get_metrics(dashboard, from_date, to_date))
 
 
 def delete_dashboard(dashboard):
