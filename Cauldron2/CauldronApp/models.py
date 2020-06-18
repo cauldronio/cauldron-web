@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 
 # IMPORTANT: If you are going to modify any User Reference: take a look at merge_accounts in views.py
 
-# IMPORTANT: If you are going to change the schema, you MUST modify the schema in mordred container
+# IMPORTANT: If you are going to change the schema, you MUST modify the schema in worker container
 
 
 class AnonymousUser(models.Model):
@@ -276,3 +276,12 @@ class CompletedTask(models.Model):
     status = models.CharField(max_length=255)
     log_file = models.CharField(max_length=255, blank=True)
     old = models.BooleanField(default=False)
+
+
+class SHTask(models.Model):
+    # MUST BE UTC DATE
+    scheduled_date = models.DateTimeField()
+    started_date = models.DateTimeField(null=True)
+    completed_date = models.DateTimeField(null=True)
+    done = models.BooleanField(default=False)
+    log_file = models.CharField(max_length=255, blank=True)
