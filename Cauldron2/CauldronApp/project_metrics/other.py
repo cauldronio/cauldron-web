@@ -4,11 +4,13 @@ import logging
 
 from bokeh.embed import json_item
 from bokeh.models import ColumnDataSource
-from bokeh.palettes import Category20c
+from bokeh.palettes import Category20c, Blues
 from bokeh.plotting import figure
 from bokeh.transform import cumsum
 from elasticsearch import ElasticsearchException
 from elasticsearch_dsl import Search, Q
+
+from .utils import configure_figure
 
 logger = logging.getLogger(__name__)
 
@@ -109,9 +111,7 @@ def author_domains_bokeh(elastic, from_date='now-1y', to_date='now'):
 
 
 def author_evolution_bokeh(elastic, from_date='now-1y', to_date='now'):
-    """
-    Get evolution of Authors
-    """
+    """Get evolution of Authors"""
     s = Search(using=elastic, index='all')\
         .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date})\
         .extra(size=0)
@@ -143,11 +143,13 @@ def author_evolution_bokeh(elastic, from_date='now-1y', to_date='now'):
         users.append(values.Users.bucket3.value)
 
     plot = figure(x_axis_type="datetime",
-                  x_axis_label='Time',
-                  y_axis_label='Authors',
+                  y_axis_label='# Authors',
                   height=300,
                   sizing_mode="stretch_width",
-                  tools='pan,wheel_zoom,save,reset')
+                  tools='')
+    plot.title.text = '# Authors per category over time'
+    configure_figure(plot, '')
+
     source = ColumnDataSource(data=dict(
         x=x,
         contrib=contrib,
@@ -156,7 +158,7 @@ def author_evolution_bokeh(elastic, from_date='now-1y', to_date='now'):
         users=users
     ))
     names = ['contributors', 'maintainers', 'observers', 'users']
-    colors = ['navy', 'royalblue', 'deepskyblue', 'lightsteelblue']
+    colors = Blues[4]
     plot.varea_stack(['contrib', 'maintainers', 'observers', 'users'],
                      x='x',
                      source=source,

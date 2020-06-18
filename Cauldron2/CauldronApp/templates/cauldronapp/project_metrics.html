@@ -18,7 +18,10 @@
     <div class="card-header font-weight-bold">
       <ul class="nav nav-pills" id="pills-tab" role="tablist">
         <li class="nav-item" role="presentation">
-          <a class="nav-link active" data-toggle="pill" href="#pills-activity-git" role="tab" aria-controls="pills-activity-git" aria-selected="true">Commits Activity</a>
+          <a class="nav-link active" data-toggle="pill" href="#pills-overview" role="tab" aria-controls="pills-overview" aria-selected="true">Overview</a>
+        </li>
+        <li class="nav-item" role="presentation">
+          <a class="nav-link" data-toggle="pill" href="#pills-activity-git" role="tab" aria-controls="pills-activity-git" aria-selected="true">Commits Activity</a>
         </li>
         <li class="nav-item" role="presentation">
           <a class="nav-link" data-toggle="pill" href="#pills-activity-issues" role="tab" aria-controls="pills-activity-issues" aria-selected="false">Issues Activity</a>
@@ -30,8 +33,55 @@
     </div>
 
     <div class="tab-content card-body text-center mb-4">
+      <!-- Start Overview -->
+      <div id="pills-overview" class="mb-4 tab-pane fade show active" role="tabpanel" >
+        <div class="row py-4 border">
+          <div class="col-md-2">
+            <p class="font-weight-bold text-muted mb-3"># Commits </p>
+            <p class="h5 font-weight-bold text-gray-800"><span id="number_commits_range"> {{ metrics.commits_range }}</span></p>
+          </div>
+          <div class="col-md-2 border-left border-right">
+            <p class="font-weight-bold text-muted mb-3"># Pull requests</p>
+            <p class="h5 font-weight-bold text-gray-800"><span id="number_reviews_opened"> {{ metrics.reviews_opened }}</span></p>
+          </div>
+          <div class="col-md-2 border-left border-right">
+            <p class="font-weight-bold text-muted mb-3">Review duration</p>
+            <p class="h5 font-weight-bold text-gray-800"><span id="number_review_duration"> {{ metrics.review_duration }}</span> days</p>
+          </div>
+          <div class="col-md-2 border-left border-right">
+            <p class="font-weight-bold text-muted mb-3"># Issues created</p>
+            <p class="h5 font-weight-bold text-gray-800"><span id="number_issues_created_range"> {{ metrics.issues_created_range }}</span></p>
+          </div>
+          <div class="col-md-2 border-left border-right">
+            <p class="font-weight-bold text-muted mb-3"># Issues closed</p>
+            <p class="h5 font-weight-bold text-gray-800"><span id="number_issues_closed_range"> {{ metrics.issues_closed_range }}</span></p>
+          </div>
+          <div class="col-md-2 border-left border-right">
+            <p class="font-weight-bold text-muted mb-3">Avg. Time to close</p>
+            <p class="h5 font-weight-bold text-gray-800"><span id="number_issues_time_to_close"> {{ metrics.issues_time_to_close }}</span> days</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div id="chart-commits-overview"></div>
+          </div>
+          <div class="col-md-6">
+            <div id="chart-people-overview"></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div id="chart-issues-overview"></div>
+          </div>
+          <div class="col-md-6">
+            <div id="chart-pull-requests-overview"></div>
+          </div>
+        </div>
+
+      </div>
+      <!-- End Overview -->
       <!-- Start GIT ACTIVITY -->
-      <div id="pills-activity-git" class="mb-4 tab-pane fade show active" role="tabpanel" >
+      <div id="pills-activity-git" class="mb-4 tab-pane fade" role="tabpanel" >
         <div class="row py-4 border">
           <div class="col-md-4">
             <p class="font-weight-bold text-muted mb-3"># Commits <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/project_metrics.md#commits"><i class="far fa-question-circle"></i></a></p>
@@ -256,6 +306,10 @@
 <script>
 document.addEventListener('DOMContentLoaded', function(event) {
     var graphs = {
+        "chart-commits-overview": {{ metrics.commits_bokeh | safe }},
+        "chart-people-overview": {{ metrics.author_evolution_bokeh | safe }},
+        "chart-issues-overview": {{ metrics.issues_open_closed_bokeh | safe }},
+        "chart-pull-requests-overview": {{ metrics.reviews_open_closed_bokeh | safe }},
         "chart-commits": {{ metrics.commits_bokeh | safe }},
         "chart-commits-hour": {{ metrics.commits_hour_day_bokeh | safe }},
         "chart-commits-weekday": {{ metrics.commits_weekday_bokeh | safe }},

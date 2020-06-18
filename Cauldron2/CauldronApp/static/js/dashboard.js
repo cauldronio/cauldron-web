@@ -328,17 +328,22 @@ $(function() {
     //"html_id": "key from Django"
     var VIZ_KEYS = {
         "chart-commits": 'commits_bokeh',
-        "chart-commits-hour": 'commits_hour_day_bokeh',
-        "chart-commits-weekday": 'commits_weekday_bokeh',
         "chart-lines-touched": 'commits_lines_changed_boked',
         "chart-issues-open-closed": 'issues_open_closed_bokeh',
-        "chart-issues-open-age": 'issues_open_age_bokeh',
-        "chart-issues-open-weekday": 'issues_open_weekday_bokeh',
-        "chart-issues-closed-weekday": 'issues_closed_weekday_bokeh',
         "chart-reviews-open-closed": 'reviews_open_closed_bokeh',
-        "chart-reviews-open-age": 'reviews_open_age_bokeh',
-        "chart-reviews-open-weekday": 'reviews_open_weekday_bokeh',
-        "chart-reviews-closed-weekday": 'reviews_closed_weekday_bokeh',
+        "chart-commits-overview": "commits_bokeh",
+        "chart-people-overview": "author_evolution_bokeh",
+        "chart-issues-overview": "issues_open_closed_bokeh",
+        "chart-pull-requests-overview": "reviews_open_closed_bokeh",
+    }
+
+    var NUMBERS_KEYS = {
+        "number_commits_range": "commits_range",
+        "number_reviews_opened": "reviews_opened",
+        "number_review_duration": "review_duration",
+        "number_issues_created_range": "issues_created_range",
+        "number_issues_closed_range": "issues_closed_range",
+        "number_issues_time_to_close": "issues_time_to_close",
     }
 
 
@@ -351,6 +356,11 @@ $(function() {
                 var item = JSON.parse(data[VIZ_KEYS[k]]);
                 $(id_html).empty();
                 Bokeh.embed.embed_item(item, k);
+            }
+            for (var k in NUMBERS_KEYS) {
+                var id_html = `#${k}`;
+                var number = data[NUMBERS_KEYS[k]];
+                $(id_html).html(number);
             }
         });
     }

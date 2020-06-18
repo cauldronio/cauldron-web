@@ -1071,7 +1071,7 @@ def request_project_metrics(request, dash_id):
     except Dashboard.DoesNotExist:
         return custom_404(request, "The project requested was not found in this server")
 
-    return JsonResponse(metrics.get_metrics(dashboard, from_date, to_date))
+    return JsonResponse(metrics.get_metrics_in_range(dashboard, from_date, to_date))
 
 
 def delete_dashboard(dashboard):
