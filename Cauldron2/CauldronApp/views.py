@@ -1336,8 +1336,8 @@ def create_context(request):
     context['meetup_enabled'] = hasattr(request.user, 'meetupuser')
 
     # Matomo link
+    context['matomo_enabled'] = settings.MATOMO_ENABLED
     context['matomo_url'] = settings.MATOMO_URL
-
 
     # Information about Hatstall
     if HATSTALL_ENABLED:
