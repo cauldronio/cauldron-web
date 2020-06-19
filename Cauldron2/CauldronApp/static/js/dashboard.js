@@ -93,10 +93,9 @@ function reanalyzeEveryRepo(event){
     var id_repo = 'all';
     var backend = 'all';
 
-    var reanalyzeRepo = $(this);
-    reanalyzeRepo.html(`<div class="spinner-border spinner-border-sm" role="status">
-                            <span class="sr-only">Loading...</span>
-                        </div>`);
+    $('#reanalyze-all-spinner').html(`<div class="spinner-border spinner-border-sm" role="status">
+                                    <span class="sr-only">Loading...</span>
+                                </div>`);
     $.post(url = window.location.pathname + "/edit",
            data = {'action': 'reanalyze-all', 'backend': backend, 'data': id_repo})
         .done(function (data) {
@@ -108,8 +107,8 @@ function reanalyzeEveryRepo(event){
         })
         .fail(function (data) {
             showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
+            $('#reanalyze-all-spinner').html(`<i class="fa fa-sync"></i>`)
         })
-        .always(function(){reanalyzeRepo.html('<i class="fa fa-sync"></i> Refresh')})
 }
 
 function refreshTable() {
@@ -149,6 +148,13 @@ function getSummary() {
               status_output += ` | `;
             }
             i++;
+        }
+        if ((data.status['pending'] > 0) | (data.status['running'] > 0)) {
+            $('#reanalyze-all-spinner').html(`<div class="spinner-border spinner-border-sm" role="status">
+                                    <span class="sr-only">Loading...</span>
+                                </div>`);
+        } else {
+            $('#reanalyze-all-spinner').html(`<i class="fa fa-sync"></i>`)
         }
 
         $('#num-repos-filter').html(data.total);
