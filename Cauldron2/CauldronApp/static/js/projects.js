@@ -1,5 +1,6 @@
 $(document).ready(function(){
     $('form#form-delete-project').on('submit', onSubmitDelete);
+    refreshProjects();
 });
 
 $('#modal-delete-project').on('show.bs.modal', function (e) {
@@ -42,4 +43,33 @@ function refreshProjectDatasources(button, project_id) {
   .always(function(){
     $(button).html(old_html)
   })
+}
+
+function refreshProjects() {
+  var projects_ids = []
+  $('#projects-cards > div').each(function(){
+    projects_ids.push($(this).attr('data-project-id'));
+  })
+
+  if(projects_ids.length > 0) {
+    var query_string = '?projects_ids='.concat(projects_ids.join('&projects_ids='));
+
+    $.getJSON('/projects/info' + query_string, function(data) {
+        data.forEach(function(project){
+            $('#project-' + project.id + '-git').html(project.repositories.git);
+            $('#project-' + project.id + '-github').html(project.repositories.github);
+            $('#project-' + project.id + '-gitlab').html(project.repositories.gitlab);
+            $('#project-' + project.id + '-meetup').html(project.repositories.meetup);
+            $('#project-' + project.id + '-completed').html(project.status.completed);
+            $('#project-' + project.id + '-errors').html(project.status.errors);
+            $('#project-' + project.id + '-pending').html(project.status.pending + project.status.running);
+            if (project.status.pending + project.status.running > 0) {
+                $('#spinner-' + project.id).show();
+            } else {
+                $('#spinner-' + project.id).hide();
+            }
+        });
+    });
+    setTimeout(refreshProjects, 5000);
+  }
 }

@@ -36,6 +36,7 @@ urlpatterns = [
     path('dashboard/<int:dash_id>/metrics', views.request_project_metrics, name="project_metrics"),
 
     path('repositories/info', views.request_repos_info),
+    path('projects/info', views.request_projects_info),
 
     path('terms/', views.terms, name="terms"),
     path('privacy/', views.privacy, name="privacy"),

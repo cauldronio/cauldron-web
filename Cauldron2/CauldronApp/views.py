@@ -962,8 +962,10 @@ def get_dashboard_summary(dash_id):
     :return:
     """
     summary = {
+        'id': dash_id,
         'total': 0,
-        'status': {}
+        'status': {},
+        'repositories': {}
     }
 
     repos = Repository.objects.filter(dashboards=dash_id)
@@ -979,6 +981,9 @@ def get_dashboard_summary(dash_id):
     summary['status']['error'] = CompletedTask.objects.filter(repository__in=repos,
                                                               status="ERROR",
                                                               old=False).count()
+
+    for backend in Repository.BACKEND_CHOICES:
+        summary['repositories'][backend] = repos.filter(backend=backend).count()
 
     return summary
 
@@ -1371,6 +1376,21 @@ def request_repos_info(request):
             'last_refresh': repo.last_refresh,
             'duration': repo.duration,
         })
+
+    return JsonResponse(info, safe=False)
+
+
+def request_projects_info(request):
+    info = []
+
+    projects_ids = request.GET.getlist('projects_ids')
+    try:
+        projects = Dashboard.objects.filter(pk__in=projects_ids)
+    except ValueError:
+        return JsonResponse(info, safe=False)
+
+    for project in projects:
+        info.append(get_dashboard_summary(project.id))
 
     return JsonResponse(info, safe=False)
 

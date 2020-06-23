@@ -1,10 +1,11 @@
-<div class="col-xl-4 col-lg-6" id=project-{{project.project.id}}>
+<div class="col-xl-4 col-lg-6" id=project-{{project.project.id}} data-project-id="{{project.project.id}}">
   <div class="card mb-4 shadow">
     <!-- Card Header -->
     <div class="card-header d-flex">
       <div class="mr-auto font-weight-bold"><a href="{% url 'show_dashboard' project.project.id %}">{{project.project.name}}</a></div>
+      <div id="spinner-{{project.project.id}}" class="spinner-border spinner-border-sm" style="display: none;"></div>
       <div class="dropdown no-arrow">
-        <a id="dropdown{{project.project.id}}" class="dropdown-toggle px-2" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <a id="dropdown{{project.project.id}}" class="dropdown-toggle px-2 ml-3" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
           <i class="fas fa-ellipsis-v fa-sm fa-fe"></i>
         </a>
         <div class="dropdown-menu dropdown-menu-right shadow" aria-labelledby="dropddown{{project.project.id}}">
@@ -63,16 +64,16 @@
           <div class="container">
             <div class="row justify-content-between">
               <div>
-                <i class="fab fa-git-square"></i> <span>{{project.git}}</span>
+                <i class="fab fa-git-square"></i> <span id="project-{{project.project.id}}-git">{{project.git}}</span>
               </div>
               <div>
-                <i class="fab fa-github"></i> <span>{{project.github}}</span>
+                <i class="fab fa-github"></i> <span id="project-{{project.project.id}}-github">{{project.github}}</span>
               </div>
               <div>
-                <i class="fab fa-gitlab"></i> <span>{{project.gitlab}}</span>
+                <i class="fab fa-gitlab"></i> <span id="project-{{project.project.id}}-gitlab">{{project.gitlab}}</span>
               </div>
               <div>
-                <i class="fab fa-meetup"></i> <span>{{project.meetup}}</span>
+                <i class="fab fa-meetup"></i> <span id="project-{{project.project.id}}-meetup">{{project.meetup}}</span>
               </div>
             </div>
           </div>
@@ -87,13 +88,13 @@
           <div class="container">
             <div class="row justify-content-between">
               <div>
-                <i class="fas fa-check text-success"></i> <span>{{project.completed}}</span>
+                <i class="fas fa-check text-success"></i> <span id="project-{{project.project.id}}-completed">{{project.completed}}</span>
               </div>
               <div>
-                <i class="fas fa-times text-danger"></i> <span>{{project.errors}}</span>
+                <i class="fas fa-times text-danger"></i> <span id="project-{{project.project.id}}-errors">{{project.errors}}</span>
               </div>
               <div>
-                <i class="fas fa-spinner"></i> <span>{{project.pending}}</span>
+                <i class="fas fa-spinner"></i> <span id="project-{{project.project.id}}-pending">{{project.pending}}</span>
               </div>
             </div>
           </div>
