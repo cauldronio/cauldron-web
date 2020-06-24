@@ -1117,7 +1117,7 @@ def request_delete_dashboard(request, dash_id):
 
     delete_dashboard(dash)
 
-    return HttpResponseRedirect(reverse('homepage'))
+    return JsonResponse({'status': 'Ok', 'id': dash_id, 'message': 'Dashboard deleted successfully'})
 
 
 def remove_tasks_no_token():

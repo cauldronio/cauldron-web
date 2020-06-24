@@ -1,8 +1,25 @@
+$(document).ready(function(){
+    $('form#form-delete-project').on('submit', onSubmitDelete);
+});
+
 $('#modal-delete-project').on('show.bs.modal', function (e) {
     var projectId = $(e.relatedTarget).data('project-id');
     var urlDelete = `/dashboard/${projectId}/delete`;
     $('#form-delete-project').attr('action', urlDelete);
 })
+
+function onSubmitDelete(ev) {
+    ev.preventDefault();
+
+    var url = $(this).attr("action")
+    $.post(url=url)
+    .done(function (result) {
+        location.reload();
+    })
+    .fail(function (data) {
+        showToast('Failed', `Deletion operation failed`, 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
+    })
+}
 
 function refreshProjectDatasources(button, project_id) {
   var old_html = $(button).html();
