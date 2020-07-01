@@ -163,4 +163,3 @@ class DailyMetricsTestCase(TestCase):
             self.assertEqual(active_users, 3)
             self.assertEqual(new_projects, 3)
             self.assertEqual(completed_tasks, 0)
-

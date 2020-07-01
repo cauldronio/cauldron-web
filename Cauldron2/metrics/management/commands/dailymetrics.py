@@ -53,6 +53,21 @@ class Command(BaseCommand):
         completed_tasks = CompletedTask.objects.filter(completed__date=date_metrics).count()
         self.stdout.write(self.style.SUCCESS(f"Completed tasks: {completed_tasks}"))
 
+        projects_per_user = Dashboard.objects.filter(created__date__lte=date_metrics).exclude(repository=None).count() / User.objects.filter(date_joined__date__lte=date_metrics).count()
+        self.stdout.write(self.style.SUCCESS(f"Projects per user: {projects_per_user}"))
+
+        activated_users = User.objects.filter(dashboard__in=Dashboard.objects.exclude(repository=None)).exclude(dashboard__created__date__lt=date_metrics).distinct().count()
+        self.stdout.write(self.style.SUCCESS(f"Activated Users: {activated_users}"))
+
+        real_users = User.objects.exclude(token=None).filter(date_joined__date__lte=date_metrics).count()
+        self.stdout.write(self.style.SUCCESS(f"Real Users: {real_users}"))
+
+        m2 = User.objects.exclude(token=None).filter(last_login__date=date_metrics).count()
+        self.stdout.write(self.style.SUCCESS(f"M2: {m2}"))
+
+        m3 = User.objects.filter(dashboard__in=Dashboard.objects.filter(modified__date=date_metrics)).distinct().count()
+        self.stdout.write(self.style.SUCCESS(f"M3: {m3}"))
+
         if options['save']:
             models.DailyCreatedUsers.objects.update_or_create(date=date_metrics,
                                                               defaults={'total': users_created})
@@ -62,6 +77,17 @@ class Command(BaseCommand):
                                                                  defaults={'total': projects_created})
             models.DailyCompletedTasks.objects.update_or_create(date=date_metrics,
                                                                 defaults={'total': completed_tasks})
+            models.DailyProjectsPerUser.objects.update_or_create(date=date_metrics,
+                                                                 defaults={'total': projects_per_user})
+            models.DailyActivatedUsers.objects.update_or_create(date=date_metrics,
+                                                                defaults={'total': activated_users})
+            models.DailyRealUsers.objects.update_or_create(date=date_metrics,
+                                                           defaults={'total': real_users})
+            models.DailyM2.objects.update_or_create(date=date_metrics,
+                                                    defaults={'total': m2})
+            models.DailyM3.objects.update_or_create(date=date_metrics,
+                                                    defaults={'total': m3})
+
             self.stdout.write(self.style.SUCCESS("Results stored in the database"))
 
         if options['save_elastic']:
@@ -80,6 +106,11 @@ class Command(BaseCommand):
                                         created_users=users_created,
                                         logged_users=active_users,
                                         created_projects=projects_created,
-                                        completed_tasks=completed_tasks).save()
+                                        completed_tasks=completed_tasks,
+                                        projects_per_user=projects_per_user,
+                                        activated_users=activated_users,
+                                        real_users=real_users,
+                                        m2=m2,
+                                        m3=m3).save()
 
             self.stdout.write(self.style.SUCCESS("Results stored in ElasticSearch"))
