@@ -53,7 +53,7 @@ class Command(BaseCommand):
         completed_tasks = CompletedTask.objects.filter(completed__date=date_metrics).count()
         self.stdout.write(self.style.SUCCESS(f"Completed tasks: {completed_tasks}"))
 
-        projects_per_user = Dashboard.objects.filter(created__date__lte=date_metrics).exclude(repository=None).count() / User.objects.filter(date_joined__date__lte=date_metrics).count()
+        projects_per_user = Dashboard.objects.filter(created__date__lte=date_metrics).exclude(repository=None).count() / User.objects.filter(date_joined__date__lte=date_metrics).filter(dashboard__in=Dashboard.objects.exclude(repository=None)).distinct().count()
         self.stdout.write(self.style.SUCCESS(f"Projects per user: {projects_per_user}"))
 
         activated_users = User.objects.filter(dashboard__in=Dashboard.objects.exclude(repository=None)).exclude(dashboard__created__date__lt=date_metrics).distinct().count()
