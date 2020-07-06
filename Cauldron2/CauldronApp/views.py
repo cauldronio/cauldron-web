@@ -14,6 +14,7 @@ import os
 import re
 import logging
 import requests
+from github import Github
 from random import choice
 from string import ascii_lowercase, digits
 from urllib.parse import urlencode
@@ -28,7 +29,7 @@ from Cauldron2 import settings
 
 from CauldronApp.models import GithubUser, GitlabUser, MeetupUser, Dashboard, Repository, Task, \
                                CompletedTask, AnonymousUser, ProjectRole, Token, UserWorkspace
-from CauldronApp.githubsync import GitHubSync
+
 from CauldronApp.opendistro_utils import OpendistroApi
 from CauldronApp.oauth.github import GitHubOAuth
 from CauldronApp.oauth.gitlab import GitLabOAuth
@@ -179,7 +180,8 @@ def request_github_oauth(request):
         if data_add['backend'] == 'github':
             commits = data_add['commits']
             issues = data_add['issues']
-            manage_add_gh_repo(dash, data_add['data'], commits, issues)
+            forks = data_add['forks']
+            manage_add_gh_repo(dash, data_add['data'], commits, issues, forks)
 
     if merged:
         request.session['alert_notification'] = {'title': 'Account merged',
@@ -279,7 +281,8 @@ def request_gitlab_oauth(request):
         if data_add['backend'] == 'gitlab':
             commits = data_add['commits']
             issues = data_add['issues']
-            manage_add_gl_repo(dash, data_add['data'], commits, issues)
+            forks = data_add['forks']
+            manage_add_gl_repo(dash, data_add['data'], commits, issues, forks)
 
     if merged:
         request.session['alert_notification'] = {'title': 'Account merged',
@@ -490,26 +493,20 @@ def request_edit_dashboard(request, dash_id):
         elif not token and backend != 'git':
             return JsonResponse({'status': 'error', 'message': 'Token not found for that backend'},
                                 status=404)
-        started = start_task(repo=repo, token=token)
-        if started:
-            return JsonResponse({'status': 'reanalyze'})
-        else:
-            return JsonResponse({'status': 'Running or pending'})
+        start_task(repo=repo, token=token)
+        return JsonResponse({'status': 'reanalyze'})
 
     elif action == 'reanalyze-all':
         repos = Repository.objects.filter(dashboards=dash_id)
         if not repos:
             return JsonResponse({'status': 'error', 'message': 'Repositories not found'},
                                 status=404)
-        refreshed_count = 0
         for repo in repos:
             token = Token.objects.filter(user=dash.creator, backend=repo.backend).first()
             if token or repo.backend == 'git':
-                started = start_task(repo=repo, token=token)
-                if started:
-                    refreshed_count += 1
+                start_task(repo=repo, token=token)
         return JsonResponse({'status': 'reanalyze',
-                             'message': "{} of {} will be refreshed".format(refreshed_count, len(repos))})
+                             'message': "Refreshing all the repositories"})
 
     # From here the action should be add
     if backend == 'git':
@@ -530,6 +527,7 @@ def request_edit_dashboard(request, dash_id):
     if backend == 'github':
         analyze_commits = 'commits' in request.POST
         analyze_issues = 'issues' in request.POST
+        forks = 'forks' in request.POST
         if not hasattr(dash.creator, 'githubuser'):
             if request.user != dash.creator:
                 # Admin and owner didn't add his token
@@ -541,6 +539,7 @@ def request_edit_dashboard(request, dash_id):
                                            'backend': backend,
                                            'dash_id': dash.id,
                                            'commits': analyze_commits,
+                                           'forks': forks,
                                            'issues': analyze_issues}
             request.session['last_page'] = '/dashboard/{}'.format(dash_id)
             params = urlencode({'client_id': settings.GH_CLIENT_ID})
@@ -549,11 +548,12 @@ def request_edit_dashboard(request, dash_id):
                                  'message': generate_request_token_message("GitHub"),
                                  'redirect': gh_url_oauth},
                                 status=401)
-        return manage_add_gh_repo(dash, data, analyze_commits, analyze_issues)
+        return manage_add_gh_repo(dash, data, analyze_commits, analyze_issues, forks)
 
     elif backend == 'gitlab':
         analyze_commits = 'commits' in request.POST
         analyze_issues = 'issues' in request.POST
+        forks = 'forks' in request.POST
         if not hasattr(dash.creator, 'gitlabuser'):
             if request.user != dash.creator:
                 return JsonResponse({'status': 'error',
@@ -564,6 +564,7 @@ def request_edit_dashboard(request, dash_id):
                                            'backend': backend,
                                            'dash_id': dash.id,
                                            'commits': analyze_commits,
+                                           'forks': forks,
                                            'issues': analyze_issues}
             request.session['last_page'] = '/dashboard/{}'.format(dash_id)
             params = urlencode({'client_id': settings.GL_CLIENT_ID,
@@ -575,7 +576,7 @@ def request_edit_dashboard(request, dash_id):
                                  'message': generate_request_token_message("GitLab"),
                                  'redirect': gl_url_oauth},
                                 status=401)
-        return manage_add_gl_repo(dash, data, analyze_commits, analyze_issues)
+        return manage_add_gl_repo(dash, data, analyze_commits, analyze_issues, forks)
 
     elif backend == 'meetup':
         if not hasattr(dash.creator, 'meetupuser'):
@@ -602,30 +603,32 @@ def request_edit_dashboard(request, dash_id):
                             status=400)
 
 
-def manage_add_gh_repo(dash, data, analyze_commits, analyze_issues_prs):
+def manage_add_gh_repo(dash, data, analyze_commits, analyze_issues_prs, forks=False):
     """
     Add a repository or a user in a dashboard
     :param dash: Dashboard object for adding
     :param data: Dictionary with the user or the repository to be added. Format: {'user': 'xxx', 'repository': 'yyy'}
     :param analyze_commits: Analyze commits from the repositories
     :param analyze_issues_prs: Analyze issues and pull requests from the repositories
+    :param forks: Analyze forks
     :return:
     """
     if data['user'] and not data['repository']:
-        gh_sync = GitHubSync(dash.creator.githubuser.token.key)
+        github_repos, git_repos = [], []
+        github = Github(dash.creator.githubuser.token.key)
         try:
-            git_list, github_list = gh_sync.get_repo(data['user'], False)
+            repositories = github.get_user(data['user']).get_repos()
+            for repo_gh in repositories:
+                if not repo_gh.fork or forks:
+                    if analyze_issues_prs:
+                        repo = add_to_dashboard(dash, 'github', repo_gh.html_url)
+                        start_task(repo, dash.creator.githubuser.token)
+                    if analyze_commits:
+                        repo = add_to_dashboard(dash, 'git', repo_gh.clone_url)
+                        start_task(repo, None)
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': 'Error from GitHub API. ' + str(e)},
                                 status=404)
-        if analyze_issues_prs:
-            for url in github_list:
-                repo = add_to_dashboard(dash, 'github', url)
-                start_task(repo, dash.creator.githubuser.token)
-        if analyze_commits:
-            for url in git_list:
-                repo = add_to_dashboard(dash, 'git', url)
-                start_task(repo, None)
     elif data['user'] and data['repository']:
         if analyze_issues_prs:
             url_gh = "https://github.com/{}/{}".format(data['user'], data['repository'])
@@ -644,18 +647,19 @@ def manage_add_gh_repo(dash, data, analyze_commits, analyze_issues_prs):
     return JsonResponse({'status': 'ok'})
 
 
-def manage_add_gl_repo(dash, data, analyze_commits, analyze_issues_mrs):
+def manage_add_gl_repo(dash, data, analyze_commits, analyze_issues_mrs, forks=False):
     """
     Add a repository or a user in a dashboard
     :param dash: Dashboard object for adding
     :param data: Dictionary with the user or the repository to be added. Format: {'user': 'xxx', 'repository': 'yyy'}
     :param analyze_commits: Analyze commits from the repositories
     :param analyze_issues_mrs: Analyze issues and merge requests from the repositories
+    :param forks: include forks in the analysis
     :return:
     """
     if data['user'] and not data['repository']:
         try:
-            gitlab_list, git_list = get_gl_repos(data['user'], dash.creator.gitlabuser.token.key)
+            gitlab_list, git_list = get_gl_repos(data['user'], dash.creator.gitlabuser.token.key, forks)
         except Exception as e:
             logging.warning("Error for Gitlab owner {}: {}".format(data['user'], e))
             return JsonResponse({'status': 'error', 'message': 'Error from GitLab API. Does that user exist?'},
@@ -813,18 +817,12 @@ def start_task(repo, token):
     :param token: Token used for the analysis
     :return:
     """
-    if not Task.objects.filter(repository=repo, tokens=token).first():
+    log_file = '{}/repo_{}.log'.format(DASHBOARD_LOGS, repo.id)
+    task, created = Task.objects.get_or_create(repository=repo, defaults={'log_file': log_file})
+    if created:
         CompletedTask.objects.filter(repository=repo, old=False).update(old=True)
-        task = Task.objects.filter(repository=repo).first()
-        if not task:
-            file_log = '{}/repo_{}.log'.format(DASHBOARD_LOGS, repo.id)
-            task = Task(repository=repo, log_file=file_log)
-            task.save()
-        if token:
-            task.tokens.add(token)
-
-        return True
-    return False
+    if token:
+        task.tokens.add(token)
 
 
 def request_new_dashboard(request):
@@ -885,10 +883,7 @@ def add_to_dashboard(dash, backend, url):
     :param backend: Identity used like github, gitlab or meetup. See models.py for more details
     :return: Repository created
     """
-    repo_obj = Repository.objects.filter(url=url, backend=backend).first()
-    if not repo_obj:
-        repo_obj = Repository(url=url, backend=backend)
-        repo_obj.save()
+    repo_obj, _ = Repository.objects.get_or_create(url=url, backend=backend)
     repo_obj.dashboards.add(dash)
     return repo_obj
 
@@ -1440,12 +1435,13 @@ def repo_logs(request, repo_id):
     return JsonResponse(response)
 
 
-def get_gl_repos(owner, token):
+def get_gl_repos(owner, token, forks=False):
     """
     Get all the repositories from a owner or a group
     Limited to 5 seconds
     :param owner: Group or user name
     :param token: Token for gitlab authentication. Must be oauth
+    :param forks: Get owner forks
     :return: Tuple of list of (gitlab repositories and git repositories)
     """
     init_time = time.time()
@@ -1463,7 +1459,7 @@ def get_gl_repos(owner, token):
             gitlab_urls.append(project['web_url'])
             git_urls.append(project['http_url_to_repo'])
 
-        gl_urls_sg, git_urls_sg = get_urls_subgroups(owner, init_time)
+        gl_urls_sg, git_urls_sg = get_urls_subgroups(owner, init_time, forks)
         gitlab_urls += gl_urls_sg
         git_urls += git_urls_sg
         return gitlab_urls, git_urls
@@ -1478,19 +1474,21 @@ def get_gl_repos(owner, token):
     if not r.ok:
         raise Exception('Error in GitLab API retrieving user projects')
     for project in r.json():
-        git_urls.append(project['http_url_to_repo'])
-        gitlab_urls.append(project['web_url'])
+        if ('forked_from_project' not in project) or forks:
+            git_urls.append(project['http_url_to_repo'])
+            gitlab_urls.append(project['web_url'])
 
     return gitlab_urls, git_urls
 
 
-def get_urls_subgroups(group, init_time=time.time()):
+def get_urls_subgroups(group, init_time=time.time(), forks=False):
     """
     Get repositories from subgroups
     Limited to 6 seconds
     NOTE: Auth token doesn't work with subgroups, no token required here (last update: 07-2019)
     :param group:
     :param init_time: The time it started
+    :param forks: get forks
     :return: gl_urls, git_urls
     """
     gitlab_urls, git_urls = list(), list()
@@ -1504,11 +1502,12 @@ def get_urls_subgroups(group, init_time=time.time()):
             continue
         else:
             for project in r.json():
-                main_group = project['path_with_namespace'].split('/')[0]
-                subgroup = '%2F'.join(project['path_with_namespace'].split('/')[1:])
-                gitlab_urls.append('https://gitlab.com/{}/{}'.format(main_group, subgroup))
-                git_urls.append(project['http_url_to_repo'])
-        gl_urls_sub, git_urls_sub = get_urls_subgroups(path, init_time)
+                if ('forked_from_project' not in project) or forks:
+                    main_group = project['path_with_namespace'].split('/')[0]
+                    subgroup = '%2F'.join(project['path_with_namespace'].split('/')[1:])
+                    gitlab_urls.append('https://gitlab.com/{}/{}'.format(main_group, subgroup))
+                    git_urls.append(project['http_url_to_repo'])
+        gl_urls_sub, git_urls_sub = get_urls_subgroups(path, init_time, forks)
         gitlab_urls += gl_urls_sub
         git_urls += git_urls_sub
         logging.error("Elapsed: {}".format(time.time()-init_time))
