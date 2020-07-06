@@ -135,7 +135,7 @@ def git_commits_weekday_bokeh(elastic):
     s = Search(using=elastic, index='git') \
         .query(~Q('match', files=0)) \
         .extra(size=0)
-    s.aggs.bucket('commit_weekday', 'terms', script="doc['grimoire_creation_date'].value.dayOfWeek")
+    s.aggs.bucket('commit_weekday', 'terms', script="doc['commit_date'].value.dayOfWeek", size=7)
 
     try:
         response = s.execute()
@@ -170,7 +170,7 @@ def git_commits_hour_day_bokeh(elastic):
     """Get commits per hour of the day in the specified range of time"""
     s = Search(using=elastic, index='git')\
         .extra(size=0)
-    s.aggs.bucket('commit_hour_day', 'terms', script="doc['grimoire_creation_date'].value.getHourOfDay()")
+    s.aggs.bucket('commit_hour_day', 'terms', script="doc['commit_date'].value.getHourOfDay()", size=24)
 
     try:
         response = s.execute()

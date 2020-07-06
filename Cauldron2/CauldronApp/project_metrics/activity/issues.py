@@ -210,7 +210,7 @@ def issues_open_weekday_bokeh(elastic):
         .query('bool', filter=(Q('match', pull_request=False) |
                                Q('match', is_gitlab_issue=1)))\
         .extra(size=0)
-    s.aggs.bucket('issue_weekday', 'terms', script="doc['created_at'].value.dayOfWeek")
+    s.aggs.bucket('issue_weekday', 'terms', script="doc['created_at'].value.dayOfWeek", size=7)
 
     try:
         response = s.execute()
@@ -247,7 +247,7 @@ def issues_closed_weekday_bokeh(elastic):
         .query('bool', filter=((Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) &
                                Q('exists', field='closed_at'))) \
         .extra(size=0)
-    s.aggs.bucket('issue_weekday', 'terms', script="doc['closed_at'].value.dayOfWeek")
+    s.aggs.bucket('issue_weekday', 'terms', script="doc['closed_at'].value.dayOfWeek", size=7)
 
     try:
         response = s.execute()

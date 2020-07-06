@@ -207,7 +207,7 @@ def reviews_open_weekday_bokeh(elastic):
     s = Search(using=elastic, index='all') \
         .query((Q('match', pull_request=True) | Q('match', is_gitlab_issue=1))) \
         .extra(size=0)
-    s.aggs.bucket('reviews_weekday', 'terms', script="doc['created_at'].value.dayOfWeek")
+    s.aggs.bucket('reviews_weekday', 'terms', script="doc['created_at'].value.dayOfWeek", size=7)
 
     try:
         response = s.execute()
@@ -244,7 +244,7 @@ def reviews_closed_weekday_bokeh(elastic):
         .query('bool', filter=((Q('match', pull_request=True) | Q('match', merge_request=True)) &
                                Q('exists', field='closed_at'))) \
         .extra(size=0)
-    s.aggs.bucket('review_weekday', 'terms', script="doc['closed_at'].value.dayOfWeek")
+    s.aggs.bucket('review_weekday', 'terms', script="doc['closed_at'].value.dayOfWeek", size=7)
 
     try:
         response = s.execute()
