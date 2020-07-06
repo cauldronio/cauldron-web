@@ -20,9 +20,11 @@ def configure_figure(plot, url_help):
     plot.title.align = 'center'
     plot.toolbar.logo = None
     plot.toolbar.active_drag = None
+    plot.left[0].formatter.use_scientific = False
     plot.add_tools(info_tool,
                    tools.PanTool(dimensions='width'),
                    tools.WheelZoomTool(dimensions='width'),
+                   tools.WheelZoomTool(dimensions='height'),
                    tools.SaveTool(),
                    tools.ResetTool())
 

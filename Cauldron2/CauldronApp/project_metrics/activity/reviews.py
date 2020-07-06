@@ -3,7 +3,7 @@ import logging
 from collections import defaultdict
 
 from bokeh.embed import json_item
-from bokeh.models import ColumnDataSource, tools
+from bokeh.models import ColumnDataSource, tools, Range1d
 from bokeh.palettes import Blues
 from bokeh.plotting import figure
 
@@ -15,10 +15,12 @@ from ..utils import configure_figure, weekday_vbar_figure, WEEKDAY
 logger = logging.getLogger(__name__)
 
 
-def reviews_opened(elastic, from_date='now-1y', to_date='now'):
+def reviews_opened(elastic, from_date, to_date):
     """Get number of Merge requests and Pull requests opened in the specified range"""
+    from_date_es = from_date.strftime("%Y-%m-%d")
+    to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all')\
-        .filter('range', created_at={'gte': from_date, "lte": to_date}) \
+        .filter('range', created_at={'gte': from_date_es, "lte": to_date_es}) \
         .query(Q('match', pull_request=True) | Q('match', merge_request=True))
 
     try:
@@ -33,10 +35,12 @@ def reviews_opened(elastic, from_date='now-1y', to_date='now'):
         return 0
 
 
-def reviews_closed(elastic, from_date='now-1y', to_date='now'):
+def reviews_closed(elastic, from_date, to_date):
     """Get number of Merge requests and Pull requests closed in the specified range"""
+    from_date_es = from_date.strftime("%Y-%m-%d")
+    to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all')\
-        .filter('range', closed_at={'gte': from_date, "lte": to_date}) \
+        .filter('range', closed_at={'gte': from_date_es, "lte": to_date_es}) \
         .query(Q('match', pull_request=True) | Q('match', merge_request=True))
 
     try:
@@ -70,14 +74,16 @@ def reviews_open_on(elastic, date):
         return 0
 
 
-def reviews_open_closed_bokeh(elastic, from_date='now-1y', to_date='now'):
+def reviews_open_closed_bokeh(elastic, from_date, to_date):
     """Visualization of opened and closed reviews in the specified time rage"""
+    from_date_es = from_date.strftime("%Y-%m-%d")
+    to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all') \
         .query('bool', filter=(Q('match', pull_request=True) | Q('match', merge_request=True))) \
         .extra(size=0)
-    s.aggs.bucket('range_open', 'filter', Q('range', created_at={'gte': from_date, "lte": to_date})) \
+    s.aggs.bucket('range_open', 'filter', Q('range', created_at={'gte': from_date_es, "lte": to_date_es})) \
         .bucket('open', 'date_histogram', field='created_at', calendar_interval='1w')
-    s.aggs.bucket('range_closed', 'filter', Q('range', closed_at={'gte': from_date, "lte": to_date})) \
+    s.aggs.bucket('range_closed', 'filter', Q('range', closed_at={'gte': from_date_es, "lte": to_date_es})) \
         .bucket('closed', 'date_histogram', field='closed_at', calendar_interval='1w')
 
     try:
@@ -106,6 +112,7 @@ def reviews_open_closed_bokeh(elastic, from_date='now-1y', to_date='now'):
     plot.title.text = '# Reviews open/closed'
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
                            '-/blob/master/guides/project_metrics.md#-reviews-openclosed')
+    plot.x_range = Range1d(from_date, to_date)
 
     source = ColumnDataSource(data=dict(
         o_timestamp=o_timestamp,

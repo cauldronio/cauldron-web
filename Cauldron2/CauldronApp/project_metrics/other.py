@@ -3,7 +3,7 @@ import math
 import logging
 
 from bokeh.embed import json_item
-from bokeh.models import ColumnDataSource
+from bokeh.models import ColumnDataSource, Range1d
 from bokeh.palettes import Category20c, Blues
 from bokeh.plotting import figure
 from bokeh.transform import cumsum
@@ -15,12 +15,12 @@ from .utils import configure_figure
 logger = logging.getLogger(__name__)
 
 
-def issues_time_to_close(elastic, from_date='now-1y', to_date='now'):
-    """
-     Get average time to close issues (only issues closed in the time range)
-    """
+def issues_time_to_close(elastic, from_date, to_date):
+    """ Get average time to close issues (only issues closed in the time range)"""
+    from_date_es = from_date.strftime("%Y-%m-%d")
+    to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all')\
-        .filter('range', closed_at={'gte': from_date, "lte": to_date})\
+        .filter('range', closed_at={'gte': from_date_es, "lte": to_date_es})\
         .filter('match', state='closed')\
         .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1))
     s.aggs.bucket('avg_merge', 'avg', field='time_to_close_days')
@@ -38,13 +38,15 @@ def issues_time_to_close(elastic, from_date='now-1y', to_date='now'):
 
 
 # This one is not responsive at all... we keep it here in case we find a solution
-def author_domains_bokeh(elastic, from_date='now-1y', to_date='now'):
+def author_domains_bokeh(elastic, from_date, to_date):
     """
     Pie chart for domain diversity
     """
+    from_date_es = from_date.strftime("%Y-%m-%d")
+    to_date_es = to_date.strftime("%Y-%m-%d")
     # request for domains
     s = Search(using=elastic, index='all')\
-        .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date})\
+        .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es})\
         .extra(size=0)
 
     s.aggs.bucket('bdomains', 'terms', field='author_domain', order={'authors': 'desc'})\
@@ -70,7 +72,7 @@ def author_domains_bokeh(elastic, from_date='now-1y', to_date='now'):
     # request for other domains
     ignore_domains = [Q('match_phrase', author_domain=domain) for domain in data['domain']]
     s = Search(using=elastic, index='all')\
-        .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date})\
+        .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es})\
         .filter('exists', field='author_domain')\
         .query(Q('bool', must_not=ignore_domains))\
         .extra(size=0)
@@ -110,10 +112,12 @@ def author_domains_bokeh(elastic, from_date='now-1y', to_date='now'):
     return json.dumps(json_item(plot))
 
 
-def author_evolution_bokeh(elastic, from_date='now-1y', to_date='now'):
+def author_evolution_bokeh(elastic, from_date, to_date):
     """Get evolution of Authors"""
+    from_date_es = from_date.strftime("%Y-%m-%d")
+    to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all')\
-        .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date})\
+        .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es})\
         .extra(size=0)
 
     s.aggs.bucket('bucket1', 'date_histogram', field='grimoire_creation_date', calendar_interval='1w')\
@@ -149,6 +153,7 @@ def author_evolution_bokeh(elastic, from_date='now-1y', to_date='now'):
                   tools='')
     plot.title.text = '# Authors per category over time'
     configure_figure(plot, '')
+    plot.x_range = Range1d(from_date, to_date)
 
     source = ColumnDataSource(data=dict(
         x=x,
@@ -169,12 +174,14 @@ def author_evolution_bokeh(elastic, from_date='now-1y', to_date='now'):
     return json.dumps(json_item(plot))
 
 
-def review_duration(elastic, from_date='now-1y', to_date='now'):
+def review_duration(elastic, from_date, to_date):
     """
     Average time to merge a PR or MR
     """
+    from_date_es = from_date.strftime("%Y-%m-%d")
+    to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all')\
-        .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) \
+        .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
         .query((Q('match', pull_request=True) & Q('match', state='closed')) |
                (Q('match', merge_request=True) & Q('match', state='merged')))
     s.aggs.bucket('avg_merge', 'avg', field='time_to_close_days')

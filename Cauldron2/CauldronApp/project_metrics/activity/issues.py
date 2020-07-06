@@ -3,7 +3,7 @@ import logging
 from collections import defaultdict
 
 from bokeh.embed import json_item
-from bokeh.models import ColumnDataSource, tools
+from bokeh.models import ColumnDataSource, tools, Range1d
 from bokeh.palettes import Blues
 from bokeh.plotting import figure
 
@@ -15,10 +15,12 @@ from ..utils import configure_figure, weekday_vbar_figure, WEEKDAY
 logger = logging.getLogger(__name__)
 
 
-def issues_opened(elastic, from_date='now-1y', to_date='now'):
+def issues_opened(elastic, from_date, to_date):
     """Get number of created issues in GitHub and GitLab in a period of time"""
+    from_date_es = from_date.strftime("%Y-%m-%d")
+    to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all')\
-        .filter('range', created_at={'gte': from_date, "lte": to_date}) \
+        .filter('range', created_at={'gte': from_date_es, "lte": to_date_es}) \
         .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1))
 
     try:
@@ -33,10 +35,12 @@ def issues_opened(elastic, from_date='now-1y', to_date='now'):
         return 0
 
 
-def issues_closed(elastic, from_date='now-1y', to_date='now'):
+def issues_closed(elastic, from_date, to_date):
     """Get number of closed issues in GitHub and GitLab in period of time"""
+    from_date_es = from_date.strftime("%Y-%m-%d")
+    to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all')\
-        .filter('range', closed_at={'gte': from_date, "lte": to_date})\
+        .filter('range', closed_at={'gte': from_date_es, "lte": to_date_es})\
         .filter('match', state='closed')\
         .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1))
 
@@ -71,14 +75,16 @@ def issues_open_on(elastic, date):
         return 0
 
 
-def issues_open_closed_bokeh(elastic, from_date='now-1y', to_date='now'):
+def issues_open_closed_bokeh(elastic, from_date, to_date):
     """Visualization of opened and closed issues in the specified time rage"""
+    from_date_es = from_date.strftime("%Y-%m-%d")
+    to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all') \
         .query('bool', filter=(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)))\
         .extra(size=0)
-    s.aggs.bucket('range_open', 'filter', Q('range', created_at={'gte': from_date, "lte": to_date}))\
+    s.aggs.bucket('range_open', 'filter', Q('range', created_at={'gte': from_date_es, "lte": to_date}))\
         .bucket('open', 'date_histogram', field='created_at', calendar_interval='1w')
-    s.aggs.bucket('range_closed', 'filter', Q('range', closed_at={'gte': from_date, "lte": to_date}))\
+    s.aggs.bucket('range_closed', 'filter', Q('range', closed_at={'gte': from_date_es, "lte": to_date}))\
         .bucket('closed', 'date_histogram', field='closed_at', calendar_interval='1w')
 
     try:
@@ -107,6 +113,7 @@ def issues_open_closed_bokeh(elastic, from_date='now-1y', to_date='now'):
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
                            '-/blob/master/guides/project_metrics.md#-issues-openclosed')
     plot.title.text = '# Issues open/closed'
+    plot.x_range = Range1d(from_date, to_date)
 
     source = ColumnDataSource(data=dict(
         o_timestamp=o_timestamp,

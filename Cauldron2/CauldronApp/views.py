@@ -18,6 +18,8 @@ from random import choice
 from string import ascii_lowercase, digits
 from urllib.parse import urlencode
 import time
+import datetime
+from dateutil.relativedelta import relativedelta
 
 from Cauldron2.settings import ES_IN_HOST, ES_IN_PORT, ES_IN_PROTO, ES_ADMIN_PASSWORD, \
                                KIB_IN_HOST, KIB_IN_PORT, KIB_IN_PROTO, KIB_OUT_URL, \
@@ -296,7 +298,7 @@ def request_gitlab_oauth(request):
 def request_meetup_oauth(request):
     error = request.GET.get('error', None)
     if error:
-        return custom_404(f"Meetup callback error. {error}")
+        return custom_404(request, f"Meetup callback error. {error}")
     code = request.GET.get('code', None)
     if not code:
         return custom_404(request, "Code not found in the Meetup callback")
@@ -775,7 +777,6 @@ def request_rename_project(request, dash_id):
     :param dash_id: ID for the project to change
     :return:
     """
-    context = create_context(request)
     try:
         dash = Dashboard.objects.get(id=dash_id)
     except Dashboard.DoesNotExist:
@@ -1058,7 +1059,9 @@ def request_show_dashboard(request, dash_id):
     context['editable'] = request.user.is_authenticated and request.user == dash.creator or request.user.is_superuser
 
     if not context['render_table'] and context['repositories_count'] > 0:
-        context['metrics'] = metrics.get_metrics(dash)
+        from_date = datetime.datetime.now() - relativedelta(years=1)
+        to_date = datetime.datetime.now()
+        context['metrics'] = metrics.get_metrics(dash, from_date, to_date)
 
     return render(request, 'cauldronapp/dashboard.html', context=context)
 
@@ -1068,13 +1071,21 @@ def request_project_metrics(request, dash_id):
     if request.method != 'GET':
         return custom_405(request, request.method)
 
-    from_date = request.GET.get('from', 'now-1y')
-    to_date = request.GET.get('to', 'now')
-
     try:
         dashboard = Dashboard.objects.get(pk=dash_id)
     except Dashboard.DoesNotExist:
         return custom_404(request, "The project requested was not found in this server")
+
+    try:
+        from_str = request.GET.get('from', '')
+        from_date = datetime.datetime.strptime(from_str, '%Y-%m-%d')
+    except ValueError:
+        from_date = datetime.datetime.now() - relativedelta(years=1)
+    try:
+        to_str = request.GET.get('to', '')
+        to_date = datetime.datetime.strptime(to_str, '%Y-%m-%d')
+    except ValueError:
+        to_date = datetime.datetime.now()
 
     return JsonResponse(metrics.get_metrics_in_range(dashboard, from_date, to_date))
 
@@ -1778,7 +1789,8 @@ def request_delete_user(request):
 
     if user == request.user:
         context['title'] = "Not allowed"
-        context['description'] = "You are not allowed to delete your own user from the admin page. Please, go to your settings page to make this action."
+        context['description'] = "You are not allowed to delete your own user from the admin page. " \
+                                 "Please, go to your settings page to make this action."
         return render(request, 'error.html', status=400,
                       context=context)
 

@@ -3,7 +3,7 @@ import logging
 from collections import defaultdict
 
 from bokeh.embed import json_item
-from bokeh.models import ColumnDataSource, tools
+from bokeh.models import ColumnDataSource, tools, Range1d
 from bokeh.palettes import Blues
 from bokeh.plotting import figure
 
@@ -15,10 +15,12 @@ from ..utils import configure_figure, weekday_vbar_figure, WEEKDAY
 logger = logging.getLogger(__name__)
 
 
-def git_commits(elastic, from_date='now-1y', to_date='now'):
+def git_commits(elastic, from_date, to_date):
     """Get number of commits for a project"""
+    from_date_es = from_date.strftime("%Y-%m-%d")
+    to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='git')\
-        .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) \
+        .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
         .query(~Q('match', files=0)) \
         .extra(size=0)
     s.aggs.bucket('commits', 'cardinality', field='hash')
@@ -35,10 +37,12 @@ def git_commits(elastic, from_date='now-1y', to_date='now'):
         return 0
 
 
-def git_lines_commit(elastic, from_date='now-1y', to_date='now'):
+def git_lines_commit(elastic, from_date, to_date):
     """Get lines changed per commit in a period of time"""
+    from_date_es = from_date.strftime("%Y-%m-%d")
+    to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='git')\
-        .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) \
+        .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
         .query(~Q('match', files=0)) \
         .extra(size=0)
     s.aggs.bucket('lines_avg', 'avg', field='lines_changed')
@@ -55,10 +59,12 @@ def git_lines_commit(elastic, from_date='now-1y', to_date='now'):
         return 0
 
 
-def git_files_touched(elastic, from_date='now-1y', to_date='now'):
+def git_files_touched(elastic, from_date, to_date):
     """Get sum of files changed in a period of time"""
+    from_date_es = from_date.strftime("%Y-%m-%d")
+    to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='git')\
-        .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) \
+        .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
         .extra(size=0)
     s.aggs.bucket('files_sum', 'sum', field='files')
 
@@ -74,10 +80,12 @@ def git_files_touched(elastic, from_date='now-1y', to_date='now'):
         return 0
 
 
-def git_commits_bokeh(elastic, from_date='now-1y', to_date='now'):
+def git_commits_bokeh(elastic, from_date, to_date):
     """ Get evolution of contributions by commits"""
+    from_date_es = from_date.strftime("%Y-%m-%d")
+    to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='git')\
-        .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) \
+        .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
         .query(~Q('match', files=0)) \
         .extra(size=0)
     s.aggs.bucket("commits_per_day", 'date_histogram', field='grimoire_creation_date', calendar_interval='1w')
@@ -103,6 +111,7 @@ def git_commits_bokeh(elastic, from_date='now-1y', to_date='now'):
     plot.title.text = '# Commits over time'
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
                            '-/blob/master/guides/project_metrics.md#-commits-over-time')
+    plot.x_range = Range1d(from_date, to_date)
 
     source = ColumnDataSource(data=dict(
         commits=commits,
@@ -215,10 +224,12 @@ def git_commits_hour_day_bokeh(elastic):
     return json.dumps(json_item(plot))
 
 
-def git_lines_changed_bokeh(elastic, from_date='now-1y', to_date='now'):
+def git_lines_changed_bokeh(elastic, from_date, to_date):
     """Evolution of lines added vs lines removed in Bokeh"""
+    from_date_es = from_date.strftime("%Y-%m-%d")
+    to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='git') \
-        .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date})\
+        .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es})\
         .extra(size=0)
 
     s.aggs.bucket('changed', 'date_histogram', field='grimoire_creation_date', calendar_interval='1w')\
@@ -247,6 +258,7 @@ def git_lines_changed_bokeh(elastic, from_date='now-1y', to_date='now'):
     plot.title.text = '# Lines added/removed'
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
                            '-/blob/master/guides/project_metrics.md#-lines-added-vs-removed')
+    plot.x_range = Range1d(from_date, to_date)
 
     source = ColumnDataSource(data=dict(
         lines_added=lines_added,

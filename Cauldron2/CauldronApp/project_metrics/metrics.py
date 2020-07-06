@@ -1,5 +1,7 @@
 import ssl
 import logging
+import datetime
+from dateutil.relativedelta import relativedelta
 
 from elasticsearch.connection import create_ssl_context
 from elasticsearch import Elasticsearch
@@ -43,7 +45,7 @@ def get_elastic_project(dashboard):
     return elastic
 
 
-def get_metrics(dashboard, from_date='now-1y', to_date='now'):
+def get_metrics(dashboard, from_date, to_date):
 
     metrics = {}
 
@@ -56,26 +58,31 @@ def get_metrics(dashboard, from_date='now-1y', to_date='now'):
 def get_metrics_static(dashboard):
     elastic = get_elastic_project(dashboard)
 
+    now = datetime.datetime.now()
+    one_month_ago = now - relativedelta(months=1)
+    one_year_ago = now - relativedelta(years=1)
+    two_year_ago = now - relativedelta(years=2)
+
     metrics = {}
     # Activity git numbers
-    metrics['commits_last_month'] = commits.git_commits(elastic, 'now-1M', 'now')
-    metrics['commits_last_year'] = commits.git_commits(elastic, 'now-1y', 'now')
+    metrics['commits_last_month'] = commits.git_commits(elastic, one_month_ago, now)
+    metrics['commits_last_year'] = commits.git_commits(elastic, one_year_ago, now)
     metrics['commits_yoy'] = year_over_year(metrics['commits_last_year'],
-                                            commits.git_commits(elastic, 'now-2y', 'now-1y'))
-    metrics['lines_commit_last_month'] = commits.git_lines_commit(elastic, 'now-1M', 'now')
-    metrics['lines_commit_last_year'] = commits.git_lines_commit(elastic, 'now-1y', 'now')
+                                            commits.git_commits(elastic, two_year_ago, one_year_ago))
+    metrics['lines_commit_last_month'] = commits.git_lines_commit(elastic, one_month_ago, now)
+    metrics['lines_commit_last_year'] = commits.git_lines_commit(elastic, one_year_ago, now)
     metrics['lines_commit_yoy'] = year_over_year(metrics['lines_commit_last_year'],
-                                                 commits.git_lines_commit(elastic, 'now-2y', 'now-1y'))
+                                                 commits.git_lines_commit(elastic, two_year_ago, one_year_ago))
     try:
-        metrics['lines_commit_file_last_month'] = metrics['lines_commit_last_month'] / commits.git_files_touched(elastic, 'now-1M', 'now')
+        metrics['lines_commit_file_last_month'] = metrics['lines_commit_last_month'] / commits.git_files_touched(elastic, one_month_ago, now)
     except ZeroDivisionError:
         metrics['lines_commit_file_last_month'] = 0
     try:
-        metrics['lines_commit_file_last_year'] = metrics['lines_commit_last_year'] / commits.git_files_touched(elastic, 'now-1y', 'now')
+        metrics['lines_commit_file_last_year'] = metrics['lines_commit_last_year'] / commits.git_files_touched(elastic, one_year_ago, now)
     except ZeroDivisionError:
         metrics['lines_commit_file_last_year'] = 0
     try:
-        lines_commit_file_two_year_ago = commits.git_lines_commit(elastic, 'now-2y', 'now-1y') / commits.git_files_touched(elastic, 'now-2y', 'now-1y')
+        lines_commit_file_two_year_ago = commits.git_lines_commit(elastic, two_year_ago, one_year_ago) / commits.git_files_touched(elastic, two_year_ago, one_year_ago)
     except ZeroDivisionError:
         lines_commit_file_two_year_ago = 0
     metrics['lines_commit_file_yoy'] = year_over_year(metrics['lines_commit_file_last_year'],
@@ -86,17 +93,17 @@ def get_metrics_static(dashboard):
     metrics['commits_weekday_bokeh'] = commits.git_commits_weekday_bokeh(elastic)
 
     # Activity issue numbers
-    metrics['issues_open_last_month'] = issues.issues_opened(elastic, 'now-1M', 'now')
-    metrics['issues_open_last_year'] = issues.issues_opened(elastic, 'now-1y', 'now')
+    metrics['issues_open_last_month'] = issues.issues_opened(elastic, one_month_ago, now)
+    metrics['issues_open_last_year'] = issues.issues_opened(elastic, one_year_ago, now)
     metrics['issues_open_yoy'] = year_over_year(metrics['issues_open_last_year'],
-                                                issues.issues_opened(elastic, 'now-2y', 'now-1y'))
-    metrics['issues_closed_last_month'] = issues.issues_closed(elastic, 'now-1M', 'now')
-    metrics['issues_closed_last_year'] = issues.issues_closed(elastic, 'now-1y', 'now')
+                                                issues.issues_opened(elastic, two_year_ago, one_year_ago))
+    metrics['issues_closed_last_month'] = issues.issues_closed(elastic, one_month_ago, now)
+    metrics['issues_closed_last_year'] = issues.issues_closed(elastic, one_year_ago, now)
     metrics['issues_closed_yoy'] = year_over_year(metrics['issues_closed_last_year'],
-                                                  issues.issues_closed(elastic, 'now-2y', 'now-1y'))
-    metrics['issues_open_today'] = issues.issues_open_on(elastic, 'now')
-    metrics['issues_open_month_ago'] = issues.issues_open_on(elastic, 'now-1M')
-    metrics['issues_open_year_ago'] = issues.issues_open_on(elastic, 'now-1y')
+                                                  issues.issues_closed(elastic, two_year_ago, one_year_ago))
+    metrics['issues_open_today'] = issues.issues_open_on(elastic, now)
+    metrics['issues_open_month_ago'] = issues.issues_open_on(elastic, one_month_ago)
+    metrics['issues_open_year_ago'] = issues.issues_open_on(elastic, one_year_ago)
 
     # Activity issues graphs
     metrics['issues_open_age_bokeh'] = issues.issues_open_age_opened_bokeh(elastic)
@@ -104,17 +111,17 @@ def get_metrics_static(dashboard):
     metrics['issues_closed_weekday_bokeh'] = issues.issues_closed_weekday_bokeh(elastic)
 
     # Activity reviews numbers
-    metrics['reviews_open_last_month'] = reviews.reviews_opened(elastic, 'now-1M', 'now')
-    metrics['reviews_open_last_year'] = reviews.reviews_opened(elastic, 'now-1y', 'now')
+    metrics['reviews_open_last_month'] = reviews.reviews_opened(elastic, one_month_ago, now)
+    metrics['reviews_open_last_year'] = reviews.reviews_opened(elastic, one_year_ago, now)
     metrics['reviews_open_yoy'] = year_over_year(metrics['reviews_open_last_year'],
-                                                 reviews.reviews_opened(elastic, 'now-2y', 'now-1y'))
-    metrics['reviews_closed_last_month'] = reviews.reviews_closed(elastic, 'now-1M', 'now')
-    metrics['reviews_closed_last_year'] = reviews.reviews_closed(elastic, 'now-1y', 'now')
+                                                 reviews.reviews_opened(elastic, two_year_ago, one_year_ago))
+    metrics['reviews_closed_last_month'] = reviews.reviews_closed(elastic, one_month_ago, now)
+    metrics['reviews_closed_last_year'] = reviews.reviews_closed(elastic, one_year_ago, now)
     metrics['reviews_closed_yoy'] = year_over_year(metrics['reviews_closed_last_year'],
-                                                   reviews.reviews_closed(elastic, 'now-2y', 'now-1y'))
-    metrics['reviews_open_today'] = reviews.reviews_open_on(elastic, 'now')
-    metrics['reviews_open_month_ago'] = reviews.reviews_open_on(elastic, 'now-1M')
-    metrics['reviews_open_year_ago'] = reviews.reviews_open_on(elastic, 'now-1y')
+                                                   reviews.reviews_closed(elastic, two_year_ago, one_year_ago))
+    metrics['reviews_open_today'] = reviews.reviews_open_on(elastic, now)
+    metrics['reviews_open_month_ago'] = reviews.reviews_open_on(elastic, one_month_ago)
+    metrics['reviews_open_year_ago'] = reviews.reviews_open_on(elastic, one_year_ago)
 
     # Activity issues graphs
     metrics['reviews_open_age_bokeh'] = reviews.reviews_open_age_opened_bokeh(elastic)
