@@ -328,8 +328,10 @@ function onDataFail(data, target) {
  ************************/
 $(function() {
 
-    var start = moment().subtract(1, 'year');
-    var end = moment();
+    var start = getUrlParameter('from_date');
+    var end = getUrlParameter('to_date');
+    start = (typeof start === 'undefined') ? moment().subtract(1, 'year') : moment(start, "YYYY-MM-DD");
+    end = (typeof end === 'undefined') ? moment() : moment(end, "YYYY-MM-DD");
 
     //"html_id": "key from Django"
     var VIZ_KEYS = {
@@ -372,7 +374,10 @@ $(function() {
     }
 
     function cb(start, end) {
+        var from_str = start.format('YYYY-MM-DD');
+        var end_str = end.format('YYYY-MM-DD');
         $('#date-picker-input').val(start.format('YYYY-MM-DD') + ' - ' + end.format('YYYY-MM-DD'));
+        window.history.replaceState({'start': from_str, 'end': end_str}, 'date', `?from_date=${from_str}&to_date=${end_str}`)
         updateMetricsData(start, end);
     }
 

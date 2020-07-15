@@ -188,3 +188,19 @@ function copy_kibana_public_link() {
   share_button.tooltip('show');
   setTimeout(function () {share_button.tooltip('hide')}, 1000)
 }
+
+// From https://stackoverflow.com/a/21903119/5930859
+var getUrlParameter = function getUrlParameter(sParam) {
+    var sPageURL = window.location.search.substring(1),
+        sURLVariables = sPageURL.split('&'),
+        sParameterName,
+        i;
+
+    for (i = 0; i < sURLVariables.length; i++) {
+        sParameterName = sURLVariables[i].split('=');
+
+        if (sParameterName[0] === sParam) {
+            return sParameterName[1] === undefined ? true : decodeURIComponent(sParameterName[1]);
+        }
+    }
+};

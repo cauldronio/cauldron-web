@@ -1054,8 +1054,17 @@ def request_show_dashboard(request, dash_id):
     context['editable'] = request.user.is_authenticated and request.user == dash.creator or request.user.is_superuser
 
     if not context['render_table'] and context['repositories_count'] > 0:
-        from_date = datetime.datetime.now() - relativedelta(years=1)
-        to_date = datetime.datetime.now()
+        try:
+            from_str = request.GET.get('from_date', '')
+            from_date = datetime.datetime.strptime(from_str, '%Y-%m-%d')
+        except ValueError:
+            from_date = datetime.datetime.now() - relativedelta(years=1)
+        try:
+            to_str = request.GET.get('to_date', '')
+            to_date = datetime.datetime.strptime(to_str, '%Y-%m-%d')
+        except ValueError:
+            to_date = datetime.datetime.now()
+
         context['metrics'] = metrics.get_metrics(dash, from_date, to_date)
 
     return render(request, 'cauldronapp/dashboard.html', context=context)
