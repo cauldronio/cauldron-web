@@ -1,91 +1,87 @@
 <div class="header-dashboard">
 {% if dashboard %}
-
-  <div class="row justify-content-between mb-3">
-
-    <h1 id="dash-name-container">
-      <span id="dash-name">{{dashboard.name}}</span>
-      {% if editable %}
-      <small><a href="#" id="rename"><i class="far fa-xs fa-edit"></i></a></small>
-      {% endif %}
-    </h1>
-
-    <!-- Change name form -->
-    <div>
-      <form class="input-group form-inline" id="change-name" method='post' action="{% url 'rename_project' dashboard.id %}" style="display: none;">
-        {% csrf_token %}
-        <input type="text" class="form-control" id="new-name" name="name" placeholder="" data-container="body" data-toggle="popover" data-trigger="focus" data-placement="bottom" data-html="true" data-content="4-32 characters long">
-        <div class="input-group-append">
-          <button class="btn btn-primary" type="submit">Change</button>
+  <div class="d-lg-flex justify-content-between">
+    <div class="">
+      <div class="row">
+        <!-- Project name -->
+        <h1 id="dash-name-container">
+          <span id="dash-name">{{dashboard.name}}</span>
+          {% if editable %}
+          <small><a href="#" id="rename"><i class="far fa-xs fa-edit"></i></a></small>
+          {% endif %}
+        </h1>
+        <!-- End project name -->
+        <!-- Change name form -->
+        <div>
+          <form class="input-group form-inline" id="change-name" method='post' action="{% url 'rename_project' dashboard.id %}" style="display: none;">
+            {% csrf_token %}
+            <input type="text" class="form-control" id="new-name" name="name" placeholder="" data-container="body" data-toggle="popover" data-trigger="focus" data-placement="bottom" data-html="true" data-content="4-32 characters long">
+            <div class="input-group-append">
+              <button class="btn btn-primary" type="submit">Change</button>
+            </div>
+          </form>
         </div>
-      </form>
+        <!-- End change name form-->
+        <!-- Share button -->
+        {% if repositories_count > 0 %}
+        <span data-toggle="modal" data-target="#shareModal" class="ml-3">
+          <button type="button" class="btn btn-success"
+             data-toggle="tooltip" title="Share project">
+            <i class="fas fa-share-alt"></i>
+          </button>
+        </span>
+        {% endif %}
+        <!-- End share button -->
+
+        {% if editable %}
+          <!-- My workspace -->
+          {% if repositories_count > 0 %}
+          <div class="ml-3 mb-1">
+            <a class="btn btn-icon-split btn-outline-dark"
+               data-toggle="tooltip" title="Edit your dashboards in Kibana"
+               href="{% url 'open_workspace' dashboard.id %}"
+               target="_blank">
+               <span class="icon"><i class="fas fa-wrench"></i></span>
+               <span class="text">Data Workspace</span>
+            </a>
+          </div>
+          {% endif %}
+          <!-- End my workspace -->
+          <!-- Add data source -->
+          <div class="ml-3 mb-1">
+            <button type="button" class="btn btn-icon-split btn-orange mb-sm-1"
+                    data-toggle="modal" data-target="#add-datasource-modal">
+              <span class="icon"><i class="fa fa-plus"></i></span>
+              <span class="text">Add data sources</span>
+            </button>
+          </div>
+          <!-- End add data source -->
+          <!-- Refresh all -->
+          {% if repositories_count > 0 %}
+          <div class="ml-3 mb-1">
+            <button type="button" class="btn btn-icon-split btn-outline-success btn-reanalyze-all">
+              <span class="icon" id="reanalyze-all-spinner"><i class="fa fa-sync"></i></span>
+              <span class="text">Refresh all data sources</span>
+            </button>
+          </div>
+          {% endif %}
+          <!-- End refresh all -->
+        {% endif %}
+      </div>
     </div>
-    <!-- End change name form-->
-
-    {% if repositories_count > 0 %}
-    <div class="pb-1">
-      <a class="btn btn-icon-split btn-outline-dark"
-         data-toggle="tooltip" title="Visualize the data in Kibana"
-         href="{% url 'open_public_kibana' dashboard.id %}"
-         target="_blank">
-        <span class="icon"><i class="fa fa-chart-bar"></i></span>
-        <span class="text">Public Dashboard</span>
-      </a>
-
-      <span data-toggle="modal" data-target="#shareModal">
-        <button type="button" class="btn btn-success"
-           data-toggle="tooltip" title="Share Public Dashboard">
-          <i class="fas fa-share-alt"></i>
-        </button>
-      </span>
-    </div>
-
-    {% if editable %}
-    <div>
-      <a class="btn btn-icon-split btn-outline-dark"
-         data-toggle="tooltip" title="Edit your dashboards in Kibana"
-         href="{% url 'open_workspace' dashboard.id %}"
-         target="_blank">
-         <span class="icon"><i class="fas fa-wrench"></i></span>
-         <span class="text">Data Workspace</span>
-      </a>
-    </div>
-    {% endif %}
-    {% endif %}
-  </div>
-
-  <div class="row d-flex mt-4">
-    <div class="mr-auto">
-      <h3>Project information</h3>
-    </div>
-
-    <div>
-      {% if editable %}
-      <button type="button" class="btn btn-icon-split btn-orange mb-sm-1"
-              data-toggle="modal" data-target="#add-datasource-modal">
-        <span class="icon"><i class="fa fa-plus"></i></span>
-        <span class="text">Add data sources</span>
-      </button>
-       {% if repositories_count > 0 %}
-        <button type="button" class="btn btn-icon-split btn-outline-success btn-reanalyze-all">
-          <span class="icon" id="reanalyze-all-spinner"><i class="fa fa-sync"></i></span>
-          <span class="text">Refresh all data sources</span>
-        </button>
+    <div class="">
+      {% if repositories_count > 0 %}
+        <h3>Project information</h3>
+        <b>Repositories:</b>
+        <span id="num-repos-filter">0</span>
+        (<span id="general-status"><!--This content is generated via JS--></span>)
+        {% if render_table %}
+        <a href="{% url 'show_dashboard' dashboard.id %}">Hide details</a>
+        {% else %}
+        <a href="{% url 'show_dashboard' dashboard.id %}?kind=any">Show details</a>
         {% endif %}
       {% endif %}
     </div>
   </div>
- {% if repositories_count > 0 %}
-  <div class="row">
-    <b>Repositories:</b>
-    <span id="num-repos-filter">0</span>
-    (<span id="general-status"><!--This content is generated via JS--></span>)
-    {% if render_table %}
-    <a href="{% url 'show_dashboard' dashboard.id %}">Hide details</a>
-    {% else %}
-    <a href="{% url 'show_dashboard' dashboard.id %}?kind=any">Show details</a>
-    {% endif %}
-  </div>
-  {% endif %}
 {% endif %}
 </div>

@@ -1,13 +1,13 @@
 <form class="form-inline">
   <div class="input-group col-12 px-0">
-    <input type="text" class="form-control" id="url-public-link-kibana_{{project_id}}" value="https://{{request.get_host}}{% url 'open_public_kibana' project_id %}" readonly>
+    <input type="text" class="form-control" id="url-public-link-kibana_{{project_id}}" value="https://{{request.get_host}}{% url 'show_dashboard' project_id %}" readonly>
     <div class="input-group-append">
       <button class="btn btn-outline-dark copy-share-link-kibana rounded-right" data-project-id="{{project_id}}" type="button" data-toggle="tooltip" data-title="Copied to clipboard!" data-trigger="manual" data-placement="bottom"><i class="far fa-copy"></i></button>
     </div>
     <div class="btn-group ml-2" role="group">
-      <a href="https://twitter.com/intent/tweet?text=Watch+the+public+metrics+about+%23{{project_name|urlencode}}+development+provided+by+@cauldronio:&url=https://{{request.get_host}}{% url 'open_public_kibana' project_id %}&hashtags=LevelUp,OpenSource,DevAnalytics" class="btn btn-twitter" target="_blank"><i class="fab fa-twitter"></i></a>
-      <a href="https://www.linkedin.com/shareArticle?mini=true&text=Watch+this+amazing+visualizations+of+{{project_name|urlencode}}+made+with+@cauldronio&url=https://{{request.get_host}}{% url 'open_public_kibana' project_id %}" class="btn btn-linkedin" target="_blank"><i class="fab fa-linkedin-in"></i></a>
-      <a href="mailto:?subject={{project_name|urlencode}}+visualizations&body=https://{{request.get_host}}{% url 'open_public_kibana' project_id %}" class="btn btn-envelope"><i class="far fa-envelope"></i></a>
+      <a href="https://twitter.com/intent/tweet?text=Watch+the+public+metrics+about+%23{{project_name|urlencode}}+development+provided+by+@cauldronio:&url=https://{{request.get_host}}{% url 'show_dashboard' project_id %}&hashtags=LevelUp,OpenSource,DevAnalytics" class="btn btn-twitter" target="_blank"><i class="fab fa-twitter"></i></a>
+      <a href="https://www.linkedin.com/shareArticle?mini=true&text=Watch+this+amazing+visualizations+of+{{project_name|urlencode}}+made+with+@cauldronio&url=https://{{request.get_host}}{% url 'show_dashboard' project_id %}" class="btn btn-linkedin" target="_blank"><i class="fab fa-linkedin-in"></i></a>
+      <a href="mailto:?subject={{project_name|urlencode}}+visualizations&body=https://{{request.get_host}}{% url 'show_dashboard' project_id %}" class="btn btn-envelope"><i class="far fa-envelope"></i></a>
     </div>
   </div>
 </form>

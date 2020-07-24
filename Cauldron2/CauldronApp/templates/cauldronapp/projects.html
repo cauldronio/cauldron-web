@@ -10,15 +10,9 @@
 {% block content %}
 <div class="container-fluid mt-3">
 	<div class="mb-3 d-md-flex justify-content-between">
-		<form action="/dashboard" method="post" class="create-dashboard form-inline">
-      {% csrf_token %}
-      <h1 class="mr-4">My projects</h1>
 
-			<button class="btn btn-icon-split btn-primary" role="button" type="submit">
-				<span class="icon"><i class="fas fa-plus"></i></span>
-				<span class="text">New project</span>
-			</button>
-		</form>
+		<h1 class="mr-4">My projects</h1>
+
 
     <form method="GET" action ="" class="form-inline">
         <span class="font-weight-bold d-block mr-2">Search: </span>

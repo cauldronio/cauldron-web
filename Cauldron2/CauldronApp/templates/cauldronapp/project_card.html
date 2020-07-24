@@ -39,7 +39,7 @@
             <span class="sharedashboard" data-toggle="modal" data-target="#shareModal"
             data-projname="{{project.project.name}}"
             data-projid="{{project.project.id}}"
-            data-projurl="https://{{request.get_host}}{% url 'open_public_kibana' project.project.id %}">
+            data-projurl="https://{{request.get_host}}{% url 'show_dashboard' project.project.id %}">
               <button type="button" class="btn btn-sm btn-outline-success"
                data-toggle="tooltip" title="Share options">
               <i class="fas fa-share-alt"></i>

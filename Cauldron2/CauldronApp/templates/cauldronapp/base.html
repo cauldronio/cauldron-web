@@ -90,6 +90,17 @@
       </a>
       <div class="collapse navbar-collapse">
         <ul class="navbar-nav mr-auto ml-3">
+          {% if request.resolver_match.url_name != 'show_dashboard' or repositories_count > 0%}
+          <li class="nav-item">
+            <form action="/dashboard" method="post" class="create-dashboard form-inline">
+              {% csrf_token %}
+              <button class="btn btn-icon-split btn-orange" role="button" type="submit">
+                <span class="icon"><i class="fas fa-plus"></i></span>
+                <span class="text">New project</span>
+              </button>
+            </form>
+          </li>
+          {% endif %}
           {% if authenticated and request.path != homepage %}
           <li class="nav-item">
             <a class="nav-link" href="{% url 'homepage' %}">My Projects</a>
