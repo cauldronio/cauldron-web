@@ -8,5 +8,5 @@ python-gitlab>=2.0,<3.0
 python-slugify>= 4.0.0,<5
 cryptography>=2.7,<3
 PyJWT>=1.7,<2
-bokeh>=2.0.2
+bokeh==2.1.1
 python-dateutil>=2.8.1,<3
