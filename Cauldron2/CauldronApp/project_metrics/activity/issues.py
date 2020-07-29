@@ -113,7 +113,8 @@ def issues_open_closed_bokeh(elastic, from_date, to_date):
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
                            '-/blob/master/guides/project_metrics.md#-issues-openclosed')
     plot.title.text = '# Issues open/closed'
-    plot.x_range = Range1d(from_date, to_date)
+    if len(o_timestamp) > 0 or len(c_timestamp) > 0:
+        plot.x_range = Range1d(from_date, to_date)
 
     source = ColumnDataSource(data=dict(
         o_timestamp=o_timestamp,

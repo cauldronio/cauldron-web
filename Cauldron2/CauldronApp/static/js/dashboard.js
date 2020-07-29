@@ -343,6 +343,9 @@ $(function() {
         "chart-people-overview": "author_evolution_bokeh",
         "chart-issues-overview": "issues_open_closed_bokeh",
         "chart-pull-requests-overview": "reviews_open_closed_bokeh",
+        "chart-authors-git-active":"commits_authors_active_bokeh",
+        "chart-authors-issues-active":"issues_authors_active_bokeh",
+        "chart-authors-reviews-active":"reviews_authors_active_bokeh",
     }
 
     var NUMBERS_KEYS = {
@@ -352,6 +355,13 @@ $(function() {
         "number_issues_created_range": "issues_created_range",
         "number_issues_closed_range": "issues_closed_range",
         "number_issues_time_to_close": "issues_time_to_close",
+        "number_issues_time_to_close": "issues_time_to_close",
+        "active_people_git": "active_people_git",
+        "active_people_issues": "active_people_issues",
+        "active_people_patches": "active_people_patches",
+        "onboardings_git": "onboardings_git",
+        "onboardings_issues": "onboardings_issues",
+        "onboardings_patches": "onboardings_patches",
     }
 
 

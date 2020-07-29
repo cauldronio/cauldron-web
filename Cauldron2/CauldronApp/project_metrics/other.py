@@ -153,7 +153,8 @@ def author_evolution_bokeh(elastic, from_date, to_date):
                   tools='')
     plot.title.text = '# Authors per category over time'
     configure_figure(plot, '')
-    plot.x_range = Range1d(from_date, to_date)
+    if len(x) > 0:
+        plot.x_range = Range1d(from_date, to_date)
 
     source = ColumnDataSource(data=dict(
         x=x,

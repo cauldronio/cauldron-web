@@ -111,7 +111,8 @@ def git_commits_bokeh(elastic, from_date, to_date):
     plot.title.text = '# Commits over time'
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
                            '-/blob/master/guides/project_metrics.md#-commits-over-time')
-    plot.x_range = Range1d(from_date, to_date)
+    if len(timestamp) > 0:
+        plot.x_range = Range1d(from_date, to_date)
 
     source = ColumnDataSource(data=dict(
         commits=commits,
@@ -258,7 +259,8 @@ def git_lines_changed_bokeh(elastic, from_date, to_date):
     plot.title.text = '# Lines added/removed'
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
                            '-/blob/master/guides/project_metrics.md#-lines-added-vs-removed')
-    plot.x_range = Range1d(from_date, to_date)
+    if len(timestamp) > 0:
+        plot.x_range = Range1d(from_date, to_date)
 
     source = ColumnDataSource(data=dict(
         lines_added=lines_added,

@@ -15,8 +15,11 @@
         <li class="nav-item" role="presentation">
           <a class="nav-link" data-toggle="pill" href="#pills-activity-reviews" role="tab" aria-controls="pills-activity-reviews" aria-selected="false">PRs/MRs Activity</a>
         </li>
+        <li class="nav-item" role="presentation">
+          <a class="nav-link" data-toggle="pill" href="#pills-community" role="tab" aria-controls="pills-community" aria-selected="false">Community</a>
+        </li>
         {% if repositories_count > 0 %}
-         <li class="nav-item">
+        <li class="nav-item">
           <a class="nav-link"
              data-toggle="tooltip" title="Visualize the data in Kibana"
              href="{% url 'open_public_kibana' dashboard.id %}"
@@ -26,17 +29,19 @@
           </a>
         </li>
         {% endif %}
-          <div class="form-group ml-md-auto">
-            <div class="input-group">
-              <input type="text" class="form-control"  id="date-picker-input">
-              <div class="input-group-append">
-                <button class="btn btn-outline-secondary" type="button" id="date-picker">
-                  <i class="fa fa-calendar"></i>&nbsp;
-                  <i class="fa fa-caret-down"></i>
-                </button>
-              </div>
+        <div class="form-group ml-md-auto">
+          <div class="input-group">
+            <input type="text" class="form-control"  id="date-picker-input">
+            <div class="input-group-append">
+              <button class="btn btn-outline-secondary" type="button" id="date-picker">
+                <i class="fa fa-calendar"></i>&nbsp;
+                <i class="fa fa-caret-down"></i>
+              </button>
             </div>
           </div>
+        </div>
+
+
       </ul>
     </div>
 
@@ -307,6 +312,62 @@
         </div>
       </div>
       <!-- End Reviews ACTIVITY-->
+      <!-- Start COMMUNITY -->
+      <div id="pills-community" class="mb-4 tab-pane fade" role="tabpanel" >
+        <div class="row py-4 border">
+          <div class="col-md-6">
+            <p class="font-weight-bold text-muted mb-3"># Active people <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/project_metrics.md#-active-people-last-month"><i class="far fa-question-circle"></i></a></p>
+            <div class="row">
+              <div class="col-4">
+                <p class="h5 font-weight-bold text-gray-800"><span id="active_people_git">{{ metrics.active_people_git }}</span></p>
+                <p class="text-muted mb-1">Git authors</p>
+              </div>
+              <div class="col-4">
+                <p class="h5 font-weight-bold text-gray-800"><span id="active_people_issues">{{metrics.active_people_issues}}</span></p>
+                <p class="text-muted mb-1">Issue authors</p>
+              </div>
+              <div class="col-4">
+                <p class="h5 font-weight-bold text-gray-800"><span id="active_people_patches">{{metrics.active_people_patches}}</span></p>
+                <p class="text-muted mb-1">PRs/MRs submitters</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 border-left">
+            <p class="font-weight-bold text-muted mb-3"># Onboardings <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/project_metrics.md#-onboardings"><i class="far fa-question-circle"></i></a></p>
+            <div class="row">
+              <div class="col-4">
+                <p class="h5 font-weight-bold text-gray-800"><span id="onboardings_git">{{metrics.onboardings_git}}</span></p>
+                <p class="text-muted mb-1">Git authors</p>
+              </div>
+              <div class="col-4">
+                <p class="h5 font-weight-bold text-gray-800"><span id="onboardings_issues">{{metrics.onboardings_issues}}</span></p>
+                <p class="text-muted mb-1">Issue authors</p>
+              </div>
+              <div class="col-4">
+                <p class="h5 font-weight-bold text-gray-800"><span id="onboardings_patches">{{metrics.onboardings_patches}}</span></p>
+                <p class="text-muted mb-1">PRs/MRs submitters</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div id="chart-authors-git-active"></div>
+          </div>
+          <div class="col-md-6">
+            <div id="chart-authors-issues-active"></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div id="chart-authors-reviews-active"></div>
+          </div>
+<!--          <div class="col-md-6">-->
+<!--            <div id="chart-commits-weekday"></div>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--      </div>-->
+      <!-- End COMMUNITY -->
     </div>
   </div>
 </div>
@@ -330,6 +391,9 @@ document.addEventListener('DOMContentLoaded', function(event) {
         "chart-reviews-open-age": {{ metrics.reviews_open_age_bokeh | safe }},
         "chart-reviews-open-weekday": {{ metrics.reviews_open_weekday_bokeh | safe }},
         "chart-reviews-closed-weekday": {{ metrics.reviews_closed_weekday_bokeh | safe }},
+        "chart-authors-git-active": {{ metrics.commits_authors_active_bokeh | safe }},
+        "chart-authors-issues-active": {{ metrics.issues_authors_active_bokeh | safe }},
+        "chart-authors-reviews-active": {{ metrics.reviews_authors_active_bokeh | safe }},
     }
 
     for (var k in graphs) {
