@@ -111,7 +111,7 @@ def issues_open_closed_bokeh(elastic, from_date, to_date):
                   sizing_mode="stretch_width",
                   tools='')
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
-                           '-/blob/master/guides/project_metrics.md#-issues-openclosed')
+                           '-/blob/master/guides/metrics/activity/issues-open-closed.md')
     plot.title.text = '# Issues open/closed'
     if len(o_timestamp) > 0 or len(c_timestamp) > 0:
         plot.x_range = Range1d(from_date, to_date)
@@ -184,7 +184,7 @@ def issues_open_age_opened_bokeh(elastic):
                   tools='')
     plot.title.text = '# Open issues age'
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
-                           '-/blob/master/guides/project_metrics.md#-open-issues-age')
+                           '-/blob/master/guides/metrics/activity/open-issues-age.md')
 
     source = ColumnDataSource(data=dict(
         issues=issues,
@@ -244,7 +244,7 @@ def issues_open_weekday_bokeh(elastic):
                                    ('issues', '@top')
                                ],
                                url_help='https://gitlab.com/cauldronio/cauldron/'
-                                        '-/blob/master/guides/project_metrics.md#-issues-open-by-weekday')
+                                        '-/blob/master/guides/metrics/activity/issues-open-by-weekday.md')
 
     return json.dumps(json_item(plot))
 
@@ -281,6 +281,6 @@ def issues_closed_weekday_bokeh(elastic):
                                    ('issues', '@top')
                                ],
                                url_help='https://gitlab.com/cauldronio/cauldron/'
-                                        '-/blob/master/guides/project_metrics.md#-issues-closed-by-weekday')
+                                        '-/blob/master/guides/metrics/activity/issues-closed-by-weekday.md')
 
     return json.dumps(json_item(plot))

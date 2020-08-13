@@ -111,7 +111,7 @@ def reviews_open_closed_bokeh(elastic, from_date, to_date):
                   tools='')
     plot.title.text = '# Reviews open/closed'
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
-                           '-/blob/master/guides/project_metrics.md#-reviews-openclosed')
+                           '-/blob/master/guides/metrics/activity/reviews-open-closed.md')
     if len(o_timestamp) > 0 or len(c_timestamp) > 0:
         plot.x_range = Range1d(from_date, to_date)
 
@@ -182,7 +182,7 @@ def reviews_open_age_opened_bokeh(elastic):
                   tools='')
     plot.title.text = '# Open reviews age'
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
-                           '-/blob/master/guides/project_metrics.md#-open-reviews-age')
+                           '-/blob/master/guides/metrics/activity/open-reviews-age.md')
 
     source = ColumnDataSource(data=dict(
         reviews=reviews,
@@ -241,7 +241,7 @@ def reviews_open_weekday_bokeh(elastic):
                                    ('reviews', '@top')
                                ],
                                url_help='https://gitlab.com/cauldronio/cauldron/'
-                                        '-/blob/master/guides/project_metrics.md#-reviews-open-by-weekday')
+                                        '-/blob/master/guides/metrics/activity/reviews-open-by-weekday.md')
 
     return json.dumps(json_item(plot))
 
@@ -278,6 +278,6 @@ def reviews_closed_weekday_bokeh(elastic):
                                    ('reviews', '@top')
                                ],
                                url_help='https://gitlab.com/cauldronio/cauldron/'
-                                        '-/blob/master/guides/project_metrics.md#-reviews-closed-by-weekday')
+                                        '-/blob/master/guides/metrics/activity/reviews-closed-by-weekday.md')
 
     return json.dumps(json_item(plot))

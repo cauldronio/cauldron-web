@@ -99,7 +99,7 @@ def authors_active_bokeh(elastic, from_date, to_date):
                   tools='')
 
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
-                           '-/blob/master/guides/project_metrics.md')
+                           '-/blob/master/guides/metrics/community/authors-reviews.md')
     plot.title.text = '# Merge and Pull requests authors'
     if len(timestamp) > 0:
         plot.x_range = Range1d(from_date, to_date)
@@ -127,4 +127,3 @@ def authors_active_bokeh(elastic, from_date, to_date):
     ))
 
     return json.dumps(json_item(plot))
-

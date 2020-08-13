@@ -50,27 +50,27 @@
       <div id="pills-overview" class="mb-4 tab-pane fade show active" role="tabpanel" >
         <div class="row py-4 border">
           <div class="col-md-2">
-            <p class="font-weight-bold text-muted mb-3"># Commits </p>
+            <p class="font-weight-bold text-muted mb-3"># Commits <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/overview/commits.md"><i class="far fa-question-circle"></i></a></p>
             <p class="h5 font-weight-bold text-gray-800"><span id="number_commits_range"> {{ metrics.commits_range }}</span></p>
           </div>
           <div class="col-md-2 border-left border-right">
-            <p class="font-weight-bold text-muted mb-3"># Pull requests</p>
+            <p class="font-weight-bold text-muted mb-3"># Pull requests <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/overview/pull-merge-requests-created.md"><i class="far fa-question-circle"></i></a></p>
             <p class="h5 font-weight-bold text-gray-800"><span id="number_reviews_opened"> {{ metrics.reviews_opened }}</span></p>
           </div>
           <div class="col-md-2 border-left border-right">
-            <p class="font-weight-bold text-muted mb-3">Review duration</p>
+            <p class="font-weight-bold text-muted mb-3">Review duration <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/overview/review-duration.md"><i class="far fa-question-circle"></i></a></p>
             <p class="h5 font-weight-bold text-gray-800"><span id="number_review_duration"> {{ metrics.review_duration }}</span> days</p>
           </div>
           <div class="col-md-2 border-left border-right">
-            <p class="font-weight-bold text-muted mb-3"># Issues created</p>
+            <p class="font-weight-bold text-muted mb-3"># Issues created <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/overview/issues-created.md"><i class="far fa-question-circle"></i></a></p>
             <p class="h5 font-weight-bold text-gray-800"><span id="number_issues_created_range"> {{ metrics.issues_created_range }}</span></p>
           </div>
           <div class="col-md-2 border-left border-right">
-            <p class="font-weight-bold text-muted mb-3"># Issues closed</p>
+            <p class="font-weight-bold text-muted mb-3"># Issues closed <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/overview/issues-closed.md"><i class="far fa-question-circle"></i></a></p>
             <p class="h5 font-weight-bold text-gray-800"><span id="number_issues_closed_range"> {{ metrics.issues_closed_range }}</span></p>
           </div>
           <div class="col-md-2 border-left border-right">
-            <p class="font-weight-bold text-muted mb-3">Avg. Time to close</p>
+            <p class="font-weight-bold text-muted mb-3">Avg. Time to close <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/overview/average-time-to-close.md"><i class="far fa-question-circle"></i></a></p>
             <p class="h5 font-weight-bold text-gray-800"><span id="number_issues_time_to_close"> {{ metrics.issues_time_to_close }}</span> days</p>
           </div>
         </div>
@@ -97,7 +97,7 @@
       <div id="pills-activity-git" class="mb-4 tab-pane fade" role="tabpanel" >
         <div class="row py-4 border">
           <div class="col-md-4">
-            <p class="font-weight-bold text-muted mb-3"># Commits <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/project_metrics.md#commits"><i class="far fa-question-circle"></i></a></p>
+            <p class="font-weight-bold text-muted mb-3"># Commits <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/commits.md"><i class="far fa-question-circle"></i></a></p>
             <div class="row">
               <div class="col-4">
                 <p class="h5 font-weight-bold text-gray-800">{{ metrics.commits_last_month }}</p>
@@ -114,7 +114,7 @@
             </div>
           </div>
           <div class="col-md-4 border-right border-left">
-            <p class="font-weight-bold text-muted mb-3"># Lines/commit <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/project_metrics.md#linescommit"><i class="far fa-question-circle"></i></a></p>
+            <p class="font-weight-bold text-muted mb-3"># Lines/commit <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/lines-commit.md"><i class="far fa-question-circle"></i></a></p>
             <div class="row">
               <div class="col-4">
                 <p class="h5 font-weight-bold text-gray-800">{{ metrics.lines_commit_last_month|stringformat:".2f" }}</p>
@@ -131,7 +131,7 @@
             </div>
           </div>
           <div class="col-md-4">
-            <p class="font-weight-bold text-muted mb-3"># Lines/commit/file <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/project_metrics.md#linescommitfile"><i class="far fa-question-circle"></i></a></p>
+            <p class="font-weight-bold text-muted mb-3"># Lines/commit/file <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/lines-commit-file.md"><i class="far fa-question-circle"></i></a></p>
             <div class="row">
               <div class="col-4">
                 <p class="h5 font-weight-bold text-gray-800">{{ metrics.lines_commit_file_last_month|stringformat:".4f" }}</p>
@@ -170,7 +170,7 @@
       <div id="pills-activity-issues" class="mb-4 tab-pane fade" role="tabpanel" >
         <div class="row py-4 border">
           <div class="col-md-4">
-            <p class="font-weight-bold text-muted mb-3"># Issues created <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/project_metrics.md#-issues-opened"><i class="far fa-question-circle"></i></a></p>
+            <p class="font-weight-bold text-muted mb-3"># Issues created <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/issues-created.md"><i class="far fa-question-circle"></i></a></p>
             <div class="row">
               <div class="col-4">
                 <p class="h5 font-weight-bold text-gray-800">{{ metrics.issues_open_last_month }}</p>
@@ -187,7 +187,7 @@
             </div>
           </div>
           <div class="col-md-4 border-left border-right">
-            <p class="font-weight-bold text-muted mb-3"># Issues closed <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/project_metrics.md#-issues-closed"><i class="far fa-question-circle"></i></a></p>
+            <p class="font-weight-bold text-muted mb-3"># Issues closed <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/issues-closed.md"><i class="far fa-question-circle"></i></a></p>
             <div class="row">
               <div class="col-4">
                 <p class="h5 font-weight-bold text-gray-800">{{ metrics.issues_closed_last_month }}</p>
@@ -204,7 +204,7 @@
             </div>
           </div>
           <div class="col-md-4">
-            <p class="font-weight-bold text-muted mb-3"># Issues open <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/project_metrics.md#-issues-open-on-x-date"><i class="far fa-question-circle"></i></a></p>
+            <p class="font-weight-bold text-muted mb-3"># Issues open <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/issues-open.md"><i class="far fa-question-circle"></i></a></p>
             <div class="row">
               <div class="col-4">
                 <p class="h5 font-weight-bold text-gray-800">{{ metrics.issues_open_today }}</p>
@@ -243,7 +243,7 @@
       <div id="pills-activity-reviews" class="mb-4 tab-pane fade" role="tabpanel" >
         <div class="row py-4 border">
           <div class="col-md-4">
-            <p class="font-weight-bold text-muted mb-3"># Pull/Merge requests created <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/project_metrics.md#-prsmrs-opened"><i class="far fa-question-circle"></i></a></p>
+            <p class="font-weight-bold text-muted mb-3"># Pull/Merge requests created <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/pull-merge-requests-created.md"><i class="far fa-question-circle"></i></a></p>
             <div class="row">
               <div class="col-4">
                 <p class="h5 font-weight-bold text-gray-800">{{ metrics.reviews_open_last_month }}</p>
@@ -260,7 +260,7 @@
             </div>
           </div>
           <div class="col-md-4 border-left border-right">
-            <p class="font-weight-bold text-muted mb-3"># Pull/Merge requests closed <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/project_metrics.md#-prsmrs-closed"><i class="far fa-question-circle"></i></a></p>
+            <p class="font-weight-bold text-muted mb-3"># Pull/Merge requests closed <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/pull-merge-requests-closed.md"><i class="far fa-question-circle"></i></a></p>
             <div class="row">
               <div class="col-4">
                 <p class="h5 font-weight-bold text-gray-800">{{ metrics.reviews_closed_last_month }}</p>
@@ -277,7 +277,7 @@
             </div>
           </div>
           <div class="col-md-4">
-            <p class="font-weight-bold text-muted mb-3"># Pull/Merge requests open <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/project_metrics.md#-prsmrs-were-open-on-x-date"><i class="far fa-question-circle"></i></a></p>
+            <p class="font-weight-bold text-muted mb-3"># Pull/Merge requests open <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/pull-merge-requests-open.md"><i class="far fa-question-circle"></i></a></p>
             <div class="row">
               <div class="col-4">
                 <p class="h5 font-weight-bold text-gray-800">{{ metrics.reviews_open_today }}</p>
@@ -316,7 +316,7 @@
       <div id="pills-community" class="mb-4 tab-pane fade" role="tabpanel" >
         <div class="row py-4 border">
           <div class="col-md-6">
-            <p class="font-weight-bold text-muted mb-3"># Active people <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/project_metrics.md#-active-people-last-month"><i class="far fa-question-circle"></i></a></p>
+            <p class="font-weight-bold text-muted mb-3"># Active people <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/community/active-people.md"><i class="far fa-question-circle"></i></a></p>
             <div class="row">
               <div class="col-4">
                 <p class="h5 font-weight-bold text-gray-800"><span id="active_people_git">{{ metrics.active_people_git }}</span></p>
@@ -333,7 +333,7 @@
             </div>
           </div>
           <div class="col-md-6 border-left">
-            <p class="font-weight-bold text-muted mb-3"># Onboardings <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/project_metrics.md#-onboardings"><i class="far fa-question-circle"></i></a></p>
+            <p class="font-weight-bold text-muted mb-3"># Onboardings <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/community/onboardings.md"><i class="far fa-question-circle"></i></a></p>
             <div class="row">
               <div class="col-4">
                 <p class="h5 font-weight-bold text-gray-800"><span id="onboardings_git">{{metrics.onboardings_git}}</span></p>

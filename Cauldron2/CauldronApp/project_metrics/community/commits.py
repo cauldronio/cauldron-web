@@ -57,8 +57,6 @@ def authors_active_bokeh(elastic, from_date, to_date):
         logger.warning(e)
         authors_buckets = []
 
-    logger.error(authors_buckets)
-
     # Create the Bokeh visualization
     timestamp, authors = [], []
     for item in authors_buckets:
@@ -73,7 +71,7 @@ def authors_active_bokeh(elastic, from_date, to_date):
                   tools='')
 
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
-                           '-/blob/master/guides/project_metrics.md')
+                           '-/blob/master/guides/metrics/community/authors-commits.md')
     plot.title.text = '# Authors of commits'
     if len(timestamp) > 0:
         plot.x_range = Range1d(from_date, to_date)

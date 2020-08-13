@@ -110,7 +110,7 @@ def git_commits_bokeh(elastic, from_date, to_date):
                   tools='')
     plot.title.text = '# Commits over time'
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
-                           '-/blob/master/guides/project_metrics.md#-commits-over-time')
+                           '-/blob/master/guides/metrics/activity/commits-over-time.md')
     if len(timestamp) > 0:
         plot.x_range = Range1d(from_date, to_date)
 
@@ -171,7 +171,7 @@ def git_commits_weekday_bokeh(elastic):
                                    ('commits', '@top')
                                ],
                                url_help='https://gitlab.com/cauldronio/cauldron/'
-                                        '-/blob/master/guides/project_metrics.md#-commits-by-weekday')
+                                        '-/blob/master/guides/metrics/activity/commits-by-weekday.md')
 
     return json.dumps(json_item(plot))
 
@@ -201,7 +201,7 @@ def git_commits_hour_day_bokeh(elastic):
                   tools='')
     plot.title.text = '# Commits by hour of the day'
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
-                           '-/blob/master/guides/project_metrics.md#-commits-by-hour-of-day')
+                           '-/blob/master/guides/metrics/activity/commits-by-hour-of-day.md')
 
     source = ColumnDataSource(data=dict(
         commits=commits,
@@ -258,7 +258,7 @@ def git_lines_changed_bokeh(elastic, from_date, to_date):
                   tools='')
     plot.title.text = '# Lines added/removed'
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
-                           '-/blob/master/guides/project_metrics.md#-lines-added-vs-removed')
+                           '-/blob/master/guides/metrics/activity/lines-added-removed.md')
     if len(timestamp) > 0:
         plot.x_range = Range1d(from_date, to_date)
 
