@@ -3,7 +3,7 @@ import math
 import logging
 
 from bokeh.embed import json_item
-from bokeh.models import ColumnDataSource, Range1d
+from bokeh.models import ColumnDataSource, Range1d, tools
 from bokeh.palettes import Category20c, Blues
 from bokeh.plotting import figure
 from bokeh.transform import cumsum
@@ -164,13 +164,45 @@ def author_evolution_bokeh(elastic, from_date, to_date):
         observers=observers,
         users=users
     ))
-    names = ['contributors', 'maintainers', 'observers', 'users']
-    colors = Blues[4]
-    plot.varea_stack(['contrib', 'maintainers', 'observers', 'users'],
-                     x='x',
-                     source=source,
-                     color=colors,
-                     legend_label=names)
+
+    plot.line(x='x', y='contrib',
+              line_width=4,
+              line_color=Blues[6][0],
+              legend_label='contributors',
+              source=source)
+    plot.line(x='x', y='maintainers',
+              name='maintainers',
+              line_width=4,
+              line_color=Blues[6][1],
+              legend_label='maintainers',
+              source=source)
+    plot.line(x='x', y='observers',
+              line_width=4,
+              line_color=Blues[6][2],
+              legend_label='observers',
+              source=source)
+    plot.line(x='x', y='users',
+              line_width=4,
+              line_color=Blues[6][3],
+              legend_label='users',
+              source=source)
+
+    plot.add_tools(tools.HoverTool(
+        names=['maintainers'],
+        tooltips=[
+            ('date', '@x{%F}'),
+            ('contributors', '@contrib'),
+            ('maintainers', '@maintainers'),
+            ('observers', '@observers'),
+            ('users', '@users')
+        ],
+        formatters={
+            '@x': 'datetime'
+        },
+        mode='vline',
+        toggleable=False
+    ))
+
     plot.legend.location = "top_left"
 
     return json.dumps(json_item(plot))
