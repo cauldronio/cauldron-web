@@ -15,7 +15,7 @@
         <div>
           <form class="input-group form-inline" id="change-name" method='post' action="{% url 'rename_project' dashboard.id %}" style="display: none;">
             {% csrf_token %}
-            <input type="text" class="form-control" id="new-name" name="name" placeholder="" data-container="body" data-toggle="popover" data-trigger="focus" data-placement="bottom" data-html="true" data-content="4-32 characters long">
+            <input type="text" class="form-control" id="new-name" name="name" placeholder="" data-container="body" data-toggle="popover" data-trigger="focus" data-placement="bottom" data-html="true" data-content="1-32 characters long">
             <div class="input-group-append">
               <button class="btn btn-primary" type="submit">Change</button>
             </div>

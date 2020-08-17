@@ -792,10 +792,9 @@ def request_rename_project(request, dash_id):
                             status=400)
 
     name = request.POST.get('name', '')
-
     name = name.strip()
 
-    if len(name) < 4 or len(name) > 32:
+    if len(name) < 1 or len(name) > 32:
         return JsonResponse({'status': 'error', 'message': "The name doesn't fit the allowed length "},
                             status=400)
 
