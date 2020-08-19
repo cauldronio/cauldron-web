@@ -1,6 +1,7 @@
 import json
 import math
 import logging
+from datetime import timedelta
 
 from bokeh.embed import json_item
 from bokeh.models import ColumnDataSource, Range1d, tools
@@ -10,20 +11,20 @@ from bokeh.transform import cumsum
 from elasticsearch import ElasticsearchException
 from elasticsearch_dsl import Search, Q
 
-from .utils import configure_figure
+from .utils import configure_figure, get_interval
 
 logger = logging.getLogger(__name__)
 
 
 def issues_time_to_close(elastic, from_date, to_date):
-    """ Get average time to close issues (only issues closed in the time range)"""
+    """ Get median time to close issues (only issues closed in the time range)"""
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all')\
         .filter('range', closed_at={'gte': from_date_es, "lte": to_date_es})\
         .filter('match', state='closed')\
         .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1))
-    s.aggs.bucket('avg_merge', 'avg', field='time_to_close_days')
+    s.aggs.bucket('ttc_percentiles', 'percentiles', field='time_to_close_days', percents=[50])
 
     try:
         response = s.execute()
@@ -31,10 +32,10 @@ def issues_time_to_close(elastic, from_date, to_date):
         logger.warning(e)
         response = None
 
-    if response is not None and response.aggregations.avg_merge.value is not None:
-        return round(response.aggregations.avg_merge.value, 2)
+    if response is not None and response.aggregations.ttc_percentiles.values['50.0'] is not None:
+        return round(response.aggregations.ttc_percentiles.values['50.0'], 2)
     else:
-        return 0
+        return 'X'
 
 
 # This one is not responsive at all... we keep it here in case we find a solution
@@ -116,11 +117,12 @@ def author_evolution_bokeh(elastic, from_date, to_date):
     """Get evolution of Authors"""
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
+    interval_name, interval_elastic, _ = get_interval(from_date, to_date)
     s = Search(using=elastic, index='all')\
         .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es})\
         .extra(size=0)
 
-    s.aggs.bucket('bucket1', 'date_histogram', field='grimoire_creation_date', calendar_interval='1w')\
+    s.aggs.bucket('bucket1', 'date_histogram', field='grimoire_creation_date', calendar_interval=interval_elastic)\
           .bucket('bucket2', 'filters',
                   filters={'Maintainers': Q('match', is_git_commit=1),
                            'Contributors': (Q('match', pull_request=True) | Q('match', merge_request=True)),
@@ -155,7 +157,7 @@ def author_evolution_bokeh(elastic, from_date, to_date):
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
                            '-/blob/master/guides/metrics/overview/authors-evolution.md')
     if len(x) > 0:
-        plot.x_range = Range1d(from_date, to_date)
+        plot.x_range = Range1d(from_date - timedelta(days=1), to_date + timedelta(days=1))
 
     source = ColumnDataSource(data=dict(
         x=x,
@@ -190,7 +192,7 @@ def author_evolution_bokeh(elastic, from_date, to_date):
     plot.add_tools(tools.HoverTool(
         names=['maintainers'],
         tooltips=[
-            ('date', '@x{%F}'),
+            (interval_name, '@x{%F}'),
             ('contributors', '@contrib'),
             ('maintainers', '@maintainers'),
             ('observers', '@observers'),
@@ -210,7 +212,7 @@ def author_evolution_bokeh(elastic, from_date, to_date):
 
 def review_duration(elastic, from_date, to_date):
     """
-    Average time to merge a PR or MR
+    Median time to merge a PR or MR
     """
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
@@ -218,7 +220,7 @@ def review_duration(elastic, from_date, to_date):
         .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
         .query((Q('match', pull_request=True) & Q('match', state='closed')) |
                (Q('match', merge_request=True) & Q('match', state='merged')))
-    s.aggs.bucket('avg_merge', 'avg', field='time_to_close_days')
+    s.aggs.bucket('ttc_percentiles', 'percentiles', field='time_to_close_days', percents=[50])
 
     try:
         response = s.execute()
@@ -226,7 +228,7 @@ def review_duration(elastic, from_date, to_date):
         logger.warning(e)
         response = None
 
-    if response is not None and response.aggregations.avg_merge.value is not None:
-        return round(response.aggregations.avg_merge.value, 2)
+    if response is not None and response.aggregations.ttc_percentiles.values['50.0'] is not None:
+        return round(response.aggregations.ttc_percentiles.values['50.0'], 2)
     else:
-        return 0
+        return 'X'

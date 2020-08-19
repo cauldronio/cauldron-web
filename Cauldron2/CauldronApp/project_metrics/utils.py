@@ -64,3 +64,17 @@ def year_over_year(current, previous):
     except ZeroDivisionError:
         result = 0
     return result
+
+
+def get_interval(from_date, to_date):
+    """
+    Checks if the visualizations should be aggregated by days or weeks
+    :return agg_name, elastic_agg, bokeh_bar_width
+    """
+    # week = 1000 ms/s * 60 s/m * 60 m/h * 24 h/d * 7 d/w * 0.9
+    # day = 1000 ms/s * 60 s/m * 60 m/h * 24 h/d * 0.9
+    delta = to_date - from_date
+    if delta.days > 150:
+        return 'week', '1w', 544320000
+    else:
+        return 'day', '1d', 77760000

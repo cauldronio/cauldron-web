@@ -1,6 +1,7 @@
 import json
 import logging
 from collections import defaultdict
+from datetime import timedelta
 
 from bokeh.embed import json_item
 from bokeh.models import ColumnDataSource, tools, Range1d
@@ -10,7 +11,7 @@ from bokeh.plotting import figure
 from elasticsearch import ElasticsearchException
 from elasticsearch_dsl import Search, Q
 
-from ..utils import configure_figure, weekday_vbar_figure, WEEKDAY
+from ..utils import configure_figure, get_interval, weekday_vbar_figure, WEEKDAY
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +35,7 @@ def git_commits(elastic, from_date, to_date):
     if response is not None and response.success():
         return response.aggregations.commits.value or 0
     else:
-        return 0
+        return 'X'
 
 
 def git_lines_commit(elastic, from_date, to_date):
@@ -56,7 +57,7 @@ def git_lines_commit(elastic, from_date, to_date):
     if response is not None and response.success():
         return response.aggregations.lines_avg.value or 0
     else:
-        return 0
+        return 'X'
 
 
 def git_files_touched(elastic, from_date, to_date):
@@ -77,18 +78,20 @@ def git_files_touched(elastic, from_date, to_date):
     if response is not None and response.success():
         return response.aggregations.files_sum.value or 0
     else:
-        return 0
+        return 'X'
 
 
 def git_commits_bokeh(elastic, from_date, to_date):
     """ Get evolution of contributions by commits"""
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
+    interval_name, interval_elastic, bar_width = get_interval(from_date, to_date)
     s = Search(using=elastic, index='git')\
         .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
         .query(~Q('match', files=0)) \
         .extra(size=0)
-    s.aggs.bucket("commits_per_day", 'date_histogram', field='grimoire_creation_date', calendar_interval='1w')
+    s.aggs.bucket("commits_per_day", 'date_histogram', field='grimoire_creation_date',
+                  calendar_interval=interval_elastic)
 
     try:
         response = s.execute()
@@ -112,7 +115,7 @@ def git_commits_bokeh(elastic, from_date, to_date):
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
                            '-/blob/master/guides/metrics/activity/commits-over-time.md')
     if len(timestamp) > 0:
-        plot.x_range = Range1d(from_date, to_date)
+        plot.x_range = Range1d(from_date - timedelta(days=1), to_date + timedelta(days=1))
 
     source = ColumnDataSource(data=dict(
         commits=commits,
@@ -122,12 +125,12 @@ def git_commits_bokeh(elastic, from_date, to_date):
     # width = 1000 ms/s * 60 s/m * 60 m/h * 24 h/d * 7 d/w * 0.9 width
     plot.vbar(x='timestamp', top='commits',
               source=source,
-              width=544320000,
+              width=bar_width,
               color=Blues[3][0])
 
     plot.add_tools(tools.HoverTool(
         tooltips=[
-            ('week', '@timestamp{%F}'),
+            (interval_name, '@timestamp{%F}'),
             ('commits', '@commits')
         ],
         formatters={
@@ -229,11 +232,12 @@ def git_lines_changed_bokeh(elastic, from_date, to_date):
     """Evolution of lines added vs lines removed in Bokeh"""
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
+    interval_name, interval_elastic, bar_width = get_interval(from_date, to_date)
     s = Search(using=elastic, index='git') \
         .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es})\
         .extra(size=0)
 
-    s.aggs.bucket('changed', 'date_histogram', field='grimoire_creation_date', calendar_interval='1w')\
+    s.aggs.bucket('changed', 'date_histogram', field='grimoire_creation_date', calendar_interval=interval_elastic)\
         .pipeline('removed_sum', 'sum', script={'source': 'doc.lines_removed.value * -1'})\
         .bucket('added_sum', 'sum', field='lines_added')
 
@@ -260,7 +264,7 @@ def git_lines_changed_bokeh(elastic, from_date, to_date):
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
                            '-/blob/master/guides/metrics/activity/lines-added-removed.md')
     if len(timestamp) > 0:
-        plot.x_range = Range1d(from_date, to_date)
+        plot.x_range = Range1d(from_date - timedelta(days=1), to_date + timedelta(days=1))
 
     source = ColumnDataSource(data=dict(
         lines_added=lines_added,

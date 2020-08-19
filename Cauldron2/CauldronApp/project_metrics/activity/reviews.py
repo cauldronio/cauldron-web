@@ -1,6 +1,7 @@
 import json
 import logging
 from collections import defaultdict
+from datetime import timedelta
 
 from bokeh.embed import json_item
 from bokeh.models import ColumnDataSource, tools, Range1d
@@ -10,7 +11,7 @@ from bokeh.plotting import figure
 from elasticsearch import ElasticsearchException
 from elasticsearch_dsl import Search, Q
 
-from ..utils import configure_figure, weekday_vbar_figure, WEEKDAY
+from ..utils import configure_figure, weekday_vbar_figure, WEEKDAY, get_interval
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +33,7 @@ def reviews_opened(elastic, from_date, to_date):
     if response is not None:
         return response
     else:
-        return 0
+        return 'X'
 
 
 def reviews_closed(elastic, from_date, to_date):
@@ -52,7 +53,7 @@ def reviews_closed(elastic, from_date, to_date):
     if response is not None:
         return response
     else:
-        return 0
+        return 'X'
 
 
 def reviews_open_on(elastic, date):
@@ -71,20 +72,21 @@ def reviews_open_on(elastic, date):
     if response is not None:
         return response
     else:
-        return 0
+        return 'X'
 
 
 def reviews_open_closed_bokeh(elastic, from_date, to_date):
     """Visualization of opened and closed reviews in the specified time rage"""
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
+    interval_name, interval_elastic, bar_width = get_interval(from_date, to_date)
     s = Search(using=elastic, index='all') \
         .query('bool', filter=(Q('match', pull_request=True) | Q('match', merge_request=True))) \
         .extra(size=0)
     s.aggs.bucket('range_open', 'filter', Q('range', created_at={'gte': from_date_es, "lte": to_date_es})) \
-        .bucket('open', 'date_histogram', field='created_at', calendar_interval='1w')
+        .bucket('open', 'date_histogram', field='created_at', calendar_interval=interval_elastic)
     s.aggs.bucket('range_closed', 'filter', Q('range', closed_at={'gte': from_date_es, "lte": to_date_es})) \
-        .bucket('closed', 'date_histogram', field='closed_at', calendar_interval='1w')
+        .bucket('closed', 'date_histogram', field='closed_at', calendar_interval=interval_elastic)
 
     try:
         response = s.execute()
@@ -113,7 +115,7 @@ def reviews_open_closed_bokeh(elastic, from_date, to_date):
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
                            '-/blob/master/guides/metrics/activity/reviews-open-closed.md')
     if len(o_timestamp) > 0 or len(c_timestamp) > 0:
-        plot.x_range = Range1d(from_date, to_date)
+        plot.x_range = Range1d(from_date - timedelta(days=1), to_date + timedelta(days=1))
 
     source = ColumnDataSource(data=dict(
         o_timestamp=o_timestamp,
@@ -137,7 +139,7 @@ def reviews_open_closed_bokeh(elastic, from_date, to_date):
     plot.add_tools(tools.HoverTool(
         names=['open_reviews'],
         tooltips=[
-            ('date', '@o_timestamp{%F}'),
+            (interval_name, '@o_timestamp{%F}'),
             ('created reviews', '@open_reviews'),
             ('closed reviews', '@closed_reviews')
         ],
