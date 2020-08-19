@@ -94,10 +94,6 @@ def get_metrics_static(dashboard):
     metrics['lines_commit_file_yoy'] = year_over_year(metrics['lines_commit_file_last_year'],
                                                       lines_commit_file_two_year_ago)
 
-    # Activity git graphs
-    metrics['commits_hour_day_bokeh'] = activity_commits.git_commits_hour_day_bokeh(elastic)
-    metrics['commits_weekday_bokeh'] = activity_commits.git_commits_weekday_bokeh(elastic)
-
     # Activity issue numbers
     metrics['issues_open_last_month'] = activity_issues.issues_opened(elastic, one_month_ago, now)
     metrics['issues_open_last_year'] = activity_issues.issues_opened(elastic, one_year_ago, now)
@@ -113,8 +109,6 @@ def get_metrics_static(dashboard):
 
     # Activity issues graphs
     metrics['issues_open_age_bokeh'] = activity_issues.issues_open_age_opened_bokeh(elastic)
-    metrics['issues_open_weekday_bokeh'] = activity_issues.issues_open_weekday_bokeh(elastic)
-    metrics['issues_closed_weekday_bokeh'] = activity_issues.issues_closed_weekday_bokeh(elastic)
 
     # Activity reviews numbers
     metrics['reviews_open_last_month'] = activity_reviews.reviews_opened(elastic, one_month_ago, now)
@@ -129,10 +123,8 @@ def get_metrics_static(dashboard):
     metrics['reviews_open_month_ago'] = activity_reviews.reviews_open_on(elastic, one_month_ago)
     metrics['reviews_open_year_ago'] = activity_reviews.reviews_open_on(elastic, one_year_ago)
 
-    # Activity issues graphs
+    # Activity reviews graphs
     metrics['reviews_open_age_bokeh'] = activity_reviews.reviews_open_age_opened_bokeh(elastic)
-    metrics['reviews_open_weekday_bokeh'] = activity_reviews.reviews_open_weekday_bokeh(elastic)
-    metrics['reviews_closed_weekday_bokeh'] = activity_reviews.reviews_closed_weekday_bokeh(elastic)
 
     # Community graphs
     metrics['authors_aging_bokeh'] = community_common.authors_aging_bokeh(elastic)
@@ -148,10 +140,16 @@ def get_metrics_in_range(dashboard, from_date, to_date):
     # Activity git graphs
     metrics['commits_bokeh'] = activity_commits.git_commits_bokeh(elastic, from_date, to_date)
     metrics['commits_lines_changed_boked'] = activity_commits.git_lines_changed_bokeh(elastic, from_date, to_date)
+    metrics['commits_hour_day_bokeh'] = activity_commits.git_commits_hour_day_bokeh(elastic, from_date, to_date)
+    metrics['commits_weekday_bokeh'] = activity_commits.git_commits_weekday_bokeh(elastic, from_date, to_date)
     # Activity issue graphs
     metrics['issues_open_closed_bokeh'] = activity_issues.issues_open_closed_bokeh(elastic, from_date, to_date)
-    # Activity issue graphs
+    metrics['issues_open_weekday_bokeh'] = activity_issues.issues_open_weekday_bokeh(elastic, from_date, to_date)
+    metrics['issues_closed_weekday_bokeh'] = activity_issues.issues_closed_weekday_bokeh(elastic, from_date, to_date)
+    # Activity reviews graphs
     metrics['reviews_open_closed_bokeh'] = activity_reviews.reviews_open_closed_bokeh(elastic, from_date, to_date)
+    metrics['reviews_open_weekday_bokeh'] = activity_reviews.reviews_open_weekday_bokeh(elastic, from_date, to_date)
+    metrics['reviews_closed_weekday_bokeh'] = activity_reviews.reviews_closed_weekday_bokeh(elastic, from_date, to_date)
     # Overview/Other
     metrics['author_evolution_bokeh'] = other.author_evolution_bokeh(elastic, from_date, to_date)
     metrics['reviews_opened'] = activity_reviews.reviews_opened(elastic, from_date, to_date)

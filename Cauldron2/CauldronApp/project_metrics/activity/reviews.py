@@ -212,9 +212,12 @@ def reviews_open_age_opened_bokeh(elastic):
     return json.dumps(json_item(plot))
 
 
-def reviews_open_weekday_bokeh(elastic):
-    """Get reviews open per week day"""
+def reviews_open_weekday_bokeh(elastic, from_date, to_date):
+    """Get reviews open per week day in the specified range of time"""
+    from_date_es = from_date.strftime("%Y-%m-%d")
+    to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all') \
+        .filter('range', created_at={'gte': from_date_es, "lte": to_date_es}) \
         .query((Q('match', pull_request=True) | Q('match', is_gitlab_issue=1))) \
         .extra(size=0)
     s.aggs.bucket('reviews_weekday', 'terms', script="doc['created_at'].value.dayOfWeek", size=7)
@@ -248,9 +251,12 @@ def reviews_open_weekday_bokeh(elastic):
     return json.dumps(json_item(plot))
 
 
-def reviews_closed_weekday_bokeh(elastic):
-    """Get reviews closed by week day"""
+def reviews_closed_weekday_bokeh(elastic, from_date, to_date):
+    """Get reviews closed by week day in the specified range of time"""
+    from_date_es = from_date.strftime("%Y-%m-%d")
+    to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all') \
+        .filter('range', closed_at={'gte': from_date_es, "lte": to_date_es}) \
         .query('bool', filter=((Q('match', pull_request=True) | Q('match', merge_request=True)) &
                                Q('exists', field='closed_at'))) \
         .extra(size=0)

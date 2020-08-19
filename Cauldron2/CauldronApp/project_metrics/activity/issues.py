@@ -215,9 +215,12 @@ def issues_open_age_opened_bokeh(elastic):
     return json.dumps(json_item(plot))
 
 
-def issues_open_weekday_bokeh(elastic):
-    """Get issues open per week day"""
+def issues_open_weekday_bokeh(elastic, from_date, to_date):
+    """Get issues open per week day in the specified range of time"""
+    from_date_es = from_date.strftime("%Y-%m-%d")
+    to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all') \
+        .filter('range', created_at={'gte': from_date_es, "lte": to_date_es}) \
         .query('bool', filter=(Q('match', pull_request=False) |
                                Q('match', is_gitlab_issue=1)))\
         .extra(size=0)
@@ -252,9 +255,12 @@ def issues_open_weekday_bokeh(elastic):
     return json.dumps(json_item(plot))
 
 
-def issues_closed_weekday_bokeh(elastic):
-    """Get issues closed per week day"""
+def issues_closed_weekday_bokeh(elastic, from_date, to_date):
+    """Get issues closed per week day in the specified range of time"""
+    from_date_es = from_date.strftime("%Y-%m-%d")
+    to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all') \
+        .filter('range', closed_at={'gte': from_date_es, "lte": to_date_es}) \
         .query('bool', filter=((Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) &
                                Q('exists', field='closed_at'))) \
         .extra(size=0)

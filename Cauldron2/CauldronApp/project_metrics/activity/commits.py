@@ -143,9 +143,12 @@ def git_commits_bokeh(elastic, from_date, to_date):
     return json.dumps(json_item(plot))
 
 
-def git_commits_weekday_bokeh(elastic):
+def git_commits_weekday_bokeh(elastic, from_date, to_date):
     """Get commits per week day in the specified range of time"""
+    from_date_es = from_date.strftime("%Y-%m-%d")
+    to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='git') \
+        .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
         .query(~Q('match', files=0)) \
         .extra(size=0)
     s.aggs.bucket('commit_weekday', 'terms', script="doc['commit_date'].value.dayOfWeek", size=7)
@@ -179,9 +182,12 @@ def git_commits_weekday_bokeh(elastic):
     return json.dumps(json_item(plot))
 
 
-def git_commits_hour_day_bokeh(elastic):
+def git_commits_hour_day_bokeh(elastic, from_date, to_date):
     """Get commits per hour of the day in the specified range of time"""
+    from_date_es = from_date.strftime("%Y-%m-%d")
+    to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='git')\
+        .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
         .extra(size=0)
     s.aggs.bucket('commit_hour_day', 'terms', script="doc['commit_date'].value.getHourOfDay()", size=24)
 
