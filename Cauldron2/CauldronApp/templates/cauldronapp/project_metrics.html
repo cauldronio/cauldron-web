@@ -362,9 +362,22 @@
           <div class="col-md-6">
             <div id="chart-authors-reviews-active"></div>
           </div>
-<!--          <div class="col-md-6">-->
-<!--            <div id="chart-commits-weekday"></div>-->
-<!--          </div>-->
+          <div class="col-md-6">
+            <div id="chart-onboarding-leaving"></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div id="chart-authors-aging"></div>
+          </div>
+          <div class="col-md-6">
+            <div id="chart-authors-retained-ratio"></div>
+          </div>
+        </div>
+        <div class="row">
+          <!--div class="col-md-6"-->
+            <div id="chart-organizational-diversity"></div>
+          <!--/div-->
         </div>
       </div>
       <!-- End COMMUNITY -->
@@ -394,6 +407,10 @@ document.addEventListener('DOMContentLoaded', function(event) {
         "chart-authors-git-active": {{ metrics.commits_authors_active_bokeh | safe }},
         "chart-authors-issues-active": {{ metrics.issues_authors_active_bokeh | safe }},
         "chart-authors-reviews-active": {{ metrics.reviews_authors_active_bokeh | safe }},
+        "chart-onboarding-leaving": {{ metrics.authors_entering_leaving_bokeh | safe }},
+        "chart-authors-aging": {{ metrics.authors_aging_bokeh | safe }},
+        "chart-authors-retained-ratio": {{ metrics.authors_retained_ratio_bokeh | safe }},
+        "chart-organizational-diversity": {{ metrics.organizational_diversity_bokeh | safe }},
     }
 
     for (var k in graphs) {

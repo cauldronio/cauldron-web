@@ -73,7 +73,7 @@ def authors_active_bokeh(elastic, from_date, to_date):
 
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
                            '-/blob/master/guides/metrics/community/authors-commits.md')
-    plot.title.text = '# Authors of commits'
+    plot.title.text = 'Active authors (Git)'
     if len(timestamp) > 0:
         plot.x_range = Range1d(from_date - timedelta(days=1), to_date + timedelta(days=1))
 

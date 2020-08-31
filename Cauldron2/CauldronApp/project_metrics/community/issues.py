@@ -73,7 +73,7 @@ def authors_active_bokeh(elastic, from_date, to_date):
 
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
                            '-/blob/master/guides/metrics/community/authors-issues.md')
-    plot.title.text = '# Authors of issues'
+    plot.title.text = 'Active submitters (Issues)'
     if len(timestamp) > 0:
         plot.x_range = Range1d(from_date - timedelta(days=1), to_date + timedelta(days=1))
 
@@ -90,7 +90,7 @@ def authors_active_bokeh(elastic, from_date, to_date):
     plot.add_tools(tools.HoverTool(
         tooltips=[
             (interval_name, '@timestamp{%F}'),
-            ('authors', '@authors')
+            ('submitters', '@authors')
         ],
         formatters={
             '@timestamp': 'datetime'

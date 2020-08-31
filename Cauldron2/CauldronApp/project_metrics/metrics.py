@@ -13,6 +13,7 @@ from .activity import reviews as activity_reviews
 from .community import commits as community_commits
 from .community import issues as community_issues
 from .community import reviews as community_reviews
+from .community import common as community_common
 
 from .utils import year_over_year
 from . import other
@@ -133,6 +134,10 @@ def get_metrics_static(dashboard):
     metrics['reviews_open_weekday_bokeh'] = activity_reviews.reviews_open_weekday_bokeh(elastic)
     metrics['reviews_closed_weekday_bokeh'] = activity_reviews.reviews_closed_weekday_bokeh(elastic)
 
+    # Community graphs
+    metrics['authors_aging_bokeh'] = community_common.authors_aging_bokeh(elastic)
+    metrics['authors_retained_ratio_bokeh'] = community_common.authors_retained_ratio_bokeh(elastic)
+
     return metrics
 
 
@@ -168,5 +173,7 @@ def get_metrics_in_range(dashboard, from_date, to_date):
     metrics['commits_authors_active_bokeh'] = community_commits.authors_active_bokeh(elastic, from_date, to_date)
     metrics['issues_authors_active_bokeh'] = community_issues.authors_active_bokeh(elastic, from_date, to_date)
     metrics['reviews_authors_active_bokeh'] = community_reviews.authors_active_bokeh(elastic, from_date, to_date)
+    metrics['authors_entering_leaving_bokeh'] = community_common.authors_entering_leaving_bokeh(elastic, from_date, to_date)
+    metrics['organizational_diversity_bokeh'] = community_common.organizational_diversity(elastic, from_date, to_date)
 
     return metrics

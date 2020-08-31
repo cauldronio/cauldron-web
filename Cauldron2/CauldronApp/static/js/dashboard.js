@@ -346,6 +346,8 @@ $(function() {
         "chart-authors-git-active":"commits_authors_active_bokeh",
         "chart-authors-issues-active":"issues_authors_active_bokeh",
         "chart-authors-reviews-active":"reviews_authors_active_bokeh",
+        "chart-onboarding-leaving":"authors_entering_leaving_bokeh",
+        "chart-organizational-diversity":"organizational_diversity_bokeh",
     }
 
     var NUMBERS_KEYS = {
