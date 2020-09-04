@@ -1,7 +1,7 @@
 var LogsInterval;
 var BackendFilter = 'any';
 var StatusFilter = 'all';
-var Dash_ID = window.location.pathname.split('/')[2];
+var Project_ID = window.location.pathname.split('/')[2];
 
 $(document).ready(function(){
     $('#logModal').on('show.bs.modal', onShowLogsModal);
@@ -29,9 +29,9 @@ $(document).ready(function(){
 
 function onClickEditName(ev) {
     ev.preventDefault();
-    var old_name = $('#dash-name').text();
+    var old_name = $('#project-name').text();
 
-    $('#dash-name-container').hide();
+    $('#project-name-container').hide();
     $('#change-name').show();
 
     $('input#new-name').popover();
@@ -51,10 +51,10 @@ function deleteRepo(event) {
                     <span class="sr-only">Loading...</span>
                 </div>`);
 
-    $.post(url = window.location.pathname + "/edit",
-           data = {'action': 'delete', 'backend': backend, 'data': id_repo})
+    $.post(url=`/project/${Project_ID}/repositories/remove`,
+           data = {'repository': id_repo})
         .done(function (data) {
-            showToast('Deleted', `The repository <b>${url_repo}</b> was deleted from this dashboard`, 'fas fa-check-circle text-success', 1500);
+            showToast('Deleted', `The repository <b>${url_repo}</b> was deleted from this project`, 'fas fa-check-circle text-success', 1500);
             $(`tr#repo-${id_repo}`).remove();
         })
         .fail(function (data) {
@@ -74,8 +74,7 @@ function reanalyzeRepo(event){
     reanalyzeRepo.html(`<div class="spinner-border spinner-border-sm" role="status">
                             <span class="sr-only">Loading...</span>
                         </div>`);
-    $.post(url = window.location.pathname + "/edit",
-           data = {'action': 'reanalyze', 'backend': backend, 'data': id_repo})
+    $.post(url=`/repository/${id_repo}/refresh`)
         .done(function (data) {
             if (data['status'] == 'reanalyze'){
                 showToast('Reanalyzing', `The repository <b>${url_repo}</b> has refreshed`, 'fas fa-check-circle text-success', 1500);
@@ -90,14 +89,10 @@ function reanalyzeRepo(event){
 }
 
 function reanalyzeEveryRepo(event){
-    var id_repo = 'all';
-    var backend = 'all';
-
     $('#reanalyze-all-spinner').html(`<div class="spinner-border spinner-border-sm" role="status">
                                     <span class="sr-only">Loading...</span>
                                 </div>`);
-    $.post(url = window.location.pathname + "/edit",
-           data = {'action': 'reanalyze-all', 'backend': backend, 'data': id_repo})
+    $.post(url =`/project/${Project_ID}/refresh`)
         .done(function (data) {
             if (data['status'] == 'reanalyze'){
                 showToast('Reanalyzing', `${data.message}`, 'fas fa-check-circle text-success', 3000);
@@ -122,16 +117,15 @@ function refreshTable() {
 
     $.getJSON('/repositories/info' + query_string, function(data) {
         data.forEach(function(repo){
-            setIconStatus('#repo-' + repo.id + ' .repo-status', repo.status);
-            $('#repo-' + repo.id).attr('data-status', repo.status.toLowerCase());
-            if (repo.status == 'completed'){
-                $('#repo-' + repo.id + " .repo-last-update").html(moment(repo.last_refresh).fromNow());
+            var jq_id_status = `#repo-${repo.id} .repo-status`;
+            var jq_id_last_update = `#repo-${repo.id} .repo-last-update`;
+            var last_refresh = moment(repo.last_refresh).fromNow();
+            $(jq_id_status).html(repo.status);
+            if (last_refresh == 'Invalid date'){
+                $(jq_id_last_update).html(repo.last_refresh);
             } else {
-                $('#repo-' + repo.id + " .repo-last-update").html("Not completed");
+                $(jq_id_last_update).html(last_refresh);
             }
-            var duration = get_duration(repo);
-            $('#repo-' + repo.id + " .repo-duration").html(duration);
-
         });
     });
     setTimeout(refreshTable, 5000);
@@ -139,28 +133,33 @@ function refreshTable() {
 }
 
 function getSummary() {
-    $.getJSON('/dashboard/' + Dash_ID + "/summary", function(data) {
+    $.getJSON('/project/' + Project_ID + "/summary", function(data) {
         var status_output = "";
         var i = 0;
-        for (var key in data.status){
-            status_output += `${key}: ${data.status[key]}`;
-            if(i < Object.keys(data.status).length - 1) {
-              status_output += ` | `;
-            }
-            i++;
+        if (data.git){
+            status_output += `. <b>Git:</b> ${data.git}`
         }
-        if ((data.status['pending'] > 0) | (data.status['running'] > 0)) {
-            $('#reanalyze-all-spinner').html(`<div class="spinner-border spinner-border-sm" role="status">
-                                    <span class="sr-only">Loading...</span>
-                                </div>`);
+        if (data.github){
+            status_output += `. <b>GitHub:</b> ${data.github}`
+        }
+        if (data.gitlab){
+            status_output += `. <b>GitLab:</b> ${data.gitlab}`
+        }
+        if (data.meetup){
+            status_output += `. <b>Meetup:</b> ${data.meetup}`
+        }
+        status_output += `. <b>Running:</b> ${data.running}`
+        if (data.running > 0) {
+            $('#reanalyze-all-spinner-dynamic').show();
+            $('#reanalyze-all-spinner-static').hide();
         } else {
-            $('#reanalyze-all-spinner').html(`<i class="fa fa-sync"></i>`)
+            $('#reanalyze-all-spinner-dynamic').hide();
+            $('#reanalyze-all-spinner-static').show();
         }
-
-        $('#num-repos-filter').html(data.total);
+        $('#num-repos').html(data.total);
         $('#general-status').html(status_output)
     });
-    setTimeout(getSummary, 5000, Dash_ID);
+    setTimeout(getSummary, 5000, Project_ID);
 }
 
 function onSubmitRename(ev) {
@@ -174,16 +173,16 @@ function onSubmitRename(ev) {
 
     $.post(url=url, data=data)
     .done(function (result) {
-        $('#dash-name').text(name);
+        $('#project-name').text(name);
 
-        $('#dash-name-container').show();
+        $('#project-name-container').show();
         $('#change-name').hide();
 
         showToast('Name updated', `${result.message}`, 'fas fa-check-circle text-success', 5000);
     })
     .fail(function (data) {
         showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
-        $('#dash-name-container').show();
+        $('#project-name-container').show();
         $('#change-name').hide();
     })
 }
@@ -297,7 +296,7 @@ function submitBackend(event) {
                     <span class="sr-only">Loading...</span>
                 </div>`);
 
-    $.post(url = window.location.pathname + "/edit",
+    $.post(url = `/project/${Project_ID}/repositories/add`,
            data = $(this).serializeArray())
         .done(function (data) {onDataAdded(data, event.target)})
         .fail(function (data) {onDataFail(data, event.target)})

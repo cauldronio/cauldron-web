@@ -4,6 +4,46 @@ import requests
 logger = logging.getLogger(__name__)
 # logging.basicConfig(level=logging.DEBUG)
 
+BACKEND_INDICES = {
+    "git": [
+        {
+            "name": "git_enrich_index",
+            "url_field": "repo_name"
+        }
+    ],
+    "github": [
+        {
+            "name": "github_enrich_index",
+            "url_field": "repository"
+        },
+        {
+            "name": "github_repo_enrich_index",
+            "url_field": "origin"
+        },
+        {
+            "name": "github2_enrich_index",
+            "url_field": "repository"
+        },
+    ],
+    "gitlab": [
+        {
+            "name": "gitlab_enriched_index",
+            "url_field": "repository"
+        },
+        {
+            "name": "gitlab_mrs_enriched_index",
+            "url_field": "repository"
+        }
+    ],
+    "meetup": [
+        {
+            "name": "meetup_enriched_index",
+            "backend": "meetup",
+            "url_field": "tag"
+        }
+    ]
+}
+
 
 class OpendistroApi:
     """
@@ -166,3 +206,53 @@ class OpendistroApi:
                             headers=headers)
         logger.info("Result deleting tenant: {} - {}".format(r.status_code, r.text))
         return r.ok
+
+    @staticmethod
+    def create_index_permissions(url_list, index):
+        if len(url_list) == 0:
+            # Include permissions to the repository '0' to avoid errors in visualizations
+            url_list = ["0"]
+
+        dls = {
+            'terms': {
+                index['url_field']: url_list
+            }
+        }
+        str_dls = str(dls).replace("'", "\"")
+        index_permissions = {
+            'index_patterns': [index['name']],
+            'dls': str_dls,
+            'allowed_actions': [
+                'read'
+            ]
+        }
+        return index_permissions
+
+    def update_elastic_role(self, role, index_permissions):
+        """
+        Update the Elasticsearch role with the current state of a project.
+        role is the name of the role to update
+        index_permissions is a list in which element can be generated using the method _create_index_permissions
+        Include read permission for .kibana
+        """
+        kibana_permissions = {
+            'index_patterns': ['?kibana'],
+            'allowed_actions': [
+                'read'
+            ]
+        }
+        global_tenant_permissions = [{
+            "tenant_patterns": [
+                "global_tenant"
+            ],
+            "allowed_actions": [
+                "kibana_all_read"
+            ]
+        }]
+        index_permissions.append(kibana_permissions)
+        permissions = {
+            "index_permissions": index_permissions,
+            "cluster_permissions": [],
+            "tenant_permissions": global_tenant_permissions
+        }
+        self.create_role(role, permissions)

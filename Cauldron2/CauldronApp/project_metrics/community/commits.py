@@ -14,7 +14,7 @@ from bokeh.palettes import Blues, Greens, Greys, Reds, Category10
 from bokeh.plotting import figure
 from bokeh.transform import dodge
 
-from CauldronApp.models import Dashboard
+from CauldronApp.models import Project
 
 from .common import get_seniority, is_still_active
 from ..utils import configure_figure, get_interval
@@ -111,15 +111,15 @@ def git_authors_bokeh_compare(elastics, from_date, to_date):
     tooltips = [(interval_name, '@timestamps{%F}')]
     for idx, project_id in enumerate(authors_buckets):
         try:
-            dash = Dashboard.objects.get(pk=project_id)
-            dash_name = dash.name
-        except Dashboard.DoesNotExist:
-            dash_name = "Unknown"
+            project = Project.objects.get(pk=project_id)
+            project_name = project.name
+        except Project.DoesNotExist:
+            project_name = "Unknown"
 
         if idx == 0:
             names.append(f'authors_{project_id}')
 
-        tooltips.append((f'authors {dash_name}', f'@authors_{project_id}'))
+        tooltips.append((f'authors {project_name}', f'@authors_{project_id}'))
 
         plot.circle(x='timestamps', y=f'authors_{project_id}',
                     name=f'authors_{project_id}',
@@ -130,7 +130,7 @@ def git_authors_bokeh_compare(elastics, from_date, to_date):
         plot.line(x='timestamps', y=f'authors_{project_id}',
                   line_width=4,
                   line_color=Category10[5][idx],
-                  legend_label=dash_name,
+                  legend_label=project_name,
                   source=source)
 
     plot.add_tools(tools.HoverTool(

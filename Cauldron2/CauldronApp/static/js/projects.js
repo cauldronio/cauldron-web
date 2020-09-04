@@ -5,7 +5,7 @@ $(document).ready(function(){
 
 $('#modal-delete-project').on('show.bs.modal', function (e) {
     var projectId = $(e.relatedTarget).data('project-id');
-    var urlDelete = `/dashboard/${projectId}/delete`;
+    var urlDelete = `/project/${projectId}/delete`;
     $('#form-delete-project').attr('action', urlDelete);
 })
 
@@ -27,7 +27,7 @@ function refreshProjectDatasources(button, project_id) {
   $(button).html(`<div class="spinner-border spinner-border-sm" role="status">
                 <span class="sr-only">Loading...</span>
                 </div>`);
-  $.post(url =`/dashboard/${project_id}/edit`,
+  $.post(url =`/project/${project_id}/refresh`,
     data = {'action': 'reanalyze-all', 'backend': 'all', 'data': 'all'}
   )
   .done(function (data) {
@@ -56,14 +56,12 @@ function refreshProjects() {
 
     $.getJSON('/projects/info' + query_string, function(data) {
         data.forEach(function(project){
-            $('#project-' + project.id + '-git').html(project.repositories.git);
-            $('#project-' + project.id + '-github').html(project.repositories.github);
-            $('#project-' + project.id + '-gitlab').html(project.repositories.gitlab);
-            $('#project-' + project.id + '-meetup').html(project.repositories.meetup);
-            $('#project-' + project.id + '-completed').html(project.status.completed);
-            $('#project-' + project.id + '-errors').html(project.status.errors);
-            $('#project-' + project.id + '-pending').html(project.status.pending + project.status.running);
-            if (project.status.pending + project.status.running > 0) {
+            $('#project-' + project.id + '-git').html(project.git);
+            $('#project-' + project.id + '-github').html(project.github);
+            $('#project-' + project.id + '-gitlab').html(project.gitlab);
+            $('#project-' + project.id + '-meetup').html(project.meetup);
+            $('#project-' + project.id + '-running').html(project.running);
+            if (project.running > 0) {
                 $('#spinner-' + project.id).show();
             } else {
                 $('#spinner-' + project.id).hide();

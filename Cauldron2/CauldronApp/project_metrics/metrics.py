@@ -30,14 +30,14 @@ Open CauldronApp/project_metrics.py
       The output should be a number or a JSON in case of a Bokeh function:
       https://docs.bokeh.org/en/latest/docs/user_guide/embed.html#json-items
     - Add the output of the function to the dictionary returned by 'get_category_metrics' in the corresponding category
-Open CauldronApp/static/js/dashbord.js
+Open CauldronApp/static/js/project.js
     - Include your metric in the function `updateMetricsData`. It is called when the user
       updates the date picker range.
 """
 
 
-def get_elastic_project(dashboard):
-    jwt_key = utils.get_jwt_key(f"Project {dashboard.id}", dashboard.projectrole.backend_role)
+def get_elastic_project(project):
+    jwt_key = utils.get_jwt_key(f"Project {project.id}", project.projectrole.backend_role)
 
     context = create_ssl_context()
     context.check_hostname = False
@@ -110,17 +110,17 @@ def get_compare_metrics(projects, from_date, to_date):
 
         try:
             metrics[project.id]['lines_commit_file_last_month'] = metrics[project.id]['lines_commit_last_month'] / activity_commits.git_files_touched(elastic, one_month_ago, now)
-        except ZeroDivisionError:
+        except (ZeroDivisionError, TypeError):
             metrics[project.id]['lines_commit_file_last_month'] = 0
 
         try:
             metrics[project.id]['lines_commit_file_last_year'] = metrics[project.id]['lines_commit_last_year'] / activity_commits.git_files_touched(elastic, one_year_ago, now)
-        except ZeroDivisionError:
+        except (ZeroDivisionError, TypeError):
             metrics[project.id]['lines_commit_file_last_year'] = 0
 
         try:
             lines_commit_file_two_year_ago = activity_commits.git_lines_commit(elastic, two_year_ago, one_year_ago) / activity_commits.git_files_touched(elastic, two_year_ago, one_year_ago)
-        except ZeroDivisionError:
+        except (ZeroDivisionError, TypeError):
             lines_commit_file_two_year_ago = 0
 
         metrics[project.id]['lines_commit_file_yoy'] = year_over_year(metrics[project.id]['lines_commit_file_last_year'],
@@ -143,9 +143,11 @@ def get_compare_charts(projects, from_date, to_date):
     return charts
 
 
-def get_category_metrics(dashboard, category, from_date, to_date):
-    # ['overview', 'activity-overview', 'activity-git', 'activity-issues', 'activity-reviews', 'community-overview', 'community-git', 'community-issues', 'community-reviews']
-    elastic = get_elastic_project(dashboard)
+def get_category_metrics(project, category, from_date, to_date):
+    # ['overview',
+    # 'activity-overview', 'activity-git', 'activity-issues', 'activity-reviews',
+    # 'community-overview', 'community-git', 'community-issues', 'community-reviews']
+    elastic = get_elastic_project(project)
     if category == 'overview':
         return overview_metrics(elastic, from_date, to_date)
     elif category == 'activity-overview':
@@ -240,17 +242,17 @@ def activity_git_metrics(elastic, from_date, to_date):
     try:
         lines_commit_file_last_month = lines_commit_last_month / activity_commits.git_files_touched(elastic, one_month_ago, now)
         metrics['lines_commit_file_last_month'] = f"{lines_commit_file_last_month:.2f}"
-    except ZeroDivisionError:
+    except (ZeroDivisionError, TypeError):
         metrics['lines_commit_file_last_month'] = 0
     try:
         lines_commit_file_last_year = lines_commit_last_year / activity_commits.git_files_touched(elastic, one_year_ago, now)
         metrics['lines_commit_file_last_year'] = f"{lines_commit_file_last_year:.2f}"
-    except ZeroDivisionError:
+    except (ZeroDivisionError, TypeError):
         lines_commit_file_last_year = 0
         metrics['lines_commit_file_last_year'] = 0
     try:
         lines_commit_file_two_year_ago = activity_commits.git_lines_commit(elastic, two_year_ago, one_year_ago) / activity_commits.git_files_touched(elastic, two_year_ago, one_year_ago)
-    except ZeroDivisionError:
+    except (ZeroDivisionError, TypeError):
         lines_commit_file_two_year_ago = 0
     lines_commit_file_yoy = year_over_year(lines_commit_file_last_year,
                                            lines_commit_file_two_year_ago)

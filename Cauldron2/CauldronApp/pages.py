@@ -3,8 +3,8 @@
 from django.core.paginator import Paginator
 import unittest
 
-class Pages:
 
+class Pages:
     def __init__(self, objects, count):
         self.pages = Paginator(objects, count)
 
@@ -47,6 +47,7 @@ class Pages:
             pages_to_show.insert(pages_to_show.index(i), -1)
 
         return pages_to_show
+
 
 class TestPages(unittest.TestCase):
 

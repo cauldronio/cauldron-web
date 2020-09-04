@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'CauldronApp.apps.CauldronAppConfig',
     'metrics.apps.MetricsConfig',
+    'poolsched.apps.PoolschedConfig',
 ]
 
 MIDDLEWARE = [
@@ -88,20 +89,27 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'Cauldron2.wsgi.application'
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'db_name',
+#         'USER': 'db_user',
+#         'PASSWORD': 'db_password',
+#         'HOST': 'db_host',
+#         'PORT': 'db_port',
+#         'OPTIONS': {
+#             'sql_mode': 'traditional'
+#         },
+#         'TEST': {
+#             'CHARSET': 'utf8'
+#         }
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'db_name',
-        'USER': 'db_user',
-        'PASSWORD': 'db_password',
-        'HOST': 'db_host',
-        'PORT': 'db_port',
-        'OPTIONS': {
-            'sql_mode': 'traditional'
-        },
-        'TEST': {
-            'CHARSET': 'utf8'
-        }
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
 

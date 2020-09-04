@@ -81,7 +81,7 @@ def year_over_year(current, previous):
     """Calculate the % increase of year-over-year"""
     try:
         result = ((current - previous) / previous) * 100
-    except ZeroDivisionError:
+    except (ZeroDivisionError, TypeError):
         result = 0
     return result
 

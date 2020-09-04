@@ -1,11 +1,11 @@
-<div class="header-dashboard">
-{% if dashboard %}
+<div class="header-project">
+{% if project %}
   <div class="d-lg-flex justify-content-between">
     <div class="">
       <div class="row">
         <!-- Project name -->
-        <h1 id="dash-name-container">
-          <span id="dash-name">{{dashboard.name}}</span>
+        <h1 id="project-name-container">
+          <span id="project-name">{{project.name}}</span>
           {% if editable %}
           <small><a href="#" id="rename"><i class="far fa-xs fa-edit"></i></a></small>
           {% endif %}
@@ -13,7 +13,7 @@
         <!-- End project name -->
         <!-- Change name form -->
         <div>
-          <form class="input-group form-inline" id="change-name" method='post' action="{% url 'rename_project' dashboard.id %}" style="display: none;">
+          <form class="input-group form-inline" id="change-name" method='post' action="{% url 'rename_project' project.id %}" style="display: none;">
             {% csrf_token %}
             <input type="text" class="form-control" id="new-name" name="name" placeholder="" data-container="body" data-toggle="popover" data-trigger="focus" data-placement="bottom" data-html="true" data-content="1-32 characters long">
             <div class="input-group-append">
@@ -39,7 +39,7 @@
           <div class="ml-3 mb-1">
             <a class="btn btn-icon-split btn-outline-dark"
                data-toggle="tooltip" title="Edit your dashboards in Kibana"
-               href="{% url 'open_workspace' dashboard.id %}"
+               href="{% url 'open_workspace' project.id %}"
                target="_blank">
                <span class="icon"><i class="fas fa-wrench"></i></span>
                <span class="text">Data Workspace</span>
@@ -61,8 +61,8 @@
           <div class="ml-3 mb-1 dropdown show">
             <a class="btn btn-orange dropdown-toggle" href="#" role="button" id="compare-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Compare</a>
             <div class="dropdown-menu scrollable-menu" aria-labelledby="compare-dropdown">
-              {% for project in projects_compare %}
-              <a class="dropdown-item" href="{% url 'compare_projects' %}?projects={{dashboard.pk}}&projects={{project.pk}}" target="_blank">{{ project.name }}</a>
+              {% for project_compare in projects_compare %}
+              <a class="dropdown-item" href="{% url 'compare_projects' %}?projects={{project.pk}}&projects={{project_compare.pk}}" target="_blank">{{ project_compare.name }}</a>
               {% endfor %}
             </div>
           </div>
@@ -72,7 +72,14 @@
           {% if repositories_count > 0 %}
           <div class="ml-3 mb-1">
             <button type="button" class="btn btn-icon-split btn-orange btn-reanalyze-all">
-              <span class="icon" id="reanalyze-all-spinner"><i class="fa fa-sync"></i></span>
+              <span class="icon" id="reanalyze-all-spinner-dynamic" style="display: none;">
+                <div class="spinner-border spinner-border-sm" role="status">
+                  <span class="sr-only">Loading...</span>
+                </div>
+              </span>
+              <span class="icon" id="reanalyze-all-spinner-static">
+                <i class="fa fa-sync"></i>
+              </span>
               <span class="text">Refresh all data sources</span>
             </button>
           </div>
@@ -85,12 +92,11 @@
       {% if repositories_count > 0 %}
         <h3>Project information</h3>
         <b>Repositories:</b>
-        <span id="num-repos-filter">0</span>
-        (<span id="general-status"><!--This content is generated via JS--></span>)
+        <span id="num-repos">0</span><span id="general-status"><!--This content is generated via JS--></span>
         {% if render_table %}
-        <a href="{% url 'show_dashboard' dashboard.id %}">Hide details</a>
+        <a href="{% url 'show_project' project.id %}">Hide details</a>
         {% else %}
-        <a href="{% url 'show_dashboard' dashboard.id %}?kind=any">Show details</a>
+        <a href="{% url 'show_project_repos' project.id %}">Show details</a>
         {% endif %}
       {% endif %}
     </div>

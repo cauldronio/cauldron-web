@@ -27,24 +27,43 @@ urlpatterns = [
 
     path('compare', views.request_compare_projects, name="compare_projects"),
 
-    path('dashboard', views.request_new_dashboard),
-    path('dashboard/<int:dash_id>', views.request_show_dashboard, name="show_dashboard"),
-    path('dashboard/<int:dash_id>/edit', views.request_edit_dashboard),
-    path('dashboard/<int:dash_id>/rename', views.request_rename_project, name="rename_project"),
-    path('dashboard/<int:dash_id>/summary', views.request_dash_summary),
-    path('dashboard/<int:dash_id>/workspace', views.request_workspace, name="open_workspace"),
-    path('dashboard/<int:dash_id>/delete', views.request_delete_dashboard, name="delete_project_url"),
-    path('dashboard/<int:dash_id>/public-kibana', views.request_public_kibana, name="open_public_kibana"),
-    path('dashboard/<int:dash_id>/metrics', views.request_project_metrics, name="project_metrics"),
+    path('projects', views.request_user_projects, name="user_projects"),
 
+    path('project', views.request_new_project, name='new_project'),
+    path('project/<int:project_id>', views.request_show_project, name="show_project"),
+    path('project/<int:project_id>/summary', views.request_project_summary, name="project_summary"),
+    path('project/<int:project_id>/rename', views.request_rename_project, name="rename_project"),
+    path('project/<int:project_id>/refresh', views.request_refresh_project, name="refresh_project"),
+    path('project/<int:project_id>/metrics', views.request_project_metrics, name="project_metrics"),
+    path('project/<int:project_id>/workspace', views.request_workspace, name="open_workspace"),
+    path('project/<int:project_id>/delete', views.request_delete_project, name="delete_project"),
+    path('project/<int:project_id>/public-kibana', views.request_public_kibana, name="open_public_kibana"),
+    path('project/<int:project_id>/repositories', views.request_project_repositories, name="show_project_repos"),
+    path('project/<int:project_id>/repositories/add', views.request_add_to_project, name="add_project_repos"),
+    path('project/<int:project_id>/repositories/remove', views.request_remove_from_project, name="remove_project_repos"),
+
+    path('repository/<int:repo_id>/refresh', views.request_refresh_repository, name='refresh_repository'),
+    path('repository/<int:repo_id>', views.request_show_repository, name='show_repository'),
     path('repositories/info', views.request_repos_info),
+
+    # - path('dashboard', views.request_new_project),
+    # - path('dashboard/<int:dash_id>', views.request_show_project, name="show_dashboard"),
+    # - path('dashboard/<int:dash_id>/edit', views.request_edit_dashboard),
+    # - path('dashboard/<int:dash_id>/rename', views.request_rename_project, name="rename_project"),
+    # - path('dashboard/<int:dash_id>/summary', views.request_project_summary, name="dashboard_summary"),
+    # - path('dashboard/<int:dash_id>/workspace', views.request_workspace, name="open_workspace"),
+    # - path('dashboard/<int:dash_id>/delete', views.request_delete_dashboard, name="delete_project_url"),
+    # - path('dashboard/<int:dash_id>/public-kibana', views.request_public_kibana, name="open_public_kibana"),
+    # - path('dashboard/<int:dash_id>/metrics', views.request_project_metrics, name="project_metrics"),
+
+
     path('projects/info', views.request_projects_info),
 
     path('terms/', views.terms, name="terms"),
     path('privacy/', views.privacy, name="privacy"),
     path('cookies/', views.cookies, name="cookies"),
 
-    path('repo-logs/<int:repo_id>', views.repo_logs),
+    # - path('repo-logs/<int:repo_id>', views.repo_logs),
 
     path('admin-page/', views.admin_page, name="admin_page"),
     path('admin-page/users/', views.admin_page_users, name="admin_page_users"),

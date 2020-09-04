@@ -36,16 +36,15 @@ $(document).ready(function () {
         ev.preventDefault();
     });
 
-    $('form.create-dashboard').on('submit', on_create_dashboard);
+    $('form.create-project').on('submit', on_create_project);
 
     /**
     * Send data to Share modal
     */
-    $('.sharedashboard').click(function () {
+    $('.shareproject').click(function () {
         var projname = $(this).data('projname');
         var projid = $(this).data('projid');
         var projurl = $(this).data('projurl');
-        //console.log(projname +','+ projid);
         $('#shareModal .modal-title').text('Share ' + projname + ' public dashboard');
         $('#shareModal .modal-body input').attr('id', 'url-public-link-kibana_'+projid);
         $('#shareModal .modal-body input').attr('value', projurl);
@@ -167,7 +166,7 @@ function deleteToken(identity) {
         })
  }
 
- function on_create_dashboard(event) {
+ function on_create_project(event) {
     showToast('Creating...', `Your project analytics environment is being set up. Wait a second.`, 'fas fa-spinner text-success', 10000);
 }
 

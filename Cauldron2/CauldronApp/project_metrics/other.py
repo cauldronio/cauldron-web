@@ -11,7 +11,7 @@ from bokeh.transform import cumsum
 from elasticsearch import ElasticsearchException
 from elasticsearch_dsl import Search, Q
 
-from CauldronApp.models import Dashboard
+from CauldronApp.models import Project
 
 from .utils import configure_figure, get_interval
 
@@ -193,10 +193,10 @@ def author_evolution_bokeh_compare(elastics, from_date, to_date):
     formatters = dict()
     for idx, project_id in enumerate(authors_buckets):
         try:
-            dash = Dashboard.objects.get(pk=project_id)
-            dash_name = dash.name
-        except Dashboard.DoesNotExist:
-            dash_name = "Unknown"
+            project = Project.objects.get(pk=project_id)
+            project_name = project.name
+        except Project.DoesNotExist:
+            project_name = "Unknown"
 
         if idx == 0:
             names.append(f'maintainers_{project_id}')
@@ -204,12 +204,12 @@ def author_evolution_bokeh_compare(elastics, from_date, to_date):
             formatters[f'@timestamps_{project_id}'] = 'datetime'
 
         for i, category in enumerate(('contributors', 'maintainers', 'observers', 'users')):
-            tooltips.append((f'{category} {dash_name}', f'@{category}_{project_id}'))
+            tooltips.append((f'{category} {project_name}', f'@{category}_{project_id}'))
             plot.line(x=f'timestamps_{project_id}', y=f'{category}_{project_id}',
                       name=f'{category}_{project_id}',
                       line_width=4,
                       line_color=Category20c[20][4 * idx + i],
-                      legend_label=f'{category} {dash_name}',
+                      legend_label=f'{category} {project_name}',
                       source=source)
 
     plot.add_tools(tools.HoverTool(

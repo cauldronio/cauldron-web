@@ -3,7 +3,7 @@
 
 {% block css%}
 <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
-<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'css/project.css' %}">
 {% endblock %}
 
 
@@ -12,15 +12,15 @@
     <div class="container-fluid">
 
       <div class="p-md-4">
-        {% include "cauldronapp/project_header.html" %}
+        {% include "cauldronapp/project/project_header.html" %}
 
         <!-- Check if there are repositories, if not, include a warning -->
         {% if repositories_count > 0%}
           <!-- Table OR visualizations -->
           {% if render_table %}
-            {% include "cauldronapp/repositories_table.html" %}
+            {% include "cauldronapp/project/project_repositories.html" %}
           {% else %}
-            {% include "cauldronapp/project_metrics.html" %}
+            {% include "cauldronapp/project/project_metrics.html" %}
           {% endif %}
         {% else %}
           <div class="alert alert-warning alert-dismissible fade show" role="alert">
@@ -50,14 +50,14 @@
       <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Share {{dashboard.name}} project</h5>
+            <h5 class="modal-title">Share {{project.name}} project</h5>
             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
               <span aria-hidden="true">&times;</span>
             </button>
           </div>
           <div class="modal-body">
-            {% with project_name=dashboard.name project_id=dashboard.id %}
-              {% include "cauldronapp/share_buttons.html" %}
+            {% with project_name=project.name project_id=project.id %}
+              {% include "cauldronapp/project/share_buttons.html" %}
             {% endwith %}
           </div>
         </div>
@@ -83,11 +83,11 @@
     </div>
 
     <!-- Data source modals -->
-    {% include "cauldronapp/datasource_modals/global.html" %}
-    {% include "cauldronapp/datasource_modals/github.html" %}
-    {% include "cauldronapp/datasource_modals/gitlab.html" %}
-    {% include "cauldronapp/datasource_modals/git.html" %}
-    {% include "cauldronapp/datasource_modals/meetup.html" %}
+    {% include "cauldronapp/project/datasource_modals/global.html" %}
+    {% include "cauldronapp/project/datasource_modals/github.html" %}
+    {% include "cauldronapp/project/datasource_modals/gitlab.html" %}
+    {% include "cauldronapp/project/datasource_modals/git.html" %}
+    {% include "cauldronapp/project/datasource_modals/meetup.html" %}
 
 {% endblock %}
 
@@ -99,5 +99,5 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.25.3/moment.min.js" integrity="sha256-C66CaAImteEKZPYvgng9j10J/45e9sAuZyfPYCwp4gE=" crossorigin="anonymous"></script>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
-<script src="{% static 'js/dashboard.js' %}" charset="utf-8"></script>
+<script src="{% static 'js/project.js' %}" charset="utf-8"></script>
 {% endblock %}

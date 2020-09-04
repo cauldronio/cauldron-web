@@ -32,19 +32,19 @@
 		<!-- PROJECT CARD-->
 		{% if projects_info %}
 			{% for project in projects_info %}
-				{% include "cauldronapp/project_card.html" %}
+				{% include "cauldronapp/projects/project_card.html" %}
 			{% endfor %}
 		{% endif %}
 		<!-- END PROJECT CARD-->
 	</div>
 
   {% if projects_info %}
-    {% include "cauldronapp/nav_pagination.html" %}
+    {% include "cauldronapp/utils/nav_pagination.html" %}
   {% endif %}
 
 </div>
 
-{% include "cauldronapp/delete_project.html" %}
+{% include "cauldronapp/projects/delete_project.html" %}
 
 <div class="modal fade" id="shareModal" tabindex="-1" role="dialog">
 	<div class="modal-dialog modal-dialog-centered" role="document">

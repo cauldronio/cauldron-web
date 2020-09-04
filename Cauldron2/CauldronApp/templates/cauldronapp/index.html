@@ -19,7 +19,7 @@
         <div class="col-lg-5 text-center text-lg-left">
           <h1 class="font-weight-bold my-4">Level Up Software Development Analytics</h1>
           <p class="mb-3">Cauldron allows project managers, analysts, and developers to understand more about the community and processes involved in software development</p>
-          <form action="/dashboard" method="post" class="create-dashboard">
+          <form action="{% url 'new_project' %}" method="post" class="create-project">
             {% csrf_token %}
             <button type="submit" class="btn btn-light btn-lg my-3" role="button">Analyze a Project</button>
           </form>
@@ -55,7 +55,7 @@
         </div>
       </div>
       <div class="row justify-content-center text-center">
-        <form action="/dashboard" method="post" class="create-dashboard">
+        <form action="{% url 'new_project' %}" method="post" class="create-project">
           {% csrf_token %}
           <button type="submit" class="btn btn-primary btn-lg my-3" role="button">Analyze a Project</button>
         </form>
@@ -106,23 +106,23 @@
         </div>
 
         <div class="col-sm-4 text-center">
-          <h2>Popular Dashboards</h2>
+          <h2>Popular Projects</h2>
           <p class="text-justify">
             <ul class="list-unstyled">
               <li class="mb-1">
-                <a target="_blank" rel="noopener noreferrer" class="font-weight-bold"  href="https://cauldron.io/dashboard/1308">Opendistro-for-Elasticsearch</a>
+                <a target="_blank" rel="noopener noreferrer" class="font-weight-bold"  href="https://cauldron.io/project/1308">Opendistro-for-Elasticsearch</a>
               </li>
               <li class="mb-1">
-                <a target="_blank" rel="noopener noreferrer" class="font-weight-bold"  href="https://cauldron.io/dashboard/1309">Ansible</a>
+                <a target="_blank" rel="noopener noreferrer" class="font-weight-bold"  href="https://cauldron.io/project/1309">Ansible</a>
               </li>
               <li class="mb-1">
-                <a target="_blank" rel="noopener noreferrer" class="font-weight-bold"  href="https://cauldron.io/dashboard/1310">Chaoss</a>
+                <a target="_blank" rel="noopener noreferrer" class="font-weight-bold"  href="https://cauldron.io/project/1310">Chaoss</a>
               </li>
               <li class="mb-1">
-                <a target="_blank" rel="noopener noreferrer" class="font-weight-bold"  href="https://cauldron.io/dashboard/1311">Kubernetes</a>
+                <a target="_blank" rel="noopener noreferrer" class="font-weight-bold"  href="https://cauldron.io/project/1311">Kubernetes</a>
               </li>
               <li class="mb-1">
-                <a target="_blank" rel="noopener noreferrer" class="font-weight-bold"  href="https://cauldron.io/dashboard/1312">Cauldron.io (GitLab)</a>
+                <a target="_blank" rel="noopener noreferrer" class="font-weight-bold"  href="https://cauldron.io/project/1312">Cauldron.io (GitLab)</a>
               </li>
             </ul>
           </p>
@@ -130,7 +130,7 @@
 
       </div>
       <div class="row justify-content-center text-center">
-        <form action="/dashboard" method="post" class="create-dashboard">
+        <form action="{% url 'new_project' %}" method="post" class="create-project">
           {% csrf_token %}
           <button type="submit" class="btn btn-primary btn-lg my-3" role="button">Analyze a Project</button>
         </form>
