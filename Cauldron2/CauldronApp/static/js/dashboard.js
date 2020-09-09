@@ -352,8 +352,11 @@ $(function() {
         "chart-authors-git-active":"commits_authors_active_bokeh",
         "chart-authors-issues-active":"issues_authors_active_bokeh",
         "chart-authors-reviews-active":"reviews_authors_active_bokeh",
-        "chart-onboarding-leaving":"authors_entering_leaving_bokeh",
-        "chart-organizational-diversity":"organizational_diversity_bokeh",
+        "chart-onboarding-leaving-git":"commits_authors_entering_leaving_bokeh",
+        "chart-onboarding-leaving-issues":"issues_authors_entering_leaving_bokeh",
+        "chart-onboarding-leaving-reviews":"reviews_authors_entering_leaving_bokeh",
+        "chart-organizational-diversity-authors":"organizational_diversity_authors_bokeh",
+        "chart-organizational-diversity-commits":"organizational_diversity_commits_bokeh",
     }
 
     var NUMBERS_KEYS = {

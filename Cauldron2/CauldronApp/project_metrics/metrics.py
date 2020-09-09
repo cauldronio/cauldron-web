@@ -127,8 +127,13 @@ def get_metrics_static(dashboard):
     metrics['reviews_open_age_bokeh'] = activity_reviews.reviews_open_age_opened_bokeh(elastic)
 
     # Community graphs
-    metrics['authors_aging_bokeh'] = community_common.authors_aging_bokeh(elastic)
-    metrics['authors_retained_ratio_bokeh'] = community_common.authors_retained_ratio_bokeh(elastic)
+    # TODO: Remember to update the documentation about the snapshot date when the time comes
+    metrics['commits_authors_aging_bokeh'] = community_commits.authors_aging_bokeh(elastic, now)
+    metrics['issues_authors_aging_bokeh'] = community_issues.authors_aging_bokeh(elastic, now)
+    metrics['reviews_authors_aging_bokeh'] = community_reviews.authors_aging_bokeh(elastic, now)
+    metrics['commits_authors_retained_ratio_bokeh'] = community_commits.authors_retained_ratio_bokeh(elastic, now)
+    metrics['issues_authors_retained_ratio_bokeh'] = community_issues.authors_retained_ratio_bokeh(elastic, now)
+    metrics['reviews_authors_retained_ratio_bokeh'] = community_reviews.authors_retained_ratio_bokeh(elastic, now)
 
     return metrics
 
@@ -171,7 +176,10 @@ def get_metrics_in_range(dashboard, from_date, to_date):
     metrics['commits_authors_active_bokeh'] = community_commits.authors_active_bokeh(elastic, from_date, to_date)
     metrics['issues_authors_active_bokeh'] = community_issues.authors_active_bokeh(elastic, from_date, to_date)
     metrics['reviews_authors_active_bokeh'] = community_reviews.authors_active_bokeh(elastic, from_date, to_date)
-    metrics['authors_entering_leaving_bokeh'] = community_common.authors_entering_leaving_bokeh(elastic, from_date, to_date)
-    metrics['organizational_diversity_bokeh'] = community_common.organizational_diversity(elastic, from_date, to_date)
+    metrics['commits_authors_entering_leaving_bokeh'] = community_commits.authors_entering_leaving_bokeh(elastic, from_date, to_date)
+    metrics['issues_authors_entering_leaving_bokeh'] = community_issues.authors_entering_leaving_bokeh(elastic, from_date, to_date)
+    metrics['reviews_authors_entering_leaving_bokeh'] = community_reviews.authors_entering_leaving_bokeh(elastic, from_date, to_date)
+    metrics['organizational_diversity_authors_bokeh'] = community_common.organizational_diversity_authors(elastic, from_date, to_date)
+    metrics['organizational_diversity_commits_bokeh'] = community_common.organizational_diversity_commits(elastic, from_date, to_date)
 
     return metrics

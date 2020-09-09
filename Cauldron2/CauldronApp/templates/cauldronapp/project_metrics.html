@@ -355,7 +355,31 @@
             <div id="chart-authors-git-active"></div>
           </div>
           <div class="col-md-6">
+            <div id="chart-onboarding-leaving-git"></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div id="chart-authors-aging-git"></div>
+          </div>
+          <div class="col-md-6">
+            <div id="chart-authors-retained-ratio-git"></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
             <div id="chart-authors-issues-active"></div>
+          </div>
+          <div class="col-md-6">
+            <div id="chart-onboarding-leaving-issues"></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div id="chart-authors-aging-issues"></div>
+          </div>
+          <div class="col-md-6">
+            <div id="chart-authors-retained-ratio-issues"></div>
           </div>
         </div>
         <div class="row">
@@ -363,21 +387,24 @@
             <div id="chart-authors-reviews-active"></div>
           </div>
           <div class="col-md-6">
-            <div id="chart-onboarding-leaving"></div>
+            <div id="chart-onboarding-leaving-reviews"></div>
           </div>
         </div>
         <div class="row">
           <div class="col-md-6">
-            <div id="chart-authors-aging"></div>
+            <div id="chart-authors-aging-reviews"></div>
           </div>
           <div class="col-md-6">
-            <div id="chart-authors-retained-ratio"></div>
+            <div id="chart-authors-retained-ratio-reviews"></div>
           </div>
         </div>
         <div class="row">
-          <!--div class="col-md-6"-->
-            <div id="chart-organizational-diversity"></div>
-          <!--/div-->
+          <div class="col-md-6">
+            <div id="chart-organizational-diversity-authors"></div>
+          </div>
+          <div class="col-md-6">
+            <div id="chart-organizational-diversity-commits"></div>
+          </div>
         </div>
       </div>
       <!-- End COMMUNITY -->
@@ -407,10 +434,17 @@ document.addEventListener('DOMContentLoaded', function(event) {
         "chart-authors-git-active": {{ metrics.commits_authors_active_bokeh | safe }},
         "chart-authors-issues-active": {{ metrics.issues_authors_active_bokeh | safe }},
         "chart-authors-reviews-active": {{ metrics.reviews_authors_active_bokeh | safe }},
-        "chart-onboarding-leaving": {{ metrics.authors_entering_leaving_bokeh | safe }},
-        "chart-authors-aging": {{ metrics.authors_aging_bokeh | safe }},
-        "chart-authors-retained-ratio": {{ metrics.authors_retained_ratio_bokeh | safe }},
-        "chart-organizational-diversity": {{ metrics.organizational_diversity_bokeh | safe }},
+        "chart-onboarding-leaving-git": {{ metrics.commits_authors_entering_leaving_bokeh | safe }},
+        "chart-onboarding-leaving-issues": {{ metrics.issues_authors_entering_leaving_bokeh | safe }},
+        "chart-onboarding-leaving-reviews": {{ metrics.reviews_authors_entering_leaving_bokeh | safe }},
+        "chart-authors-aging-git": {{ metrics.commits_authors_aging_bokeh | safe }},
+        "chart-authors-aging-issues": {{ metrics.issues_authors_aging_bokeh | safe }},
+        "chart-authors-aging-reviews": {{ metrics.reviews_authors_aging_bokeh | safe }},
+        "chart-authors-retained-ratio-git": {{ metrics.commits_authors_retained_ratio_bokeh | safe }},
+        "chart-authors-retained-ratio-issues": {{ metrics.issues_authors_retained_ratio_bokeh | safe }},
+        "chart-authors-retained-ratio-reviews": {{ metrics.reviews_authors_retained_ratio_bokeh | safe }},
+        "chart-organizational-diversity-authors": {{ metrics.organizational_diversity_authors_bokeh | safe }},
+        "chart-organizational-diversity-commits": {{ metrics.organizational_diversity_commits_bokeh | safe }},
     }
 
     for (var k in graphs) {
