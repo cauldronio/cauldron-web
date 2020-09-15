@@ -147,14 +147,19 @@ def get_metrics_in_range(dashboard, from_date, to_date):
     metrics['commits_lines_changed_boked'] = activity_commits.git_lines_changed_bokeh(elastic, from_date, to_date)
     metrics['commits_hour_day_bokeh'] = activity_commits.git_commits_hour_day_bokeh(elastic, from_date, to_date)
     metrics['commits_weekday_bokeh'] = activity_commits.git_commits_weekday_bokeh(elastic, from_date, to_date)
+    metrics['commits_heatmap_bokeh'] = activity_commits.git_commits_heatmap_bokeh(elastic, from_date, to_date)
     # Activity issue graphs
     metrics['issues_open_closed_bokeh'] = activity_issues.issues_open_closed_bokeh(elastic, from_date, to_date)
     metrics['issues_open_weekday_bokeh'] = activity_issues.issues_open_weekday_bokeh(elastic, from_date, to_date)
     metrics['issues_closed_weekday_bokeh'] = activity_issues.issues_closed_weekday_bokeh(elastic, from_date, to_date)
+    metrics['issues_opened_heatmap_bokeh'] = activity_issues.issues_opened_heatmap_bokeh(elastic, from_date, to_date)
+    metrics['issues_closed_heatmap_bokeh'] = activity_issues.issues_closed_heatmap_bokeh(elastic, from_date, to_date)
     # Activity reviews graphs
     metrics['reviews_open_closed_bokeh'] = activity_reviews.reviews_open_closed_bokeh(elastic, from_date, to_date)
     metrics['reviews_open_weekday_bokeh'] = activity_reviews.reviews_open_weekday_bokeh(elastic, from_date, to_date)
     metrics['reviews_closed_weekday_bokeh'] = activity_reviews.reviews_closed_weekday_bokeh(elastic, from_date, to_date)
+    metrics['reviews_opened_heatmap_bokeh'] = activity_reviews.reviews_opened_heatmap_bokeh(elastic, from_date, to_date)
+    metrics['reviews_closed_heatmap_bokeh'] = activity_reviews.reviews_closed_heatmap_bokeh(elastic, from_date, to_date)
     # Overview/Other
     metrics['author_evolution_bokeh'] = other.author_evolution_bokeh(elastic, from_date, to_date)
     metrics['reviews_opened'] = activity_reviews.reviews_opened(elastic, from_date, to_date)

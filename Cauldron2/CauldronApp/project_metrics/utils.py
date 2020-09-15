@@ -29,6 +29,23 @@ def configure_figure(plot, url_help):
                    tools.ResetTool())
 
 
+def configure_heatmap(plot, url_help):
+    """Configuration for heatmap figures"""
+    my_path = os.path.abspath(os.path.dirname(__file__))
+    path = os.path.join(my_path, "help.png")
+    info_tool = CustomAction(icon=path,
+                             callback=CustomJS(code=f"window.open('{url_help}', '_blank');"),
+                             action_tooltip='More information about this figure.')
+    plot.title.align = 'center'
+    plot.toolbar.logo = None
+    plot.toolbar.active_drag = None
+    plot.grid.grid_line_color = None
+    plot.axis.axis_line_color = None
+    plot.axis.major_tick_line_color = None
+    plot.axis.major_label_standoff = 0
+    plot.add_tools(info_tool)
+
+
 def weekday_vbar_figure(top, y_axis_label, title, tooltips, url_help):
     """Create a vbar figure for weekday"""
     source = ColumnDataSource(data=dict(

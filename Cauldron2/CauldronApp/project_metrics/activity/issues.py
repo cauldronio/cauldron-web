@@ -2,16 +2,19 @@ import json
 import logging
 from collections import defaultdict
 from datetime import timedelta
+import calendar
+import pandas
 
 from bokeh.embed import json_item
 from bokeh.models import ColumnDataSource, tools, Range1d
+from bokeh.models import BasicTicker, ColorBar, LinearColorMapper, PrintfTickFormatter
 from bokeh.palettes import Blues
 from bokeh.plotting import figure
 
 from elasticsearch import ElasticsearchException
 from elasticsearch_dsl import Search, Q
 
-from ..utils import configure_figure, weekday_vbar_figure, WEEKDAY, get_interval
+from ..utils import configure_figure, configure_heatmap, weekday_vbar_figure, WEEKDAY, get_interval
 
 logger = logging.getLogger(__name__)
 
@@ -291,5 +294,142 @@ def issues_closed_weekday_bokeh(elastic, from_date, to_date):
                                ],
                                url_help='https://gitlab.com/cauldronio/cauldron/'
                                         '-/blob/master/guides/metrics/activity/issues-closed-by-weekday.md')
+
+    return json.dumps(json_item(plot))
+
+
+def issues_opened_heatmap_bokeh(elastic, from_date, to_date):
+    """Get issues opened per week day and per hour of the day in the
+    specified range of time"""
+    from_date_es = from_date.strftime("%Y-%m-%d")
+    to_date_es = to_date.strftime("%Y-%m-%d")
+
+    s = Search(using=elastic, index='all') \
+        .filter('range', created_at={'gte': from_date_es, "lte": to_date_es}) \
+        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .extra(size=0)
+    s.aggs.bucket('weekdays', 'terms', script="doc['created_at'].value.dayOfWeek", size=7, order={'_term': 'asc'}) \
+          .bucket('hours', 'terms', script="doc['created_at'].value.getHourOfDay()", size=24, order={'_term': 'asc'})
+
+    try:
+        response = s.execute()
+        weekdays = response.aggregations.weekdays.buckets
+    except ElasticsearchException as e:
+        logger.warning(e)
+        weekdays = []
+
+    days = list(calendar.day_abbr)
+    hours = list(map(str, range(24)))
+
+    data = dict.fromkeys(days)
+    for day in days:
+        data[day] = dict.fromkeys(hours, 0)
+
+    for weekday in weekdays:
+        day = days[int(weekday.key) - 1]
+        for hour in weekday.hours.buckets:
+            data[day][hour.key] = hour.doc_count
+
+    data = pandas.DataFrame(data)
+    data.index.name = "Hour"
+    data.columns.name = "Day"
+
+    df = pandas.DataFrame(data.stack(), columns=['issues']).reset_index()
+
+    colors = ["#ffffff", "#dfdfff", "#bfbfff", "#9f9fff", "#7f7fff", "#5f5fff", "#3f3fff", "#1f1fff", "#0000ff"]
+    mapper = LinearColorMapper(palette=colors, low=df.issues.min(), high=df.issues.max())
+
+    TOOLS = "hover,save,pan,box_zoom,reset,wheel_zoom"
+
+    plot = figure(title="Issues Opened Heatmap",
+                  x_range=days, y_range=list(reversed(hours)),
+                  x_axis_location="above", height=400,
+                  sizing_mode="stretch_width",
+                  tools=TOOLS, toolbar_location='below',
+                  tooltips=[('date', '@Day @ @Hour{00}:00'), ('issues', '@issues')])
+
+    configure_heatmap(plot, 'https://gitlab.com/cauldronio/cauldron/'
+                            '-/blob/master/guides/metrics/activity/issues-opened-heatmap.md')
+
+    plot.rect(x="Day", y="Hour", width=1, height=1,
+              source=df,
+              fill_color={'field': 'issues', 'transform': mapper},
+              line_color=None)
+
+    color_bar = ColorBar(color_mapper=mapper,
+                         ticker=BasicTicker(desired_num_ticks=len(colors)),
+                         formatter=PrintfTickFormatter(format="%d"),
+                         label_standoff=6, border_line_color=None,
+                         location=(0, 0))
+    plot.add_layout(color_bar, 'right')
+
+    return json.dumps(json_item(plot))
+
+
+def issues_closed_heatmap_bokeh(elastic, from_date, to_date):
+    """Get issues closed per week day and per hour of the day in the
+    specified range of time"""
+    from_date_es = from_date.strftime("%Y-%m-%d")
+    to_date_es = to_date.strftime("%Y-%m-%d")
+
+    s = Search(using=elastic, index='all') \
+        .filter('range', closed_at={'gte': from_date_es, "lte": to_date_es}) \
+        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .extra(size=0)
+    s.aggs.bucket('weekdays', 'terms', script="doc['closed_at'].value.dayOfWeek", size=7, order={'_term': 'asc'}) \
+          .bucket('hours', 'terms', script="doc['closed_at'].value.getHourOfDay()", size=24, order={'_term': 'asc'})
+
+    try:
+        response = s.execute()
+        weekdays = response.aggregations.weekdays.buckets
+    except ElasticsearchException as e:
+        logger.warning(e)
+        weekdays = []
+
+    days = list(calendar.day_abbr)
+    hours = list(map(str, range(24)))
+
+    data = dict.fromkeys(days)
+    for day in days:
+        data[day] = dict.fromkeys(hours, 0)
+
+    for weekday in weekdays:
+        day = days[int(weekday.key) - 1]
+        data[day] = dict.fromkeys(hours, 0)
+        for hour in weekday.hours.buckets:
+            data[day][hour.key] = hour.doc_count
+
+    data = pandas.DataFrame(data)
+    data.index.name = "Hour"
+    data.columns.name = "Day"
+
+    df = pandas.DataFrame(data.stack(), columns=['issues']).reset_index()
+
+    colors = ["#ffffff", "#dfdfff", "#bfbfff", "#9f9fff", "#7f7fff", "#5f5fff", "#3f3fff", "#1f1fff", "#0000ff"]
+    mapper = LinearColorMapper(palette=colors, low=df.issues.min(), high=df.issues.max())
+
+    TOOLS = "hover,save,pan,box_zoom,reset,wheel_zoom"
+
+    plot = figure(title="Issues Closed Heatmap",
+                  x_range=days, y_range=list(reversed(hours)),
+                  x_axis_location="above", height=400,
+                  sizing_mode="stretch_width",
+                  tools=TOOLS, toolbar_location='below',
+                  tooltips=[('date', '@Day @ @Hour{00}:00'), ('issues', '@issues')])
+
+    configure_heatmap(plot, 'https://gitlab.com/cauldronio/cauldron/'
+                            '-/blob/master/guides/metrics/activity/issues-closed-heatmap.md')
+
+    plot.rect(x="Day", y="Hour", width=1, height=1,
+              source=df,
+              fill_color={'field': 'issues', 'transform': mapper},
+              line_color=None)
+
+    color_bar = ColorBar(color_mapper=mapper,
+                         ticker=BasicTicker(desired_num_ticks=len(colors)),
+                         formatter=PrintfTickFormatter(format="%d"),
+                         label_standoff=6, border_line_color=None,
+                         location=(0, 0))
+    plot.add_layout(color_bar, 'right')
 
     return json.dumps(json_item(plot))

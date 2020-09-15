@@ -164,6 +164,9 @@
             <div id="chart-commits-weekday"></div>
           </div>
         </div>
+        <div class="row">
+          <div id="chart-commits-heatmap"></div>
+        </div>
       </div>
       <!-- End GIT ACTIVITY -->
       <!-- Start Issues ACTIVITY -->
@@ -237,6 +240,14 @@
             <div id="chart-issues-closed-weekday"></div>
           </div>
         </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div id="chart-issues-opened-heatmap"></div>
+          </div>
+          <div class="col-md-6">
+            <div id="chart-issues-closed-heatmap"></div>
+          </div>
+        </div>
       </div>
       <!-- End Issues ACTIVITY -->
       <!-- Start Reviews ACTIVITY -->
@@ -308,6 +319,14 @@
           </div>
           <div class="col-md-6">
             <div id="chart-reviews-closed-weekday"></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div id="chart-reviews-opened-heatmap"></div>
+          </div>
+          <div class="col-md-6">
+            <div id="chart-reviews-closed-heatmap"></div>
           </div>
         </div>
       </div>
@@ -422,15 +441,20 @@ document.addEventListener('DOMContentLoaded', function(event) {
         "chart-commits": {{ metrics.commits_bokeh | safe }},
         "chart-commits-hour": {{ metrics.commits_hour_day_bokeh | safe }},
         "chart-commits-weekday": {{ metrics.commits_weekday_bokeh | safe }},
+        "chart-commits-heatmap": {{ metrics.commits_heatmap_bokeh | safe }},
         "chart-lines-touched": {{ metrics.commits_lines_changed_boked | safe }},
         "chart-issues-open-closed": {{ metrics.issues_open_closed_bokeh | safe }},
         "chart-issues-open-age": {{ metrics.issues_open_age_bokeh | safe }},
         "chart-issues-open-weekday": {{ metrics.issues_open_weekday_bokeh | safe }},
         "chart-issues-closed-weekday": {{ metrics.issues_closed_weekday_bokeh | safe }},
+        "chart-issues-opened-heatmap": {{ metrics.issues_opened_heatmap_bokeh | safe }},
+        "chart-issues-closed-heatmap": {{ metrics.issues_closed_heatmap_bokeh | safe }},
         "chart-reviews-open-closed": {{ metrics.reviews_open_closed_bokeh | safe }},
         "chart-reviews-open-age": {{ metrics.reviews_open_age_bokeh | safe }},
         "chart-reviews-open-weekday": {{ metrics.reviews_open_weekday_bokeh | safe }},
         "chart-reviews-closed-weekday": {{ metrics.reviews_closed_weekday_bokeh | safe }},
+        "chart-reviews-opened-heatmap": {{ metrics.reviews_opened_heatmap_bokeh | safe }},
+        "chart-reviews-closed-heatmap": {{ metrics.reviews_closed_heatmap_bokeh | safe }},
         "chart-authors-git-active": {{ metrics.commits_authors_active_bokeh | safe }},
         "chart-authors-issues-active": {{ metrics.issues_authors_active_bokeh | safe }},
         "chart-authors-reviews-active": {{ metrics.reviews_authors_active_bokeh | safe }},

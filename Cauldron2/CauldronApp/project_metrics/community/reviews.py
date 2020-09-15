@@ -136,7 +136,7 @@ def authors_entering_leaving_bokeh(elastic, from_date, to_date):
     """Get a visualization of review submitters entering and leaving
     the project"""
     s = Search(using=elastic, index='all') \
-        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
         .extra(size=0)
     s.aggs.bucket('authors', 'terms', field='author_uuid', size=30000) \
           .metric('first_contribution', 'min', field='grimoire_creation_date') \

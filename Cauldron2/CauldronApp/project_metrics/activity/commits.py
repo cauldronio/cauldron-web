@@ -2,16 +2,19 @@ import json
 import logging
 from collections import defaultdict
 from datetime import timedelta
+import calendar
+import pandas
 
 from bokeh.embed import json_item
 from bokeh.models import ColumnDataSource, tools, Range1d
+from bokeh.models import BasicTicker, ColorBar, LinearColorMapper, PrintfTickFormatter
 from bokeh.palettes import Blues
 from bokeh.plotting import figure
 
 from elasticsearch import ElasticsearchException
 from elasticsearch_dsl import Search, Q
 
-from ..utils import configure_figure, get_interval, weekday_vbar_figure, WEEKDAY
+from ..utils import configure_figure, configure_heatmap, get_interval, weekday_vbar_figure, WEEKDAY
 
 logger = logging.getLogger(__name__)
 
@@ -188,6 +191,7 @@ def git_commits_hour_day_bokeh(elastic, from_date, to_date):
     to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='git')\
         .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
+        .query(~Q('match', files=0)) \
         .extra(size=0)
     s.aggs.bucket('commit_hour_day', 'terms', script="doc['commit_date'].value.getHourOfDay()", size=24)
 
@@ -230,6 +234,75 @@ def git_commits_hour_day_bokeh(elastic, from_date, to_date):
         mode='vline',
         toggleable=False
     ))
+
+    return json.dumps(json_item(plot))
+
+
+def git_commits_heatmap_bokeh(elastic, from_date, to_date):
+    """Get commits per week day and per hour of the day in the
+    specified range of time"""
+    from_date_es = from_date.strftime("%Y-%m-%d")
+    to_date_es = to_date.strftime("%Y-%m-%d")
+
+    s = Search(using=elastic, index='git') \
+        .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
+        .query(~Q('match', files=0)) \
+        .extra(size=0)
+    s.aggs.bucket('weekdays', 'terms', field='commit_date_weekday', size=7, order={'_term': 'asc'}) \
+          .bucket('hours', 'terms', field='commit_date_hour', size=24, order={'_term': 'asc'})
+
+    try:
+        response = s.execute()
+        weekdays = response.aggregations.weekdays.buckets
+    except ElasticsearchException as e:
+        logger.warning(e)
+        weekdays = []
+
+    days = list(calendar.day_abbr)
+    hours = list(map(str, range(24)))
+
+    data = dict.fromkeys(days)
+    for day in days:
+        data[day] = dict.fromkeys(hours, 0)
+
+    for weekday in weekdays:
+        day = days[weekday.key - 1]
+        data[day] = dict.fromkeys(hours, 0)
+        for hour in weekday.hours:
+            data[day][str(hour.key)] = hour.doc_count
+
+    data = pandas.DataFrame(data)
+    data.index.name = "Hour"
+    data.columns.name = "Day"
+
+    df = pandas.DataFrame(data.stack(), columns=['commits']).reset_index()
+
+    colors = ["#ffffff", "#dfdfff", "#bfbfff", "#9f9fff", "#7f7fff", "#5f5fff", "#3f3fff", "#1f1fff", "#0000ff"]
+    mapper = LinearColorMapper(palette=colors, low=df.commits.min(), high=df.commits.max())
+
+    TOOLS = "hover,save,pan,box_zoom,reset,wheel_zoom"
+
+    plot = figure(title="# Commits by hour and weekday (local time of commit author)",
+                  x_range=days, y_range=list(reversed(hours)),
+                  x_axis_location="above", height=400,
+                  sizing_mode="stretch_width",
+                  tools=TOOLS, toolbar_location='below',
+                  tooltips=[('date', '@Day @ @Hour{00}:00'), ('commits', '@commits')])
+
+    configure_heatmap(plot, 'https://gitlab.com/cauldronio/cauldron/'
+                            '-/blob/master/guides/metrics/activity/commits-heatmap.md')
+
+    plot.rect(x="Day", y="Hour", width=1, height=1,
+              source=df,
+              fill_color={'field': 'commits', 'transform': mapper},
+              line_color=None)
+
+    color_bar = ColorBar(color_mapper=mapper,
+                         ticker=BasicTicker(desired_num_ticks=len(colors)),
+                         formatter=PrintfTickFormatter(format="%d"),
+                         label_standoff=6, border_line_color=None,
+                         location=(0, 0))
+    plot.add_layout(color_bar, 'right')
 
     return json.dumps(json_item(plot))
 
