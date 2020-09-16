@@ -1050,6 +1050,10 @@ def request_show_dashboard(request, dash_id):
     context['error'] = summary['status']['error']
     context['running'] = summary['status']['running']
 
+    context['is_outdated'] = dash.is_outdated
+    if context['is_outdated']:
+        context['last_refresh'] = dash.last_refresh
+
     context['editable'] = request.user.is_authenticated and request.user == dash.creator or request.user.is_superuser
 
     if not context['render_table'] and context['repositories_count'] > 0:

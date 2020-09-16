@@ -2,6 +2,9 @@ from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
 
+from datetime import datetime, timedelta
+import pytz
+
 # IMPORTANT: If you are going to modify any User Reference: take a look at merge_accounts in views.py
 
 # IMPORTANT: If you are going to change the schema, you MUST modify the schema in worker container
@@ -158,6 +161,18 @@ class Dashboard(models.Model):
     @property
     def repos_meetup_count(self):
         return self.repository_set.filter(backend="meetup").count()
+
+    @property
+    def last_refresh(self):
+        if self.repos_count == 0:
+            return datetime.now(pytz.utc)
+
+        return sorted(self.repository_set.all(), key=lambda r: r.last_refresh)[0].last_refresh
+
+    @property
+    def is_outdated(self):
+        elapsed_time = datetime.now(pytz.utc) - self.last_refresh
+        return elapsed_time > timedelta(days=5)
 
 
 class ProjectRole(models.Model):

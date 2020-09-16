@@ -83,5 +83,13 @@
       {% endif %}
     </div>
   </div>
+  {% if is_outdated %}
+  <div class="alert alert-warning alert-dismissible mb-0 mt-1 fade show" role="alert">
+    <strong>Data outdated!</strong> Some of the analyzed repositories have not been updated since {{last_refresh|date:'N j, Y'}}. The data could have inconsistencies...
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  {% endif %}
 {% endif %}
 </div>
