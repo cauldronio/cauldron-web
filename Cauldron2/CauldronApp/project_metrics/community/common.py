@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 seconds_in_year = 365 * 24 * 60 * 60
 
+
 def get_seniority(first_contribution_date, ref_date):
     """Returns the seniority of an author given the date of
     their first contribution and a reference date"""

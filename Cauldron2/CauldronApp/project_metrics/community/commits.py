@@ -244,7 +244,7 @@ def authors_aging_bokeh(elastic, snap_date):
     of these people are still active in the community (retained)"""
     snap_date_es = snap_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='git') \
-        .filter('range', grimoire_creation_date={"lte": snap_date_es}) \
+        .filter('range', grimoire_creation_date={"lt": snap_date_es}) \
         .query(~Q('match', files=0)) \
         .extra(size=0)
     s.aggs.bucket('authors', 'terms', field='author_uuid', size=30000) \
@@ -271,8 +271,8 @@ def authors_aging_bokeh(elastic, snap_date):
 
     authors['first_contribution'] = pandas.to_datetime(authors['first_contribution'], unit='s')
     authors['last_contribution'] = pandas.to_datetime(authors['last_contribution'], unit='s')
-    authors['seniority'] = authors['first_contribution'].apply(lambda x: get_seniority(x, datetime.now()))
-    authors['still_active'] = authors['last_contribution'].apply(lambda x: is_still_active(x, datetime.now()))
+    authors['seniority'] = authors['first_contribution'].apply(lambda x: get_seniority(x, snap_date))
+    authors['still_active'] = authors['last_contribution'].apply(lambda x: is_still_active(x, snap_date))
 
     authors_attracted = authors.groupby('seniority').size().reset_index(name='attracted')
 
@@ -333,7 +333,7 @@ def authors_retained_ratio_bokeh(elastic, snap_date):
     git authors in a community"""
     snap_date_es = snap_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='git') \
-        .filter('range', grimoire_creation_date={"lte": snap_date_es}) \
+        .filter('range', grimoire_creation_date={"lt": snap_date_es}) \
         .query(~Q('match', files=0)) \
         .extra(size=0)
     s.aggs.bucket('authors', 'terms', field='author_uuid', size=30000) \
@@ -360,8 +360,8 @@ def authors_retained_ratio_bokeh(elastic, snap_date):
 
     authors['first_contribution'] = pandas.to_datetime(authors['first_contribution'], unit='s')
     authors['last_contribution'] = pandas.to_datetime(authors['last_contribution'], unit='s')
-    authors['seniority'] = authors['first_contribution'].apply(lambda x: get_seniority(x, datetime.now()))
-    authors['still_active'] = authors['last_contribution'].apply(lambda x: is_still_active(x, datetime.now()))
+    authors['seniority'] = authors['first_contribution'].apply(lambda x: get_seniority(x, snap_date))
+    authors['still_active'] = authors['last_contribution'].apply(lambda x: is_still_active(x, snap_date))
 
     authors_attracted = authors.groupby('seniority').size().reset_index(name='attracted')
 
