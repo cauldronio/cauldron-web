@@ -292,7 +292,7 @@ def authors_aging_bokeh(elastic, snap_date):
                   sizing_mode="stretch_width",
                   tools='')
     plot.x_range.start = 0
-    plot.title.text = 'Submitters aging (Issues)'
+    plot.title.text = f'Submitters aging as of {snap_date_es} (Issues)'
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
                            '-/blob/master/guides/metrics/community/aging-issues.md')
 
@@ -381,7 +381,7 @@ def authors_retained_ratio_bokeh(elastic, snap_date):
                   height=300,
                   sizing_mode="stretch_width",
                   tools='')
-    plot.title.text = 'Submitters retained ratio (Issues)'
+    plot.title.text = f'Submitters retained ratio as of {snap_date_es} (Issues)'
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
                            '-/blob/master/guides/metrics/community/retained-ratio-issues.md')
 

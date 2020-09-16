@@ -102,8 +102,9 @@ def organizational_diversity_authors(elastic, from_date, to_date):
                   tools='')
 
     plot.title.text = 'Organizational diversity (Git)'
-    configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
-                           '-/blob/master/guides/metrics/community/organizational-diversity-authors.md',
+    configure_figure(plot,
+                     'https://gitlab.com/cauldronio/cauldron/'
+                     '-/blob/master/guides/metrics/community/organizational-diversity-authors.md',
                      vertical=False)
 
     source = ColumnDataSource(data=dict(
@@ -188,8 +189,9 @@ def organizational_diversity_commits(elastic, from_date, to_date):
                   tools='')
 
     plot.title.text = 'Organizational diversity (Git)'
-    configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
-                           '-/blob/master/guides/metrics/community/organizational-diversity-commits.md',
+    configure_figure(plot,
+                     'https://gitlab.com/cauldronio/cauldron/'
+                     '-/blob/master/guides/metrics/community/organizational-diversity-commits.md',
                      vertical=False)
 
     source = ColumnDataSource(data=dict(

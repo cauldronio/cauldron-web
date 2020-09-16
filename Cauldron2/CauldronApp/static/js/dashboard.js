@@ -362,6 +362,12 @@ $(function() {
         "chart-onboarding-leaving-reviews":"reviews_authors_entering_leaving_bokeh",
         "chart-organizational-diversity-authors":"organizational_diversity_authors_bokeh",
         "chart-organizational-diversity-commits":"organizational_diversity_commits_bokeh",
+        "chart-authors-aging-git": "commits_authors_aging_bokeh",
+        "chart-authors-aging-issues": "issues_authors_aging_bokeh",
+        "chart-authors-aging-reviews": "reviews_authors_aging_bokeh",
+        "chart-authors-retained-ratio-git": "commits_authors_retained_ratio_bokeh",
+        "chart-authors-retained-ratio-issues": "issues_authors_retained_ratio_bokeh",
+        "chart-authors-retained-ratio-reviews": "reviews_authors_retained_ratio_bokeh",
     }
 
     var NUMBERS_KEYS = {
