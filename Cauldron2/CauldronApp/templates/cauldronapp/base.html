@@ -1,6 +1,7 @@
 {% load static %}
 
 {% url 'homepage' as homepage %}
+{% url 'compare_projects' as compare_projects %}
 
 <!doctype html>
 <html lang="en">
@@ -105,6 +106,11 @@
           <li class="nav-item">
             <a class="nav-link" href="{% url 'homepage' %}">My Projects</a>
           </li>
+          {% endif %}
+          {% if authenticated and request.path != compare_projects %}
+          <!--li class="nav-item">
+            <a class="nav-link" href="{% url 'compare_projects' %}">Compare</a>
+          </li-->
           {% endif %}
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle navbar-text" href="#" id="dropdownCommunityMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

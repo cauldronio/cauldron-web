@@ -1,0 +1,83 @@
+{% extends "cauldronapp/base.html" %}
+{% load static %}
+
+{% block css%}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="h3 mt-5 mb-5 font-weight-bold text-dark text-uppercase">Compare projects</div>
+
+    <!-- Success message -->
+    {% if message_success %}
+    <div class="alert alert-success">
+        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+        {{ message_success }}
+    </div>
+    {% endif %}
+
+    <!-- Error message -->
+    {% if message_error %}
+    <div class="alert alert-danger">
+        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+        {{ message_error }}
+    </div>
+    {% endif %}
+
+    {% if projects|length > 0 %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col" class="text-center"><img src="{% static '/img/cauldron_logo.png' %}" width="20" height="20" alt=""></th>
+                {% for project in projects %}
+                <th scope="col" class="text-center"><a href="{% url 'show_dashboard' project.id %}">{{ project.name }}</a></th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <th scope="row"># Commits</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.commits_range }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Pull requests</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.reviews_opened }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row">Median review duration</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.review_duration }} days</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Issues created</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.issues_created_range }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Issues closed</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.issues_closed_range }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row">Median time to close</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.issues_time_to_close }} days</td>
+                {% endfor %}
+            </tr>
+        </tbody>
+    </table>
+    {% else %}
+    <p><em>No projects selected to compare</em></p>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block javascript %}
+{% endblock %}

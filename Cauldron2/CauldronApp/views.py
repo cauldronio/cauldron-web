@@ -35,6 +35,12 @@ from CauldronApp.oauth.github import GitHubOAuth
 from CauldronApp.oauth.gitlab import GitLabOAuth
 from CauldronApp.oauth.meetup import MeetupOAuth
 
+from .project_metrics.metrics import get_elastic_project
+from .project_metrics.activity import commits as activity_commits
+from .project_metrics.activity import issues as activity_issues
+from .project_metrics.activity import reviews as activity_reviews
+from .project_metrics import other
+
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -1002,6 +1008,8 @@ def request_show_dashboard(request, dash_id):
 
     context['dashboard'] = dash
 
+    context['projects_compare'] = request.user.dashboard_set.exclude(pk=dash.pk)
+
     repositories = dash.repository_set.all()
 
     context['repositories_count'] = repositories.count()
@@ -1071,6 +1079,58 @@ def request_show_dashboard(request, dash_id):
         context['metrics'] = metrics.get_metrics(dash, from_date, to_date)
 
     return render(request, 'cauldronapp/dashboard.html', context=context)
+
+
+def request_compare_projects(request):
+    """
+    View for the dashboards comparison.
+    :param request:
+    :return:
+    """
+    context = create_context(request)
+
+    if request.method != 'GET':
+        return custom_405(request, request.method)
+
+    try:
+        projects_id = list(map(int, request.GET.getlist('projects')))
+    except ValueError:
+        projects_id = []
+
+    if projects_id:
+        projects = Dashboard.objects.filter(id__in=projects_id)
+    else:
+        projects = Dashboard.objects.none()
+
+    if projects.count() > 2:
+        return custom_403(request)
+
+    context['projects'] = projects
+
+    try:
+        from_str = request.GET.get('from_date', '')
+        from_date = datetime.datetime.strptime(from_str, '%Y-%m-%d')
+    except ValueError:
+        from_date = datetime.datetime.now() - relativedelta(years=1)
+    try:
+        to_str = request.GET.get('to_date', '')
+        to_date = datetime.datetime.strptime(to_str, '%Y-%m-%d')
+    except ValueError:
+        to_date = datetime.datetime.now()
+
+    context['metrics'] = dict()
+    for project in projects:
+        elastic = get_elastic_project(project)
+        context['metrics'][project.id] = {
+            'commits_range': activity_commits.git_commits(elastic, from_date, to_date),
+            'reviews_opened': activity_reviews.reviews_opened(elastic, from_date, to_date),
+            'review_duration': other.review_duration(elastic, from_date, to_date),
+            'issues_created_range': activity_issues.issues_opened(elastic, from_date, to_date),
+            'issues_closed_range': activity_issues.issues_closed(elastic, from_date, to_date),
+            'issues_time_to_close': other.issues_time_to_close(elastic, from_date, to_date),
+        }
+
+    return render(request, 'cauldronapp/projects_compare.html', context=context)
 
 
 def request_project_metrics(request, dash_id):

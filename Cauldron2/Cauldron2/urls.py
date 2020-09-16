@@ -25,6 +25,8 @@ urlpatterns = [
     path('logout', views.request_logout),
     path('delete-token', views.request_delete_token),
 
+    path('compare', views.request_compare_projects, name="compare_projects"),
+
     path('dashboard', views.request_new_dashboard),
     path('dashboard/<int:dash_id>', views.request_show_dashboard, name="show_dashboard"),
     path('dashboard/<int:dash_id>/edit', views.request_edit_dashboard),
