@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 WEEKDAY = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 
-def configure_figure(plot, url_help):
+def configure_figure(plot, url_help, vertical=True):
     """Common configuration for all the figures"""
     my_path = os.path.abspath(os.path.dirname(__file__))
     path = os.path.join(my_path, "help.png")
@@ -20,7 +20,10 @@ def configure_figure(plot, url_help):
     plot.title.align = 'center'
     plot.toolbar.logo = None
     plot.toolbar.active_drag = None
-    plot.left[0].formatter.use_scientific = False
+    if vertical:
+        plot.left[0].formatter.use_scientific = False
+    else:
+        plot.xaxis.formatter.use_scientific = False
     plot.add_tools(info_tool,
                    tools.PanTool(dimensions='width'),
                    tools.WheelZoomTool(dimensions='width'),

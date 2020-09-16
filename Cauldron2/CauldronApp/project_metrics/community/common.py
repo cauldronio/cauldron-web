@@ -90,26 +90,30 @@ def organizational_diversity_authors(elastic, from_date, to_date):
     data['domain'].append('other')
     data['value'].append(authors_other_domain)
 
-    plot = figure(x_range=data['domain'],
-                  x_axis_label='Domain',
-                  y_axis_label='# Authors',
+    # Flip the list
+    data['domain'].reverse()
+    data['value'].reverse()
+
+    plot = figure(y_range=data['domain'],
+                  y_axis_label='Domain',
+                  x_axis_label='# Authors',
                   height=300,
                   sizing_mode="stretch_width",
                   tools='')
 
     plot.title.text = 'Organizational diversity (Git)'
-    plot.xaxis.major_label_text_color = None
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
-                           '-/blob/master/guides/metrics/community/organizational-diversity-authors.md')
+                           '-/blob/master/guides/metrics/community/organizational-diversity-authors.md',
+                     vertical=False)
 
     source = ColumnDataSource(data=dict(
         domains=data['domain'],
         authors=data['value']
     ))
 
-    plot.vbar(x='domains', top='authors',
+    plot.hbar(y='domains', right='authors',
               source=source,
-              width=0.3,
+              width=10,
               color=Blues[3][0])
 
     plot.add_tools(tools.HoverTool(
@@ -117,7 +121,7 @@ def organizational_diversity_authors(elastic, from_date, to_date):
             ('domain', '@domains'),
             ('authors', '@authors')
         ],
-        mode='vline',
+        mode='hline',
         toggleable=False
     ))
 
@@ -172,26 +176,30 @@ def organizational_diversity_commits(elastic, from_date, to_date):
     data['domain'].append('other')
     data['value'].append(commits_other_domain)
 
-    plot = figure(x_range=data['domain'],
-                  x_axis_label='Domain',
-                  y_axis_label='# Commits',
+    # Flip the list
+    data['domain'].reverse()
+    data['value'].reverse()
+
+    plot = figure(y_range=data['domain'],
+                  y_axis_label='Domain',
+                  x_axis_label='# Commits',
                   height=300,
                   sizing_mode="stretch_width",
                   tools='')
 
     plot.title.text = 'Organizational diversity (Git)'
-    plot.xaxis.major_label_text_color = None
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
-                           '-/blob/master/guides/metrics/community/organizational-diversity-commits.md')
+                           '-/blob/master/guides/metrics/community/organizational-diversity-commits.md',
+                     vertical=False)
 
     source = ColumnDataSource(data=dict(
         domains=data['domain'],
         commits=data['value']
     ))
 
-    plot.vbar(x='domains', top='commits',
+    plot.hbar(y='domains', right='commits',
               source=source,
-              width=0.3,
+              width=10,
               color=Blues[3][0])
 
     plot.add_tools(tools.HoverTool(
@@ -199,7 +207,7 @@ def organizational_diversity_commits(elastic, from_date, to_date):
             ('domain', '@domains'),
             ('commits', '@commits')
         ],
-        mode='vline',
+        mode='hline',
         toggleable=False
     ))
 
