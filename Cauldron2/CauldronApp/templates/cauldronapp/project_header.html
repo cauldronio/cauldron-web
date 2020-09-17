@@ -59,12 +59,13 @@
           <!-- Compare -->
           <div class="ml-3 mb-1 dropdown show">
             <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="compare-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Compare</a>
-
+            {% if projects_compare %}
             <div class="dropdown-menu scrollable-menu" aria-labelledby="compare-dropdown">
               {% for project in projects_compare %}
               <a class="dropdown-item" href="{% url 'compare_projects' %}?projects={{dashboard.pk}}&projects={{project.pk}}" target="_blank">{{ project.name }}</a>
               {% endfor %}
             </div>
+            {% endif %}
           </div>
           <!-- End compare -->
           <!-- Refresh all -->

@@ -1008,7 +1008,8 @@ def request_show_dashboard(request, dash_id):
 
     context['dashboard'] = dash
 
-    context['projects_compare'] = request.user.dashboard_set.exclude(pk=dash.pk)
+    if request.user.is_authenticated:
+        context['projects_compare'] = request.user.dashboard_set.exclude(pk=dash.pk)
 
     repositories = dash.repository_set.all()
 
