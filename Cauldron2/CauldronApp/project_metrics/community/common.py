@@ -115,7 +115,7 @@ def organizational_diversity_authors(elastic, from_date, to_date):
 
     plot.hbar(y='domains', right='authors',
               source=source,
-              width=10,
+              height=0.5,
               color=Blues[3][0])
 
     plot.add_tools(tools.HoverTool(
@@ -202,7 +202,7 @@ def organizational_diversity_commits(elastic, from_date, to_date):
 
     plot.hbar(y='domains', right='commits',
               source=source,
-              width=10,
+              height=0.5,
               color=Blues[3][0])
 
     plot.add_tools(tools.HoverTool(
