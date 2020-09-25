@@ -59,7 +59,7 @@
           <!-- Compare -->
           {% if projects_compare %}
           <div class="ml-3 mb-1 dropdown show">
-            <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="compare-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Compare</a>
+            <a class="btn btn-orange dropdown-toggle" href="#" role="button" id="compare-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Compare</a>
             <div class="dropdown-menu scrollable-menu" aria-labelledby="compare-dropdown">
               {% for project in projects_compare %}
               <a class="dropdown-item" href="{% url 'compare_projects' %}?projects={{dashboard.pk}}&projects={{project.pk}}" target="_blank">{{ project.name }}</a>
@@ -71,7 +71,7 @@
           <!-- Refresh all -->
           {% if repositories_count > 0 %}
           <div class="ml-3 mb-1">
-            <button type="button" class="btn btn-icon-split btn-outline-success btn-reanalyze-all">
+            <button type="button" class="btn btn-icon-split btn-orange btn-reanalyze-all">
               <span class="icon" id="reanalyze-all-spinner"><i class="fa fa-sync"></i></span>
               <span class="text">Refresh all data sources</span>
             </button>
