@@ -4,19 +4,19 @@
     <div class="card-header font-weight-bold">
       <ul class="nav nav-pills" id="pills-tab" role="tablist">
         <li class="nav-item" role="presentation">
-          <a class="nav-link active" data-toggle="pill" href="#pills-overview" role="tab" aria-controls="pills-overview" aria-selected="true">Overview</a>
+          <a class="nav-link" data-category="overview" data-toggle="pill" href="#pills-overview" role="tab" aria-controls="pills-overview" aria-selected="true">Overview</a>
         </li>
         <li class="nav-item" role="presentation">
-          <a class="nav-link" data-toggle="pill" href="#pills-activity-git" role="tab" aria-controls="pills-activity-git" aria-selected="true">Commits Activity</a>
+          <a class="nav-link" data-category="activity-git" data-toggle="pill" href="#pills-activity-git" role="tab" aria-controls="pills-activity-git" aria-selected="true">Commits Activity</a>
         </li>
         <li class="nav-item" role="presentation">
-          <a class="nav-link" data-toggle="pill" href="#pills-activity-issues" role="tab" aria-controls="pills-activity-issues" aria-selected="false">Issues Activity</a>
+          <a class="nav-link" data-category="activity-issues" data-toggle="pill" href="#pills-activity-issues" role="tab" aria-controls="pills-activity-issues" aria-selected="false">Issues Activity</a>
         </li>
         <li class="nav-item" role="presentation">
-          <a class="nav-link" data-toggle="pill" href="#pills-activity-reviews" role="tab" aria-controls="pills-activity-reviews" aria-selected="false">PRs/MRs Activity</a>
+          <a class="nav-link" data-category="activity-reviews" data-toggle="pill" href="#pills-activity-reviews" role="tab" aria-controls="pills-activity-reviews" aria-selected="false">PRs/MRs Activity</a>
         </li>
         <li class="nav-item" role="presentation">
-          <a class="nav-link" data-toggle="pill" href="#pills-community" role="tab" aria-controls="pills-community" aria-selected="false">Community</a>
+          <a class="nav-link" data-category="community" data-toggle="pill" href="#pills-community" role="tab" aria-controls="pills-community" aria-selected="false">Community</a>
         </li>
         {% if repositories_count > 0 %}
         <li class="nav-item">
@@ -100,15 +100,15 @@
             <p class="font-weight-bold text-muted mb-3"># Commits <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/commits.md"><i class="far fa-question-circle"></i></a></p>
             <div class="row">
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800">{{ metrics.commits_last_month }}</p>
+                <p id="number_commits_last_month" class="h5 font-weight-bold text-gray-800">{{ metrics.commits_last_month }}</p>
                 <p class="text-muted mb-1">Last month</p>
               </div>
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800">{{metrics.commits_last_year}}</p>
+                <p id="number_commits_last_year" class="h5 font-weight-bold text-gray-800">{{metrics.commits_last_year}}</p>
                 <p class="text-muted mb-1">Last year</p>
               </div>
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800">{{metrics.commits_yoy | stringformat:"+.2f" }}%</p>
+                <p id="number_commits_yoy" class="h5 font-weight-bold text-gray-800">{{metrics.commits_yoy | stringformat:"+.2f" }}%</p>
                 <p class="text-muted mb-1">Year-over-year</p>
               </div>
             </div>
@@ -117,15 +117,15 @@
             <p class="font-weight-bold text-muted mb-3"># Lines/commit <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/lines-commit.md"><i class="far fa-question-circle"></i></a></p>
             <div class="row">
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800">{{ metrics.lines_commit_last_month|stringformat:".2f" }}</p>
+                <p id="number_lines_commit_last_month" class="h5 font-weight-bold text-gray-800">{{ metrics.lines_commit_last_month|stringformat:".2f" }}</p>
                 <p class="text-muted mb-1">Last month</p>
               </div>
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800">{{metrics.lines_commit_last_year|stringformat:".2f"}}</p>
+                <p id="number_lines_commit_last_year" class="h5 font-weight-bold text-gray-800">{{metrics.lines_commit_last_year|stringformat:".2f"}}</p>
                 <p class="text-muted mb-1">Last year</p>
               </div>
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800">{{metrics.lines_commit_yoy | stringformat:"+.2f" }}%</p>
+                <p id="number_lines_commit_yoy" class="h5 font-weight-bold text-gray-800">{{metrics.lines_commit_yoy | stringformat:"+.2f" }}%</p>
                 <p class="text-muted mb-1">Year-over-year</p>
               </div>
             </div>
@@ -134,15 +134,15 @@
             <p class="font-weight-bold text-muted mb-3"># Lines/commit/file <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/lines-commit-file.md"><i class="far fa-question-circle"></i></a></p>
             <div class="row">
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800">{{ metrics.lines_commit_file_last_month|stringformat:".4f" }}</p>
+                <p id="number_lines_commit_file_last_month" class="h5 font-weight-bold text-gray-800">{{ metrics.lines_commit_file_last_month|stringformat:".4f" }}</p>
                 <p class="text-muted mb-1">Last month</p>
               </div>
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800">{{metrics.lines_commit_file_last_year|stringformat:".4f"}}</p>
+                <p id="number_lines_commit_file_last_year" class="h5 font-weight-bold text-gray-800">{{metrics.lines_commit_file_last_year|stringformat:".4f"}}</p>
                 <p class="text-muted mb-1">Last year</p>
               </div>
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800">{{metrics.lines_commit_file_yoy | stringformat:"+.2f" }}%</p>
+                <p id="number_lines_commit_file_yoy" class="h5 font-weight-bold text-gray-800">{{metrics.lines_commit_file_yoy | stringformat:"+.2f" }}%</p>
                 <p class="text-muted mb-1">Year-over-year</p>
               </div>
             </div>
@@ -176,15 +176,15 @@
             <p class="font-weight-bold text-muted mb-3"># Issues created <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/issues-created.md"><i class="far fa-question-circle"></i></a></p>
             <div class="row">
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800">{{ metrics.issues_open_last_month }}</p>
+                <p id="number_issues_open_last_month" class="h5 font-weight-bold text-gray-800">{{ metrics.issues_open_last_month }}</p>
                 <p class="text-muted mb-1">Last month</p>
               </div>
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800">{{metrics.issues_open_last_year}}</p>
+                <p id="number_issues_open_last_year" class="h5 font-weight-bold text-gray-800">{{metrics.issues_open_last_year}}</p>
                 <p class="text-muted mb-1">Last year</p>
               </div>
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800">{{metrics.issues_open_yoy | stringformat:"+.2f" }}%</p>
+                <p id="number_issues_open_yoy" class="h5 font-weight-bold text-gray-800">{{metrics.issues_open_yoy | stringformat:"+.2f" }}%</p>
                 <p class="text-muted mb-1">Year-over-year</p>
               </div>
             </div>
@@ -193,15 +193,15 @@
             <p class="font-weight-bold text-muted mb-3"># Issues closed <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/issues-closed.md"><i class="far fa-question-circle"></i></a></p>
             <div class="row">
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800">{{ metrics.issues_closed_last_month }}</p>
+                <p id="number_issues_closed_last_month" class="h5 font-weight-bold text-gray-800">{{ metrics.issues_closed_last_month }}</p>
                 <p class="text-muted mb-1">Last month</p>
               </div>
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800">{{metrics.issues_closed_last_year}}</p>
+                <p id="number_issues_closed_last_year" class="h5 font-weight-bold text-gray-800">{{metrics.issues_closed_last_year}}</p>
                 <p class="text-muted mb-1">Last year</p>
               </div>
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800">{{metrics.issues_closed_yoy | stringformat:"+.2f" }}%</p>
+                <p id="number_issues_closed_yoy" class="h5 font-weight-bold text-gray-800">{{metrics.issues_closed_yoy | stringformat:"+.2f" }}%</p>
                 <p class="text-muted mb-1">Year-over-year</p>
               </div>
             </div>
@@ -210,15 +210,15 @@
             <p class="font-weight-bold text-muted mb-3"># Issues open <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/issues-open.md"><i class="far fa-question-circle"></i></a></p>
             <div class="row">
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800">{{ metrics.issues_open_today }}</p>
+                <p id="number_issues_open_today" class="h5 font-weight-bold text-gray-800">{{ metrics.issues_open_today }}</p>
                 <p class="text-muted mb-1">Today</p>
               </div>
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800">{{metrics.issues_open_month_ago}}</p>
+                <p id="number_issues_open_month_ago" class="h5 font-weight-bold text-gray-800">{{metrics.issues_open_month_ago}}</p>
                 <p class="text-muted mb-1">1 Month ago</p>
               </div>
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800">{{metrics.issues_open_year_ago}}</p>
+                <p id="number_issues_open_year_ago" class="h5 font-weight-bold text-gray-800">{{metrics.issues_open_year_ago}}</p>
                 <p class="text-muted mb-1">1 Year ago</p>
               </div>
             </div>
@@ -257,15 +257,15 @@
             <p class="font-weight-bold text-muted mb-3"># Pull/Merge requests created <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/pull-merge-requests-created.md"><i class="far fa-question-circle"></i></a></p>
             <div class="row">
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800">{{ metrics.reviews_open_last_month }}</p>
+                <p id="number_reviews_open_last_month" class="h5 font-weight-bold text-gray-800">{{ metrics.reviews_open_last_month }}</p>
                 <p class="text-muted mb-1">Last month</p>
               </div>
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800">{{metrics.reviews_open_last_year}}</p>
+                <p id="number_reviews_open_last_year" class="h5 font-weight-bold text-gray-800">{{metrics.reviews_open_last_year}}</p>
                 <p class="text-muted mb-1">Last year</p>
               </div>
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800">{{metrics.reviews_open_yoy | stringformat:"+.2f" }}%</p>
+                <p id="number_reviews_open_yoy" class="h5 font-weight-bold text-gray-800">{{metrics.reviews_open_yoy | stringformat:"+.2f" }}%</p>
                 <p class="text-muted mb-1">Year-over-year</p>
               </div>
             </div>
@@ -274,15 +274,15 @@
             <p class="font-weight-bold text-muted mb-3"># Pull/Merge requests closed <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/pull-merge-requests-closed.md"><i class="far fa-question-circle"></i></a></p>
             <div class="row">
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800">{{ metrics.reviews_closed_last_month }}</p>
+                <p id="number_reviews_closed_last_month" class="h5 font-weight-bold text-gray-800">{{ metrics.reviews_closed_last_month }}</p>
                 <p class="text-muted mb-1">Last month</p>
               </div>
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800">{{metrics.reviews_closed_last_year}}</p>
+                <p id="number_reviews_closed_last_year" class="h5 font-weight-bold text-gray-800">{{metrics.reviews_closed_last_year}}</p>
                 <p class="text-muted mb-1">Last year</p>
               </div>
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800">{{metrics.reviews_closed_yoy | stringformat:"+.2f" }}%</p>
+                <p id="number_reviews_closed_yoy" class="h5 font-weight-bold text-gray-800">{{metrics.reviews_closed_yoy | stringformat:"+.2f" }}%</p>
                 <p class="text-muted mb-1">Year-over-year</p>
               </div>
             </div>
@@ -291,15 +291,15 @@
             <p class="font-weight-bold text-muted mb-3"># Pull/Merge requests open <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/pull-merge-requests-open.md"><i class="far fa-question-circle"></i></a></p>
             <div class="row">
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800">{{ metrics.reviews_open_today }}</p>
+                <p id="number_reviews_open_today" class="h5 font-weight-bold text-gray-800">{{ metrics.reviews_open_today }}</p>
                 <p class="text-muted mb-1">Today</p>
               </div>
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800">{{metrics.reviews_open_month_ago}}</p>
+                <p id="number_reviews_open_month_ago" class="h5 font-weight-bold text-gray-800">{{metrics.reviews_open_month_ago}}</p>
                 <p class="text-muted mb-1">1 Month ago</p>
               </div>
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800">{{metrics.reviews_open_year_ago }}</p>
+                <p id="number_reviews_open_year_ago" class="h5 font-weight-bold text-gray-800">{{metrics.reviews_open_year_ago }}</p>
                 <p class="text-muted mb-1">1 Year ago</p>
               </div>
             </div>
@@ -430,50 +430,3 @@
     </div>
   </div>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function(event) {
-    var graphs = {
-        "chart-commits-overview": {{ metrics.commits_bokeh | safe }},
-        "chart-people-overview": {{ metrics.author_evolution_bokeh | safe }},
-        "chart-issues-overview": {{ metrics.issues_open_closed_bokeh | safe }},
-        "chart-pull-requests-overview": {{ metrics.reviews_open_closed_bokeh | safe }},
-        "chart-commits": {{ metrics.commits_bokeh | safe }},
-        "chart-commits-hour": {{ metrics.commits_hour_day_bokeh | safe }},
-        "chart-commits-weekday": {{ metrics.commits_weekday_bokeh | safe }},
-        "chart-commits-heatmap": {{ metrics.commits_heatmap_bokeh | safe }},
-        "chart-lines-touched": {{ metrics.commits_lines_changed_boked | safe }},
-        "chart-issues-open-closed": {{ metrics.issues_open_closed_bokeh | safe }},
-        "chart-issues-open-age": {{ metrics.issues_open_age_bokeh | safe }},
-        "chart-issues-open-weekday": {{ metrics.issues_open_weekday_bokeh | safe }},
-        "chart-issues-closed-weekday": {{ metrics.issues_closed_weekday_bokeh | safe }},
-        "chart-issues-opened-heatmap": {{ metrics.issues_opened_heatmap_bokeh | safe }},
-        "chart-issues-closed-heatmap": {{ metrics.issues_closed_heatmap_bokeh | safe }},
-        "chart-reviews-open-closed": {{ metrics.reviews_open_closed_bokeh | safe }},
-        "chart-reviews-open-age": {{ metrics.reviews_open_age_bokeh | safe }},
-        "chart-reviews-open-weekday": {{ metrics.reviews_open_weekday_bokeh | safe }},
-        "chart-reviews-closed-weekday": {{ metrics.reviews_closed_weekday_bokeh | safe }},
-        "chart-reviews-opened-heatmap": {{ metrics.reviews_opened_heatmap_bokeh | safe }},
-        "chart-reviews-closed-heatmap": {{ metrics.reviews_closed_heatmap_bokeh | safe }},
-        "chart-authors-git-active": {{ metrics.commits_authors_active_bokeh | safe }},
-        "chart-authors-issues-active": {{ metrics.issues_authors_active_bokeh | safe }},
-        "chart-authors-reviews-active": {{ metrics.reviews_authors_active_bokeh | safe }},
-        "chart-onboarding-leaving-git": {{ metrics.commits_authors_entering_leaving_bokeh | safe }},
-        "chart-onboarding-leaving-issues": {{ metrics.issues_authors_entering_leaving_bokeh | safe }},
-        "chart-onboarding-leaving-reviews": {{ metrics.reviews_authors_entering_leaving_bokeh | safe }},
-        "chart-authors-aging-git": {{ metrics.commits_authors_aging_bokeh | safe }},
-        "chart-authors-aging-issues": {{ metrics.issues_authors_aging_bokeh | safe }},
-        "chart-authors-aging-reviews": {{ metrics.reviews_authors_aging_bokeh | safe }},
-        "chart-authors-retained-ratio-git": {{ metrics.commits_authors_retained_ratio_bokeh | safe }},
-        "chart-authors-retained-ratio-issues": {{ metrics.issues_authors_retained_ratio_bokeh | safe }},
-        "chart-authors-retained-ratio-reviews": {{ metrics.reviews_authors_retained_ratio_bokeh | safe }},
-        "chart-organizational-diversity-authors": {{ metrics.organizational_diversity_authors_bokeh | safe }},
-        "chart-organizational-diversity-commits": {{ metrics.organizational_diversity_commits_bokeh | safe }},
-    }
-
-    for (var k in graphs) {
-        item = graphs[k];
-        Bokeh.embed.embed_item(item, k);
-    }
-})
-</script>

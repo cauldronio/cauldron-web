@@ -323,61 +323,105 @@ function onDataFail(data, target) {
 }
 
 
-/************************
- *    DASHBOARD BOKEH   *
- ************************/
+/***********************************
+ *    METRICS AND VISUALIZATIONS   *
+ ***********************************/
 $(function() {
-
+    var categories = ['overview', 'activity-git', 'activity-issues', 'activity-reviews', 'community'];
     var start = getUrlParameter('from_date');
     var end = getUrlParameter('to_date');
+    var tab = getUrlParameter('tab');
     start = (typeof start === 'undefined') ? moment().subtract(1, 'year') : moment(start, "YYYY-MM-DD");
     end = (typeof end === 'undefined') ? moment() : moment(end, "YYYY-MM-DD");
+    tab = ((typeof tab === 'undefined') | !categories.includes(tab) ) ? 'overview' : tab
+
+    $('#date-picker-input').val(start.format('YYYY-MM-DD') + ' - ' + end.format('YYYY-MM-DD'));
+
+    $(`a[data-category="${tab}"]`).tab('show')
 
     //"html_id": "key from Django"
     var VIZ_KEYS = {
-        "chart-commits": 'commits_bokeh',
-        "chart-lines-touched": 'commits_lines_changed_boked',
-        "chart-commits-hour": 'commits_hour_day_bokeh',
-        "chart-commits-weekday": 'commits_weekday_bokeh',
-        "chart-commits-heatmap": 'commits_heatmap_bokeh',
-        "chart-issues-open-closed": 'issues_open_closed_bokeh',
-        "chart-issues-open-weekday": 'issues_open_weekday_bokeh',
-        "chart-issues-closed-weekday": 'issues_closed_weekday_bokeh',
-        "chart-issues-opened-heatmap": 'issues_opened_heatmap_bokeh',
-        "chart-issues-closed-heatmap": 'issues_closed_heatmap_bokeh',
-        "chart-reviews-open-closed": 'reviews_open_closed_bokeh',
-        "chart-reviews-open-weekday": 'reviews_open_weekday_bokeh',
-        "chart-reviews-closed-weekday": 'reviews_closed_weekday_bokeh',
-        "chart-reviews-opened-heatmap": 'reviews_opened_heatmap_bokeh',
-        "chart-reviews-closed-heatmap": 'reviews_closed_heatmap_bokeh',
-        "chart-commits-overview": "commits_bokeh",
-        "chart-people-overview": "author_evolution_bokeh",
-        "chart-issues-overview": "issues_open_closed_bokeh",
-        "chart-pull-requests-overview": "reviews_open_closed_bokeh",
-        "chart-authors-git-active":"commits_authors_active_bokeh",
-        "chart-authors-issues-active":"issues_authors_active_bokeh",
-        "chart-authors-reviews-active":"reviews_authors_active_bokeh",
-        "chart-onboarding-leaving-git":"commits_authors_entering_leaving_bokeh",
-        "chart-onboarding-leaving-issues":"issues_authors_entering_leaving_bokeh",
-        "chart-onboarding-leaving-reviews":"reviews_authors_entering_leaving_bokeh",
-        "chart-organizational-diversity-authors":"organizational_diversity_authors_bokeh",
-        "chart-organizational-diversity-commits":"organizational_diversity_commits_bokeh",
-        "chart-authors-aging-git": "commits_authors_aging_bokeh",
-        "chart-authors-aging-issues": "issues_authors_aging_bokeh",
-        "chart-authors-aging-reviews": "reviews_authors_aging_bokeh",
-        "chart-authors-retained-ratio-git": "commits_authors_retained_ratio_bokeh",
-        "chart-authors-retained-ratio-issues": "issues_authors_retained_ratio_bokeh",
-        "chart-authors-retained-ratio-reviews": "reviews_authors_retained_ratio_bokeh",
+        'commits_bokeh': "chart-commits",
+        'commits_bokeh_overview': "chart-commits-overview",
+        'commits_lines_changed_bokeh': "chart-lines-touched",
+        'commits_hour_day_bokeh': "chart-commits-hour",
+        'commits_weekday_bokeh': "chart-commits-weekday",
+        'commits_heatmap_bokeh': "chart-commits-heatmap",
+        'issues_open_closed_bokeh': "chart-issues-open-closed",
+        'issues_open_weekday_bokeh': "chart-issues-open-weekday",
+        'issues_closed_weekday_bokeh': "chart-issues-closed-weekday",
+        'issues_opened_heatmap_bokeh': "chart-issues-opened-heatmap",
+        'issues_closed_heatmap_bokeh': "chart-issues-closed-heatmap",
+        'reviews_open_closed_bokeh': "chart-reviews-open-closed",
+        'reviews_open_weekday_bokeh': "chart-reviews-open-weekday",
+        'reviews_closed_weekday_bokeh': "chart-reviews-closed-weekday",
+        'reviews_opened_heatmap_bokeh': "chart-reviews-opened-heatmap",
+        'reviews_closed_heatmap_bokeh': "chart-reviews-closed-heatmap",
+        "author_evolution_bokeh": "chart-people-overview",
+        "issues_open_closed_bokeh_overview": "chart-issues-overview",
+        "reviews_open_closed_bokeh_overview": "chart-pull-requests-overview",
+        "commits_authors_active_bokeh": "chart-authors-git-active",
+        "issues_authors_active_bokeh": "chart-authors-issues-active",
+        "reviews_authors_active_bokeh": "chart-authors-reviews-active",
+        "commits_authors_entering_leaving_bokeh": "chart-onboarding-leaving-git",
+        "issues_authors_entering_leaving_bokeh": "chart-onboarding-leaving-issues",
+        "reviews_authors_entering_leaving_bokeh": "chart-onboarding-leaving-reviews",
+        "organizational_diversity_authors_bokeh": "chart-organizational-diversity-authors",
+        "organizational_diversity_commits_bokeh": "chart-organizational-diversity-commits",
+        "commits_authors_aging_bokeh": "chart-authors-aging-git",
+        "issues_authors_aging_bokeh": "chart-authors-aging-issues",
+        "reviews_authors_aging_bokeh": "chart-authors-aging-reviews",
+        "commits_authors_retained_ratio_bokeh": "chart-authors-retained-ratio-git",
+        "issues_authors_retained_ratio_bokeh": "chart-authors-retained-ratio-issues",
+        "reviews_authors_retained_ratio_bokeh": "chart-authors-retained-ratio-reviews",
+        "issues_open_age_bokeh": "chart-issues-open-age",
+        "reviews_open_age_bokeh": "chart-reviews-open-age",
     }
 
-    var NUMBERS_KEYS = {
-        "number_commits_range": "commits_range",
-        "number_reviews_opened": "reviews_opened",
-        "number_review_duration": "review_duration",
-        "number_issues_created_range": "issues_created_range",
-        "number_issues_closed_range": "issues_closed_range",
-        "number_issues_time_to_close": "issues_time_to_close",
-        "number_issues_time_to_close": "issues_time_to_close",
+    var METRICS_ACTIVITY_GIT = {
+        "commits_last_month": "number_commits_last_month",
+        "commits_last_year": "number_commits_last_year",
+        "commits_yoy": "number_commits_yoy",
+        "lines_commit_last_month": "number_lines_commit_last_month",
+        "lines_commit_last_year": "number_lines_commit_last_year",
+        "lines_commit_yoy": "number_lines_commit_yoy",
+        "lines_commit_file_last_month": "number_lines_commit_file_last_month",
+        "lines_commit_file_last_year": "number_lines_commit_file_last_year",
+        "lines_commit_file_yoy": "number_lines_commit_file_yoy",
+    }
+
+    var METRICS_ACTIVITY_ISSUES = {
+        "issues_open_last_month": "number_issues_open_last_month",
+        "issues_open_last_year": "number_issues_open_last_year",
+        "issues_open_yoy": "number_issues_open_yoy",
+        "issues_closed_last_month": "number_issues_closed_last_month",
+        "issues_closed_last_year": "number_issues_closed_last_year",
+        "issues_closed_yoy": "number_issues_closed_yoy",
+        "issues_open_today": "number_issues_open_today",
+        "issues_open_month_ago": "number_issues_open_month_ago",
+        "issues_open_year_ago": "number_issues_open_year_ago",
+    }
+
+    var METRICS_ACTIVITY_REVIEWS = {
+        "reviews_open_last_month": "number_reviews_open_last_month",
+        "reviews_open_last_year": "number_reviews_open_last_year",
+        "reviews_open_yoy": "number_reviews_open_yoy",
+        "reviews_closed_last_month": "number_reviews_closed_last_month",
+        "reviews_closed_last_year": "number_reviews_closed_last_year",
+        "reviews_closed_yoy": "number_reviews_closed_yoy",
+        "reviews_open_today": "number_reviews_open_today",
+        "reviews_open_month_ago": "number_reviews_open_month_ago",
+        "reviews_open_year_ago": "number_reviews_open_year_ago",
+    }
+
+    var METRICS_KEYS = {
+        "commits_range": "number_commits_range",
+        "reviews_opened": "number_reviews_opened",
+        "review_duration": "number_review_duration",
+        "issues_created_range": "number_issues_created_range",
+        "issues_closed_range": "number_issues_closed_range",
+        "issues_time_to_close": "number_issues_time_to_close",
+        "issues_time_to_close": "number_issues_time_to_close",
         "active_people_git": "active_people_git",
         "active_people_issues": "active_people_issues",
         "active_people_patches": "active_people_patches",
@@ -386,31 +430,38 @@ $(function() {
         "onboardings_patches": "onboardings_patches",
     }
 
+    METRICS_KEYS = Object.assign({}, METRICS_KEYS, METRICS_ACTIVITY_GIT);
+    METRICS_KEYS = Object.assign({}, METRICS_KEYS, METRICS_ACTIVITY_ISSUES);
+    METRICS_KEYS = Object.assign({}, METRICS_KEYS, METRICS_ACTIVITY_REVIEWS);
 
-    function updateMetricsData(start, end) {
+
+    function updateMetricsData() {
         $.getJSON(`${window.location.pathname}/metrics`,
-        {"from": start.format('YYYY-MM-DD'), "to": end.format('YYYY-MM-DD')},
+        {"from": start.format('YYYY-MM-DD'), "to": end.format('YYYY-MM-DD'), "tab": tab},
         function(data){
-            for (var k in VIZ_KEYS) {
-                var id_html = `#${k}`;
-                var item = JSON.parse(data[VIZ_KEYS[k]]);
-                $(id_html).empty();
-                Bokeh.embed.embed_item(item, k);
-            }
-            for (var k in NUMBERS_KEYS) {
-                var id_html = `#${k}`;
-                var number = data[NUMBERS_KEYS[k]];
-                $(id_html).html(number);
+            for (k in data){
+                if (k in METRICS_KEYS){
+                    var id_html = `#${METRICS_KEYS[k]}`;
+                    $(id_html).html(data[k]);
+                }
+                if (k in VIZ_KEYS){
+                    var id_html = `#${VIZ_KEYS[k]}`;
+                    var item = JSON.parse(data[k]);
+                    $(id_html).empty();
+                    Bokeh.embed.embed_item(item, VIZ_KEYS[k]);
+                }
             }
         });
     }
 
-    function cb(start, end) {
-        var from_str = start.format('YYYY-MM-DD');
+    function cb(new_start, new_end) {
+        start = new_start;
+        end = new_end;
+        var start_str = start.format('YYYY-MM-DD');
         var end_str = end.format('YYYY-MM-DD');
         $('#date-picker-input').val(start.format('YYYY-MM-DD') + ' - ' + end.format('YYYY-MM-DD'));
-        window.history.replaceState({'start': from_str, 'end': end_str}, 'date', `?from_date=${from_str}&to_date=${end_str}`)
-        updateMetricsData(start, end);
+        window.history.replaceState({'start': start_str, 'end': end_str}, 'date', `?from_date=${start_str}&to_date=${end_str}&tab=${tab}`)
+        updateMetricsData();
     }
 
     $('#date-picker').daterangepicker({
@@ -438,6 +489,11 @@ $(function() {
         }
     }, cb);
 
-    $('#date-picker-input').val(start.format('YYYY-MM-DD') + ' - ' + end.format('YYYY-MM-DD'));
-
+    $('a[data-toggle="pill"]').on('shown.bs.tab', function (e) {
+        tab = e.target.dataset.category;
+        var start_str = start.format('YYYY-MM-DD');
+        var end_str = end.format('YYYY-MM-DD');
+        window.history.replaceState({'start': start_str, 'end': end_str}, 'date', `?from_date=${start_str}&to_date=${end_str}&tab=${tab}`)
+        updateMetricsData();
+    });
 });

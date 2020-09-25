@@ -1061,20 +1061,6 @@ def request_show_dashboard(request, dash_id):
 
     context['editable'] = request.user.is_authenticated and request.user == dash.creator or request.user.is_superuser
 
-    if not context['render_table'] and context['repositories_count'] > 0:
-        try:
-            from_str = request.GET.get('from_date', '')
-            from_date = datetime.datetime.strptime(from_str, '%Y-%m-%d')
-        except ValueError:
-            from_date = datetime.datetime.now() - relativedelta(years=1)
-        try:
-            to_str = request.GET.get('to_date', '')
-            to_date = datetime.datetime.strptime(to_str, '%Y-%m-%d')
-        except ValueError:
-            to_date = datetime.datetime.now()
-
-        context['metrics'] = metrics.get_metrics(dash, from_date, to_date)
-
     return render(request, 'cauldronapp/dashboard.html', context=context)
 
 
@@ -1129,9 +1115,11 @@ def request_compare_projects(request):
 
 
 def request_project_metrics(request, dash_id):
-    """Obtain the metrics related to a project"""
+    """Obtain the metrics related to a project for a category. By default overview"""
     if request.method != 'GET':
         return custom_405(request, request.method)
+
+    category = request.GET.get('tab', 'overview')
 
     try:
         dashboard = Dashboard.objects.get(pk=dash_id)
@@ -1149,7 +1137,7 @@ def request_project_metrics(request, dash_id):
     except ValueError:
         to_date = datetime.datetime.now()
 
-    return JsonResponse(metrics.get_metrics_in_range(dashboard, from_date, to_date))
+    return JsonResponse(metrics.get_category_metrics(dashboard, category, from_date, to_date))
 
 
 def delete_dashboard(dashboard):
