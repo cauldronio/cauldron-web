@@ -2,7 +2,20 @@
   <div class="card mb-4 shadow">
     <!-- Card Header -->
     <div class="card-header d-flex">
-      <div class="mr-auto font-weight-bold"><a href="{% url 'show_dashboard' project.project.id %}">{{project.project.name}}</a></div>
+      <div class="mr-auto font-weight-bold">
+        <a href="{% url 'show_dashboard' project.project.id %}">{{project.project.name}}</a>
+        {% if project.total > 0%}
+          <span class="sharedashboard ml-3" data-toggle="modal" data-target="#shareModal"
+          data-projname="{{project.project.name}}"
+          data-projid="{{project.project.id}}"
+          data-projurl="https://{{request.get_host}}{% url 'show_dashboard' project.project.id %}">
+            <button type="button" class="btn btn-sm btn-outline-success"
+             data-toggle="tooltip" title="Share options">
+            <i class="fas fa-share-alt"></i>
+            </button>
+          </span>
+        {% endif %}
+      </div>
       <div id="spinner-{{project.project.id}}" class="spinner-border spinner-border-sm" style="display: none;"></div>
       <div class="dropdown no-arrow">
         <a id="dropdown{{project.project.id}}" class="dropdown-toggle px-2 ml-3" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -10,9 +23,11 @@
         </a>
         <div class="dropdown-menu dropdown-menu-right shadow" aria-labelledby="dropddown{{project.project.id}}">
           <div class="dropdown-header">Options</div>
-          <div class="dropdown-item"><a href="{% url 'show_dashboard' project.project.id %}"><i class="fas fa-cog"></i> Project Settings</a></div>
+          <div class="dropdown-item"><a href="{% url 'show_dashboard' project.project.id %}"><i class="fas fa-cog"></i> Project</a></div>
+          {% if project.total > 0%}
           <div class="dropdown-item"><a href="{% url 'open_workspace' project.project.id %}" target="_blank" rel="noopener noreferrer"><i class="fa fa-wrench"></i> Data Workspace</a></div>
-          <div class="dropdown-item"><button type="button" {% if project.total > 0%}onclick="refreshProjectDatasources(this, {{project.project.id}})"{% endif %} role="button" class="btn btn-sm btn-icon-split btn-outline-success {% if project.total == 0 %} disabled{% endif %}" {% if project.total > 0 %}{% endif %}><span class="icon"><i class="fas fa-sync-alt"></i></span><span class="text">Refresh Data</span></button></div>
+          <div class="dropdown-item"><button type="button" onclick="refreshProjectDatasources(this, {{project.project.id}})"role="button" class="btn btn-sm btn-icon-split btn-outline-success {% if project.total == 0 %} disabled{% endif %}" {% if project.total > 0 %}{% endif %}><span class="icon"><i class="fas fa-sync-alt"></i></span><span class="text">Refresh Data</span></button></div>
+          {% endif %}
           <div class="dropdown-divider"></div>
           <div class="dropdown-item"><button type="button" data-toggle="modal" data-target="#modal-delete-project" data-project-id="{{project.project.id}}" role="button" class="open-deleteProjectModal btn btn-sm btn-outline-danger btn-icon-split"><span class="icon"><i class="fas fa-trash-alt"></i></span><span class="text">Remove Project</span></button></div>
         </div>
@@ -25,32 +40,7 @@
     <!-- ./card header -->
     <!-- card Body -->
     <div class="card-body">
-      <!-- public dashboard -->
-      <div class="d-flex justify-content-between">
-        <div>
-          <strong>Public dashboard</strong>:
-          {% if project.total > 0%}
-            <a href="https://{{request.get_host}}{% url 'open_public_kibana' project.project.id %}"
-              target="_blank">https://{{request.get_host}}{% url 'open_public_kibana' project.project.id %}</a>
-          {% endif %}
-        </div>
-        <div>
-          {% if project.total > 0%}
-            <span class="sharedashboard" data-toggle="modal" data-target="#shareModal"
-            data-projname="{{project.project.name}}"
-            data-projid="{{project.project.id}}"
-            data-projurl="https://{{request.get_host}}{% url 'show_dashboard' project.project.id %}">
-              <button type="button" class="btn btn-sm btn-outline-success"
-               data-toggle="tooltip" title="Share options">
-              <i class="fas fa-share-alt"></i>
-              </button>
-            </span>
-          {% endif %}
-        </div>
-      </div>
-      <hr class="my-2">
       <!-- creation date -->
-
       <div class="row">
         <div class="col-5"><strong>Created</strong></div>
         <div class="col-7">{{ project.project.created | date:"jS M Y"}}</div>
