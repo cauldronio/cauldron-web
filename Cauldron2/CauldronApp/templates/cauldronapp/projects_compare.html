@@ -2,6 +2,7 @@
 {% load static %}
 
 {% block css%}
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css"/>
 {% endblock %}
 
 {% block content %}
@@ -24,55 +25,380 @@
     </div>
     {% endif %}
 
+    {% if user_projects|length > 0 %}
+    <form method="GET" class="form-inline justify-content-between">
+        <div class="form-group mb-2">
+            <select name="projects" class="selectpicker mr-2" title="Select a project..." data-style="btn-outline-dark" data-live-search="true" data-size="5" data-showTick="true">
+                {% for project in user_projects %}
+                <option value="{{ project.id }}">{{ project.name }}</option>
+                {% endfor %}
+            </select>
+
+            <span class="font-weight-bold d-block d-md-inline mr-2"><i class="fas fa-times"></i></span>
+
+            <select name="projects" class="selectpicker mr-2" title="Select a project..." data-style="btn-outline-dark" data-live-search="true" data-size="5">
+                {% for project in user_projects %}
+                <option value="{{ project.id }}">{{ project.name }}</option>
+                {% endfor %}
+            </select>
+
+            <button type="submit" class="btn btn-outline-dark"><strong>Compare</strong></button>
+        </div>
+    </form>
+    {% endif %}
+
     {% if projects|length > 0 %}
-    <table class="table">
-        <thead>
-            <tr>
-                <th scope="col" class="text-center"><img src="{% static '/img/cauldron_logo.png' %}" width="20" height="20" alt=""></th>
-                {% for project in projects %}
-                <th scope="col" class="text-center"><a href="{% url 'show_dashboard' project.id %}">{{ project.name }}</a></th>
-                {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <th scope="row"># Commits</th>
-                {% for key, value in metrics.items %}
-                <td class="text-center">{{ value.commits_range }}</td>
-                {% endfor %}
-            </tr>
-            <tr>
-                <th scope="row"># Pull requests</th>
-                {% for key, value in metrics.items %}
-                <td class="text-center">{{ value.reviews_opened }}</td>
-                {% endfor %}
-            </tr>
-            <tr>
-                <th scope="row">Median review duration</th>
-                {% for key, value in metrics.items %}
-                <td class="text-center">{{ value.review_duration }} days</td>
-                {% endfor %}
-            </tr>
-            <tr>
-                <th scope="row"># Issues created</th>
-                {% for key, value in metrics.items %}
-                <td class="text-center">{{ value.issues_created_range }}</td>
-                {% endfor %}
-            </tr>
-            <tr>
-                <th scope="row"># Issues closed</th>
-                {% for key, value in metrics.items %}
-                <td class="text-center">{{ value.issues_closed_range }}</td>
-                {% endfor %}
-            </tr>
-            <tr>
-                <th scope="row">Median time to close</th>
-                {% for key, value in metrics.items %}
-                <td class="text-center">{{ value.issues_time_to_close }} days</td>
-                {% endfor %}
-            </tr>
-        </tbody>
-    </table>
+    <div class="card">
+        <div class="card-header font-weight-bold">
+            <ul class="nav nav-pills" id="pills-tab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link active" data-toggle="pill" href="#pills-overview" role="tab" aria-controls="pills-overview" aria-selected="true">Overview</a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" data-toggle="pill" href="#pills-activity-git" role="tab" aria-controls="pills-activity-git" aria-selected="false">Commits Activity</a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" data-toggle="pill" href="#pills-activity-issues" role="tab" aria-controls="pills-activity-issues" aria-selected="false">Issues Activity</a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" data-toggle="pill" href="#pills-activity-reviews" role="tab" aria-controls="pills-activity-reviews" aria-selected="false">PRs/MRs Activity</a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" data-toggle="pill" href="#pills-community" role="tab" aria-controls="pills-community" aria-selected="false">Community</a>
+                </li>
+                <div class="ml-md-auto">
+                    <div class="input-group">
+                        <input type="text" class="form-control"  id="date-picker-input">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="button" id="date-picker">
+                                <i class="fa fa-calendar"></i>&nbsp;
+                                <i class="fa fa-caret-down"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </ul>
+        </div>
+
+        <div class="tab-content card-body">
+            <!-- Start Overview -->
+            <div id="pills-overview" class="tab-pane fade show active" role="tabpanel" >
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col" class="text-center"><img src="{% static '/img/cauldron_logo.png' %}" width="20" height="20" alt=""></th>
+                            {% for project in projects %}
+                            <th scope="col" class="text-center"><a href="{% url 'show_dashboard' project.id %}">{{ project.name }}</a></th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row"># Commits</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.commits_range }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row"># Pull requests</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.reviews_opened }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row">Median review duration</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.review_duration }} days</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row"># Issues created</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.issues_created_range }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row"># Issues closed</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.issues_closed_range }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row">Median time to close</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.issues_time_to_close }} days</td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+                <div id="chart-commits-compare"></div>
+                <div id="chart-authors-compare"></div>
+            </div>
+            <!-- End Overview -->
+            <!-- Start Git Activity -->
+            <div id="pills-activity-git" class="tab-pane fade" role="tabpanel" >
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col" class="text-center"><img src="{% static '/img/cauldron_logo.png' %}" width="20" height="20" alt=""></th>
+                            {% for project in projects %}
+                            <th scope="col" class="text-center"><a href="{% url 'show_dashboard' project.id %}">{{ project.name }}</a></th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row"># Commits (Last month)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.commits_last_month }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row"># Commits (Last year)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.commits_last_year }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row"># Commits (Year-over-year)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.commits_yoy | stringformat:"+.2f" }}%</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row"># Lines/commit (Last month)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.lines_commit_last_month | stringformat:".2f" }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row"># Lines/commit (Last year)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.lines_commit_last_year | stringformat:".2f" }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row"># Lines/commit (Year-over-year)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.lines_commit_yoy | stringformat:"+.2f" }}%</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row"># Lines/commit/file (Last month)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.lines_commit_file_last_month | stringformat:".4f" }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row"># Lines/commit/file (Last year)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.lines_commit_file_last_year | stringformat:".4f" }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row"># Lines/commit/file (Year-over-year)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.lines_commit_file_yoy | stringformat:"+.2f" }}%</td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- End Git Activity -->
+            <!-- Start Issues Activity -->
+            <div id="pills-activity-issues" class="tab-pane fade" role="tabpanel" >
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col" class="text-center"><img src="{% static '/img/cauldron_logo.png' %}" width="20" height="20" alt=""></th>
+                            {% for project in projects %}
+                            <th scope="col" class="text-center"><a href="{% url 'show_dashboard' project.id %}">{{ project.name }}</a></th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row"># Issues created (Last month)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.issues_open_last_month }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row"># Issues created (Last year)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.issues_open_last_year }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row"># Issues created (Year-over-year)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.issues_open_yoy | stringformat:"+.2f" }}%</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row"># Issues closed (Last month)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.issues_closed_last_month }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row"># Issues closed (Last year)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.issues_closed_last_year }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row"># Issues closed (Year-over-year)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.issues_closed_yoy | stringformat:"+.2f" }}%</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row"># Issues open (Today)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.issues_open_today }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row"># Issues open (1 month ago)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.issues_open_month_ago }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row"># Issues open (1 year ago)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.issues_open_year_ago }}</td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- End Issues Activity -->
+            <!-- Start Reviews Activity -->
+            <div id="pills-activity-reviews" class="tab-pane fade" role="tabpanel" >
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col" class="text-center"><img src="{% static '/img/cauldron_logo.png' %}" width="20" height="20" alt=""></th>
+                            {% for project in projects %}
+                            <th scope="col" class="text-center"><a href="{% url 'show_dashboard' project.id %}">{{ project.name }}</a></th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row"># Pull/Merge requests created (Last month)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.reviews_open_last_month }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row"># Pull/Merge requests created (Last year)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.reviews_open_last_year }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row"># Pull/Merge requests created (Year-over-year)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.reviews_open_yoy | stringformat:"+.2f" }}%</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row"># Pull/Merge requests closed (Last month)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.reviews_closed_last_month }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row"># Pull/Merge requests closed (Last year)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.reviews_closed_last_year }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row"># Pull/Merge requests closed (Year-over-year)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.reviews_closed_yoy | stringformat:"+.2f" }}%</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row"># Pull/Merge requests open (Today)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.reviews_open_today }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row"># Pull/Merge requests open (1 month ago)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.reviews_open_month_ago }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row"># Pull/Merge requests open (1 year ago)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.reviews_open_year_ago }}</td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- End Reviews Activity-->
+            <!-- Start Community -->
+            <div id="pills-community" class="tab-pane fade" role="tabpanel" >
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col" class="text-center"><img src="{% static '/img/cauldron_logo.png' %}" width="20" height="20" alt=""></th>
+                            {% for project in projects %}
+                            <th scope="col" class="text-center"><a href="{% url 'show_dashboard' project.id %}">{{ project.name }}</a></th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row"># Active people (Git authors)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.active_people_git }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row"># Active people (Issue submitters)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.active_people_issues }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row"># Active people (PRs/MRs submitters)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.active_people_patches }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row"># Onboardings (Git authors)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.onboardings_git }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row"># Onboardings (Issue submitters)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.onboardings_issues }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="row"># Onboardings (PRs/MRs submitters)</th>
+                            {% for key, value in metrics.items %}
+                            <td class="text-center">{{ value.onboardings_patches }}</td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- End Community -->
+        </div>
+    </div>
     {% else %}
     <p><em>No projects selected to compare</em></p>
     {% endif %}
@@ -80,4 +406,74 @@
 {% endblock %}
 
 {% block javascript %}
+<script src="https://cdn.bokeh.org/bokeh/release/bokeh-2.1.1.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-2.1.1.min.js" crossorigin="anonymous"> </script>
+<script src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-2.1.1.min.js" crossorigin="anonymous"> </script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.25.3/moment.min.js" integrity="sha256-C66CaAImteEKZPYvgng9j10J/45e9sAuZyfPYCwp4gE=" crossorigin="anonymous"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+
+{% if projects|length > 0 %}
+<script>
+document.addEventListener('DOMContentLoaded', function(event) {
+    var graphs = {
+        "chart-commits-compare": {{ charts.git_commits_bokeh_compare | safe }},
+        "chart-authors-compare": {{ charts.git_authors_bokeh_compare | safe }},
+    }
+
+    for (var k in graphs) {
+        item = graphs[k];
+        Bokeh.embed.embed_item(item, k);
+    }
+})
+</script>
+
+<script>
+$(function() {
+    var start = getUrlParameter('from_date');
+    var end = getUrlParameter('to_date');
+    start = (typeof start === 'undefined') ? moment().subtract(1, 'year') : moment(start, "YYYY-MM-DD");
+    end = (typeof end === 'undefined') ? moment() : moment(end, "YYYY-MM-DD");
+
+    function cb(start, end) {
+        var from_str = start.format('YYYY-MM-DD');
+        var end_str = end.format('YYYY-MM-DD');
+        $('#date-picker-input').val(start.format('YYYY-MM-DD') + ' - ' + end.format('YYYY-MM-DD'));
+        var url = new URL(document.URL);
+        var search_params = url.searchParams;
+        search_params.set('from_date', from_str);
+        search_params.set('to_date', end_str);
+        url.search = search_params.toString();
+        window.location.href = url.toString();
+    }
+
+    $('#date-picker').daterangepicker({
+        startDate: start,
+        endDate: end,
+        maxDate: moment(),
+        opens: 'left',
+        ranges: {
+           'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+           'Last 6 months': [moment().subtract(6, 'months'), moment()],
+           'Last Year': [moment().subtract(1, 'year'), moment()],
+           'Last 3 Years': [moment().subtract(3, 'years'), moment()],
+           'All (20 years)': [moment().subtract(20, 'years'), moment()]
+        },
+        showCustomRangeLabel: false
+    }, cb);
+
+    $('#date-picker-input').daterangepicker({
+        startDate: start,
+        endDate: end,
+        maxDate: moment(),
+        opens: 'left',
+        locale: {
+            format: 'YYYY-MM-DD'
+        }
+    }, cb);
+
+    $('#date-picker-input').val(start.format('YYYY-MM-DD') + ' - ' + end.format('YYYY-MM-DD'));
+});
+</script>
+{% endif %}
 {% endblock %}

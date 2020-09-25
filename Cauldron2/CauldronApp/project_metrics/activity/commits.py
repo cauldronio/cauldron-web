@@ -8,8 +8,10 @@ import pandas
 from bokeh.embed import json_item
 from bokeh.models import ColumnDataSource, tools, Range1d
 from bokeh.models import BasicTicker, ColorBar, LinearColorMapper, PrintfTickFormatter
-from bokeh.palettes import Blues
+from bokeh.palettes import Blues, Category10
 from bokeh.plotting import figure
+
+from CauldronApp.models import Dashboard
 
 from elasticsearch import ElasticsearchException
 from elasticsearch_dsl import Search, Q
@@ -84,24 +86,107 @@ def git_files_touched(elastic, from_date, to_date):
         return 'X'
 
 
+def git_commits_bucket(elastic, from_date, to_date, interval):
+    """ Makes a query to ES to get the number of commits grouped by date """
+    s = Search(using=elastic, index='git') \
+        .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) \
+        .query(~Q('match', files=0)) \
+        .extra(size=0)
+    s.aggs.bucket("commits", 'date_histogram', field='grimoire_creation_date',
+                  calendar_interval=interval)
+
+    try:
+        response = s.execute()
+        commits_bucket = response.aggregations.commits.buckets
+    except ElasticsearchException as e:
+        logger.warning(e)
+        commits_bucket = []
+
+    return commits_bucket
+
+def git_commits_bokeh_compare(elastics, from_date, to_date):
+    """ Get a projects comparison of evolution of contributions by commits"""
+    from_date_es = from_date.strftime("%Y-%m-%d")
+    to_date_es = to_date.strftime("%Y-%m-%d")
+    interval_name, interval_elastic, bar_width = get_interval(from_date, to_date)
+
+    commits_buckets = dict()
+    for project_id in elastics:
+        elastic = elastics[project_id]
+        commits_buckets[project_id] = git_commits_bucket(elastic, from_date_es, to_date_es, interval_elastic)
+
+    data = dict()
+    for project_id in commits_buckets:
+        commits_bucket = commits_buckets[project_id]
+
+        # Create the data structure
+        commits, timestamps = [], []
+        for week in commits_bucket:
+            timestamps.append(week.key)
+            commits.append(week.doc_count)
+
+        data[f'commits_{project_id}'] = commits
+        data[f'timestamps_{project_id}'] = timestamps
+
+    # Create the Bokeh visualization
+    plot = figure(x_axis_type="datetime",
+                  x_axis_label='Time',
+                  y_axis_label='# Commits',
+                  height=300,
+                  sizing_mode="stretch_width",
+                  tools='')
+    plot.title.text = '# Commits over time'
+    configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
+                           '-/blob/master/guides/metrics/activity/commits-over-time.md')
+    if any(data.values()):
+        plot.x_range = Range1d(from_date - timedelta(days=1), to_date + timedelta(days=1))
+
+    source = ColumnDataSource(data=data)
+
+    names = []
+    tooltips = []
+    formatters = dict()
+    for idx, project_id in enumerate(commits_buckets):
+        try:
+            dash = Dashboard.objects.get(pk=project_id)
+            dash_name = dash.name
+        except Dashboard.DoesNotExist:
+            dash_name = "Unknown"
+
+        if idx == 0:
+            names.append(f'commits_{project_id}')
+            tooltips.append((interval_name, f'@timestamps_{project_id}{{%F}}'))
+            formatters[f'@timestamps_{project_id}'] = 'datetime'
+
+        tooltips.append((f'commits {dash_name}', f'@commits_{project_id}'))
+
+        plot.line(x=f'timestamps_{project_id}', y=f'commits_{project_id}',
+                  name=f'commits_{project_id}',
+                  line_width=4,
+                  line_color=Category10[5][idx],
+                  legend_label=dash_name,
+                  source=source)
+
+    plot.add_tools(tools.HoverTool(
+        names=names,
+        tooltips=tooltips,
+        formatters=formatters,
+        mode='vline',
+        toggleable=False
+    ))
+
+    plot.legend.location = "top_left"
+
+    return json.dumps(json_item(plot))
+
+
 def git_commits_bokeh(elastic, from_date, to_date):
     """ Get evolution of contributions by commits"""
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
     interval_name, interval_elastic, bar_width = get_interval(from_date, to_date)
-    s = Search(using=elastic, index='git')\
-        .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
-        .query(~Q('match', files=0)) \
-        .extra(size=0)
-    s.aggs.bucket("commits_per_day", 'date_histogram', field='grimoire_creation_date',
-                  calendar_interval=interval_elastic)
 
-    try:
-        response = s.execute()
-        commits_bucket = response.aggregations.commits_per_day.buckets
-    except ElasticsearchException as e:
-        logger.warning(e)
-        commits_bucket = []
+    commits_bucket = git_commits_bucket(elastic, from_date_es, to_date_es, interval_elastic)
 
     # Create the Bokeh visualization
     timestamp, commits = [], []

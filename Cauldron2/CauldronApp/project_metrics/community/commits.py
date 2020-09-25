@@ -9,9 +9,11 @@ from elasticsearch_dsl import Search, Q
 
 from bokeh.embed import json_item
 from bokeh.models import ColumnDataSource, tools, Range1d
-from bokeh.palettes import Blues, Greens, Greys, Reds
+from bokeh.palettes import Blues, Greens, Greys, Reds, Category10
 from bokeh.plotting import figure
 from bokeh.transform import dodge
+
+from CauldronApp.models import Dashboard
 
 from .common import get_seniority, is_still_active
 from ..utils import configure_figure, get_interval
@@ -41,24 +43,110 @@ def authors_active(elastic, from_date, to_date):
         return 'X'
 
 
+def get_authors_bucket(elastic, from_date, to_date, interval):
+    """ Makes a query to ES to get the number of authors grouped by date """
+    s = Search(using=elastic, index='git') \
+        .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) \
+        .query(~Q('match', files=0)) \
+        .extra(size=0)
+
+    s.aggs.bucket("bucket1", 'date_histogram', field='grimoire_creation_date', calendar_interval=interval) \
+          .bucket('authors', 'cardinality', field='author_uuid')
+
+    try:
+        response = s.execute()
+        authors_bucket = response.aggregations.bucket1.buckets
+    except ElasticsearchException as e:
+        logger.warning(e)
+        authors_bucket = []
+
+    return authors_bucket
+
+
+def git_authors_bokeh_compare(elastics, from_date, to_date):
+    """ Get a projects comparison of the number of git authors active
+    for a project in a period of time """
+    from_date_es = from_date.strftime("%Y-%m-%d")
+    to_date_es = to_date.strftime("%Y-%m-%d")
+    interval_name, interval_elastic, _ = get_interval(from_date, to_date)
+
+    authors_buckets = dict()
+    for project_id in elastics:
+        elastic = elastics[project_id]
+        authors_buckets[project_id] = get_authors_bucket(elastic, from_date_es, to_date_es, interval_elastic)
+
+    data = dict()
+    for project_id in authors_buckets:
+        authors_bucket = authors_buckets[project_id]
+
+        # Create the data structure
+        timestamps, authors = [], []
+        for item in authors_bucket:
+            timestamps.append(item.key)
+            authors.append(item.authors.value)
+
+        data[f'timestamps_{project_id}'] = timestamps
+        data[f'authors_{project_id}'] = authors
+
+    # Create the Bokeh visualization
+    plot = figure(x_axis_type="datetime",
+                  x_axis_label='Time',
+                  y_axis_label='# Authors',
+                  height=300,
+                  sizing_mode="stretch_width",
+                  tools='')
+    plot.title.text = '# Git authors over time'
+    configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
+                           '-/blob/master/guides/metrics/community/authors-commits.md')
+    if any(data.values()):
+        plot.x_range = Range1d(from_date - timedelta(days=1), to_date + timedelta(days=1))
+
+    source = ColumnDataSource(data=data)
+
+    names = []
+    tooltips = []
+    formatters = dict()
+    for idx, project_id in enumerate(authors_buckets):
+        try:
+            dash = Dashboard.objects.get(pk=project_id)
+            dash_name = dash.name
+        except Dashboard.DoesNotExist:
+            dash_name = "Unknown"
+
+        if idx == 0:
+            names.append(f'authors_{project_id}')
+            tooltips.append((interval_name, f'@timestamps_{project_id}{{%F}}'))
+            formatters[f'@timestamps_{project_id}'] = 'datetime'
+
+        tooltips.append((f'authors {dash_name}', f'@authors_{project_id}'))
+
+        plot.line(x=f'timestamps_{project_id}', y=f'authors_{project_id}',
+                  name=f'authors_{project_id}',
+                  line_width=4,
+                  line_color=Category10[5][idx],
+                  legend_label=dash_name,
+                  source=source)
+
+    plot.add_tools(tools.HoverTool(
+        names=names,
+        tooltips=tooltips,
+        formatters=formatters,
+        mode='vline',
+        toggleable=False
+    ))
+
+    plot.legend.location = "top_left"
+
+    return json.dumps(json_item(plot))
+
+
 def authors_active_bokeh(elastic, from_date, to_date):
     """Get evolution of Authors in commits"""
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
     interval_name, interval_elastic, bar_width = get_interval(from_date, to_date)
-    s = Search(using=elastic, index='git') \
-        .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
-        .query(~Q('match', files=0)) \
-        .extra(size=0)
 
-    s.aggs.bucket("bucket1", 'date_histogram', field='grimoire_creation_date', calendar_interval=interval_elastic)\
-        .bucket('authors', 'cardinality', field='author_uuid')
-    try:
-        response = s.execute()
-        authors_buckets = response.aggregations.bucket1.buckets
-    except ElasticsearchException as e:
-        logger.warning(e)
-        authors_buckets = []
+    authors_buckets = get_authors_bucket(elastic, from_date_es, to_date_es, interval_elastic)
 
     # Create the Bokeh visualization
     timestamp, authors = [], []

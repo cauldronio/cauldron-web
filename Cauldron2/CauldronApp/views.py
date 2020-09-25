@@ -35,11 +35,7 @@ from CauldronApp.oauth.github import GitHubOAuth
 from CauldronApp.oauth.gitlab import GitLabOAuth
 from CauldronApp.oauth.meetup import MeetupOAuth
 
-from .project_metrics.metrics import get_elastic_project
-from .project_metrics.activity import commits as activity_commits
-from .project_metrics.activity import issues as activity_issues
-from .project_metrics.activity import reviews as activity_reviews
-from .project_metrics import other
+from .project_metrics.metrics import get_compare_metrics, get_compare_charts
 
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -1108,28 +1104,26 @@ def request_compare_projects(request):
 
     context['projects'] = projects
 
-    try:
-        from_str = request.GET.get('from_date', '')
-        from_date = datetime.datetime.strptime(from_str, '%Y-%m-%d')
-    except ValueError:
-        from_date = datetime.datetime.now() - relativedelta(years=1)
-    try:
-        to_str = request.GET.get('to_date', '')
-        to_date = datetime.datetime.strptime(to_str, '%Y-%m-%d')
-    except ValueError:
-        to_date = datetime.datetime.now()
+    if request.user.is_authenticated:
+        context['user_projects'] = request.user.dashboard_set.all()
 
-    context['metrics'] = dict()
-    for project in projects:
-        elastic = get_elastic_project(project)
-        context['metrics'][project.id] = {
-            'commits_range': activity_commits.git_commits(elastic, from_date, to_date),
-            'reviews_opened': activity_reviews.reviews_opened(elastic, from_date, to_date),
-            'review_duration': other.review_duration(elastic, from_date, to_date),
-            'issues_created_range': activity_issues.issues_opened(elastic, from_date, to_date),
-            'issues_closed_range': activity_issues.issues_closed(elastic, from_date, to_date),
-            'issues_time_to_close': other.issues_time_to_close(elastic, from_date, to_date),
-        }
+    if projects.filter(repository=None).count() > 0:
+        context['message_error'] = "Some of the selected projects do not have repositories..."
+        context['projects'] = Dashboard.objects.none()
+    else:
+        try:
+            from_str = request.GET.get('from_date', '')
+            from_date = datetime.datetime.strptime(from_str, '%Y-%m-%d')
+        except ValueError:
+            from_date = datetime.datetime.now() - relativedelta(years=1)
+        try:
+            to_str = request.GET.get('to_date', '')
+            to_date = datetime.datetime.strptime(to_str, '%Y-%m-%d')
+        except ValueError:
+            to_date = datetime.datetime.now()
+
+        context['metrics'] = get_compare_metrics(projects, from_date, to_date)
+        context['charts'] = get_compare_charts(projects, from_date, to_date)
 
     return render(request, 'cauldronapp/projects_compare.html', context=context)
 

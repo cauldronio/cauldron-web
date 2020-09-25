@@ -11,6 +11,8 @@ from bokeh.transform import cumsum
 from elasticsearch import ElasticsearchException
 from elasticsearch_dsl import Search, Q
 
+from CauldronApp.models import Dashboard
+
 from .utils import configure_figure, get_interval
 
 logger = logging.getLogger(__name__)
@@ -113,30 +115,123 @@ def author_domains_bokeh(elastic, from_date, to_date):
     return json.dumps(json_item(plot))
 
 
-def author_evolution_bokeh(elastic, from_date, to_date):
-    """Get evolution of Authors"""
-    from_date_es = from_date.strftime("%Y-%m-%d")
-    to_date_es = to_date.strftime("%Y-%m-%d")
-    interval_name, interval_elastic, _ = get_interval(from_date, to_date)
-    s = Search(using=elastic, index='all')\
-        .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es})\
+def get_authors_bucket(elastic, from_date, to_date, interval):
+    """ Makes a query to ES to get the number of authors grouped by date """
+    s = Search(using=elastic, index='all') \
+        .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) \
         .extra(size=0)
 
-    s.aggs.bucket('bucket1', 'date_histogram', field='grimoire_creation_date', calendar_interval=interval_elastic)\
+    s.aggs.bucket('bucket1', 'date_histogram', field='grimoire_creation_date', calendar_interval=interval) \
           .bucket('bucket2', 'filters',
                   filters={'Maintainers': Q('match', is_git_commit=1),
                            'Contributors': (Q('match', pull_request=True) | Q('match', merge_request=True)),
                            'Users': (Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)),
                            'Observers': Q('match', is_meetup_rsvp=1)
                            },
-                  )\
+                  ) \
           .bucket('bucket3', 'cardinality', field='author_uuid')
+
     try:
         response = s.execute()
-        authors_buckets = response.aggregations.bucket1.buckets
+        authors_bucket = response.aggregations.bucket1.buckets
     except ElasticsearchException as e:
         logger.warning(e)
-        authors_buckets = []
+        authors_bucket = []
+
+    return authors_bucket
+
+
+# This code could be useful someday, DON'T REMOVE IT
+def author_evolution_bokeh_compare(elastics, from_date, to_date):
+    """ Get a projects comparison of evolution of authors """
+    from_date_es = from_date.strftime("%Y-%m-%d")
+    to_date_es = to_date.strftime("%Y-%m-%d")
+    interval_name, interval_elastic, _ = get_interval(from_date, to_date)
+
+    authors_buckets = dict()
+    for project_id in elastics:
+        elastic = elastics[project_id]
+        authors_buckets[project_id] = get_authors_bucket(elastic, from_date_es, to_date_es, interval_elastic)
+
+    data = dict()
+    for project_id in authors_buckets:
+        authors_bucket = authors_buckets[project_id]
+
+        # Create the data structure
+        contributors, maintainers, observers, users, timestamps = [], [], [], [], []
+        for item in authors_bucket:
+            timestamps.append(item.key)
+            values = item.bucket2.buckets
+            contributors.append(values.Contributors.bucket3.value)
+            maintainers.append(values.Maintainers.bucket3.value)
+            observers.append(values.Observers.bucket3.value)
+            users.append(values.Users.bucket3.value)
+
+        data[f'contributors_{project_id}'] = contributors
+        data[f'maintainers_{project_id}'] = maintainers
+        data[f'observers_{project_id}'] = observers
+        data[f'users_{project_id}'] = users
+        data[f'timestamps_{project_id}'] = timestamps
+
+    # Create the Bokeh visualization
+    plot = figure(x_axis_type="datetime",
+                  x_axis_label='Time',
+                  y_axis_label='# Authors',
+                  height=300,
+                  sizing_mode="stretch_width",
+                  tools='')
+    plot.title.text = '# Authors per category over time'
+    configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
+                           '-/blob/master/guides/metrics/overview/authors-evolution.md')
+    if any(data.values()):
+        plot.x_range = Range1d(from_date - timedelta(days=1), to_date + timedelta(days=1))
+
+    source = ColumnDataSource(data=data)
+
+    names = []
+    tooltips = []
+    formatters = dict()
+    for idx, project_id in enumerate(authors_buckets):
+        try:
+            dash = Dashboard.objects.get(pk=project_id)
+            dash_name = dash.name
+        except Dashboard.DoesNotExist:
+            dash_name = "Unknown"
+
+        if idx == 0:
+            names.append(f'maintainers_{project_id}')
+            tooltips.append((interval_name, f'@timestamps_{project_id}{{%F}}'))
+            formatters[f'@timestamps_{project_id}'] = 'datetime'
+
+        for i, category in enumerate(('contributors', 'maintainers', 'observers', 'users')):
+            tooltips.append((f'{category} {dash_name}', f'@{category}_{project_id}'))
+            plot.line(x=f'timestamps_{project_id}', y=f'{category}_{project_id}',
+                      name=f'{category}_{project_id}',
+                      line_width=4,
+                      line_color=Category20c[20][4 * idx + i],
+                      legend_label=f'{category} {dash_name}',
+                      source=source)
+
+    plot.add_tools(tools.HoverTool(
+        names=names,
+        tooltips=tooltips,
+        formatters=formatters,
+        mode='vline',
+        toggleable=False
+    ))
+
+    plot.legend.location = "top_left"
+
+    return json.dumps(json_item(plot))
+
+
+def author_evolution_bokeh(elastic, from_date, to_date):
+    """Get evolution of Authors"""
+    from_date_es = from_date.strftime("%Y-%m-%d")
+    to_date_es = to_date.strftime("%Y-%m-%d")
+    interval_name, interval_elastic, _ = get_interval(from_date, to_date)
+
+    authors_buckets = get_authors_bucket(elastic, from_date_es, to_date_es, interval_elastic)
 
     # Create the Bokeh visualization
     x, contrib, maintainers, observers, users = [], [], [], [], []
