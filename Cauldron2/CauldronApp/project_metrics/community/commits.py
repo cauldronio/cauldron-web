@@ -291,14 +291,15 @@ def authors_entering_leaving_bokeh(elastic, from_date, to_date):
         onboardings=authors_entering,
         leavings=authors_leaving,
         difference=difference,
-        timestamps=timestamps
+        timestamps=timestamps,
+        zeros=[0]*len(timestamps)
     ))
 
-    plot.varea('timestamps', 'onboardings',
+    plot.varea(x='timestamps', y1='zeros', y2='onboardings',
                source=source,
                color=Blues[3][0],
                legend_label='Onboarding')
-    plot.varea('timestamps', 'leavings',
+    plot.varea(x='timestamps', y2='zeros', y1='leavings',
                source=source,
                color=Blues[3][1],
                legend_label='Last activity')

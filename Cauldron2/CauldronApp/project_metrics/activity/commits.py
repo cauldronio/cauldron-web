@@ -433,14 +433,15 @@ def git_lines_changed_bokeh(elastic, from_date, to_date):
     source = ColumnDataSource(data=dict(
         lines_added=lines_added,
         lines_removed=lines_removed,
-        timestamp=timestamp
+        timestamp=timestamp,
+        zeros=[0] * len(timestamp)
     ))
 
-    plot.varea('timestamp', 'lines_added',
+    plot.varea('timestamp', y1='zeros', y2='lines_added',
                source=source,
                color=Blues[3][0],
                legend_label='Lines added')
-    plot.varea('timestamp', 'lines_removed',
+    plot.varea('timestamp', y1='zeros', y2='lines_removed',
                source=source,
                color=Blues[3][1],
                legend_label='Lines removed')
