@@ -3,6 +3,7 @@ import json
 
 import pandas
 from datetime import datetime, timedelta
+from functools import reduce
 
 from elasticsearch import ElasticsearchException
 from elasticsearch_dsl import Search, Q
@@ -75,7 +76,7 @@ def git_authors_bokeh_compare(elastics, from_date, to_date):
         elastic = elastics[project_id]
         authors_buckets[project_id] = get_authors_bucket(elastic, from_date_es, to_date_es, interval_elastic)
 
-    data = dict()
+    data = []
     for project_id in authors_buckets:
         authors_bucket = authors_buckets[project_id]
 
@@ -85,8 +86,11 @@ def git_authors_bokeh_compare(elastics, from_date, to_date):
             timestamps.append(item.key)
             authors.append(item.authors.value)
 
-        data[f'timestamps_{project_id}'] = timestamps
-        data[f'authors_{project_id}'] = authors
+        data.append(pandas.DataFrame(list(zip(timestamps, authors)),
+                    columns =['timestamps', f'authors_{project_id}']))
+
+    # Merge the dataframes in case they have different lengths
+    data = reduce(lambda df1,df2: pandas.merge(df1,df2,on='timestamps',how='outer',sort=True).fillna(0), data)
 
     # Create the Bokeh visualization
     plot = figure(x_axis_type="datetime",
@@ -98,14 +102,13 @@ def git_authors_bokeh_compare(elastics, from_date, to_date):
     plot.title.text = '# Git authors over time'
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
                            '-/blob/master/guides/metrics/community/authors-commits.md')
-    if any(data.values()):
+    if not data.empty:
         plot.x_range = Range1d(from_date - timedelta(days=1), to_date + timedelta(days=1))
 
     source = ColumnDataSource(data=data)
 
     names = []
-    tooltips = []
-    formatters = dict()
+    tooltips = [(interval_name, '@timestamps{%F}')]
     for idx, project_id in enumerate(authors_buckets):
         try:
             dash = Dashboard.objects.get(pk=project_id)
@@ -115,12 +118,10 @@ def git_authors_bokeh_compare(elastics, from_date, to_date):
 
         if idx == 0:
             names.append(f'authors_{project_id}')
-            tooltips.append((interval_name, f'@timestamps_{project_id}{{%F}}'))
-            formatters[f'@timestamps_{project_id}'] = 'datetime'
 
         tooltips.append((f'authors {dash_name}', f'@authors_{project_id}'))
 
-        plot.line(x=f'timestamps_{project_id}', y=f'authors_{project_id}',
+        plot.line(x=f'timestamps', y=f'authors_{project_id}',
                   name=f'authors_{project_id}',
                   line_width=4,
                   line_color=Category10[5][idx],
@@ -130,7 +131,9 @@ def git_authors_bokeh_compare(elastics, from_date, to_date):
     plot.add_tools(tools.HoverTool(
         names=names,
         tooltips=tooltips,
-        formatters=formatters,
+        formatters={
+            '@timestamps': 'datetime'
+        },
         mode='vline',
         toggleable=False
     ))

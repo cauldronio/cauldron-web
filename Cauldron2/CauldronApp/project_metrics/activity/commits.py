@@ -4,6 +4,7 @@ from collections import defaultdict
 from datetime import timedelta
 import calendar
 import pandas
+from functools import reduce
 
 from bokeh.embed import json_item
 from bokeh.models import ColumnDataSource, tools, Range1d
@@ -115,7 +116,7 @@ def git_commits_bokeh_compare(elastics, from_date, to_date):
         elastic = elastics[project_id]
         commits_buckets[project_id] = git_commits_bucket(elastic, from_date_es, to_date_es, interval_elastic)
 
-    data = dict()
+    data = []
     for project_id in commits_buckets:
         commits_bucket = commits_buckets[project_id]
 
@@ -125,8 +126,11 @@ def git_commits_bokeh_compare(elastics, from_date, to_date):
             timestamps.append(week.key)
             commits.append(week.doc_count)
 
-        data[f'commits_{project_id}'] = commits
-        data[f'timestamps_{project_id}'] = timestamps
+        data.append(pandas.DataFrame(list(zip(timestamps, commits)),
+                    columns =['timestamps', f'commits_{project_id}']))
+
+    # Merge the dataframes in case they have different lengths
+    data = reduce(lambda df1,df2: pandas.merge(df1,df2,on='timestamps',how='outer',sort=True).fillna(0), data)
 
     # Create the Bokeh visualization
     plot = figure(x_axis_type="datetime",
@@ -138,14 +142,13 @@ def git_commits_bokeh_compare(elastics, from_date, to_date):
     plot.title.text = '# Commits over time'
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
                            '-/blob/master/guides/metrics/activity/commits-over-time.md')
-    if any(data.values()):
+    if not data.empty:
         plot.x_range = Range1d(from_date - timedelta(days=1), to_date + timedelta(days=1))
 
     source = ColumnDataSource(data=data)
 
     names = []
-    tooltips = []
-    formatters = dict()
+    tooltips = [(interval_name, '@timestamps{%F}')]
     for idx, project_id in enumerate(commits_buckets):
         try:
             dash = Dashboard.objects.get(pk=project_id)
@@ -155,12 +158,10 @@ def git_commits_bokeh_compare(elastics, from_date, to_date):
 
         if idx == 0:
             names.append(f'commits_{project_id}')
-            tooltips.append((interval_name, f'@timestamps_{project_id}{{%F}}'))
-            formatters[f'@timestamps_{project_id}'] = 'datetime'
 
         tooltips.append((f'commits {dash_name}', f'@commits_{project_id}'))
 
-        plot.line(x=f'timestamps_{project_id}', y=f'commits_{project_id}',
+        plot.line(x='timestamps', y=f'commits_{project_id}',
                   name=f'commits_{project_id}',
                   line_width=4,
                   line_color=Category10[5][idx],
@@ -170,7 +171,9 @@ def git_commits_bokeh_compare(elastics, from_date, to_date):
     plot.add_tools(tools.HoverTool(
         names=names,
         tooltips=tooltips,
-        formatters=formatters,
+        formatters={
+            '@timestamps': 'datetime'
+        },
         mode='vline',
         toggleable=False
     ))

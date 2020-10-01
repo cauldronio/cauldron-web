@@ -1108,8 +1108,9 @@ def request_compare_projects(request):
         except ValueError:
             to_date = datetime.datetime.now()
 
-        context['metrics'] = get_compare_metrics(projects, from_date, to_date)
-        context['charts'] = get_compare_charts(projects, from_date, to_date)
+        if projects.count() > 0:
+            context['metrics'] = get_compare_metrics(projects, from_date, to_date)
+            context['charts'] = get_compare_charts(projects, from_date, to_date)
 
     return render(request, 'cauldronapp/projects_compare.html', context=context)
 
