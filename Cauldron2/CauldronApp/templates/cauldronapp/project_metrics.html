@@ -10,18 +10,36 @@
           <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="tab" aria-controls="activity">Activity</a>
           <div class="dropdown-menu">
             <a class="dropdown-item" data-category="activity-overview" data-toggle="tab" role="tab" href="#activity-overview">Overview</a>
+            {% if has_git %}
             <a class="dropdown-item" data-category="activity-git" data-toggle="tab" role="tab" href="#activity-git">Commits</a>
+            {% else %}
+            <a class="dropdown-item disabled" data-category="activity-git" data-toggle="tab" role="tab" href="#activity-git">Commits</a>
+            {% endif %}
+            {% if has_gitlab or has_github %}
             <a class="dropdown-item" data-category="activity-issues" data-toggle="tab" role="tab" href="#activity-issues">Issues</a>
             <a class="dropdown-item" data-category="activity-reviews" data-toggle="tab" role="tab" href="#activity-reviews">Reviews</a>
+            {% else %}
+            <a class="dropdown-item disabled" data-category="activity-issues" data-toggle="tab" role="tab" href="#activity-issues">Issues</a>
+            <a class="dropdown-item disabled" data-category="activity-reviews" data-toggle="tab" role="tab" href="#activity-reviews">Reviews</a>
+            {% endif %}
           </div>
         </li>
         <li class="nav-item dropdown" style="line-height:1.5;" role="presentation">
           <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="tab" aria-controls="community">Community</a>
           <div class="dropdown-menu">
             <a class="dropdown-item" data-category="community-overview" data-toggle="tab" role="tab" href="#community-overview">Overview</a>
+            {% if has_git %}
             <a class="dropdown-item" data-category="community-git" data-toggle="tab" role="tab" href="#community-git">Commits</a>
+            {% else %}
+            <a class="dropdown-item disabled" data-category="community-git" data-toggle="tab" role="tab" href="#community-git">Commits</a>
+            {% endif %}
+            {% if has_gitlab or has_github %}
             <a class="dropdown-item" data-category="community-issues" data-toggle="tab" role="tab" href="#community-issues">Issues</a>
             <a class="dropdown-item" data-category="community-reviews" data-toggle="tab" role="tab" href="#community-reviews">Reviews</a>
+            {% else %}
+            <a class="dropdown-item disabled" data-category="community-issues" data-toggle="tab" role="tab" href="#community-issues">Issues</a>
+            <a class="dropdown-item disabled" data-category="community-reviews" data-toggle="tab" role="tab" href="#community-reviews">Reviews</a>
+            {% endif %}
           </div>
         </li>
         {% if repositories_count > 0 %}
@@ -53,114 +71,131 @@
       <!-- Start Overview -->
       <div id="overview" class="mb-4 tab-pane fade show active" role="tabpanel" >
         <div class="row py-4 border">
-          <div class="col-md-2">
+          {% if has_git %}
+          <div class="col-md">
             <p class="font-weight-bold text-muted mb-3"># Commits <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/overview/commits.md"><i class="far fa-question-circle"></i></a></p>
             <p class="h5 font-weight-bold text-gray-800"><span id="number_commits_range"> {{ metrics.commits_range }}</span></p>
           </div>
-          <div class="col-md-2 border-left border-right">
+          {% endif %}
+          {% if has_gitlab or has_github %}
+          <div class="col-md border-left border-right">
             <p class="font-weight-bold text-muted mb-3"># Pull requests <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/overview/pull-merge-requests-created.md"><i class="far fa-question-circle"></i></a></p>
             <p class="h5 font-weight-bold text-gray-800"><span id="number_reviews_opened"> {{ metrics.reviews_opened }}</span></p>
           </div>
-          <div class="col-md-2 border-left border-right">
+          <div class="col-md border-left border-right">
             <p class="font-weight-bold text-muted mb-3">Median review duration <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/overview/median-review-duration.md"><i class="far fa-question-circle"></i></a></p>
             <p class="h5 font-weight-bold text-gray-800"><span id="number_review_duration"> {{ metrics.review_duration }}</span> days</p>
           </div>
-          <div class="col-md-2 border-left border-right">
+          <div class="col-md border-left border-right">
             <p class="font-weight-bold text-muted mb-3"># Issues created <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/overview/issues-created.md"><i class="far fa-question-circle"></i></a></p>
             <p class="h5 font-weight-bold text-gray-800"><span id="number_issues_created_range"> {{ metrics.issues_created_range }}</span></p>
           </div>
-          <div class="col-md-2 border-left border-right">
+          <div class="col-md border-left border-right">
             <p class="font-weight-bold text-muted mb-3"># Issues closed <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/overview/issues-closed.md"><i class="far fa-question-circle"></i></a></p>
             <p class="h5 font-weight-bold text-gray-800"><span id="number_issues_closed_range"> {{ metrics.issues_closed_range }}</span></p>
           </div>
-          <div class="col-md-2 border-left border-right">
+          <div class="col-md border-left border-right">
             <p class="font-weight-bold text-muted mb-3">Median time to close <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/overview/median-time-to-close.md"><i class="far fa-question-circle"></i></a></p>
             <p class="h5 font-weight-bold text-gray-800"><span id="number_issues_time_to_close"> {{ metrics.issues_time_to_close }}</span> days</p>
           </div>
+          {% endif %}
         </div>
         <div class="row">
-          <div class="col-md-6">
+          {% if has_git %}
+          <div class="col-md">
             <div id="chart-commits-overview"></div>
           </div>
-          <div class="col-md-6">
+          {% endif %}
+          <div class="col-md">
             <div id="chart-people-overview"></div>
           </div>
         </div>
+        {% if has_gitlab or has_github %}
         <div class="row">
-          <div class="col-md-6">
+          <div class="col-md">
             <div id="chart-issues-overview"></div>
           </div>
-          <div class="col-md-6">
+          <div class="col-md">
             <div id="chart-pull-requests-overview"></div>
           </div>
         </div>
+        {% endif %}
 
       </div>
       <!-- End Overview -->
       <!-- Start Activity Overview -->
       <div id="activity-overview" class="mb-4 tab-pane fade" role="tabpanel" >
         <div class="row py-4 border">
-          <div class="col-md-4">
+          {% if has_git %}
+          <div class="col-md">
             <div class="row">
-              <div class="col-md-4">
+              <div class="col-xl">
                 <p class="font-weight-bold text-muted mb-3"># Commits <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/commits.md"><i class="far fa-question-circle"></i></a></p>
                 <p class="h5 font-weight-bold text-gray-800"><span id="number_commits_activity_overview"> {{ metrics.commits_activity_overview }}</span></p>
               </div>
-              <div class="col-md-4 border-left">
+              <div class="col-xl border-left">
                 <p class="font-weight-bold text-muted mb-3"># Lines/commit <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/lines-commit.md"><i class="far fa-question-circle"></i></a></p>
                 <p class="h5 font-weight-bold text-gray-800"><span id="number_lines_commit_activity_overview">{{ metrics.lines_commit_activity_overview|stringformat:".2f" }}</span></p>
               </div>
-              <div class="col-md-4 border-left">
+              <div class="col-xl border-left">
                 <p class="font-weight-bold text-muted mb-3"># Lines/commit/file <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/lines-commit-file.md"><i class="far fa-question-circle"></i></a></p>
                 <p class="h5 font-weight-bold text-gray-800"><span id="number_lines_commit_file_activity_overview">{{ metrics.lines_commit_file_activity_overview|stringformat:".2f" }}</span></p>
               </div>
             </div>
           </div>
-          <div class="col-md-4">
+          {% endif %}
+          {% if has_gitlab or has_github %}
+          <div class="col-md">
             <div class="row">
-              <div class="col-md-4 border-left">
+              <div class="col-xl border-left">
                 <p class="font-weight-bold text-muted mb-3"># Issues created <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/issues-created.md"><i class="far fa-question-circle"></i></a></p>
                 <p class="h5 font-weight-bold text-gray-800"><span id="number_issues_created_activity_overview"> {{ metrics.issues_created_activity_overview }}</span></p>
               </div>
-              <div class="col-md-4 border-left">
+              <div class="col-xl border-left">
                 <p class="font-weight-bold text-muted mb-3"># Issues closed <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/issues-closed.md"><i class="far fa-question-circle"></i></a></p>
                 <p class="h5 font-weight-bold text-gray-800"><span id="number_issues_closed_activity_overview">{{ metrics.issues_closed_activity_overview }}</span></p>
               </div>
-              <div class="col-md-4 border-left">
+              <div class="col-xl border-left">
                 <p class="font-weight-bold text-muted mb-3"># Issues open <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/issues-open.md"><i class="far fa-question-circle"></i></a></p>
                 <p class="h5 font-weight-bold text-gray-800"><span id="number_issues_open_activity_overview">{{ metrics.issues_open_activity_overview }}</span></p>
               </div>
             </div>
           </div>
-          <div class="col-md-4">
+          <div class="col-md">
             <div class="row">
-              <div class="col-md-4 border-left">
+              <div class="col-xl border-left">
                 <p class="font-weight-bold text-muted mb-3"># Pull/Merge requests created <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/pull-merge-requests-created.md"><i class="far fa-question-circle"></i></a></p>
                 <p class="h5 font-weight-bold text-gray-800"><span id="number_reviews_created_activity_overview"> {{ metrics.reviews_created_activity_overview }}</span></p>
               </div>
-              <div class="col-md-4 border-left">
+              <div class="col-xl border-left">
                 <p class="font-weight-bold text-muted mb-3"># Pull/Merge requests closed <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/pull-merge-requests-closed.md"><i class="far fa-question-circle"></i></a></p>
                 <p class="h5 font-weight-bold text-gray-800"><span id="number_reviews_closed_activity_overview">{{ metrics.reviews_closed_activity_overview }}</span></p>
               </div>
-              <div class="col-md-4 border-left">
+              <div class="col-xl border-left">
                 <p class="font-weight-bold text-muted mb-3"># Pull/Merge requests open <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/pull-merge-requests-open.md"><i class="far fa-question-circle"></i></a></p>
                 <p class="h5 font-weight-bold text-gray-800"><span id="number_reviews_open_activity_overview">{{ metrics.reviews_open_activity_overview }}</span></p>
               </div>
             </div>
           </div>
+          {% endif %}
         </div>
+        {% if has_git %}
         <div class="row">
           <div id="chart-commits-activity-overview"></div>
         </div>
+        {% endif %}
+        {% if has_github or has_gitlab %}
         <div class="row">
           <div id="chart-issues-open-closed-activity-overview"></div>
         </div>
         <div class="row">
           <div id="chart-reviews-open-closed-activity-overview"></div>
         </div>
+        {% endif %}
       </div>
       <!-- End Activity Overview -->
       <!-- Start GIT ACTIVITY -->
+      {% if has_git %}
       <div id="activity-git" class="mb-4 tab-pane fade" role="tabpanel" >
         <div class="row py-4 border">
           <div class="col-md-4">
@@ -235,8 +270,10 @@
           <div id="chart-commits-heatmap"></div>
         </div>
       </div>
+      {% endif %}
       <!-- End GIT ACTIVITY -->
       <!-- Start Issues ACTIVITY -->
+      {% if has_gitlab or has_github %}
       <div id="activity-issues" class="mb-4 tab-pane fade" role="tabpanel" >
         <div class="row py-4 border">
           <div class="col-md-4">
@@ -316,8 +353,10 @@
           </div>
         </div>
       </div>
+      {% endif %}
       <!-- End Issues ACTIVITY -->
       <!-- Start Reviews ACTIVITY -->
+      {% if has_gitlab or has_github %}
       <div id="activity-reviews" class="mb-4 tab-pane fade" role="tabpanel" >
         <div class="row py-4 border">
           <div class="col-md-4">
@@ -397,57 +436,71 @@
           </div>
         </div>
       </div>
+      {% endif %}
       <!-- End Reviews ACTIVITY-->
       <!-- Start Community Overview -->
       <div id="community-overview" class="mb-4 tab-pane fade" role="tabpanel" >
         <div class="row py-4 border">
-          <div class="col-md-6">
+          <div class="col-md">
             <p class="font-weight-bold text-muted mb-3"># Active people <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/community/active-people.md"><i class="far fa-question-circle"></i></a></p>
             <div class="row">
-              <div class="col-4">
+              {% if has_git %}
+              <div class="col-md">
                 <p class="h5 font-weight-bold text-gray-800"><span id="active_people_git_community_overview">{{ metrics.active_people_git_community_overview }}</span></p>
                 <p class="text-muted mb-1">Git authors</p>
               </div>
-              <div class="col-4">
+              {% endif %}
+              {% if has_gitlab or has_github %}
+              <div class="col-md">
                 <p class="h5 font-weight-bold text-gray-800"><span id="active_people_issues_community_overview">{{metrics.active_people_issues_community_overview}}</span></p>
                 <p class="text-muted mb-1">Issue authors</p>
               </div>
-              <div class="col-4">
+              <div class="col-md">
                 <p class="h5 font-weight-bold text-gray-800"><span id="active_people_patches_community_overview">{{metrics.active_people_patches_community_overview}}</span></p>
                 <p class="text-muted mb-1">PRs/MRs submitters</p>
               </div>
+              {% endif %}
             </div>
           </div>
-          <div class="col-md-6 border-left">
+          <div class="col-md border-left">
             <p class="font-weight-bold text-muted mb-3"># Onboardings <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/community/onboardings.md"><i class="far fa-question-circle"></i></a></p>
             <div class="row">
-              <div class="col-4">
+              {% if has_git %}
+              <div class="col-md">
                 <p class="h5 font-weight-bold text-gray-800"><span id="onboardings_git_community_overview">{{metrics.onboardings_git_community_overview}}</span></p>
                 <p class="text-muted mb-1">Git authors</p>
               </div>
-              <div class="col-4">
+              {% endif %}
+              {% if has_gitlab or has_github %}
+              <div class="col-md">
                 <p class="h5 font-weight-bold text-gray-800"><span id="onboardings_issues_community_overview">{{metrics.onboardings_issues_community_overview}}</span></p>
                 <p class="text-muted mb-1">Issue authors</p>
               </div>
-              <div class="col-4">
+              <div class="col-md">
                 <p class="h5 font-weight-bold text-gray-800"><span id="onboardings_patches_community_overview">{{metrics.onboardings_patches_community_overview}}</span></p>
                 <p class="text-muted mb-1">PRs/MRs submitters</p>
               </div>
+              {% endif %}
             </div>
           </div>
         </div>
+        {% if has_git %}
         <div class="row">
           <div id="chart-authors-git-active-community-overview"></div>
         </div>
+        {% endif %}
+        {% if has_gitlab or has_github %}
         <div class="row">
           <div id="chart-authors-issues-active-community-overview"></div>
         </div>
         <div class="row">
           <div id="chart-authors-reviews-active-community-overview"></div>
         </div>
+        {% endif %}
       </div>
       <!-- End Community Overview -->
       <!-- Start Commits Community -->
+      {% if has_git %}
       <div id="community-git" class="mb-4 tab-pane fade" role="tabpanel" >
         <div class="row py-4 border">
           <div class="col-md-6">
@@ -494,8 +547,10 @@
           </div>
         </div>
       </div>
+      {% endif %}
       <!-- End Commits Community -->
       <!-- Start Issues Community -->
+      {% if has_gitlab or has_github %}
       <div id="community-issues" class="mb-4 tab-pane fade" role="tabpanel" >
         <div class="row py-4 border">
           <div class="col-md-6">
@@ -534,8 +589,10 @@
           </div>
         </div>
       </div>
+      {% endif %}
       <!-- End Issues Community -->
       <!-- Start Reviews Community -->
+      {% if has_gitlab or has_github %}
       <div id="community-reviews" class="mb-4 tab-pane fade" role="tabpanel" >
         <div class="row py-4 border">
           <div class="col-md-6">
@@ -574,6 +631,7 @@
           </div>
         </div>
       </div>
+      {% endif %}
       <!-- End Reviews Community -->
     </div>
   </div>

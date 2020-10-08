@@ -1059,6 +1059,11 @@ def request_show_dashboard(request, dash_id):
     if context['is_outdated']:
         context['last_refresh'] = dash.last_refresh
 
+    context['has_git'] = dash.repos_git_count > 0
+    context['has_github'] = dash.repos_github_count > 0
+    context['has_gitlab'] = dash.repos_gitlab_count > 0
+    context['has_meetup'] = dash.repos_meetup_count > 0
+
     context['editable'] = request.user.is_authenticated and request.user == dash.creator or request.user.is_superuser
 
     return render(request, 'cauldronapp/dashboard.html', context=context)
