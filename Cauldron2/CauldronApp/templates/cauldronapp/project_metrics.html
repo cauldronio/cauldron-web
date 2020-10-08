@@ -2,21 +2,27 @@
 
   <div class="card">
     <div class="card-header font-weight-bold">
-      <ul class="nav nav-pills" id="pills-tab" role="tablist">
+      <ul class="nav nav-tabs card-header-tabs" id="card-tabs" role="tablist">
         <li class="nav-item" role="presentation">
-          <a class="nav-link" data-category="overview" data-toggle="pill" href="#pills-overview" role="tab" aria-controls="pills-overview" aria-selected="true">Overview</a>
+          <a class="nav-link" data-category="overview" data-toggle="tab" href="#overview" role="tab" aria-controls="overview" aria-selected="true">Overview</a>
         </li>
-        <li class="nav-item" role="presentation">
-          <a class="nav-link" data-category="activity-git" data-toggle="pill" href="#pills-activity-git" role="tab" aria-controls="pills-activity-git" aria-selected="true">Commits Activity</a>
+        <li class="nav-item dropdown" style="line-height:1.5;" role="presentation">
+          <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="tab" aria-controls="activity">Activity</a>
+          <div class="dropdown-menu">
+            <a class="dropdown-item" data-category="activity-overview" data-toggle="tab" role="tab" href="#activity-overview">Overview</a>
+            <a class="dropdown-item" data-category="activity-git" data-toggle="tab" role="tab" href="#activity-git">Commits</a>
+            <a class="dropdown-item" data-category="activity-issues" data-toggle="tab" role="tab" href="#activity-issues">Issues</a>
+            <a class="dropdown-item" data-category="activity-reviews" data-toggle="tab" role="tab" href="#activity-reviews">Reviews</a>
+          </div>
         </li>
-        <li class="nav-item" role="presentation">
-          <a class="nav-link" data-category="activity-issues" data-toggle="pill" href="#pills-activity-issues" role="tab" aria-controls="pills-activity-issues" aria-selected="false">Issues Activity</a>
-        </li>
-        <li class="nav-item" role="presentation">
-          <a class="nav-link" data-category="activity-reviews" data-toggle="pill" href="#pills-activity-reviews" role="tab" aria-controls="pills-activity-reviews" aria-selected="false">PRs/MRs Activity</a>
-        </li>
-        <li class="nav-item" role="presentation">
-          <a class="nav-link" data-category="community" data-toggle="pill" href="#pills-community" role="tab" aria-controls="pills-community" aria-selected="false">Community</a>
+        <li class="nav-item dropdown" style="line-height:1.5;" role="presentation">
+          <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="tab" aria-controls="community">Community</a>
+          <div class="dropdown-menu">
+            <a class="dropdown-item" data-category="community-overview" data-toggle="tab" role="tab" href="#community-overview">Overview</a>
+            <a class="dropdown-item" data-category="community-git" data-toggle="tab" role="tab" href="#community-git">Commits</a>
+            <a class="dropdown-item" data-category="community-issues" data-toggle="tab" role="tab" href="#community-issues">Issues</a>
+            <a class="dropdown-item" data-category="community-reviews" data-toggle="tab" role="tab" href="#community-reviews">Reviews</a>
+          </div>
         </li>
         {% if repositories_count > 0 %}
         <li class="nav-item">
@@ -29,7 +35,7 @@
           </a>
         </li>
         {% endif %}
-        <div class="form-group ml-md-auto">
+        <div class="ml-md-auto">
           <div class="input-group">
             <input type="text" class="form-control"  id="date-picker-input">
             <div class="input-group-append">
@@ -40,14 +46,12 @@
             </div>
           </div>
         </div>
-
-
       </ul>
     </div>
 
     <div class="tab-content card-body text-center mb-4">
       <!-- Start Overview -->
-      <div id="pills-overview" class="mb-4 tab-pane fade show active" role="tabpanel" >
+      <div id="overview" class="mb-4 tab-pane fade show active" role="tabpanel" >
         <div class="row py-4 border">
           <div class="col-md-2">
             <p class="font-weight-bold text-muted mb-3"># Commits <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/overview/commits.md"><i class="far fa-question-circle"></i></a></p>
@@ -93,8 +97,71 @@
 
       </div>
       <!-- End Overview -->
+      <!-- Start Activity Overview -->
+      <div id="activity-overview" class="mb-4 tab-pane fade" role="tabpanel" >
+        <div class="row py-4 border">
+          <div class="col-md-4">
+            <div class="row">
+              <div class="col-md-4">
+                <p class="font-weight-bold text-muted mb-3"># Commits <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/commits.md"><i class="far fa-question-circle"></i></a></p>
+                <p class="h5 font-weight-bold text-gray-800"><span id="number_commits_activity_overview"> {{ metrics.commits_activity_overview }}</span></p>
+              </div>
+              <div class="col-md-4 border-left">
+                <p class="font-weight-bold text-muted mb-3"># Lines/commit <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/lines-commit.md"><i class="far fa-question-circle"></i></a></p>
+                <p class="h5 font-weight-bold text-gray-800"><span id="number_lines_commit_activity_overview">{{ metrics.lines_commit_activity_overview|stringformat:".2f" }}</span></p>
+              </div>
+              <div class="col-md-4 border-left">
+                <p class="font-weight-bold text-muted mb-3"># Lines/commit/file <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/lines-commit-file.md"><i class="far fa-question-circle"></i></a></p>
+                <p class="h5 font-weight-bold text-gray-800"><span id="number_lines_commit_file_activity_overview">{{ metrics.lines_commit_file_activity_overview|stringformat:".2f" }}</span></p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="row">
+              <div class="col-md-4 border-left">
+                <p class="font-weight-bold text-muted mb-3"># Issues created <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/issues-created.md"><i class="far fa-question-circle"></i></a></p>
+                <p class="h5 font-weight-bold text-gray-800"><span id="number_issues_created_activity_overview"> {{ metrics.issues_created_activity_overview }}</span></p>
+              </div>
+              <div class="col-md-4 border-left">
+                <p class="font-weight-bold text-muted mb-3"># Issues closed <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/issues-closed.md"><i class="far fa-question-circle"></i></a></p>
+                <p class="h5 font-weight-bold text-gray-800"><span id="number_issues_closed_activity_overview">{{ metrics.issues_closed_activity_overview }}</span></p>
+              </div>
+              <div class="col-md-4 border-left">
+                <p class="font-weight-bold text-muted mb-3"># Issues open <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/issues-open.md"><i class="far fa-question-circle"></i></a></p>
+                <p class="h5 font-weight-bold text-gray-800"><span id="number_issues_open_activity_overview">{{ metrics.issues_open_activity_overview }}</span></p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="row">
+              <div class="col-md-4 border-left">
+                <p class="font-weight-bold text-muted mb-3"># Pull/Merge requests created <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/pull-merge-requests-created.md"><i class="far fa-question-circle"></i></a></p>
+                <p class="h5 font-weight-bold text-gray-800"><span id="number_reviews_created_activity_overview"> {{ metrics.reviews_created_activity_overview }}</span></p>
+              </div>
+              <div class="col-md-4 border-left">
+                <p class="font-weight-bold text-muted mb-3"># Pull/Merge requests closed <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/pull-merge-requests-closed.md"><i class="far fa-question-circle"></i></a></p>
+                <p class="h5 font-weight-bold text-gray-800"><span id="number_reviews_closed_activity_overview">{{ metrics.reviews_closed_activity_overview }}</span></p>
+              </div>
+              <div class="col-md-4 border-left">
+                <p class="font-weight-bold text-muted mb-3"># Pull/Merge requests open <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/pull-merge-requests-open.md"><i class="far fa-question-circle"></i></a></p>
+                <p class="h5 font-weight-bold text-gray-800"><span id="number_reviews_open_activity_overview">{{ metrics.reviews_open_activity_overview }}</span></p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div id="chart-commits-activity-overview"></div>
+        </div>
+        <div class="row">
+          <div id="chart-issues-open-closed-activity-overview"></div>
+        </div>
+        <div class="row">
+          <div id="chart-reviews-open-closed-activity-overview"></div>
+        </div>
+      </div>
+      <!-- End Activity Overview -->
       <!-- Start GIT ACTIVITY -->
-      <div id="pills-activity-git" class="mb-4 tab-pane fade" role="tabpanel" >
+      <div id="activity-git" class="mb-4 tab-pane fade" role="tabpanel" >
         <div class="row py-4 border">
           <div class="col-md-4">
             <p class="font-weight-bold text-muted mb-3"># Commits <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/commits.md"><i class="far fa-question-circle"></i></a></p>
@@ -170,7 +237,7 @@
       </div>
       <!-- End GIT ACTIVITY -->
       <!-- Start Issues ACTIVITY -->
-      <div id="pills-activity-issues" class="mb-4 tab-pane fade" role="tabpanel" >
+      <div id="activity-issues" class="mb-4 tab-pane fade" role="tabpanel" >
         <div class="row py-4 border">
           <div class="col-md-4">
             <p class="font-weight-bold text-muted mb-3"># Issues created <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/issues-created.md"><i class="far fa-question-circle"></i></a></p>
@@ -251,7 +318,7 @@
       </div>
       <!-- End Issues ACTIVITY -->
       <!-- Start Reviews ACTIVITY -->
-      <div id="pills-activity-reviews" class="mb-4 tab-pane fade" role="tabpanel" >
+      <div id="activity-reviews" class="mb-4 tab-pane fade" role="tabpanel" >
         <div class="row py-4 border">
           <div class="col-md-4">
             <p class="font-weight-bold text-muted mb-3"># Pull/Merge requests created <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/pull-merge-requests-created.md"><i class="far fa-question-circle"></i></a></p>
@@ -331,22 +398,22 @@
         </div>
       </div>
       <!-- End Reviews ACTIVITY-->
-      <!-- Start COMMUNITY -->
-      <div id="pills-community" class="mb-4 tab-pane fade" role="tabpanel" >
+      <!-- Start Community Overview -->
+      <div id="community-overview" class="mb-4 tab-pane fade" role="tabpanel" >
         <div class="row py-4 border">
           <div class="col-md-6">
             <p class="font-weight-bold text-muted mb-3"># Active people <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/community/active-people.md"><i class="far fa-question-circle"></i></a></p>
             <div class="row">
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800"><span id="active_people_git">{{ metrics.active_people_git }}</span></p>
+                <p class="h5 font-weight-bold text-gray-800"><span id="active_people_git_community_overview">{{ metrics.active_people_git_community_overview }}</span></p>
                 <p class="text-muted mb-1">Git authors</p>
               </div>
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800"><span id="active_people_issues">{{metrics.active_people_issues}}</span></p>
+                <p class="h5 font-weight-bold text-gray-800"><span id="active_people_issues_community_overview">{{metrics.active_people_issues_community_overview}}</span></p>
                 <p class="text-muted mb-1">Issue authors</p>
               </div>
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800"><span id="active_people_patches">{{metrics.active_people_patches}}</span></p>
+                <p class="h5 font-weight-bold text-gray-800"><span id="active_people_patches_community_overview">{{metrics.active_people_patches_community_overview}}</span></p>
                 <p class="text-muted mb-1">PRs/MRs submitters</p>
               </div>
             </div>
@@ -355,16 +422,49 @@
             <p class="font-weight-bold text-muted mb-3"># Onboardings <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/community/onboardings.md"><i class="far fa-question-circle"></i></a></p>
             <div class="row">
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800"><span id="onboardings_git">{{metrics.onboardings_git}}</span></p>
+                <p class="h5 font-weight-bold text-gray-800"><span id="onboardings_git_community_overview">{{metrics.onboardings_git_community_overview}}</span></p>
                 <p class="text-muted mb-1">Git authors</p>
               </div>
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800"><span id="onboardings_issues">{{metrics.onboardings_issues}}</span></p>
+                <p class="h5 font-weight-bold text-gray-800"><span id="onboardings_issues_community_overview">{{metrics.onboardings_issues_community_overview}}</span></p>
                 <p class="text-muted mb-1">Issue authors</p>
               </div>
               <div class="col-4">
-                <p class="h5 font-weight-bold text-gray-800"><span id="onboardings_patches">{{metrics.onboardings_patches}}</span></p>
+                <p class="h5 font-weight-bold text-gray-800"><span id="onboardings_patches_community_overview">{{metrics.onboardings_patches_community_overview}}</span></p>
                 <p class="text-muted mb-1">PRs/MRs submitters</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div id="chart-authors-git-active-community-overview"></div>
+        </div>
+        <div class="row">
+          <div id="chart-authors-issues-active-community-overview"></div>
+        </div>
+        <div class="row">
+          <div id="chart-authors-reviews-active-community-overview"></div>
+        </div>
+      </div>
+      <!-- End Community Overview -->
+      <!-- Start Commits Community -->
+      <div id="community-git" class="mb-4 tab-pane fade" role="tabpanel" >
+        <div class="row py-4 border">
+          <div class="col-md-6">
+            <p class="font-weight-bold text-muted mb-3"># Active people <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/community/active-people.md"><i class="far fa-question-circle"></i></a></p>
+            <div class="row">
+              <div class="col-12">
+                <p class="h5 font-weight-bold text-gray-800"><span id="active_people_git">{{ metrics.active_people_git }}</span></p>
+                <p class="text-muted mb-1">Git authors</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 border-left">
+            <p class="font-weight-bold text-muted mb-3"># Onboardings <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/community/onboardings.md"><i class="far fa-question-circle"></i></a></p>
+            <div class="row">
+              <div class="col-12">
+                <p class="h5 font-weight-bold text-gray-800"><span id="onboardings_git">{{metrics.onboardings_git}}</span></p>
+                <p class="text-muted mb-1">Git authors</p>
               </div>
             </div>
           </div>
@@ -387,6 +487,38 @@
         </div>
         <div class="row">
           <div class="col-md-6">
+            <div id="chart-organizational-diversity-authors"></div>
+          </div>
+          <div class="col-md-6">
+            <div id="chart-organizational-diversity-commits"></div>
+          </div>
+        </div>
+      </div>
+      <!-- End Commits Community -->
+      <!-- Start Issues Community -->
+      <div id="community-issues" class="mb-4 tab-pane fade" role="tabpanel" >
+        <div class="row py-4 border">
+          <div class="col-md-6">
+            <p class="font-weight-bold text-muted mb-3"># Active people <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/community/active-people.md"><i class="far fa-question-circle"></i></a></p>
+            <div class="row">
+              <div class="col-12">
+                <p class="h5 font-weight-bold text-gray-800"><span id="active_people_issues">{{metrics.active_people_issues}}</span></p>
+                <p class="text-muted mb-1">Issue authors</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 border-left">
+            <p class="font-weight-bold text-muted mb-3"># Onboardings <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/community/onboardings.md"><i class="far fa-question-circle"></i></a></p>
+            <div class="row">
+              <div class="col-12">
+                <p class="h5 font-weight-bold text-gray-800"><span id="onboardings_issues">{{metrics.onboardings_issues}}</span></p>
+                <p class="text-muted mb-1">Issue authors</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
             <div id="chart-authors-issues-active"></div>
           </div>
           <div class="col-md-6">
@@ -399,6 +531,30 @@
           </div>
           <div class="col-md-6">
             <div id="chart-authors-retained-ratio-issues"></div>
+          </div>
+        </div>
+      </div>
+      <!-- End Issues Community -->
+      <!-- Start Reviews Community -->
+      <div id="community-reviews" class="mb-4 tab-pane fade" role="tabpanel" >
+        <div class="row py-4 border">
+          <div class="col-md-6">
+            <p class="font-weight-bold text-muted mb-3"># Active people <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/community/active-people.md"><i class="far fa-question-circle"></i></a></p>
+            <div class="row">
+              <div class="col-12">
+                <p class="h5 font-weight-bold text-gray-800"><span id="active_people_patches">{{metrics.active_people_patches}}</span></p>
+                <p class="text-muted mb-1">PRs/MRs submitters</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 border-left">
+            <p class="font-weight-bold text-muted mb-3"># Onboardings <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/community/onboardings.md"><i class="far fa-question-circle"></i></a></p>
+            <div class="row">
+              <div class="col-12">
+                <p class="h5 font-weight-bold text-gray-800"><span id="onboardings_patches">{{metrics.onboardings_patches}}</span></p>
+                <p class="text-muted mb-1">PRs/MRs submitters</p>
+              </div>
+            </div>
           </div>
         </div>
         <div class="row">
@@ -417,16 +573,8 @@
             <div id="chart-authors-retained-ratio-reviews"></div>
           </div>
         </div>
-        <div class="row">
-          <div class="col-md-6">
-            <div id="chart-organizational-diversity-authors"></div>
-          </div>
-          <div class="col-md-6">
-            <div id="chart-organizational-diversity-commits"></div>
-          </div>
-        </div>
       </div>
-      <!-- End COMMUNITY -->
+      <!-- End Reviews Community -->
     </div>
   </div>
 </div>

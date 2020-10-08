@@ -144,18 +144,26 @@ def get_compare_charts(projects, from_date, to_date):
 
 
 def get_category_metrics(dashboard, category, from_date, to_date):
-    # ['overview', 'activity-git', 'activity-issues', 'activity-reviews', 'community']
+    # ['overview', 'activity-overview', 'activity-git', 'activity-issues', 'activity-reviews', 'community-overview', 'community-git', 'community-issues', 'community-reviews']
     elastic = get_elastic_project(dashboard)
     if category == 'overview':
         return overview_metrics(elastic, from_date, to_date)
+    elif category == 'activity-overview':
+        return activity_overview_metrics(elastic, from_date, to_date)
     elif category == 'activity-git':
         return activity_git_metrics(elastic, from_date, to_date)
     elif category == 'activity-issues':
         return activity_issues_metrics(elastic, from_date, to_date)
     elif category == 'activity-reviews':
         return activity_reviews_metrics(elastic, from_date, to_date)
-    elif category == 'community':
-        return community_metrics(elastic, from_date, to_date)
+    elif category == 'community-overview':
+        return community_overview_metrics(elastic, from_date, to_date)
+    elif category == 'community-git':
+        return community_git_metrics(elastic, from_date, to_date)
+    elif category == 'community-issues':
+        return community_issues_metrics(elastic, from_date, to_date)
+    elif category == 'community-reviews':
+        return community_reviews_metrics(elastic, from_date, to_date)
     else:
         return overview_metrics(elastic, from_date, to_date)
 
@@ -172,6 +180,37 @@ def overview_metrics(elastic, from_date, to_date):
     metrics['author_evolution_bokeh'] = other.author_evolution_bokeh(elastic, from_date, to_date)
     metrics['issues_open_closed_bokeh_overview'] = activity_issues.issues_open_closed_bokeh(elastic, from_date, to_date)
     metrics['reviews_open_closed_bokeh_overview'] = activity_reviews.reviews_open_closed_bokeh(elastic, from_date, to_date)
+    return metrics
+
+
+def activity_overview_metrics(elastic, from_date, to_date):
+    now = datetime.datetime.now()
+    one_month_ago = now - relativedelta(months=1)
+    one_year_ago = now - relativedelta(years=1)
+    two_year_ago = now - relativedelta(years=2)
+
+    metrics = dict()
+    # Metrics commits
+    metrics['commits_activity_overview'] = activity_commits.git_commits(elastic, from_date, to_date)
+    lines_commit = activity_commits.git_lines_commit(elastic, from_date, to_date)
+    metrics['lines_commit_activity_overview'] = f"{lines_commit:.2f}"
+    try:
+        lines_commit_file = lines_commit / activity_commits.git_files_touched(elastic, from_date, to_date)
+        metrics['lines_commit_file_activity_overview'] = f"{lines_commit_file:.2f}"
+    except ZeroDivisionError:
+        metrics['lines_commit_file_activity_overview'] = 0
+    # Metrics Issues
+    metrics['issues_created_activity_overview'] = activity_issues.issues_opened(elastic, from_date, to_date)
+    metrics['issues_closed_activity_overview'] = activity_issues.issues_closed(elastic, from_date, to_date)
+    metrics['issues_open_activity_overview'] = activity_issues.issues_open_on(elastic, to_date)
+    # Metrics reviews
+    metrics['reviews_created_activity_overview'] = activity_reviews.reviews_opened(elastic, from_date, to_date)
+    metrics['reviews_closed_activity_overview'] = activity_reviews.reviews_closed(elastic, from_date, to_date)
+    metrics['reviews_open_activity_overview'] = activity_reviews.reviews_open_on(elastic, to_date)
+    # Visualizations
+    metrics['commits_activity_overview_bokeh'] = activity_commits.git_commits_bokeh_line(elastic, from_date, to_date)
+    metrics['issues_open_closed_activity_overview_bokeh'] = activity_issues.issues_open_closed_bokeh(elastic, from_date, to_date)
+    metrics['reviews_open_closed_activity_overview_bokeh'] = activity_reviews.reviews_open_closed_bokeh(elastic, from_date, to_date)
     return metrics
 
 
@@ -287,28 +326,58 @@ def activity_reviews_metrics(elastic, from_date, to_date):
     return metrics
 
 
-def community_metrics(elastic, from_date, to_date):
+def community_overview_metrics(elastic, from_date, to_date):
+    metrics = dict()
+    # Metrics
+    metrics['active_people_git_community_overview'] = community_commits.authors_active(elastic, from_date, to_date)
+    metrics['active_people_issues_community_overview'] = community_issues.active_submitters(elastic, from_date, to_date)
+    metrics['active_people_patches_community_overview'] = community_reviews.active_submitters(elastic, from_date, to_date)
+    metrics['onboardings_git_community_overview'] = community_commits.authors_entering(elastic, from_date, to_date)
+    metrics['onboardings_issues_community_overview'] = community_issues.authors_entering(elastic, from_date, to_date)
+    metrics['onboardings_patches_community_overview'] = community_reviews.authors_entering(elastic, from_date, to_date)
+
+    metrics['commits_authors_active_community_overview_bokeh'] = community_commits.authors_active_bokeh(elastic, from_date, to_date)
+    metrics['issues_authors_active_community_overview_bokeh'] = community_issues.authors_active_bokeh(elastic, from_date, to_date)
+    metrics['reviews_authors_active_community_overview_bokeh'] = community_reviews.authors_active_bokeh(elastic, from_date, to_date)
+    return metrics
+
+
+def community_git_metrics(elastic, from_date, to_date):
     metrics = dict()
     # Metrics
     metrics['active_people_git'] = community_commits.authors_active(elastic, from_date, to_date)
-    metrics['active_people_issues'] = community_issues.active_submitters(elastic, from_date, to_date)
-    metrics['active_people_patches'] = community_reviews.active_submitters(elastic, from_date, to_date)
     metrics['onboardings_git'] = community_commits.authors_entering(elastic, from_date, to_date)
-    metrics['onboardings_issues'] = community_issues.authors_entering(elastic, from_date, to_date)
-    metrics['onboardings_patches'] = community_reviews.authors_entering(elastic, from_date, to_date)
 
     metrics['commits_authors_active_bokeh'] = community_commits.authors_active_bokeh(elastic, from_date, to_date)
-    metrics['issues_authors_active_bokeh'] = community_issues.authors_active_bokeh(elastic, from_date, to_date)
-    metrics['reviews_authors_active_bokeh'] = community_reviews.authors_active_bokeh(elastic, from_date, to_date)
     metrics['commits_authors_entering_leaving_bokeh'] = community_commits.authors_entering_leaving_bokeh(elastic, from_date, to_date)
-    metrics['issues_authors_entering_leaving_bokeh'] = community_issues.authors_entering_leaving_bokeh(elastic, from_date, to_date)
-    metrics['reviews_authors_entering_leaving_bokeh'] = community_reviews.authors_entering_leaving_bokeh(elastic, from_date, to_date)
     metrics['organizational_diversity_authors_bokeh'] = community_common.organizational_diversity_authors(elastic, from_date, to_date)
     metrics['organizational_diversity_commits_bokeh'] = community_common.organizational_diversity_commits(elastic, from_date, to_date)
     metrics['commits_authors_aging_bokeh'] = community_commits.authors_aging_bokeh(elastic, to_date)
-    metrics['issues_authors_aging_bokeh'] = community_issues.authors_aging_bokeh(elastic, to_date)
-    metrics['reviews_authors_aging_bokeh'] = community_reviews.authors_aging_bokeh(elastic, to_date)
     metrics['commits_authors_retained_ratio_bokeh'] = community_commits.authors_retained_ratio_bokeh(elastic, to_date)
+    return metrics
+
+
+def community_issues_metrics(elastic, from_date, to_date):
+    metrics = dict()
+    # Metrics
+    metrics['active_people_issues'] = community_issues.active_submitters(elastic, from_date, to_date)
+    metrics['onboardings_issues'] = community_issues.authors_entering(elastic, from_date, to_date)
+
+    metrics['issues_authors_active_bokeh'] = community_issues.authors_active_bokeh(elastic, from_date, to_date)
+    metrics['issues_authors_entering_leaving_bokeh'] = community_issues.authors_entering_leaving_bokeh(elastic, from_date, to_date)
+    metrics['issues_authors_aging_bokeh'] = community_issues.authors_aging_bokeh(elastic, to_date)
     metrics['issues_authors_retained_ratio_bokeh'] = community_issues.authors_retained_ratio_bokeh(elastic, to_date)
+    return metrics
+
+
+def community_reviews_metrics(elastic, from_date, to_date):
+    metrics = dict()
+    # Metrics
+    metrics['active_people_patches'] = community_reviews.active_submitters(elastic, from_date, to_date)
+    metrics['onboardings_patches'] = community_reviews.authors_entering(elastic, from_date, to_date)
+
+    metrics['reviews_authors_active_bokeh'] = community_reviews.authors_active_bokeh(elastic, from_date, to_date)
+    metrics['reviews_authors_entering_leaving_bokeh'] = community_reviews.authors_entering_leaving_bokeh(elastic, from_date, to_date)
+    metrics['reviews_authors_aging_bokeh'] = community_reviews.authors_aging_bokeh(elastic, to_date)
     metrics['reviews_authors_retained_ratio_bokeh'] = community_reviews.authors_retained_ratio_bokeh(elastic, to_date)
     return metrics

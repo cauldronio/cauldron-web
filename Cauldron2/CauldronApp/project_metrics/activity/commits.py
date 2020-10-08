@@ -105,11 +105,63 @@ def git_commits_bucket(elastic, from_date, to_date, interval):
 
     return commits_bucket
 
+
+def git_commits_bokeh_line(elastic, from_date, to_date):
+    """ Get evolution of contributions by commits (line chart) """
+    from_date_es = from_date.strftime("%Y-%m-%d")
+    to_date_es = to_date.strftime("%Y-%m-%d")
+    interval_name, interval_elastic, _ = get_interval(from_date, to_date)
+
+    commits_bucket = git_commits_bucket(elastic, from_date_es, to_date_es, interval_elastic)
+
+    # Create the Bokeh visualization
+    timestamp, commits = [], []
+    for week in commits_bucket:
+        timestamp.append(week.key)
+        commits.append(week.doc_count)
+
+    plot = figure(x_axis_type="datetime",
+                  x_axis_label='Time',
+                  y_axis_label='# Commits',
+                  height=300,
+                  sizing_mode="stretch_width",
+                  tools='')
+    plot.title.text = '# Commits over time'
+    configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
+                           '-/blob/master/guides/metrics/activity/commits-over-time.md')
+    if len(timestamp) > 0:
+        plot.x_range = Range1d(from_date - timedelta(days=1), to_date + timedelta(days=1))
+
+    source = ColumnDataSource(data=dict(
+        commits=commits,
+        timestamp=timestamp
+    ))
+
+    plot.line(x='timestamp', y='commits',
+              line_width=4,
+              line_color=Blues[3][0],
+              source=source)
+
+    plot.add_tools(tools.HoverTool(
+        tooltips=[
+            (interval_name, '@timestamp{%F}'),
+            ('commits', '@commits')
+        ],
+        formatters={
+            '@timestamp': 'datetime'
+        },
+        mode='vline',
+        toggleable=False
+    ))
+
+    return json.dumps(json_item(plot))
+
+
 def git_commits_bokeh_compare(elastics, from_date, to_date):
     """ Get a projects comparison of evolution of contributions by commits"""
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
-    interval_name, interval_elastic, bar_width = get_interval(from_date, to_date)
+    interval_name, interval_elastic, _ = get_interval(from_date, to_date)
 
     commits_buckets = dict()
     for project_id in elastics:
