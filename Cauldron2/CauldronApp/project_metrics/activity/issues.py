@@ -4,6 +4,7 @@ from collections import defaultdict
 from datetime import timedelta
 import calendar
 import pandas
+from functools import reduce
 
 from bokeh.embed import json_item
 from bokeh.models import ColumnDataSource, tools, Range1d
@@ -101,15 +102,27 @@ def issues_open_closed_bokeh(elastic, from_date, to_date):
         closed_buckets = []
         open_buckets = []
 
-    # Create the Bokeh visualization
-    c_timestamp, closed_issues, o_timestamp, open_issues = [], [], [], []
+    # Create the data structure
+    timestamps_closed, issues_closed = [], []
     for citem in closed_buckets:
-        c_timestamp.append(citem.key)
-        closed_issues.append(citem.doc_count)
-    for oitem in open_buckets:
-        o_timestamp.append(oitem.key)
-        open_issues.append(oitem.doc_count)
+        timestamps_closed.append(citem.key)
+        issues_closed.append(citem.doc_count)
 
+    timestamps_created, issues_created = [], []
+    for oitem in open_buckets:
+        timestamps_created.append(oitem.key)
+        issues_created.append(oitem.doc_count)
+
+    data = []
+    data.append(pandas.DataFrame(list(zip(timestamps_closed, issues_closed)),
+                columns =['timestamps', 'issues_closed']))
+    data.append(pandas.DataFrame(list(zip(timestamps_created, issues_created)),
+                columns =['timestamps', 'issues_created']))
+
+    # Merge the dataframes in case they have different lengths
+    data = reduce(lambda df1,df2: pandas.merge(df1,df2,on='timestamps',how='outer',sort=True).fillna(0), data)
+
+    # Create the Bokeh visualization
     plot = figure(x_axis_type="datetime",
                   x_axis_label='Time',
                   y_axis_label='# Issues',
@@ -119,37 +132,32 @@ def issues_open_closed_bokeh(elastic, from_date, to_date):
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
                            '-/blob/master/guides/metrics/activity/issues-open-closed.md')
     plot.title.text = '# Issues open/closed'
-    if len(o_timestamp) > 0 or len(c_timestamp) > 0:
+    if not data.empty:
         plot.x_range = Range1d(from_date - timedelta(days=1), to_date + timedelta(days=1))
 
-    source = ColumnDataSource(data=dict(
-        o_timestamp=o_timestamp,
-        c_timestamp=c_timestamp,
-        open_issues=open_issues,
-        closed_issues=closed_issues
-    ))
+    source = ColumnDataSource(data=data)
 
-    plot.line(x='c_timestamp', y='closed_issues',
+    plot.line(x='timestamps', y='issues_closed',
               line_width=4,
               line_color=Blues[3][0],
-              legend_label='closed issues',
+              legend_label='issues closed',
               source=source)
-    plot.line(x='o_timestamp', y='open_issues',
-              name='open_issues',
+    plot.line(x='timestamps', y='issues_created',
+              name='issues_created',
               line_width=4,
               line_color=Blues[3][1],
-              legend_label='created issues',
+              legend_label='issues created',
               source=source)
 
     plot.add_tools(tools.HoverTool(
-        names=['open_issues'],
+        names=['issues_created'],
         tooltips=[
-            (interval_name, '@o_timestamp{%F}'),
-            ('created issues', '@open_issues'),
-            ('closed issues', '@closed_issues')
+            (interval_name, '@timestamps{%F}'),
+            ('issues created', '@issues_created'),
+            ('issues closed', '@issues_closed')
         ],
         formatters={
-            '@o_timestamp': 'datetime'
+            '@timestamps': 'datetime'
         },
         mode='vline',
         toggleable=False

@@ -4,6 +4,7 @@ from collections import defaultdict
 from datetime import timedelta
 import calendar
 import pandas
+from functools import reduce
 
 from bokeh.embed import json_item
 from bokeh.models import ColumnDataSource, tools, Range1d
@@ -100,14 +101,27 @@ def reviews_open_closed_bokeh(elastic, from_date, to_date):
         closed_buckets = []
         open_buckets = []
 
-    # Create the Bokeh visualization
-    c_timestamp, closed_reviews, o_timestamp, open_reviews = [], [], [], []
-    for citem, oitem in zip(closed_buckets, open_buckets):
-        c_timestamp.append(citem.key)
-        o_timestamp.append(oitem.key)
-        closed_reviews.append(citem.doc_count)
-        open_reviews.append(oitem.doc_count)
+    # Create the data structure
+    timestamps_closed, reviews_closed = [], []
+    for citem in closed_buckets:
+        timestamps_closed.append(citem.key)
+        reviews_closed.append(citem.doc_count)
 
+    timestamps_created, reviews_created = [], []
+    for oitem in open_buckets:
+        timestamps_created.append(oitem.key)
+        reviews_created.append(oitem.doc_count)
+
+    data = []
+    data.append(pandas.DataFrame(list(zip(timestamps_closed, reviews_closed)),
+                columns =['timestamps', 'reviews_closed']))
+    data.append(pandas.DataFrame(list(zip(timestamps_created, reviews_created)),
+                columns =['timestamps', 'reviews_created']))
+
+    # Merge the dataframes in case they have different lengths
+    data = reduce(lambda df1,df2: pandas.merge(df1,df2,on='timestamps',how='outer',sort=True).fillna(0), data)
+
+    # Create the Bokeh visualization
     plot = figure(x_axis_type="datetime",
                   x_axis_label='Time',
                   y_axis_label='# Reviews',
@@ -117,37 +131,32 @@ def reviews_open_closed_bokeh(elastic, from_date, to_date):
     plot.title.text = '# Reviews open/closed'
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
                            '-/blob/master/guides/metrics/activity/reviews-open-closed.md')
-    if len(o_timestamp) > 0 or len(c_timestamp) > 0:
+    if not data.empty:
         plot.x_range = Range1d(from_date - timedelta(days=1), to_date + timedelta(days=1))
 
-    source = ColumnDataSource(data=dict(
-        o_timestamp=o_timestamp,
-        c_timestamp=c_timestamp,
-        open_reviews=open_reviews,
-        closed_reviews=closed_reviews
-    ))
+    source = ColumnDataSource(data=data)
 
-    plot.line(x='c_timestamp', y='closed_reviews',
+    plot.line(x='timestamps', y='reviews_closed',
               line_width=4,
               line_color=Blues[3][0],
-              legend_label='closed reviews',
+              legend_label='reviews closed',
               source=source)
-    plot.line(x='o_timestamp', y='open_reviews',
-              name='open_reviews',
+    plot.line(x='timestamps', y='reviews_created',
+              name='reviews_created',
               line_width=4,
               line_color=Blues[3][1],
-              legend_label='created reviews',
+              legend_label='reviews created',
               source=source)
 
     plot.add_tools(tools.HoverTool(
-        names=['open_reviews'],
+        names=['reviews_created'],
         tooltips=[
-            (interval_name, '@o_timestamp{%F}'),
-            ('created reviews', '@open_reviews'),
-            ('closed reviews', '@closed_reviews')
+            (interval_name, '@timestamps{%F}'),
+            ('reviews created', '@reviews_created'),
+            ('reviews closed', '@reviews_closed')
         ],
         formatters={
-            '@o_timestamp': 'datetime'
+            '@timestamps': 'datetime'
         },
         mode='vline',
         toggleable=False
