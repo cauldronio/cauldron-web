@@ -137,13 +137,24 @@ def issues_open_closed_bokeh(elastic, from_date, to_date):
 
     source = ColumnDataSource(data=data)
 
+    plot.circle(x='timestamps', y='issues_closed',
+                color=Blues[3][0],
+                size=8,
+                source=source)
+
     plot.line(x='timestamps', y='issues_closed',
               line_width=4,
               line_color=Blues[3][0],
               legend_label='issues closed',
               source=source)
+
+    plot.circle(x='timestamps', y='issues_created',
+                name='issues_created',
+                color=Blues[3][1],
+                size=8,
+                source=source)
+
     plot.line(x='timestamps', y='issues_created',
-              name='issues_created',
               line_width=4,
               line_color=Blues[3][1],
               legend_label='issues created',

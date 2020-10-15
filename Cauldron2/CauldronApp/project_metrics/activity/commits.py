@@ -137,6 +137,11 @@ def git_commits_bokeh_line(elastic, from_date, to_date):
         timestamp=timestamp
     ))
 
+    plot.circle(x='timestamp', y='commits',
+                color=Blues[3][0],
+                size=8,
+                source=source)
+
     plot.line(x='timestamp', y='commits',
               line_width=4,
               line_color=Blues[3][0],
@@ -213,8 +218,13 @@ def git_commits_bokeh_compare(elastics, from_date, to_date):
 
         tooltips.append((f'commits {dash_name}', f'@commits_{project_id}'))
 
+        plot.circle(x='timestamps', y=f'commits_{project_id}',
+                    name=f'commits_{project_id}',
+                    color=Category10[5][idx],
+                    size=8,
+                    source=source)
+
         plot.line(x='timestamps', y=f'commits_{project_id}',
-                  name=f'commits_{project_id}',
                   line_width=4,
                   line_color=Category10[5][idx],
                   legend_label=dash_name,

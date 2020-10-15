@@ -136,13 +136,24 @@ def reviews_open_closed_bokeh(elastic, from_date, to_date):
 
     source = ColumnDataSource(data=data)
 
+    plot.circle(x='timestamps', y='reviews_closed',
+                color=Blues[3][0],
+                size=8,
+                source=source)
+
     plot.line(x='timestamps', y='reviews_closed',
               line_width=4,
               line_color=Blues[3][0],
               legend_label='reviews closed',
               source=source)
+
+    plot.circle(x='timestamps', y='reviews_created',
+                name='reviews_created',
+                color=Blues[3][1],
+                size=8,
+                source=source)
+
     plot.line(x='timestamps', y='reviews_created',
-              name='reviews_created',
               line_width=4,
               line_color=Blues[3][1],
               legend_label='reviews created',

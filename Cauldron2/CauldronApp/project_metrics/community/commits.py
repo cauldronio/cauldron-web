@@ -121,8 +121,13 @@ def git_authors_bokeh_compare(elastics, from_date, to_date):
 
         tooltips.append((f'authors {dash_name}', f'@authors_{project_id}'))
 
-        plot.line(x=f'timestamps', y=f'authors_{project_id}',
-                  name=f'authors_{project_id}',
+        plot.circle(x='timestamps', y=f'authors_{project_id}',
+                    name=f'authors_{project_id}',
+                    color=Category10[5][idx],
+                    size=8,
+                    source=source)
+
+        plot.line(x='timestamps', y=f'authors_{project_id}',
                   line_width=4,
                   line_color=Category10[5][idx],
                   legend_label=dash_name,

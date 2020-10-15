@@ -262,22 +262,45 @@ def author_evolution_bokeh(elastic, from_date, to_date):
         users=users
     ))
 
+    plot.circle(x='x', y='contrib',
+                color=Blues[6][0],
+                size=8,
+                source=source)
+
     plot.line(x='x', y='contrib',
               line_width=4,
               line_color=Blues[6][0],
               legend_label='contributors',
               source=source)
+
+    plot.circle(x='x', y='maintainers',
+                name='maintainers',
+                color=Blues[6][1],
+                size=8,
+                source=source)
+
     plot.line(x='x', y='maintainers',
-              name='maintainers',
               line_width=4,
               line_color=Blues[6][1],
               legend_label='maintainers',
               source=source)
+
+    plot.circle(x='x', y='observers',
+                color=Blues[6][2],
+                size=8,
+                source=source)
+
     plot.line(x='x', y='observers',
               line_width=4,
               line_color=Blues[6][2],
               legend_label='observers',
               source=source)
+
+    plot.circle(x='x', y='users',
+                color=Blues[6][3],
+                size=8,
+                source=source)
+
     plot.line(x='x', y='users',
               line_width=4,
               line_color=Blues[6][3],
