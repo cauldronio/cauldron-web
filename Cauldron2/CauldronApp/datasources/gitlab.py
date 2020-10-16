@@ -59,8 +59,8 @@ def analyze_data(project, data, commits=False, issues=False, forks=False):
         if issues:
             for url in gitlab_list:
                 url_parsed = url.split('/')
-                owner_url = url_parsed[-1]
-                repo_url = url_parsed[-2]
+                owner_url = url_parsed[-2]
+                repo_url = url_parsed[-1]
                 analyze_gitlab(project, owner_url, repo_url)
         if commits:
             for url in git_list:

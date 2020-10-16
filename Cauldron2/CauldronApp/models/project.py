@@ -80,7 +80,8 @@ class Project(models.Model):
         gl_running = gl.filter(Q(repo_sched__iglraw__isnull=False) | Q(repo_sched__iglenrich__isnull=False))\
             .count()
         meetup = MeetupRepository.objects.filter(projects=self).filter(repo_sched__isnull=False)
-        meetup_running = meetup.filter(Q(repo_sched__imeetupraw__isnull=False) | Q(repo_sched__imeetupenrich__isnull=False))
+        meetup_running = meetup.filter(Q(repo_sched__imeetupraw__isnull=False) | Q(repo_sched__imeetupenrich__isnull=False))\
+            .count()
         return git_running + gh_running + gl_running + meetup_running
 
     def repos_status(self):
@@ -99,8 +100,7 @@ class Project(models.Model):
         meetup = MeetupRepository.objects.filter(projects=self).filter(repo_sched__isnull=False)
         meetup_running = meetup.filter(Q(repo_sched__imeetupraw__isnull=False) | Q(repo_sched__imeetupenrich__isnull=False))
         meetup_finish = meetup.filter(Q(repo_sched__imeetupraw__isnull=True) | Q(repo_sched__imeetupenrich__isnull=True))\
-            .filter(Q(repo_sched__imeetupenricharchived__isnull=False) | Q(repo_sched__imeetuprawarchived__isnull=False))\
-            .count()
+            .filter(Q(repo_sched__imeetupenricharchived__isnull=False) | Q(repo_sched__imeetuprawarchived__isnull=False))
 
         status = {
             'git': {'running': git_running, 'finish': git_finish},
