@@ -104,6 +104,14 @@ class GitRepository(Repository):
             date = 'Not analyzed'
         return date
 
+    def get_intentions(self):
+        """Return a list of intentions related with this object"""
+        intentions = list(self.repo_sched.igitraw_set.all()) + list(self.repo_sched.igitenrich_set.all())
+        arch_intentions = list(self.repo_sched.igitrawarchived_set.all()) + list(self.repo_sched.igitenricharchived_set.all())
+        intentions_sorted = sorted(intentions, key=lambda item: item.created, reverse=True)
+        arch_intentions_sorted = sorted(arch_intentions, key=lambda item: item.completed, reverse=True)
+        return {'intentions': intentions_sorted, 'arch_intentions': arch_intentions_sorted}
+
 
 class GitHubRepository(Repository):
     owner = models.CharField(max_length=40)
@@ -161,6 +169,14 @@ class GitHubRepository(Repository):
             date = 'Not analyzed'
         return date
 
+    def get_intentions(self):
+        """Return a list of intentions related with this object"""
+        intentions = list(self.repo_sched.ighraw_set.all()) + list(self.repo_sched.ighenrich_set.all())
+        arch_intentions = list(self.repo_sched.ighrawarchived_set.all()) + list(self.repo_sched.ighenricharchived_set.all())
+        intentions_sorted = sorted(intentions, key=lambda item: item.created, reverse=True)
+        arch_intentions_sorted = sorted(arch_intentions, key=lambda item: item.completed, reverse=True)
+        return {'intentions': intentions_sorted, 'arch_intentions': arch_intentions_sorted}
+
 
 class GitLabRepository(Repository):
     owner = models.CharField(max_length=40)
@@ -210,6 +226,13 @@ class GitLabRepository(Repository):
         else:
             return self.ERROR
 
+    def get_intentions(self):
+        """Return a list of intentions related with this object"""
+        intentions = list(self.repo_sched.iglraw_set.all()) + list(self.repo_sched.iglenrich_set.all())
+        arch_intentions = list(self.repo_sched.iglrawarchived_set.all()) + list(self.repo_sched.iglenricharchived_set.all())
+        intentions_sorted = sorted(intentions, key=lambda item: item.created, reverse=True)
+        arch_intentions_sorted = sorted(arch_intentions, key=lambda item: item.completed, reverse=True)
+        return {'intentions': intentions_sorted, 'arch_intentions': arch_intentions_sorted}
 
     @property
     def last_refresh(self):
@@ -234,7 +257,7 @@ class MeetupRepository(Repository):
 
     def link_sched_repo(self):
         if not self.repo_sched:
-            repo_sched, _ = sched_models.MeetupRepo.objects.get_or_create(group=self.group)
+            repo_sched, _ = sched_models.MeetupRepo.objects.get_or_create(repo=self.group)
             self.repo_sched = repo_sched
             self.save()
 
@@ -273,3 +296,10 @@ class MeetupRepository(Repository):
             date = 'Not analyzed'
         return date
 
+    def get_intentions(self):
+        """Return a list of intentions related with this object"""
+        intentions = list(self.repo_sched.imeetupraw_set.all()) + list(self.repo_sched.imeetupenrich_set.all())
+        arch_intentions = list(self.repo_sched.imeetuprawarchived_set.all()) + list(self.repo_sched.imeetupenricharchived_set.all())
+        intentions_sorted = sorted(intentions, key=lambda item: item.created, reverse=True)
+        arch_intentions_sorted = sorted(arch_intentions, key=lambda item: item.completed, reverse=True)
+        return {'intentions': intentions_sorted, 'arch_intentions': arch_intentions_sorted}

@@ -25,12 +25,6 @@
             <i class="{% get_sorting_icon request 'refresh' %}"></i>
           </a>
         </th>
-<!--        <th scope="col">Duration-->
-<!--          {% get_sorting_link request 'duration' as duration_link %}-->
-<!--          <a href="?{% url_replace request 'sort_by' duration_link %}">-->
-<!--            <i class="{% get_sorting_icon request 'duration' %}"></i>-->
-<!--          </a>-->
-<!--        </th>-->
         <th scope="col"></th>
         {% if editable %}
         <th scope="col"></th>
@@ -40,7 +34,7 @@
     </thead>
     <tbody>
       {% for repo in page_obj.object_list %}
-      <tr id="repo-{{repo.id}}" data-repo-id="{{repo.id}}">
+      <tr id="repo-{{repo.id}}" class="repo-row" data-repo-id="{{repo.id}}">
         <td class="repo-status">
           <div class="spinner-border spinner-border-sm" role="status">
             <span class="sr-only">Loading...</span>
@@ -66,19 +60,6 @@
               </div>
           </span>
         </td>
-<!--        <td>-->
-<!--          <i class="fas fa-stopwatch text-muted"></i>-->
-<!--          <span class="repo-duration" style="font-size: small;">-->
-<!--            <div class="spinner-border spinner-border-sm" role="status">-->
-<!--              <span class="sr-only">Loading...</span>-->
-<!--            </div>-->
-<!--          </span>-->
-<!--        </td>-->
-<!--        <td>-->
-<!--          <button type="button" class="btn btn-sm btn-outline-info" data-toggle="modal" data-target="#logModal" data-repo="{{repo.id}}">-->
-<!--            <i class="fa fa-info"></i> <small>Logs</small>-->
-<!--          </button>-->
-<!--        </td>-->
         {% if editable %}
         <td>
             <button type="button" class="btn btn-sm btn-outline-danger btn-delete" data-repo="{{repo.id}}">
@@ -91,6 +72,18 @@
             </button>
         </td>
         {% endif %}
+        <td>
+            <button type="button" class="btn btn-sm btn-outline-dark btn-details" data-repo="{{repo.id}}">
+              <i class="fas fa-info mr-1"></i> <small>Details</small>
+            </button>
+        </td>
+      </tr>
+      <tr id="repo-{{repo.id}}-details" class="repo-status-row collapse" data-repo="{{repo.id}}">
+        <td colspan="{% if editable %}6{% else %}4{% endif %}">
+          <div id="repo-{{repo.id}}-intentions" class="border p-3">
+
+          </div>
+        </td>
       </tr>
       {% endfor %}
     </tbody>

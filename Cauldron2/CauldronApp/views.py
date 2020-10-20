@@ -13,9 +13,8 @@ from CauldronApp import datasources
 
 from CauldronApp.models import Project
 
-from poolsched.models import GHToken, GLToken, MeetupToken
+from poolsched.models import GHToken, GLToken, MeetupToken, Intention
 
-import os
 import logging
 from random import choice
 from string import ascii_lowercase, digits
@@ -38,6 +37,7 @@ from CauldronApp.opendistro_utils import OpendistroApi, BACKEND_INDICES
 from CauldronApp.oauth.github import GitHubOAuth
 from CauldronApp.oauth.gitlab import GitLabOAuth
 from CauldronApp.oauth.meetup import MeetupOAuth
+from poolsched.models.jobs import Log
 
 from .project_metrics.metrics import get_compare_metrics, get_compare_charts
 
@@ -47,7 +47,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 User = get_user_model()
 
-DASHBOARD_LOGS = '/dashboard_logs'
+JOB_LOGS = '/job_logs'
 
 ES_IN_URL = "{}://{}:{}".format(ES_IN_PROTO, ES_IN_HOST, ES_IN_PORT)
 KIB_IN_URL = "{}://{}:{}{}".format(KIB_IN_PROTO, KIB_IN_HOST, KIB_IN_PORT, KIB_PATH)
@@ -431,7 +431,7 @@ def request_project_repositories(request, project_id):
     return render(request, 'cauldronapp/project/project.html', context=context)
 
 
-def request_show_repository(request, repo_id):
+def request_repo_actions(request, repo_id):
     """View for a repository. It shows all the intentions related"""
     context = create_context(request)
     try:
@@ -439,13 +439,26 @@ def request_show_repository(request, repo_id):
     except Repository.DoesNotExist:
         return custom_404(request, 'Repository not found in this server')
 
-    context['debug'] = repo
-    # repo.get_information()
-    # repo.get_intentions()
-    # repo.get_arch_intentions()
-    # repo.get_job()
+    context['repo'] = repo
+    context['intentions'] = repo.get_intentions()
 
-    return render(request, 'cauldronapp/repository/repository.html', context=context)
+    return render(request, 'cauldronapp/project/repo_actions.html', context=context)
+
+
+def request_logs(request, logs_id):
+    """View logs"""
+    try:
+        logs_obj = Log.objects.get(id=logs_id)
+    except Intention.DoesNotExist:
+        return JsonResponse({'logs': "Logs not found for this action. Could not have started yet."})
+
+    try:
+        with open(f"{JOB_LOGS}/{logs_obj.location}", 'r') as f:
+            logs = f.read()
+    except FileNotFoundError:
+        logs = "Logs not found for this action. Could not have started yet."
+
+    return JsonResponse({'content': logs, 'more': logs_obj.job_set.exists()})
 
 
 @require_http_methods(['POST'])
@@ -1034,40 +1047,6 @@ def request_projects_info(request):
     for project in projects:
         info.append(project.summary())
     return JsonResponse(info, safe=False)
-
-
-def repo_logs(request, repo_id):
-    """
-    Get the latest logs for a repository
-    :param request:
-    :param repo_id: Repository Identifier
-    :return: Dict{exists[True or False], content[string or None], more[True or False]}
-    """
-    repo = Repository.objects.filter(id=repo_id).first()
-    if not repo:
-        return JsonResponse({'content': "Repository not found. Contact us if is an error.", 'more': False})
-
-    task = Task.objects.filter(repository=repo).first()
-    if task:
-        more = True
-        if not task.log_file or not os.path.isfile(task.log_file):
-            output = "Logs not found. Has the task started?"
-        else:
-            output = open(task.log_file, 'r').read() + '\n'
-
-    else:
-        more = False
-        task = CompletedTask.objects.filter(repository=repo).order_by('completed').last()
-        if not task or not task.log_file or not os.path.isfile(task.log_file):
-            output = "Logs not found. Maybe it has been deleted. Sorry for the inconveniences"
-        else:
-            output = open(task.log_file, 'r').read() + '\n'
-
-    response = {
-        'content': output,
-        'more': more
-    }
-    return JsonResponse(response)
 
 
 # https://gist.github.com/jcinis/2866253

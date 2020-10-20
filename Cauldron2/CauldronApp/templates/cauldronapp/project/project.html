@@ -46,42 +46,8 @@
 
     </div>
 
-    <div class="modal fade" id="shareModal" tabindex="-1" role="dialog">
-      <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Share {{project.name}} project</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            {% with project_name=project.name project_id=project.id %}
-              {% include "cauldronapp/project/share_buttons.html" %}
-            {% endwith %}
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal fade" id="logModal" tabindex="-1" role="dialog" aria-labelledby="logModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="logModalLabel">Repository logs</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            <div id="logger-body">
-              <pre class="logger"><code class="log-content">Loading...</code></pre>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
+    {% include "cauldronapp/project/log_modal.html" %}
+    {% include "cauldronapp/project/share_modal.html" %}
     <!-- Data source modals -->
     {% include "cauldronapp/project/datasource_modals/global.html" %}
     {% include "cauldronapp/project/datasource_modals/github.html" %}
@@ -93,11 +59,17 @@
 
 
 {% block javascript %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js" integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ==" crossorigin="anonymous"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+<script src="{% static 'js/project.js' %}" charset="utf-8"></script>
+
+{% if render_table %}
+<script src="{% static 'js/project_table.js' %}" charset="utf-8"></script>
+{% else %}
 <script src="https://cdn.bokeh.org/bokeh/release/bokeh-2.2.1.min.js" crossorigin="anonymous"></script>
 <script src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-2.2.1.min.js" crossorigin="anonymous"></script>
 <script src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-2.2.1.min.js" crossorigin="anonymous"></script>
+<script src="{% static 'js/project_metrics.js' %}" charset="utf-8"></script>
+{% endif %}
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.25.3/moment.min.js" integrity="sha256-C66CaAImteEKZPYvgng9j10J/45e9sAuZyfPYCwp4gE=" crossorigin="anonymous"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
-<script src="{% static 'js/project.js' %}" charset="utf-8"></script>
 {% endblock %}

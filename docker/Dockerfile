@@ -19,6 +19,6 @@ RUN chmod 755 /entrypoint.sh
 
 EXPOSE 8000
 
-VOLUME ["/dashboard_logs"]
+VOLUME ["/job_logs"]
 
 ENTRYPOINT ["/entrypoint.sh"]
