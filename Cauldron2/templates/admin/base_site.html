@@ -1,0 +1,19 @@
+{% extends "admin/base.html" %}
+
+{% load static %}
+
+{% block title %}Cauldron administration{% endblock %}
+
+{% block extrastyle %}<link rel="shortcut icon" href="{% static 'img/favicon.ico' %}"/>{% endblock %}
+
+
+{% block branding %}
+
+<h1 id="site-name">
+  <a href="{% url 'admin:index' %}">
+    <img src="{% static '/img/cauldron-logo-white.png' %}" width="40" height="40" alt=""> Cauldron administration
+  </a>
+</h1>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}

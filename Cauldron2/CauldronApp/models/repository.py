@@ -1,14 +1,11 @@
-from django.db import models
-from django.utils import timezone
+import logging
 
-# from CauldronApp.models import Project
+from django.db import models
 
 from poolsched import models as sched_models
 from poolsched import api as sched_api
 
 from model_utils.managers import InheritanceManager
-
-import logging
 
 
 class Repository(models.Model):
@@ -37,6 +34,9 @@ class Repository(models.Model):
         default=UNKNOWN,
     )
 
+    class Meta:
+        verbose_name_plural = "Repositories"
+
     def __str__(self):
         return f"{self.pk} - {self.get_backend_display()}"
 
@@ -50,11 +50,24 @@ class Repository(models.Model):
         """Return the last refresh of the repository, Raw + Enrich"""
         raise NotImplementedError
 
+    @property
+    def datasource_url(self):
+        """Return the URL as in sirmordred configuration"""
+        raise NotImplementedError
+
+    @property
+    def repository_link(self):
+        """Return a link to the repository"""
+        raise NotImplementedError
+
 
 class GitRepository(Repository):
     url = models.CharField(max_length=255, unique=True)
     parent = models.OneToOneField(to=Repository, on_delete=models.CASCADE, parent_link=True, related_name='git')
     repo_sched = models.OneToOneField(sched_models.GitRepo, on_delete=models.SET_NULL, null=True)
+
+    class Meta:
+        verbose_name_plural = "Git repositories"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -69,7 +82,12 @@ class GitRepository(Repository):
             self.repo_sched = repo_sched
             self.save()
 
-    def as_url(self):
+    @property
+    def datasource_url(self):
+        return self.url
+
+    @property
+    def repository_link(self):
         return self.url
 
     def refresh(self, user):
@@ -110,7 +128,7 @@ class GitRepository(Repository):
         arch_intentions = list(self.repo_sched.igitrawarchived_set.all()) + list(self.repo_sched.igitenricharchived_set.all())
         intentions_sorted = sorted(intentions, key=lambda item: item.created, reverse=True)
         arch_intentions_sorted = sorted(arch_intentions, key=lambda item: item.completed, reverse=True)
-        return {'intentions': intentions_sorted, 'arch_intentions': arch_intentions_sorted}
+        return {'intentions': intentions_sorted, 'arch_intentions': arch_intentions_sorted[:4]}
 
 
 class GitHubRepository(Repository):
@@ -118,6 +136,10 @@ class GitHubRepository(Repository):
     repo = models.CharField(max_length=100)
     parent = models.OneToOneField(to=Repository, on_delete=models.CASCADE, parent_link=True, related_name='github')
     repo_sched = models.OneToOneField(sched_models.GHRepo, on_delete=models.SET_NULL, null=True)
+
+    class Meta:
+        verbose_name_plural = "GitHub repositories"
+        unique_together = ('owner', 'repo')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -134,7 +156,12 @@ class GitHubRepository(Repository):
             self.repo_sched = repo_sched
             self.save()
 
-    def as_url(self):
+    @property
+    def datasource_url(self):
+        return f"https://github.com/{self.owner}/{self.repo}"
+
+    @property
+    def repository_link(self):
         return f"https://github.com/{self.owner}/{self.repo}"
 
     def refresh(self, user):
@@ -175,7 +202,7 @@ class GitHubRepository(Repository):
         arch_intentions = list(self.repo_sched.ighrawarchived_set.all()) + list(self.repo_sched.ighenricharchived_set.all())
         intentions_sorted = sorted(intentions, key=lambda item: item.created, reverse=True)
         arch_intentions_sorted = sorted(arch_intentions, key=lambda item: item.completed, reverse=True)
-        return {'intentions': intentions_sorted, 'arch_intentions': arch_intentions_sorted}
+        return {'intentions': intentions_sorted, 'arch_intentions': arch_intentions_sorted[:4]}
 
 
 class GitLabRepository(Repository):
@@ -183,6 +210,10 @@ class GitLabRepository(Repository):
     repo = models.CharField(max_length=100)
     parent = models.OneToOneField(to=Repository, on_delete=models.CASCADE, parent_link=True, related_name='gitlab')
     repo_sched = models.OneToOneField(sched_models.GLRepo, on_delete=models.SET_NULL, null=True)
+
+    class Meta:
+        verbose_name_plural = "GitLab repositories"
+        unique_together = ('owner', 'repo')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -199,7 +230,12 @@ class GitLabRepository(Repository):
             self.repo_sched = repo_sched
             self.save()
 
-    def as_url(self):
+    @property
+    def datasource_url(self):
+        return f"https://gitlab.com/{self.owner}/{self.repo}"
+
+    @property
+    def repository_link(self):
         return f"https://gitlab.com/{self.owner}/{self.repo}"
 
     def refresh(self, user):
@@ -232,7 +268,7 @@ class GitLabRepository(Repository):
         arch_intentions = list(self.repo_sched.iglrawarchived_set.all()) + list(self.repo_sched.iglenricharchived_set.all())
         intentions_sorted = sorted(intentions, key=lambda item: item.created, reverse=True)
         arch_intentions_sorted = sorted(arch_intentions, key=lambda item: item.completed, reverse=True)
-        return {'intentions': intentions_sorted, 'arch_intentions': arch_intentions_sorted}
+        return {'intentions': intentions_sorted, 'arch_intentions': arch_intentions_sorted[:4]}
 
     @property
     def last_refresh(self):
@@ -244,9 +280,12 @@ class GitLabRepository(Repository):
 
 
 class MeetupRepository(Repository):
-    group = models.CharField(max_length=100)
+    group = models.CharField(max_length=100, unique=True)
     parent = models.OneToOneField(to=Repository, on_delete=models.CASCADE, parent_link=True, related_name='meetup')
     repo_sched = models.OneToOneField(sched_models.MeetupRepo, on_delete=models.SET_NULL, null=True)
+
+    class Meta:
+        verbose_name_plural = "Meetup repositories"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -261,8 +300,13 @@ class MeetupRepository(Repository):
             self.repo_sched = repo_sched
             self.save()
 
-    def as_url(self):
+    @property
+    def datasource_url(self):
         return self.group
+
+    @property
+    def repository_link(self):
+        return f"https://www.meetup.com/{self.group}"
 
     def refresh(self, user):
         sched_api.analyze_meetup_repo_obj(user, self.repo_sched)
@@ -302,4 +346,4 @@ class MeetupRepository(Repository):
         arch_intentions = list(self.repo_sched.imeetuprawarchived_set.all()) + list(self.repo_sched.imeetupenricharchived_set.all())
         intentions_sorted = sorted(intentions, key=lambda item: item.created, reverse=True)
         arch_intentions_sorted = sorted(arch_intentions, key=lambda item: item.completed, reverse=True)
-        return {'intentions': intentions_sorted, 'arch_intentions': arch_intentions_sorted}
+        return {'intentions': intentions_sorted, 'arch_intentions': arch_intentions_sorted[:4]}

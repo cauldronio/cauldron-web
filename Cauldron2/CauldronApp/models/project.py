@@ -23,7 +23,7 @@ class Project(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['name', 'created'], name='unique_project_name_user')
+            models.UniqueConstraint(fields=['name', 'creator'], name='unique_project_name_user')
         ]
 
     def __str__(self):

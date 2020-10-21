@@ -11,6 +11,7 @@ $(document).ready(function(){
     $('#rename').click(onClickEditName);
 
     $('form#change-name').on('submit', onSubmitRename);
+    $('.btn-reanalyze-all').click(reanalyzeEveryRepo);
 
     $('.btn-datasource').click(onSelectDataSource);
 
@@ -32,9 +33,8 @@ function onClickEditName(ev) {
 
 
 function reanalyzeEveryRepo(event){
-    $('#reanalyze-all-spinner').html(`<div class="spinner-border spinner-border-sm" role="status">
-                                    <span class="sr-only">Loading...</span>
-                                </div>`);
+    $('#reanalyze-all-spinner-dynamic').show();
+    $('#reanalyze-all-spinner-static').hide();
     $.post(url =`/project/${Project_ID}/refresh`)
         .done(function (data) {
             if (data['status'] == 'reanalyze'){

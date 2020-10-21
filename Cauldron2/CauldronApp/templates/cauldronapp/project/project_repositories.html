@@ -50,7 +50,7 @@
           {% else %}
           <i class="fab fa-git-square"></i>
           {% endif %}
-          {{ repo.as_url }}
+          <a href="{{ repo.repository_link }}">{{ repo.datasource_url }}</a>
         </td>
         <td>
           <i class="fas fa-calendar-alt text-muted"></i>

@@ -4,7 +4,6 @@ $(document).ready(function(){
     $('.btn-delete').click(deleteRepo);
 
     $('.btn-reanalyze').click(reanalyzeRepo);
-    $('.btn-reanalyze-all').click(reanalyzeEveryRepo);
 
     $('.btn-details').click(toggleRepoDetails);
     $('.repo-status-row').on('show.bs.collapse', onShowRepoDetails);
@@ -77,7 +76,7 @@ function refreshTable() {
         data.forEach(function(repo){
             var jq_id_status = `#repo-${repo.id} .repo-status`;
             var jq_id_last_update = `#repo-${repo.id} .repo-last-update`;
-            var last_refresh = moment(repo.last_refresh, 'YYYY-MM-DDTHH:mm:ss:SSSz').fromNow();
+            var last_refresh = moment(repo.last_refresh, 'YYYY-MM-DDTHH:mm:ss.SSSZ', true).fromNow();
             $(jq_id_status).html(repo.status);
             if (last_refresh == 'Invalid date'){
                 $(jq_id_last_update).html(repo.last_refresh);

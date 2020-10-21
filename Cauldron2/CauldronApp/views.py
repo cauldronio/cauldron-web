@@ -117,7 +117,7 @@ def request_github_oauth(request):
                                                             f" We have proceeded to merge all the projects and "
                                                             f"visualization in you current account so that you do not "
                                                             f"loose anything"}
-    GHToken.objects.get_or_create(token=oauth_user.token, defaults={'user': request.user})
+    GHToken.objects.update_or_create(user=request.user, defaults={'token': oauth_user.token})
 
     if data_add and data_add['backend'] == 'github':
         project = Project.objects.filter(id=data_add['proj_id']).first()
@@ -188,7 +188,7 @@ def request_gitlab_oauth(request):
                                                             f"visualization in you current account so that you do not "
                                                             f"loose anything"}
 
-    GLToken.objects.get_or_create(token=oauth_user.token, defaults={'user': request.user})
+    GLToken.objects.update_or_create(user=request.user, defaults={'token': oauth_user.token})
 
     if data_add and data_add['backend'] == 'gitlab':
         project = Project.objects.get(id=data_add['proj_id'])
@@ -231,9 +231,8 @@ def request_meetup_oauth(request):
                                                             f"visualization in you current account so that you do not "
                                                             f"loose anything"}
 
-    MeetupToken.objects.get_or_create(token=oauth_user.token,
-                                      refresh_token=oauth_user.refresh_token,
-                                      defaults={'user': request.user})
+    GLToken.objects.update_or_create(user=request.user, defaults={'token': oauth_user.token,
+                                                                  'refresh_token': oauth_user.refresh_token})
 
     if data_add and data_add['backend'] == 'meetup':
         project = Project.objects.get(id=data_add['proj_id'])
@@ -360,7 +359,6 @@ def request_show_project(request, project_id):
     return render(request, 'cauldronapp/project/project.html', context=context)
 
 
-# TODO: Create table
 def request_project_repositories(request, project_id):
     """ View for the repositories of a project"""
     if request.method != 'GET':
@@ -1334,19 +1332,19 @@ def update_elastic_role(project):
     odfe_api = OpendistroApi(ES_IN_URL, ES_ADMIN_PASSWORD)
     permissions = []
     for index in BACKEND_INDICES['git']:
-        url_list = [repo.as_url() for repo in GitRepository.objects.filter(projects=project)]
+        url_list = [repo.datasource_url() for repo in GitRepository.objects.filter(projects=project)]
         index_permissions = OpendistroApi.create_index_permissions(url_list, index)
         permissions.append(index_permissions)
     for index in BACKEND_INDICES['github']:
-        url_list = [repo.as_url() for repo in GitHubRepository.objects.filter(projects=project)]
+        url_list = [repo.datasource_url() for repo in GitHubRepository.objects.filter(projects=project)]
         index_permissions = OpendistroApi.create_index_permissions(url_list, index)
         permissions.append(index_permissions)
     for index in BACKEND_INDICES['gitlab']:
-        url_list = [repo.as_url() for repo in GitLabRepository.objects.filter(projects=project)]
+        url_list = [repo.datasource_url() for repo in GitLabRepository.objects.filter(projects=project)]
         index_permissions = OpendistroApi.create_index_permissions(url_list, index)
         permissions.append(index_permissions)
     for index in BACKEND_INDICES['meetup']:
-        url_list = [repo.as_url() for repo in MeetupRepository.objects.filter(projects=project)]
+        url_list = [repo.datasource_url() for repo in MeetupRepository.objects.filter(projects=project)]
         index_permissions = OpendistroApi.create_index_permissions(url_list, index)
         permissions.append(index_permissions)
     odfe_api.update_elastic_role(project.projectrole.role, permissions)
