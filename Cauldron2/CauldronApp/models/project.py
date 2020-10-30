@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pytz
 from django.db import models
@@ -7,7 +7,6 @@ from django.db.models import Q
 
 from CauldronApp.models.repository import GitHubRepository, GitLabRepository, MeetupRepository, GitRepository
 
-from poolsched import models as sched_models
 from CauldronApp.opendistro_utils import OpendistroApi
 
 ELASTIC_URL = "https://{}:{}".format(settings.ES_IN_HOST, settings.ES_IN_PORT)
@@ -31,12 +30,17 @@ class Project(models.Model):
 
     @property
     def is_outdated(self):
-        # TODO: Finish implementation to check the dates
+        limit = datetime.now(pytz.utc) - timedelta(days=5)
+        for repo in self.repository_set.select_subclasses():
+            if not repo.last_refresh or repo.last_refresh < limit:
+                return True
         return False
 
+    @property
     def last_refresh(self):
-        # TODO: Finish implementation to check the dates
-        return datetime.now(pytz.utc)
+        if self.repository_set.count() == 0:
+            return datetime.now(pytz.utc)
+        return sorted(self.repository_set.select_subclasses(), key=lambda r: r.last_refresh)[0].last_refresh
 
     def summary(self):
         """Get a summary about the repositories in the project"""

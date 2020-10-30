@@ -76,13 +76,13 @@ function refreshTable() {
         data.forEach(function(repo){
             var jq_id_status = `#repo-${repo.id} .repo-status`;
             var jq_id_last_update = `#repo-${repo.id} .repo-last-update`;
-            var last_refresh = moment(repo.last_refresh, 'YYYY-MM-DDTHH:mm:ss.SSSZ', true).fromNow();
-            $(jq_id_status).html(repo.status);
-            if (last_refresh == 'Invalid date'){
-                $(jq_id_last_update).html(repo.last_refresh);
+            if (repo.last_refresh){
+                var last_refresh = moment(repo.last_refresh, 'YYYY-MM-DDTHH:mm:ss.SSSZ', true).fromNow();
             } else {
-                $(jq_id_last_update).html(last_refresh);
+                var last_refresh = 'Not analyzed';
             }
+            $(jq_id_last_update).html(last_refresh);
+            $(jq_id_status).html(repo.status);
         });
     });
     setTimeout(refreshTable, 5000);

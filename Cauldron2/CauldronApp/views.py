@@ -344,10 +344,6 @@ def request_show_project(request, project_id):
 
     context['repositories_count'] = repositories.count()
     context['render_table'] = False
-    context['is_outdated'] = project.is_outdated
-    if context['is_outdated']:
-        context['last_refresh'] = project.last_refresh
-
     context['has_git'] = GitRepository.objects.filter(projects=project).exists()
     context['has_github'] = GitHubRepository.objects.filter(projects=project).exists()
     context['has_gitlab'] = GitLabRepository.objects.filter(projects=project).exists()
@@ -377,9 +373,6 @@ def request_project_repositories(request, project_id):
     context['repositories_count'] = repositories.count()
     context['editable'] = (request.user.is_authenticated and request.user == project.creator) or \
                           request.user.is_superuser
-    if project.is_outdated:
-        context['is_outdated'] = True
-        context['last_refresh'] = project.last_refresh
     if request.user.is_authenticated:
         context['projects_compare'] = request.user.project_set.exclude(pk=project.pk)
 
@@ -588,7 +581,7 @@ def request_remove_from_project(request, project_id):
                             status=404)
     repo.projects.remove(project)
     update_elastic_role(project)
-    # TODO: Remove tasks associated to the repository
+    repo.remove_intentions(request.user)
     return JsonResponse({'status': 'deleted'})
 
 
@@ -767,36 +760,12 @@ def request_delete_project(request, project_id):
 def delete_project(project):
     # Remove tasks in a transaction atomic
     with transaction.atomic():
-        pass
-        # TODO: Remove tasks associated to this repository?
-        # user_tokens = Token.objects.filter(user=dashboard.creator)
-        # tasks = Task.objects.filter(repository__in=dashboard.repository_set.all(), tokens__user=dashboard.creator)
-        # for task in tasks:
-        #     task.tokens.remove(*user_tokens)
-        #
-        # remove_tasks_no_token()
-
+        for repo in project.repository_set.select_subclasses():
+            repo.remove_intentions(project.creator)
     odfe_api = OpendistroApi(ES_IN_URL, ES_ADMIN_PASSWORD)
     odfe_api.delete_mapping(project.projectrole.role)
     odfe_api.delete_role(project.projectrole.role)
     project.delete()
-
-    # TODO: delete this code
-    # def remove_tasks_no_token():
-    #     """
-    #     Remove the tasks with no token (different from git) and then upgrade the completed tasks
-    #     with the new old value
-    #     """
-    #     tasks = Task.objects.annotate(
-    #         num_tokens=Count('tokens')
-    #     ).filter(
-    #         num_tokens=0
-    #     ).exclude(
-    #         repository__backend='git'
-    #     )
-    #     for task in tasks:
-    #         CompletedTask.objects.filter(repository=task.repository).order_by('-completed').update(old=False)
-    #         task.delete()
 
 
 def delete_user(user):
@@ -1332,19 +1301,19 @@ def update_elastic_role(project):
     odfe_api = OpendistroApi(ES_IN_URL, ES_ADMIN_PASSWORD)
     permissions = []
     for index in BACKEND_INDICES['git']:
-        url_list = [repo.datasource_url() for repo in GitRepository.objects.filter(projects=project)]
+        url_list = [repo.datasource_url for repo in GitRepository.objects.filter(projects=project)]
         index_permissions = OpendistroApi.create_index_permissions(url_list, index)
         permissions.append(index_permissions)
     for index in BACKEND_INDICES['github']:
-        url_list = [repo.datasource_url() for repo in GitHubRepository.objects.filter(projects=project)]
+        url_list = [repo.datasource_url for repo in GitHubRepository.objects.filter(projects=project)]
         index_permissions = OpendistroApi.create_index_permissions(url_list, index)
         permissions.append(index_permissions)
     for index in BACKEND_INDICES['gitlab']:
-        url_list = [repo.datasource_url() for repo in GitLabRepository.objects.filter(projects=project)]
+        url_list = [repo.datasource_url for repo in GitLabRepository.objects.filter(projects=project)]
         index_permissions = OpendistroApi.create_index_permissions(url_list, index)
         permissions.append(index_permissions)
     for index in BACKEND_INDICES['meetup']:
-        url_list = [repo.datasource_url() for repo in MeetupRepository.objects.filter(projects=project)]
+        url_list = [repo.datasource_url for repo in MeetupRepository.objects.filter(projects=project)]
         index_permissions = OpendistroApi.create_index_permissions(url_list, index)
         permissions.append(index_permissions)
     odfe_api.update_elastic_role(project.projectrole.role, permissions)

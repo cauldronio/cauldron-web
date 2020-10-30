@@ -1,5 +1,7 @@
 import logging
+from datetime import datetime
 
+import pytz
 from django.db import models
 
 from poolsched import models as sched_models
@@ -24,6 +26,7 @@ class Repository(models.Model):
     IN_PROGRESS = 'In progress'
     ANALYZED = 'Analyzed'
     ERROR = 'Error'
+    PENDING = 'Pending'
 
     objects = InheritanceManager()
 
@@ -58,6 +61,9 @@ class Repository(models.Model):
     @property
     def repository_link(self):
         """Return a link to the repository"""
+        raise NotImplementedError
+
+    def remove_intentions(self, user):
         raise NotImplementedError
 
 
@@ -96,9 +102,15 @@ class GitRepository(Repository):
     @property
     def status(self):
         """Return status of the repository"""
-        intentions = self.repo_sched.igitraw_set.count() + self.repo_sched.igitenrich_set.count()
+        intentions = self.repo_sched.igitraw_set.count() + \
+                     self.repo_sched.igitenrich_set.count()
         if intentions > 0:
-            return self.IN_PROGRESS
+            in_progress = self.repo_sched.igitraw_set.filter(job__worker__isnull=False).count() + \
+                          self.repo_sched.igitenrich_set.filter(job__worker__isnull=False).count()
+            if in_progress:
+                return self.IN_PROGRESS
+            else:
+                return self.PENDING
         try:
             enrich = self.repo_sched.igitenricharchived_set\
                 .latest('completed')
@@ -119,7 +131,7 @@ class GitRepository(Repository):
         try:
             date = sched_models.IGitEnrichArchived.objects.filter(repo=self.repo_sched).latest('completed').completed
         except sched_models.IGitEnrichArchived.DoesNotExist:
-            date = 'Not analyzed'
+            date = datetime.now(pytz.utc)
         return date
 
     def get_intentions(self):
@@ -129,6 +141,11 @@ class GitRepository(Repository):
         intentions_sorted = sorted(intentions, key=lambda item: item.created, reverse=True)
         arch_intentions_sorted = sorted(arch_intentions, key=lambda item: item.completed, reverse=True)
         return {'intentions': intentions_sorted, 'arch_intentions': arch_intentions_sorted[:4]}
+
+    def remove_intentions(self, user):
+        """Remove all the intentions of this user related with this repository"""
+        self.repo_sched.igitraw_set.filter(user=user, job=None).delete()
+        self.repo_sched.igitenrich_set.filter(user=user, job=None).delete()
 
 
 class GitHubRepository(Repository):
@@ -170,9 +187,15 @@ class GitHubRepository(Repository):
     @property
     def status(self):
         """Return status of the repository"""
-        intentions = self.repo_sched.ighraw_set.count() + self.repo_sched.ighenrich_set.count()
+        intentions = self.repo_sched.ighraw_set.count() + \
+                     self.repo_sched.ighenrich_set.count()
         if intentions > 0:
-            return self.IN_PROGRESS
+            in_progress = self.repo_sched.ighraw_set.filter(job__worker__isnull=False).count() + \
+                          self.repo_sched.ighenrich_set.filter(job__worker__isnull=False).count()
+            if in_progress:
+                return self.IN_PROGRESS
+            else:
+                return self.PENDING
         try:
             enrich = self.repo_sched.ighenricharchived_set\
                 .latest('completed')
@@ -193,7 +216,7 @@ class GitHubRepository(Repository):
         try:
             date = sched_models.IGHEnrichArchived.objects.filter(repo=self.repo_sched).latest('completed').completed
         except sched_models.IGHEnrichArchived.DoesNotExist:
-            date = 'Not analyzed'
+            date = datetime.now(pytz.utc)
         return date
 
     def get_intentions(self):
@@ -203,6 +226,11 @@ class GitHubRepository(Repository):
         intentions_sorted = sorted(intentions, key=lambda item: item.created, reverse=True)
         arch_intentions_sorted = sorted(arch_intentions, key=lambda item: item.completed, reverse=True)
         return {'intentions': intentions_sorted, 'arch_intentions': arch_intentions_sorted[:4]}
+
+    def remove_intentions(self, user):
+        """Remove all the intentions of this user related with this repository"""
+        self.repo_sched.ighraw_set.filter(user=user, job=None).delete()
+        self.repo_sched.ighenrich_set.filter(user=user, job=None).delete()
 
 
 class GitLabRepository(Repository):
@@ -244,9 +272,15 @@ class GitLabRepository(Repository):
     @property
     def status(self):
         """Return status of the repository"""
-        intentions = self.repo_sched.iglraw_set.count() + self.repo_sched.iglenrich_set.count()
+        intentions = self.repo_sched.iglraw_set.count() + \
+                     self.repo_sched.iglenrich_set.count()
         if intentions > 0:
-            return self.IN_PROGRESS
+            in_progress = self.repo_sched.iglraw_set.filter(job__worker__isnull=False).count() + \
+                          self.repo_sched.iglenrich_set.filter(job__worker__isnull=False).count()
+            if in_progress:
+                return self.IN_PROGRESS
+            else:
+                return self.PENDING
         try:
             enrich = self.repo_sched.iglenricharchived_set\
                 .latest('completed')
@@ -270,12 +304,17 @@ class GitLabRepository(Repository):
         arch_intentions_sorted = sorted(arch_intentions, key=lambda item: item.completed, reverse=True)
         return {'intentions': intentions_sorted, 'arch_intentions': arch_intentions_sorted[:4]}
 
+    def remove_intentions(self, user):
+        """Remove all the intentions of this user related with this repository"""
+        self.repo_sched.iglraw_set.filter(user=user, job=None).delete()
+        self.repo_sched.iglenrich_set.filter(user=user, job=None).delete()
+
     @property
     def last_refresh(self):
         try:
             date = sched_models.IGLEnrichArchived.objects.filter(repo=self.repo_sched).latest('completed').completed
         except sched_models.IGLEnrichArchived.DoesNotExist:
-            date = 'Not analyzed'
+            date = datetime.now(pytz.utc)
         return date
 
 
@@ -314,9 +353,15 @@ class MeetupRepository(Repository):
     @property
     def status(self):
         """Return status of the repository"""
-        intentions = self.repo_sched.imeetupraw_set.count() + self.repo_sched.imeetupenrich_set.count()
+        intentions = self.repo_sched.imeetupraw_set.count() + \
+                     self.repo_sched.imeetupenrich_set.count()
         if intentions > 0:
-            return self.IN_PROGRESS
+            in_progress = self.repo_sched.imeetupraw_set.filter(job__worker__isnull=False).count() + \
+                        self.repo_sched.imeetupenrich_set.filter(job__worker__isnull=False).count()
+            if in_progress:
+                return self.IN_PROGRESS
+            else:
+                return self.PENDING
         try:
             enrich = self.repo_sched.imeetupenricharchived_set \
                 .latest('completed')
@@ -337,7 +382,7 @@ class MeetupRepository(Repository):
         try:
             date = sched_models.IMeetupEnrichArchived.objects.filter(repo=self.repo_sched).latest('completed').completed
         except sched_models.IMeetupEnrichArchived.DoesNotExist:
-            date = 'Not analyzed'
+            date = datetime.now(pytz.utc)
         return date
 
     def get_intentions(self):
@@ -347,3 +392,8 @@ class MeetupRepository(Repository):
         intentions_sorted = sorted(intentions, key=lambda item: item.created, reverse=True)
         arch_intentions_sorted = sorted(arch_intentions, key=lambda item: item.completed, reverse=True)
         return {'intentions': intentions_sorted, 'arch_intentions': arch_intentions_sorted[:4]}
+
+    def remove_intentions(self, user):
+        """Remove all the intentions of this user related with this repository"""
+        self.repo_sched.imeetupraw_set.filter(user=user, job=None).delete()
+        self.repo_sched.imeetupenrich_set.filter(user=user, job=None).delete()

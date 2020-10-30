@@ -8,22 +8,22 @@
     <thead>
       <tr>
         <th scope="col">Status
-          {% get_sorting_link request 'status' as status_link %}
-          <a href="?{% url_replace request 'sort_by' status_link %}">
-            <i class="{% get_sorting_icon request 'status' %}"></i>
-          </a>
+<!--          {% get_sorting_link request 'status' as status_link %}-->
+<!--          <a href="?{% url_replace request 'sort_by' status_link %}">-->
+<!--            <i class="{% get_sorting_icon request 'status' %}"></i>-->
+<!--          </a>-->
         </th>
         <th scope="col">Repository
-          {% get_sorting_link request 'kind' as kind_link %}
-          <a href="?{% url_replace request 'sort_by' kind_link %}">
-            <i class="{% get_sorting_icon request 'kind' %}"></i>
-          </a>
+<!--          {% get_sorting_link request 'kind' as kind_link %}-->
+<!--          <a href="?{% url_replace request 'sort_by' kind_link %}">-->
+<!--            <i class="{% get_sorting_icon request 'kind' %}"></i>-->
+<!--          </a>-->
         </th>
         <th scope="col">Last refresh
-          {% get_sorting_link request 'refresh' as refresh_link %}
-          <a href="?{% url_replace request 'sort_by' refresh_link %}">
-            <i class="{% get_sorting_icon request 'refresh' %}"></i>
-          </a>
+<!--          {% get_sorting_link request 'refresh' as refresh_link %}-->
+<!--          <a href="?{% url_replace request 'sort_by' refresh_link %}">-->
+<!--            <i class="{% get_sorting_icon request 'refresh' %}"></i>-->
+<!--          </a>-->
         </th>
         <th scope="col"></th>
         {% if editable %}
