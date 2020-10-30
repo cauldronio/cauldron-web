@@ -66,7 +66,7 @@ def issues_open_on(elastic, date):
     s = Search(using=elastic, index='all') \
         .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1))\
         .query(Q('range', created_at={'lte': date}) &
-               (Q('range', closed_at={'gte': date}) | Q('match', state='open')))
+               (Q('range', closed_at={'gte': date}) | Q('terms', state=['open', 'opened'])))
 
     try:
         response = s.count()
@@ -184,7 +184,7 @@ def issues_open_age_opened_bokeh(elastic):
     s = Search(using=elastic, index='all') \
         .query('bool', filter=((Q('match', pull_request=False) |
                                Q('match', is_gitlab_issue=1)) &
-                               Q('match', state='open')))\
+                               Q('terms', state=['open', 'opened'])))\
         .extra(size=0)
     s.aggs.bucket("open_issues", 'date_histogram', field='created_at', calendar_interval='1M')
 

@@ -2,7 +2,7 @@
  *    METRICS AND VISUALIZATIONS   *
  ***********************************/
 $(function() {
-    var categories = ['overview', 'activity-overview', 'activity-git', 'activity-issues', 'activity-reviews', 'community-overview', 'community-git', 'community-issues', 'community-reviews'];
+    var categories = ['overview', 'activity-overview', 'activity-git', 'activity-issues', 'activity-reviews', 'community-overview', 'community-git', 'community-issues', 'community-reviews', 'performance-overview', 'performance-issues', 'performance-reviews'];
     var start = getUrlParameter('from_date');
     var end = getUrlParameter('to_date');
     var tab = getUrlParameter('tab');
@@ -55,8 +55,18 @@ $(function() {
         "commits_authors_retained_ratio_bokeh": "chart-authors-retained-ratio-git",
         "issues_authors_retained_ratio_bokeh": "chart-authors-retained-ratio-issues",
         "reviews_authors_retained_ratio_bokeh": "chart-authors-retained-ratio-reviews",
-        "issues_open_age_bokeh": "chart-issues-open-age",
-        "reviews_open_age_bokeh": "chart-reviews-open-age",
+        "issues_created_ttc_performance_overview_bokeh": "chart-issues-created-ttc-performance-overview",
+        "issues_closed_ttc_performance_overview_bokeh": "chart-issues-closed-ttc-performance-overview",
+        "reviews_created_ttc_performance_overview_bokeh": "chart-reviews-created-ttc-performance-overview",
+        "reviews_closed_ttc_performance_overview_bokeh": "chart-reviews-closed-ttc-performance-overview",
+        "issues_created_ttc_bokeh": "chart-issues-created-ttc",
+        "issues_still_open_bokeh": "chart-issues-still-open",
+        "issues_closed_ttc_bokeh": "chart-issues-closed-ttc",
+        "issues_created_closed_ratio_bokeh": "chart-issues-created-closed-ratio",
+        "reviews_created_ttc_bokeh": "chart-reviews-created-ttc",
+        "reviews_still_open_bokeh": "chart-reviews-still-open",
+        "reviews_closed_ttc_bokeh": "chart-reviews-closed-ttc",
+        "reviews_created_closed_ratio_bokeh": "chart-reviews-created-closed-ratio",
     }
 
     var METRICS_ACTIVITY_OVERVIEW = {
@@ -90,9 +100,6 @@ $(function() {
         "issues_closed_last_month": "number_issues_closed_last_month",
         "issues_closed_last_year": "number_issues_closed_last_year",
         "issues_closed_yoy": "number_issues_closed_yoy",
-        "issues_open_today": "number_issues_open_today",
-        "issues_open_month_ago": "number_issues_open_month_ago",
-        "issues_open_year_ago": "number_issues_open_year_ago",
     }
 
     var METRICS_ACTIVITY_REVIEWS = {
@@ -102,9 +109,6 @@ $(function() {
         "reviews_closed_last_month": "number_reviews_closed_last_month",
         "reviews_closed_last_year": "number_reviews_closed_last_year",
         "reviews_closed_yoy": "number_reviews_closed_yoy",
-        "reviews_open_today": "number_reviews_open_today",
-        "reviews_open_month_ago": "number_reviews_open_month_ago",
-        "reviews_open_year_ago": "number_reviews_open_year_ago",
     }
 
     var METRICS_COMMUNITY_OVERVIEW = {
@@ -131,13 +135,39 @@ $(function() {
         "onboardings_patches": "onboardings_patches",
     }
 
+    var METRICS_PERFORMANCE_OVERVIEW = {
+        "issues_time_open_average_performance_overview": "issues_time_open_average_performance_overview",
+        "issues_time_open_median_performance_overview": "issues_time_open_median_performance_overview",
+        "open_issues_performance_overview": "open_issues_performance_overview",
+        "reviews_time_open_average_performance_overview": "reviews_time_open_average_performance_overview",
+        "reviews_time_open_median_performance_overview": "reviews_time_open_median_performance_overview",
+        "open_reviews_performance_overview": "open_reviews_performance_overview",
+    }
+
+    var METRICS_PERFORMANCE_ISSUES = {
+        "issues_time_to_close_median_last_month": "issues_time_to_close_median_last_month",
+        "issues_time_to_close_median_last_year": "issues_time_to_close_median_last_year",
+        "issues_time_to_close_median_yoy": "issues_time_to_close_median_yoy",
+        "issues_time_open_average": "issues_time_open_average",
+        "issues_time_open_median": "issues_time_open_median",
+        "open_issues": "open_issues",
+    }
+
+    var METRICS_PERFORMANCE_REVIEWS = {
+        "reviews_time_to_close_median_last_month": "reviews_time_to_close_median_last_month",
+        "reviews_time_to_close_median_last_year": "reviews_time_to_close_median_last_year",
+        "reviews_time_to_close_median_yoy": "reviews_time_to_close_median_yoy",
+        "reviews_time_open_average": "reviews_time_open_average",
+        "reviews_time_open_median": "reviews_time_open_median",
+        "open_reviews": "open_reviews",
+    }
+
     var METRICS_KEYS = {
         "commits_range": "number_commits_range",
         "reviews_opened": "number_reviews_opened",
         "review_duration": "number_review_duration",
         "issues_created_range": "number_issues_created_range",
         "issues_closed_range": "number_issues_closed_range",
-        "issues_time_to_close": "number_issues_time_to_close",
         "issues_time_to_close": "number_issues_time_to_close",
     }
 
@@ -149,6 +179,9 @@ $(function() {
     METRICS_KEYS = Object.assign({}, METRICS_KEYS, METRICS_COMMUNITY_GIT);
     METRICS_KEYS = Object.assign({}, METRICS_KEYS, METRICS_COMMUNITY_ISSUES);
     METRICS_KEYS = Object.assign({}, METRICS_KEYS, METRICS_COMMUNITY_REVIEWS);
+    METRICS_KEYS = Object.assign({}, METRICS_KEYS, METRICS_PERFORMANCE_OVERVIEW);
+    METRICS_KEYS = Object.assign({}, METRICS_KEYS, METRICS_PERFORMANCE_ISSUES);
+    METRICS_KEYS = Object.assign({}, METRICS_KEYS, METRICS_PERFORMANCE_REVIEWS);
 
 
     function updateMetricsData() {
@@ -157,10 +190,16 @@ $(function() {
         function(data){
             for (k in data){
                 if (k in METRICS_KEYS){
+                    if (!document.getElementById(METRICS_KEYS[k])){
+                        continue;
+                    }
                     var id_html = `#${METRICS_KEYS[k]}`;
                     $(id_html).html(data[k]);
                 }
                 if (k in VIZ_KEYS){
+                    if (!document.getElementById(VIZ_KEYS[k])){
+                        continue;
+                    }
                     var id_html = `#${VIZ_KEYS[k]}`;
                     var item = JSON.parse(data[k]);
                     $(id_html).empty();

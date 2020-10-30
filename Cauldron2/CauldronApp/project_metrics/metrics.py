@@ -15,6 +15,9 @@ from .community import issues as community_issues
 from .community import reviews as community_reviews
 from .community import common as community_common
 
+from .performance import issues as performance_issues
+from .performance import reviews as performance_reviews
+
 from .utils import year_over_year
 from . import other
 
@@ -166,6 +169,12 @@ def get_category_metrics(project, category, from_date, to_date):
         return community_issues_metrics(elastic, from_date, to_date)
     elif category == 'community-reviews':
         return community_reviews_metrics(elastic, from_date, to_date)
+    elif category == 'performance-overview':
+        return performance_overview_metrics(elastic, from_date, to_date)
+    elif category == 'performance-issues':
+        return performance_issues_metrics(elastic, from_date, to_date)
+    elif category == 'performance-reviews':
+        return performance_reviews_metrics(elastic, from_date, to_date)
     else:
         return overview_metrics(elastic, from_date, to_date)
 
@@ -284,11 +293,7 @@ def activity_issues_metrics(elastic, from_date, to_date):
     issues_closed_yoy = year_over_year(metrics['issues_closed_last_year'],
                                        activity_issues.issues_closed(elastic, two_year_ago, one_year_ago))
     metrics['issues_closed_yoy'] = f"{issues_closed_yoy:+.2f}%"
-    metrics['issues_open_today'] = activity_issues.issues_open_on(elastic, now)
-    metrics['issues_open_month_ago'] = activity_issues.issues_open_on(elastic, one_month_ago)
-    metrics['issues_open_year_ago'] = activity_issues.issues_open_on(elastic, one_year_ago)
     # Visualizations
-    metrics['issues_open_age_bokeh'] = activity_issues.issues_open_age_opened_bokeh(elastic)
     metrics['issues_open_closed_bokeh'] = activity_issues.issues_open_closed_bokeh(elastic, from_date, to_date)
     metrics['issues_open_weekday_bokeh'] = activity_issues.issues_open_weekday_bokeh(elastic, from_date, to_date)
     metrics['issues_closed_weekday_bokeh'] = activity_issues.issues_closed_weekday_bokeh(elastic, from_date, to_date)
@@ -315,11 +320,7 @@ def activity_reviews_metrics(elastic, from_date, to_date):
     reviews_closed_yoy = year_over_year(metrics['reviews_closed_last_year'],
                                         activity_reviews.reviews_closed(elastic, two_year_ago, one_year_ago))
     metrics['reviews_closed_yoy'] = f"{reviews_closed_yoy:+.2f}%"
-    metrics['reviews_open_today'] = activity_reviews.reviews_open_on(elastic, now)
-    metrics['reviews_open_month_ago'] = activity_reviews.reviews_open_on(elastic, one_month_ago)
-    metrics['reviews_open_year_ago'] = activity_reviews.reviews_open_on(elastic, one_year_ago)
     # Visualizations
-    metrics['reviews_open_age_bokeh'] = activity_reviews.reviews_open_age_opened_bokeh(elastic)
     metrics['reviews_open_closed_bokeh'] = activity_reviews.reviews_open_closed_bokeh(elastic, from_date, to_date)
     metrics['reviews_open_weekday_bokeh'] = activity_reviews.reviews_open_weekday_bokeh(elastic, from_date, to_date)
     metrics['reviews_closed_weekday_bokeh'] = activity_reviews.reviews_closed_weekday_bokeh(elastic, from_date, to_date)
@@ -382,4 +383,71 @@ def community_reviews_metrics(elastic, from_date, to_date):
     metrics['reviews_authors_entering_leaving_bokeh'] = community_reviews.authors_entering_leaving_bokeh(elastic, from_date, to_date)
     metrics['reviews_authors_aging_bokeh'] = community_reviews.authors_aging_bokeh(elastic, to_date)
     metrics['reviews_authors_retained_ratio_bokeh'] = community_reviews.authors_retained_ratio_bokeh(elastic, to_date)
+    return metrics
+
+
+def performance_overview_metrics(elastic, from_date, to_date):
+    now = datetime.datetime.now()
+
+    metrics = dict()
+    # Metrics
+    metrics['issues_time_open_average_performance_overview'] = performance_issues.average_open_time(elastic, now)
+    metrics['issues_time_open_median_performance_overview'] = performance_issues.median_open_time(elastic, now)
+    metrics['open_issues_performance_overview'] = performance_issues.open_issues(elastic, now)
+    metrics['reviews_time_open_average_performance_overview'] = performance_reviews.average_open_time(elastic, now)
+    metrics['reviews_time_open_median_performance_overview'] = performance_reviews.median_open_time(elastic, now)
+    metrics['open_reviews_performance_overview'] = performance_reviews.open_reviews(elastic, now)
+    # Visualizations
+    metrics['issues_created_ttc_performance_overview_bokeh'] = performance_issues.ttc_created_issues_bokeh(elastic, from_date, to_date)
+    metrics['issues_closed_ttc_performance_overview_bokeh'] = performance_issues.ttc_closed_issues_bokeh(elastic, from_date, to_date)
+    metrics['reviews_created_ttc_performance_overview_bokeh'] = performance_reviews.ttc_created_reviews_bokeh(elastic, from_date, to_date)
+    metrics['reviews_closed_ttc_performance_overview_bokeh'] = performance_reviews.ttc_closed_reviews_bokeh(elastic, from_date, to_date)
+    return metrics
+
+
+def performance_issues_metrics(elastic, from_date, to_date):
+    now = datetime.datetime.now()
+    one_month_ago = now - relativedelta(months=1)
+    one_year_ago = now - relativedelta(years=1)
+    two_years_ago = now - relativedelta(years=2)
+
+    metrics = dict()
+    # Metrics
+    metrics['issues_time_to_close_median_last_month'] = performance_issues.median_time_to_close(elastic, one_month_ago, now)
+    metrics['issues_time_to_close_median_last_year'] = performance_issues.median_time_to_close(elastic, one_year_ago, now)
+    median_closing_time_yoy = year_over_year(metrics['issues_time_to_close_median_last_month'],
+                                             performance_issues.median_time_to_close(elastic, two_years_ago, now))
+    metrics['issues_time_to_close_median_yoy'] = f"{median_closing_time_yoy:+.2f}%"
+    metrics['issues_time_open_average'] = performance_issues.average_open_time(elastic, now)
+    metrics['issues_time_open_median'] = performance_issues.median_open_time(elastic, now)
+    metrics['open_issues'] = performance_issues.open_issues(elastic, now)
+    # Visualizations
+    metrics['issues_created_ttc_bokeh'] = performance_issues.ttc_created_issues_bokeh(elastic, from_date, to_date)
+    metrics['issues_still_open_bokeh'] = performance_issues.issues_still_open_by_creation_date_bokeh(elastic)
+    metrics['issues_closed_ttc_bokeh'] = performance_issues.ttc_closed_issues_bokeh(elastic, from_date, to_date)
+    metrics['issues_created_closed_ratio_bokeh'] = performance_issues.created_closed_issues_ratio_bokeh(elastic, from_date, to_date)
+    return metrics
+
+
+def performance_reviews_metrics(elastic, from_date, to_date):
+    now = datetime.datetime.now()
+    one_month_ago = now - relativedelta(months=1)
+    one_year_ago = now - relativedelta(years=1)
+    two_years_ago = now - relativedelta(years=2)
+
+    metrics = dict()
+    # Metrics
+    metrics['reviews_time_to_close_median_last_month'] = performance_reviews.median_time_to_close(elastic, one_month_ago, now)
+    metrics['reviews_time_to_close_median_last_year'] = performance_reviews.median_time_to_close(elastic, one_year_ago, now)
+    median_closing_time_yoy = year_over_year(metrics['reviews_time_to_close_median_last_month'],
+                                             performance_reviews.median_time_to_close(elastic, two_years_ago, now))
+    metrics['reviews_time_to_close_median_yoy'] = f"{median_closing_time_yoy:+.2f}%"
+    metrics['reviews_time_open_average'] = performance_reviews.average_open_time(elastic, now)
+    metrics['reviews_time_open_median'] = performance_reviews.median_open_time(elastic, now)
+    metrics['open_reviews'] = performance_reviews.open_reviews(elastic, now)
+    # Visualizations
+    metrics['reviews_created_ttc_bokeh'] = performance_reviews.ttc_created_reviews_bokeh(elastic, from_date, to_date)
+    metrics['reviews_still_open_bokeh'] = performance_reviews.reviews_still_open_by_creation_date_bokeh(elastic)
+    metrics['reviews_closed_ttc_bokeh'] = performance_reviews.ttc_closed_reviews_bokeh(elastic, from_date, to_date)
+    metrics['reviews_created_closed_ratio_bokeh'] = performance_reviews.created_closed_reviews_ratio_bokeh(elastic, from_date, to_date)
     return metrics

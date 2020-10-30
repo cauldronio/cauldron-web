@@ -1,5 +1,6 @@
 import os
 import logging
+from datetime import datetime
 
 from bokeh.models import CustomAction, CustomJS, tools, ColumnDataSource
 from bokeh.palettes import Blues
@@ -98,3 +99,27 @@ def get_interval(from_date, to_date):
         return 'week', '1w', 544320000
     else:
         return 'day', '1d', 77760000
+
+
+def str_to_datetime(ts):
+    # Some datasources have different time formats, so it is necessary to use
+    # this strip
+    return datetime.strptime(ts[:19], "%Y-%m-%dT%H:%M:%S")
+
+
+def get_time_diff_days(start, end):
+    ''' Number of days between two dates in UTC format  '''
+
+    if start is None or end is None:
+        return None
+
+    if type(start) is not datetime:
+        start = str_to_datetime(start).replace(tzinfo=None)
+    if type(end) is not datetime:
+        end = str_to_datetime(end).replace(tzinfo=None)
+
+    seconds_day = float(60 * 60 * 24)
+    diff_days = (end - start).total_seconds() / seconds_day
+    diff_days = float('%.2f' % diff_days)
+
+    return diff_days

@@ -65,7 +65,7 @@ def reviews_open_on(elastic, date):
     s = Search(using=elastic, index='all') \
         .query(Q('match', pull_request=True) | Q('match', merge_request=True))\
         .query(Q('range', created_at={'lte': date}) &
-               (Q('range', closed_at={'gte': date}) | Q('match', state='open')))
+               (Q('range', closed_at={'gte': date}) | Q('terms', state=['open', 'opened'])))
 
     try:
         response = s.count()
@@ -182,7 +182,7 @@ def reviews_open_age_opened_bokeh(elastic):
     """Get a visualization of current open reviews age"""
     s = Search(using=elastic, index='all') \
         .query('bool', filter=((Q('match', pull_request=True) | Q('match', merge_request=True)) &
-               Q('match', state='open'))) \
+               Q('terms', state=['open', 'opened']))) \
         .extra(size=0)
     s.aggs.bucket("open_reviews", 'date_histogram', field='created_at', calendar_interval='1M')
 
