@@ -43,16 +43,15 @@
           </div>
         </li>
         <li class="nav-item dropdown" style="line-height:1.5;" role="presentation">
+          {% if has_gitlab or has_github %}
           <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="tab" aria-controls="performance">Performance</a>
+          {% else %}
+          <a class="nav-link dropdown-toggle disabled" data-toggle="dropdown" href="#" role="tab" aria-controls="performance">Performance</a>
+          {% endif %}
           <div class="dropdown-menu">
             <a class="dropdown-item" data-category="performance-overview" data-toggle="tab" role="tab" href="#performance-overview">Overview</a>
-            {% if has_gitlab or has_github %}
             <a class="dropdown-item" data-category="performance-issues" data-toggle="tab" role="tab" href="#performance-issues">Issues</a>
             <a class="dropdown-item" data-category="performance-reviews" data-toggle="tab" role="tab" href="#performance-reviews">Reviews</a>
-            {% else %}
-            <a class="dropdown-item disabled" data-category="performance-issues" data-toggle="tab" role="tab" href="#performance-issues">Issues</a>
-            <a class="dropdown-item disabled" data-category="performance-reviews" data-toggle="tab" role="tab" href="#performance-reviews">Reviews</a>
-            {% endif %}
           </div>
         </li>
         {% if repositories_count > 0 %}
@@ -617,7 +616,7 @@
                 <p class="h5 font-weight-bold text-gray-800"><span id="issues_time_open_median_performance_overview">{{ metrics.issues_time_open_median_performance_overview }}</span> days</p>
               </div>
               <div class="col-4">
-                <p class="font-weight-bold text-muted mb-3">Open reviews <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/performance/open-issues.md"><i class="far fa-question-circle"></i></a></p>
+                <p class="font-weight-bold text-muted mb-3">Open issues <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/performance/open-issues.md"><i class="far fa-question-circle"></i></a></p>
                 <p id="open_issues_performance_overview" class="h5 font-weight-bold text-gray-800">{{ metrics.open_issues_performance_overview }}</p>
               </div>
             </div>
