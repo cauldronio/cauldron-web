@@ -38,9 +38,16 @@ class Project(models.Model):
 
     @property
     def last_refresh(self):
-        if self.repository_set.count() == 0:
-            return datetime.now(pytz.utc)
-        return sorted(self.repository_set.select_subclasses(), key=lambda r: r.last_refresh)[0].last_refresh
+        last_refresh = None
+        for repo in self.repository_set.select_subclasses():
+            if not repo.last_refresh:
+                continue
+            if not last_refresh:
+                last_refresh = repo.last_refresh
+                continue
+            if repo.last_refresh < last_refresh:
+                last_refresh = repo.last_refresh
+        return last_refresh
 
     def summary(self):
         """Get a summary about the repositories in the project"""

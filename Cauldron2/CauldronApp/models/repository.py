@@ -131,7 +131,7 @@ class GitRepository(Repository):
         try:
             date = sched_models.IGitEnrichArchived.objects.filter(repo=self.repo_sched).latest('completed').completed
         except sched_models.IGitEnrichArchived.DoesNotExist:
-            date = datetime.now(pytz.utc)
+            date = None
         return date
 
     def get_intentions(self):
@@ -216,7 +216,7 @@ class GitHubRepository(Repository):
         try:
             date = sched_models.IGHEnrichArchived.objects.filter(repo=self.repo_sched).latest('completed').completed
         except sched_models.IGHEnrichArchived.DoesNotExist:
-            date = datetime.now(pytz.utc)
+            date = None
         return date
 
     def get_intentions(self):
@@ -314,7 +314,7 @@ class GitLabRepository(Repository):
         try:
             date = sched_models.IGLEnrichArchived.objects.filter(repo=self.repo_sched).latest('completed').completed
         except sched_models.IGLEnrichArchived.DoesNotExist:
-            date = datetime.now(pytz.utc)
+            date = None
         return date
 
 
@@ -382,7 +382,7 @@ class MeetupRepository(Repository):
         try:
             date = sched_models.IMeetupEnrichArchived.objects.filter(repo=self.repo_sched).latest('completed').completed
         except sched_models.IMeetupEnrichArchived.DoesNotExist:
-            date = datetime.now(pytz.utc)
+            date = None
         return date
 
     def get_intentions(self):
