@@ -425,7 +425,7 @@ def performance_issues_metrics(elastic, from_date, to_date):
     metrics['issues_created_ttc_bokeh'] = performance_issues.ttc_created_issues_bokeh(elastic, from_date, to_date)
     metrics['issues_still_open_bokeh'] = performance_issues.issues_still_open_by_creation_date_bokeh(elastic)
     metrics['issues_closed_ttc_bokeh'] = performance_issues.ttc_closed_issues_bokeh(elastic, from_date, to_date)
-    metrics['issues_created_closed_ratio_bokeh'] = performance_issues.created_closed_issues_ratio_bokeh(elastic, from_date, to_date)
+    metrics['issues_closed_created_ratio_bokeh'] = performance_issues.closed_created_issues_ratio_bokeh(elastic, from_date, to_date)
     return metrics
 
 
@@ -449,5 +449,5 @@ def performance_reviews_metrics(elastic, from_date, to_date):
     metrics['reviews_created_ttc_bokeh'] = performance_reviews.ttc_created_reviews_bokeh(elastic, from_date, to_date)
     metrics['reviews_still_open_bokeh'] = performance_reviews.reviews_still_open_by_creation_date_bokeh(elastic)
     metrics['reviews_closed_ttc_bokeh'] = performance_reviews.ttc_closed_reviews_bokeh(elastic, from_date, to_date)
-    metrics['reviews_created_closed_ratio_bokeh'] = performance_reviews.created_closed_reviews_ratio_bokeh(elastic, from_date, to_date)
+    metrics['reviews_closed_created_ratio_bokeh'] = performance_reviews.closed_created_reviews_ratio_bokeh(elastic, from_date, to_date)
     return metrics

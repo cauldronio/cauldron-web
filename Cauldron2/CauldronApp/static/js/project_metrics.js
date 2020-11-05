@@ -62,11 +62,11 @@ $(function() {
         "issues_created_ttc_bokeh": "chart-issues-created-ttc",
         "issues_still_open_bokeh": "chart-issues-still-open",
         "issues_closed_ttc_bokeh": "chart-issues-closed-ttc",
-        "issues_created_closed_ratio_bokeh": "chart-issues-created-closed-ratio",
+        "issues_closed_created_ratio_bokeh": "chart-issues-closed-created-ratio",
         "reviews_created_ttc_bokeh": "chart-reviews-created-ttc",
         "reviews_still_open_bokeh": "chart-reviews-still-open",
         "reviews_closed_ttc_bokeh": "chart-reviews-closed-ttc",
-        "reviews_created_closed_ratio_bokeh": "chart-reviews-created-closed-ratio",
+        "reviews_closed_created_ratio_bokeh": "chart-reviews-closed-created-ratio",
     }
 
     var METRICS_ACTIVITY_OVERVIEW = {

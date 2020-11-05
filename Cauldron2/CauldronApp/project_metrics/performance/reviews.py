@@ -318,9 +318,9 @@ def ttc_closed_reviews_bokeh(elastic, from_date, to_date):
     return json.dumps(json_item(plot))
 
 
-def created_closed_reviews_ratio_bokeh(elastic, from_date, to_date):
-    """Generates a visualization showing the ratio between created and
-    closed reviews in a given date"""
+def closed_created_reviews_ratio_bokeh(elastic, from_date, to_date):
+    """Generates a visualization showing the ratio between closed and
+    created reviews in a given date"""
 
     interval_name, interval_elastic, _ = get_interval(from_date, to_date)
 
@@ -358,7 +358,7 @@ def created_closed_reviews_ratio_bokeh(elastic, from_date, to_date):
 
     data = pandas.merge(creation_dates, closing_dates, on='timestamps', how='outer', sort=True).fillna(0)
 
-    data['ratio'] = data['reviews_created'] / data['reviews_closed']
+    data['ratio'] = data['reviews_closed'] / data['reviews_created']
 
     # Create the Bokeh visualization
     plot = figure(x_axis_type="datetime",
@@ -367,9 +367,9 @@ def created_closed_reviews_ratio_bokeh(elastic, from_date, to_date):
                   height=300,
                   sizing_mode="stretch_width",
                   tools='')
-    plot.title.text = 'Reviews created / closed ratio'
+    plot.title.text = 'Reviews closed / created ratio'
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
-                           '-/blob/master/guides/metrics/performance/reviews-created-closed-ratio.md')
+                           '-/blob/master/guides/metrics/performance/reviews-closed-created-ratio.md')
     if not data.empty:
         plot.x_range = Range1d(from_date - timedelta(days=1), to_date + timedelta(days=1))
 
