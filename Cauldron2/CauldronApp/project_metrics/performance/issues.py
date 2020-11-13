@@ -45,15 +45,14 @@ def average_open_time(elastic, date):
         .source('created_at')
 
     try:
-        count = s.count()
-        response = s[0:count].execute()
+        response = s.scan()
     except ElasticsearchException as e:
         logger.warning(e)
-        response = None
+        response = []
 
     date_list = []
-    for item in response:
-        date_list.append(item.created_at)
+    for hit in response:
+        date_list.append(hit.created_at)
 
     dates = pandas.DataFrame(date_list, columns=['created_at'])
     if dates.empty:
@@ -74,15 +73,14 @@ def median_open_time(elastic, date):
         .source('created_at')
 
     try:
-        count = s.count()
-        response = s[0:count].execute()
+        response = s.scan()
     except ElasticsearchException as e:
         logger.warning(e)
-        response = None
+        response = []
 
     date_list = []
-    for item in response:
-        date_list.append(item.created_at)
+    for hit in response:
+        date_list.append(hit.created_at)
 
     dates = pandas.DataFrame(date_list, columns=['created_at'])
     if dates.empty:

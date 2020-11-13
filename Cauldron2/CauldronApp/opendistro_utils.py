@@ -252,7 +252,10 @@ class OpendistroApi:
         index_permissions.append(kibana_permissions)
         permissions = {
             "index_permissions": index_permissions,
-            "cluster_permissions": [],
+            "cluster_permissions": [
+                "indices:data/read/scroll",
+                "indices:data/read/scroll/clear"
+            ],
             "tenant_permissions": global_tenant_permissions
         }
         self.create_role(role, permissions)
