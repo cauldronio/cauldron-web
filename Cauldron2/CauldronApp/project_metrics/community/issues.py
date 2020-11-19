@@ -22,13 +22,14 @@ from ..utils import configure_figure, get_interval
 logger = logging.getLogger(__name__)
 
 
-def active_submitters(elastic, from_date, to_date):
+def active_submitters(elastic, urls, from_date, to_date):
     """Get number of issue authors for a project in a period of time"""
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all') \
         .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
         .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .query(Q('terms', origin=urls)) \
         .extra(size=0)
     s.aggs.bucket('authors', 'cardinality', field='author_uuid')
 
@@ -44,11 +45,12 @@ def active_submitters(elastic, from_date, to_date):
         return 'X'
 
 
-def issue_submitters_buckets(elastic, from_date, to_date, interval):
+def issue_submitters_buckets(elastic, urls, from_date, to_date, interval):
     """Makes a query to ES to get the number of issue submitters grouped by date"""
     s = Search(using=elastic, index='all') \
         .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) \
         .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .query(Q('terms', origin=urls)) \
         .extra(size=0)
     s.aggs.bucket("dates", 'date_histogram', field='grimoire_creation_date', calendar_interval=interval) \
           .bucket('authors', 'cardinality', field='author_uuid')
@@ -63,14 +65,14 @@ def issue_submitters_buckets(elastic, from_date, to_date, interval):
     return dates_buckets
 
 
-def issue_submitters_bokeh_compare(elastics, from_date, to_date):
+def issue_submitters_bokeh_compare(elastics, urls, from_date, to_date):
     """Generates a projects comparison about issue submitters along the time"""
     interval_name, interval_elastic, _ = get_interval(from_date, to_date)
 
     authors_buckets = dict()
     for project_id in elastics:
         elastic = elastics[project_id]
-        authors_buckets[project_id] = issue_submitters_buckets(elastic, from_date, to_date, interval_elastic)
+        authors_buckets[project_id] = issue_submitters_buckets(elastic, urls, from_date, to_date, interval_elastic)
 
     data = []
     for project_id in authors_buckets:
@@ -144,11 +146,11 @@ def issue_submitters_bokeh_compare(elastics, from_date, to_date):
     return json.dumps(json_item(plot))
 
 
-def authors_active_bokeh(elastic, from_date, to_date):
+def authors_active_bokeh(elastic, urls, from_date, to_date):
     """Generates a visualization showing the issue submitters along the time"""
     interval_name, interval_elastic, bar_width = get_interval(from_date, to_date)
 
-    authors_buckets = issue_submitters_buckets(elastic, from_date, to_date, interval_elastic)
+    authors_buckets = issue_submitters_buckets(elastic, urls, from_date, to_date, interval_elastic)
 
     # Create the Bokeh visualization
     timestamp, authors = [], []
@@ -194,10 +196,11 @@ def authors_active_bokeh(elastic, from_date, to_date):
     return json.dumps(json_item(plot))
 
 
-def authors_entering(elastic, from_date, to_date):
+def authors_entering(elastic, urls, from_date, to_date):
     """Get number of issue authors entering in a project for a period of time"""
     s = Search(using=elastic, index='all') \
         .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .query(Q('terms', origin=urls)) \
         .extra(size=0)
     s.aggs.bucket('authors', 'terms', field='author_uuid', size=30000) \
           .metric('first_issue', 'min', field='grimoire_creation_date')
@@ -223,10 +226,11 @@ def authors_entering(elastic, from_date, to_date):
         return 'X'
 
 
-def authors_entering_leaving_bokeh(elastic, from_date, to_date):
+def authors_entering_leaving_bokeh(elastic, urls, from_date, to_date):
     """Get a visualization of issue submitters entering and leaving
     the project"""
     s = Search(using=elastic, index='all') \
+        .query(Q('terms', origin=urls)) \
         .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
         .extra(size=0)
     s.aggs.bucket('authors', 'terms', field='author_uuid', size=30000) \
@@ -328,13 +332,14 @@ def authors_entering_leaving_bokeh(elastic, from_date, to_date):
     return json.dumps(json_item(plot))
 
 
-def authors_aging_bokeh(elastic, snap_date):
+def authors_aging_bokeh(elastic, urls, snap_date):
     """Shows how many new issue submitters joined the community during
     a corresponding period of time (attracted) and how many
     of these people are still active in the community (retained)"""
     snap_date_es = snap_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all') \
         .filter('range', grimoire_creation_date={"lt": snap_date_es}) \
+        .query(Q('terms', origin=urls)) \
         .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
         .extra(size=0)
     s.aggs.bucket('authors', 'terms', field='author_uuid', size=30000) \
@@ -418,12 +423,13 @@ def authors_aging_bokeh(elastic, snap_date):
     return json.dumps(json_item(plot))
 
 
-def authors_retained_ratio_bokeh(elastic, snap_date):
+def authors_retained_ratio_bokeh(elastic, urls, snap_date):
     """Shows the ratio between retained and non-retained
     issue submitters in a community"""
     snap_date_es = snap_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all') \
         .filter('range', grimoire_creation_date={"lt": snap_date_es}) \
+        .query(Q('terms', origin=urls)) \
         .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
         .extra(size=0)
     s.aggs.bucket('authors', 'terms', field='author_uuid', size=30000) \

@@ -5,14 +5,20 @@ $(function() {
     var categories = ['overview', 'activity-overview', 'activity-git', 'activity-issues', 'activity-reviews', 'community-overview', 'community-git', 'community-issues', 'community-reviews', 'performance-overview', 'performance-issues', 'performance-reviews'];
     var start = getUrlParameter('from_date');
     var end = getUrlParameter('to_date');
+    var urls = getURLParameterList('repo_url');
     var tab = getUrlParameter('tab');
     start = (typeof start === 'undefined') ? moment().subtract(1, 'year') : moment(start, "YYYY-MM-DD");
     end = (typeof end === 'undefined') ? moment() : moment(end, "YYYY-MM-DD");
-    tab = ((typeof tab === 'undefined') | !categories.includes(tab) ) ? 'overview' : tab
+    tab = ((typeof tab === 'undefined') | !categories.includes(tab) ) ? 'overview' : tab;
 
     $('#date-picker-input').val(start.format('YYYY-MM-DD') + ' - ' + end.format('YYYY-MM-DD'));
 
     $(`a[data-category="${tab}"]`).tab('show')
+
+    $('select[name=repo_url]').val(urls);
+    $('.selectpicker').selectpicker('refresh');
+
+    updateSelectForm();
 
     //"html_id": "key from Django"
     var VIZ_KEYS = {
@@ -184,9 +190,16 @@ $(function() {
     METRICS_KEYS = Object.assign({}, METRICS_KEYS, METRICS_PERFORMANCE_REVIEWS);
 
 
+    function updateSelectForm() {
+        $('#repository-select-from-date').val(start.format('YYYY-MM-DD'));
+        $('#repository-select-to-date').val(end.format('YYYY-MM-DD'));
+        $('#repository-select-tab').val(tab);
+    }
+
+
     function updateMetricsData() {
         $.getJSON(`${window.location.pathname}/metrics`,
-        {"from": start.format('YYYY-MM-DD'), "to": end.format('YYYY-MM-DD'), "tab": tab},
+        {"from": start.format('YYYY-MM-DD'), "to": end.format('YYYY-MM-DD'), "tab": tab, "repo_url": urls, "repo_url": urls},
         function(data){
             for (k in data){
                 if (k in METRICS_KEYS){
@@ -214,8 +227,13 @@ $(function() {
         end = new_end;
         var start_str = start.format('YYYY-MM-DD');
         var end_str = end.format('YYYY-MM-DD');
+        var payload = `?from_date=${start_str}&to_date=${end_str}&tab=${tab}`
+        for (var i = 0; i < urls.length; i++) {
+          payload += `&repo_url=${urls[i]}`
+        }
         $('#date-picker-input').val(start.format('YYYY-MM-DD') + ' - ' + end.format('YYYY-MM-DD'));
-        window.history.replaceState({'start': start_str, 'end': end_str}, 'date', `?from_date=${start_str}&to_date=${end_str}&tab=${tab}`)
+        window.history.replaceState({'start': start_str, 'end': end_str}, 'date', payload);
+        updateSelectForm();
         updateMetricsData();
     }
 
@@ -248,7 +266,12 @@ $(function() {
         tab = e.target.dataset.category;
         var start_str = start.format('YYYY-MM-DD');
         var end_str = end.format('YYYY-MM-DD');
-        window.history.replaceState({'start': start_str, 'end': end_str}, 'date', `?from_date=${start_str}&to_date=${end_str}&tab=${tab}`)
+        var payload = `?from_date=${start_str}&to_date=${end_str}&tab=${tab}`
+        for (var i = 0; i < urls.length; i++) {
+          payload += `&repo_url=${urls[i]}`
+        }
+        window.history.replaceState({'start': start_str, 'end': end_str}, 'date', payload);
+        updateSelectForm();
         updateMetricsData();
     });
 });

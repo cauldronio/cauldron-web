@@ -18,14 +18,15 @@ from .utils import configure_figure, get_interval
 logger = logging.getLogger(__name__)
 
 
-def issues_time_to_close(elastic, from_date, to_date):
+def issues_time_to_close(elastic, urls, from_date, to_date):
     """ Get median time to close issues (only issues closed in the time range)"""
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all')\
         .filter('range', closed_at={'gte': from_date_es, "lte": to_date_es})\
         .filter('match', state='closed')\
-        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1))
+        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .query(Q('terms', origin=urls))
     s.aggs.bucket('ttc_percentiles', 'percentiles', field='time_to_close_days', percents=[50])
 
     try:
@@ -115,10 +116,11 @@ def author_domains_bokeh(elastic, from_date, to_date):
     return json.dumps(json_item(plot))
 
 
-def get_authors_bucket(elastic, from_date, to_date, interval):
+def get_authors_bucket(elastic, urls, from_date, to_date, interval):
     """ Makes a query to ES to get the number of authors grouped by date """
     s = Search(using=elastic, index='all') \
         .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) \
+        .query(Q('terms', origin=urls)) \
         .extra(size=0)
 
     s.aggs.bucket('bucket1', 'date_histogram', field='grimoire_creation_date', calendar_interval=interval) \
@@ -142,7 +144,7 @@ def get_authors_bucket(elastic, from_date, to_date, interval):
 
 
 # This code could be useful someday, DON'T REMOVE IT
-def author_evolution_bokeh_compare(elastics, from_date, to_date):
+def author_evolution_bokeh_compare(elastics, urls, from_date, to_date):
     """ Get a projects comparison of evolution of authors """
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
@@ -151,7 +153,7 @@ def author_evolution_bokeh_compare(elastics, from_date, to_date):
     authors_buckets = dict()
     for project_id in elastics:
         elastic = elastics[project_id]
-        authors_buckets[project_id] = get_authors_bucket(elastic, from_date_es, to_date_es, interval_elastic)
+        authors_buckets[project_id] = get_authors_bucket(elastic, urls, from_date_es, to_date_es, interval_elastic)
 
     data = dict()
     for project_id in authors_buckets:
@@ -225,13 +227,13 @@ def author_evolution_bokeh_compare(elastics, from_date, to_date):
     return json.dumps(json_item(plot))
 
 
-def author_evolution_bokeh(elastic, from_date, to_date):
+def author_evolution_bokeh(elastic, urls, from_date, to_date):
     """Get evolution of Authors"""
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
     interval_name, interval_elastic, _ = get_interval(from_date, to_date)
 
-    authors_buckets = get_authors_bucket(elastic, from_date_es, to_date_es, interval_elastic)
+    authors_buckets = get_authors_bucket(elastic, urls, from_date_es, to_date_es, interval_elastic)
 
     # Create the Bokeh visualization
     x, contrib, maintainers, observers, users = [], [], [], [], []
@@ -328,7 +330,7 @@ def author_evolution_bokeh(elastic, from_date, to_date):
     return json.dumps(json_item(plot))
 
 
-def review_duration(elastic, from_date, to_date):
+def review_duration(elastic, urls, from_date, to_date):
     """
     Median time to merge a PR or MR
     """
@@ -336,6 +338,7 @@ def review_duration(elastic, from_date, to_date):
     to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all')\
         .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
+        .query(Q('terms', origin=urls)) \
         .query((Q('match', pull_request=True) & Q('match', state='closed')) |
                (Q('match', merge_request=True) & Q('match', state='merged')))
     s.aggs.bucket('ttc_percentiles', 'percentiles', field='time_to_close_days', percents=[50])

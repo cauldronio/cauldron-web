@@ -5,7 +5,7 @@ from django.db import models
 from django.conf import settings
 from django.db.models import Q
 
-from CauldronApp.models.repository import GitHubRepository, GitLabRepository, MeetupRepository, GitRepository
+from CauldronApp.models.repository import Repository, GitHubRepository, GitLabRepository, MeetupRepository, GitRepository
 
 from CauldronApp.opendistro_utils import OpendistroApi
 
@@ -79,6 +79,23 @@ class Project(models.Model):
         od_api.create_mapping(role, backend_roles=[backend_role])
 
         ProjectRole.objects.create(role=role, backend_role=backend_role, project=self)
+
+    def url_list(self):
+        """Returns a list with the URLs of the repositories within the project"""
+        urls = []
+        repos = self.repository_set.all()
+
+        for repo in repos:
+            if repo.backend == Repository.GIT:
+                urls.append(repo.git.datasource_url)
+            elif repo.backend == Repository.GITHUB:
+                urls.append(repo.github.datasource_url)
+            elif repo.backend == Repository.GITLAB:
+                urls.append(repo.gitlab.datasource_url)
+            elif repo.backend == Repository.MEETUP:
+                urls.append(repo.meetup.datasource_url)
+
+        return urls
 
     def repos_running(self):
         git = GitRepository.objects.filter(projects=self).filter(repo_sched__isnull=False)

@@ -22,13 +22,14 @@ from ..utils import configure_figure, get_interval
 logger = logging.getLogger(__name__)
 
 
-def authors_active(elastic, from_date, to_date):
+def authors_active(elastic, urls, from_date, to_date):
     """Get number of git authors active for a project in a period of time"""
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
-    s = Search(using=elastic, index='git')\
+    s = Search(using=elastic, index='git') \
         .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
         .query(~Q('match', files=0)) \
+        .query(Q('terms', origin=urls)) \
         .extra(size=0)
     s.aggs.bucket('authors', 'cardinality', field='author_uuid')
 
@@ -44,10 +45,11 @@ def authors_active(elastic, from_date, to_date):
         return 'X'
 
 
-def get_authors_bucket(elastic, from_date, to_date, interval):
+def get_authors_bucket(elastic, urls, from_date, to_date, interval):
     """ Makes a query to ES to get the number of authors grouped by date """
     s = Search(using=elastic, index='git') \
         .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) \
+        .query(Q('terms', origin=urls)) \
         .query(~Q('match', files=0)) \
         .extra(size=0)
 
@@ -64,7 +66,7 @@ def get_authors_bucket(elastic, from_date, to_date, interval):
     return authors_bucket
 
 
-def git_authors_bokeh_compare(elastics, from_date, to_date):
+def git_authors_bokeh_compare(elastics, urls, from_date, to_date):
     """ Get a projects comparison of the number of git authors active
     for a project in a period of time """
     from_date_es = from_date.strftime("%Y-%m-%d")
@@ -74,7 +76,7 @@ def git_authors_bokeh_compare(elastics, from_date, to_date):
     authors_buckets = dict()
     for project_id in elastics:
         elastic = elastics[project_id]
-        authors_buckets[project_id] = get_authors_bucket(elastic, from_date_es, to_date_es, interval_elastic)
+        authors_buckets[project_id] = get_authors_bucket(elastic, urls, from_date_es, to_date_es, interval_elastic)
 
     data = []
     for project_id in authors_buckets:
@@ -148,13 +150,13 @@ def git_authors_bokeh_compare(elastics, from_date, to_date):
     return json.dumps(json_item(plot))
 
 
-def authors_active_bokeh(elastic, from_date, to_date):
+def authors_active_bokeh(elastic, urls, from_date, to_date):
     """Get evolution of Authors in commits"""
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
     interval_name, interval_elastic, bar_width = get_interval(from_date, to_date)
 
-    authors_buckets = get_authors_bucket(elastic, from_date_es, to_date_es, interval_elastic)
+    authors_buckets = get_authors_bucket(elastic, urls, from_date_es, to_date_es, interval_elastic)
 
     # Create the Bokeh visualization
     timestamp, authors = [], []
@@ -200,12 +202,13 @@ def authors_active_bokeh(elastic, from_date, to_date):
     return json.dumps(json_item(plot))
 
 
-def authors_entering(elastic, from_date, to_date):
+def authors_entering(elastic, urls, from_date, to_date):
     """Get number of git authors entering in a project for a period of time"""
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='git') \
         .query(~Q('match', files=0)) \
+        .query(Q('terms', origin=urls)) \
         .extra(size=0)
     s.aggs.bucket('authors', 'terms', field='author_uuid', size=30000) \
           .metric('first_commit', 'min', field='grimoire_creation_date')
@@ -231,9 +234,10 @@ def authors_entering(elastic, from_date, to_date):
         return 'X'
 
 
-def authors_entering_leaving_bokeh(elastic, from_date, to_date):
+def authors_entering_leaving_bokeh(elastic, urls, from_date, to_date):
     """Get a visualization of git authors entering and leaving the project"""
     s = Search(using=elastic, index='git') \
+        .query(Q('terms', origin=urls)) \
         .query(~Q('match', files=0)) \
         .extra(size=0)
     s.aggs.bucket('authors', 'terms', field='author_uuid', size=30000) \
@@ -335,13 +339,14 @@ def authors_entering_leaving_bokeh(elastic, from_date, to_date):
     return json.dumps(json_item(plot))
 
 
-def authors_aging_bokeh(elastic, snap_date):
+def authors_aging_bokeh(elastic, urls, snap_date):
     """Shows how many new git authors joined the community during
     a corresponding period of time (attracted) and how many
     of these people are still active in the community (retained)"""
     snap_date_es = snap_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='git') \
         .filter('range', grimoire_creation_date={"lt": snap_date_es}) \
+        .query(Q('terms', origin=urls)) \
         .query(~Q('match', files=0)) \
         .extra(size=0)
     s.aggs.bucket('authors', 'terms', field='author_uuid', size=30000) \
@@ -425,12 +430,13 @@ def authors_aging_bokeh(elastic, snap_date):
     return json.dumps(json_item(plot))
 
 
-def authors_retained_ratio_bokeh(elastic, snap_date):
+def authors_retained_ratio_bokeh(elastic, urls, snap_date):
     """Shows the ratio between retained and non-retained
     git authors in a community"""
     snap_date_es = snap_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='git') \
         .filter('range', grimoire_creation_date={"lt": snap_date_es}) \
+        .query(Q('terms', origin=urls)) \
         .query(~Q('match', files=0)) \
         .extra(size=0)
     s.aggs.bucket('authors', 'terms', field='author_uuid', size=30000) \

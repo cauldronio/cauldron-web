@@ -22,13 +22,14 @@ from ..utils import configure_figure, configure_heatmap, get_interval, weekday_v
 logger = logging.getLogger(__name__)
 
 
-def git_commits(elastic, from_date, to_date):
+def git_commits(elastic, urls, from_date, to_date):
     """Get number of commits for a project"""
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
-    s = Search(using=elastic, index='git')\
+    s = Search(using=elastic, index='git') \
         .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
         .query(~Q('match', files=0)) \
+        .query(Q('terms', origin=urls)) \
         .extra(size=0)
     s.aggs.bucket('commits', 'cardinality', field='hash')
 
@@ -44,13 +45,14 @@ def git_commits(elastic, from_date, to_date):
         return 'X'
 
 
-def git_lines_commit(elastic, from_date, to_date):
+def git_lines_commit(elastic, urls, from_date, to_date):
     """Get lines changed per commit in a period of time"""
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='git')\
         .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
         .query(~Q('match', files=0)) \
+        .query(Q('terms', origin=urls)) \
         .extra(size=0)
     s.aggs.bucket('lines_avg', 'avg', field='lines_changed')
 
@@ -66,12 +68,13 @@ def git_lines_commit(elastic, from_date, to_date):
         return 'X'
 
 
-def git_files_touched(elastic, from_date, to_date):
+def git_files_touched(elastic, urls, from_date, to_date):
     """Get sum of files changed in a period of time"""
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
-    s = Search(using=elastic, index='git')\
+    s = Search(using=elastic, index='git') \
         .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
+        .query(Q('terms', origin=urls)) \
         .extra(size=0)
     s.aggs.bucket('files_sum', 'sum', field='files')
 
@@ -87,11 +90,12 @@ def git_files_touched(elastic, from_date, to_date):
         return 'X'
 
 
-def git_commits_bucket(elastic, from_date, to_date, interval):
+def git_commits_bucket(elastic, urls, from_date, to_date, interval):
     """ Makes a query to ES to get the number of commits grouped by date """
     s = Search(using=elastic, index='git') \
         .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) \
         .query(~Q('match', files=0)) \
+        .query(Q('terms', origin=urls)) \
         .extra(size=0)
     s.aggs.bucket("commits", 'date_histogram', field='grimoire_creation_date',
                   calendar_interval=interval)
@@ -106,13 +110,13 @@ def git_commits_bucket(elastic, from_date, to_date, interval):
     return commits_bucket
 
 
-def git_commits_bokeh_line(elastic, from_date, to_date):
+def git_commits_bokeh_line(elastic, urls, from_date, to_date):
     """ Get evolution of contributions by commits (line chart) """
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
     interval_name, interval_elastic, _ = get_interval(from_date, to_date)
 
-    commits_bucket = git_commits_bucket(elastic, from_date_es, to_date_es, interval_elastic)
+    commits_bucket = git_commits_bucket(elastic, urls, from_date_es, to_date_es, interval_elastic)
 
     # Create the Bokeh visualization
     timestamp, commits = [], []
@@ -162,7 +166,7 @@ def git_commits_bokeh_line(elastic, from_date, to_date):
     return json.dumps(json_item(plot))
 
 
-def git_commits_bokeh_compare(elastics, from_date, to_date):
+def git_commits_bokeh_compare(elastics, urls, from_date, to_date):
     """ Get a projects comparison of evolution of contributions by commits"""
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
@@ -171,7 +175,7 @@ def git_commits_bokeh_compare(elastics, from_date, to_date):
     commits_buckets = dict()
     for project_id in elastics:
         elastic = elastics[project_id]
-        commits_buckets[project_id] = git_commits_bucket(elastic, from_date_es, to_date_es, interval_elastic)
+        commits_buckets[project_id] = git_commits_bucket(elastic, urls, from_date_es, to_date_es, interval_elastic)
 
     data = []
     for project_id in commits_buckets:
@@ -245,13 +249,13 @@ def git_commits_bokeh_compare(elastics, from_date, to_date):
     return json.dumps(json_item(plot))
 
 
-def git_commits_bokeh(elastic, from_date, to_date):
+def git_commits_bokeh(elastic, urls, from_date, to_date):
     """ Get evolution of contributions by commits"""
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
     interval_name, interval_elastic, bar_width = get_interval(from_date, to_date)
 
-    commits_bucket = git_commits_bucket(elastic, from_date_es, to_date_es, interval_elastic)
+    commits_bucket = git_commits_bucket(elastic, urls, from_date_es, to_date_es, interval_elastic)
 
     # Create the Bokeh visualization
     timestamp, commits = [], []
@@ -296,13 +300,14 @@ def git_commits_bokeh(elastic, from_date, to_date):
     return json.dumps(json_item(plot))
 
 
-def git_commits_weekday_bokeh(elastic, from_date, to_date):
+def git_commits_weekday_bokeh(elastic, urls, from_date, to_date):
     """Get commits per week day in the specified range of time"""
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='git') \
         .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
         .query(~Q('match', files=0)) \
+        .query(Q('terms', origin=urls)) \
         .extra(size=0)
     s.aggs.bucket('commit_weekday', 'terms', script="doc['commit_date'].value.dayOfWeek", size=7)
 
@@ -335,13 +340,14 @@ def git_commits_weekday_bokeh(elastic, from_date, to_date):
     return json.dumps(json_item(plot))
 
 
-def git_commits_hour_day_bokeh(elastic, from_date, to_date):
+def git_commits_hour_day_bokeh(elastic, urls, from_date, to_date):
     """Get commits per hour of the day in the specified range of time"""
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
-    s = Search(using=elastic, index='git')\
+    s = Search(using=elastic, index='git') \
         .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
         .query(~Q('match', files=0)) \
+        .query(Q('terms', origin=urls)) \
         .extra(size=0)
     s.aggs.bucket('commit_hour_day', 'terms', script="doc['commit_date'].value.getHourOfDay()", size=24)
 
@@ -388,7 +394,7 @@ def git_commits_hour_day_bokeh(elastic, from_date, to_date):
     return json.dumps(json_item(plot))
 
 
-def git_commits_heatmap_bokeh(elastic, from_date, to_date):
+def git_commits_heatmap_bokeh(elastic, urls, from_date, to_date):
     """Get commits per week day and per hour of the day in the
     specified range of time"""
     from_date_es = from_date.strftime("%Y-%m-%d")
@@ -396,6 +402,7 @@ def git_commits_heatmap_bokeh(elastic, from_date, to_date):
 
     s = Search(using=elastic, index='git') \
         .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
+        .query(Q('terms', origin=urls)) \
         .query(~Q('match', files=0)) \
         .extra(size=0)
     s.aggs.bucket('weekdays', 'terms', field='commit_date_weekday', size=7, order={'_term': 'asc'}) \
@@ -457,16 +464,17 @@ def git_commits_heatmap_bokeh(elastic, from_date, to_date):
     return json.dumps(json_item(plot))
 
 
-def git_lines_changed_bokeh(elastic, from_date, to_date):
+def git_lines_changed_bokeh(elastic, urls, from_date, to_date):
     """Evolution of lines added vs lines removed in Bokeh"""
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
     interval_name, interval_elastic, bar_width = get_interval(from_date, to_date)
     s = Search(using=elastic, index='git') \
-        .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es})\
+        .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
+        .query(Q('terms', origin=urls)) \
         .extra(size=0)
 
-    s.aggs.bucket('changed', 'date_histogram', field='grimoire_creation_date', calendar_interval=interval_elastic)\
+    s.aggs.bucket('changed', 'date_histogram', field='grimoire_creation_date', calendar_interval=interval_elastic) \
         .pipeline('removed_sum', 'sum', script={'source': 'doc.lines_removed.value * -1'})\
         .bucket('added_sum', 'sum', field='lines_added')
 

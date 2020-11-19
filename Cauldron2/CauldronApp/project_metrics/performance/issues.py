@@ -16,10 +16,11 @@ from ..utils import configure_figure, get_interval, get_time_diff_days
 logger = logging.getLogger(__name__)
 
 
-def median_time_to_close(elastic, from_date, to_date):
+def median_time_to_close(elastic, urls, from_date, to_date):
     """Gives the median time to close for closed issues in a period"""
     s = Search(using=elastic, index='all') \
         .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .query(Q('terms', origin=urls)) \
         .filter('range', closed_at={'gte': from_date, "lte": to_date}) \
         .extra(size=0)
     s.aggs.bucket('ttc_percentiles', 'percentiles', field='time_to_close_days', percents=[50])
@@ -36,10 +37,11 @@ def median_time_to_close(elastic, from_date, to_date):
         return '?'
 
 
-def average_open_time(elastic, date):
+def average_open_time(elastic, urls, date):
     """Gives the average time that open issues have been open"""
     s = Search(using=elastic, index='all') \
         .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .query(Q('terms', origin=urls)) \
         .query(Q('range', created_at={'lte': date}) &
               (Q('range', closed_at={'gte': date}) | Q('terms', state=['open', 'opened']))) \
         .source('created_at')
@@ -64,10 +66,11 @@ def average_open_time(elastic, date):
     return round(mean, 2)
 
 
-def median_open_time(elastic, date):
+def median_open_time(elastic, urls, date):
     """Gives the median time that open issues have been open"""
     s = Search(using=elastic, index='all') \
         .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .query(Q('terms', origin=urls)) \
         .query(Q('range', created_at={'lte': date}) &
               (Q('range', closed_at={'gte': date}) | Q('terms', state=['open', 'opened']))) \
         .source('created_at')
@@ -92,10 +95,11 @@ def median_open_time(elastic, date):
     return round(median, 2)
 
 
-def open_issues(elastic, date):
+def open_issues(elastic, urls, date):
     """Gives the number of open issues in a given date"""
     s = Search(using=elastic, index='all') \
         .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .query(Q('terms', origin=urls)) \
         .query(Q('range', created_at={'lte': date}) &
               (Q('range', closed_at={'gte': date}) | Q('terms', state=['open', 'opened'])))
 
@@ -108,12 +112,13 @@ def open_issues(elastic, date):
     return response
 
 
-def ttc_created_issues_bokeh(elastic, from_date, to_date):
+def ttc_created_issues_bokeh(elastic, urls, from_date, to_date):
     """Generates a visualization showing the average and the median
     time to close of created issues in a given period"""
     interval_name, interval_elastic, bar_width = get_interval(from_date, to_date)
     s = Search(using=elastic, index='all') \
         .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .query(Q('terms', origin=urls)) \
         .filter('range', created_at={'gte': from_date, "lte": to_date}) \
         .extra(size=0)
     s.aggs.bucket('dates', 'date_histogram', field='created_at', calendar_interval=interval_elastic) \
@@ -184,10 +189,11 @@ def ttc_created_issues_bokeh(elastic, from_date, to_date):
     return json.dumps(json_item(plot))
 
 
-def issues_still_open_by_creation_date_bokeh(elastic):
+def issues_still_open_by_creation_date_bokeh(elastic, urls):
     """Get a visualization of current open issues age"""
     s = Search(using=elastic, index='all') \
         .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .query(Q('terms', origin=urls)) \
         .query(Q('terms', state=['open', 'opened']))
     s.aggs.bucket("open_issues", 'date_histogram', field='created_at', calendar_interval='1M')
 
@@ -240,12 +246,13 @@ def issues_still_open_by_creation_date_bokeh(elastic):
     return json.dumps(json_item(plot))
 
 
-def ttc_closed_issues_bokeh(elastic, from_date, to_date):
+def ttc_closed_issues_bokeh(elastic, urls, from_date, to_date):
     """Generates a visualization showing the average and the median
     time to close of closed issues in a given period"""
     interval_name, interval_elastic, bar_width = get_interval(from_date, to_date)
     s = Search(using=elastic, index='all') \
         .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .query(Q('terms', origin=urls)) \
         .filter('range', closed_at={'gte': from_date, "lte": to_date}) \
         .extra(size=0)
     s.aggs.bucket('dates', 'date_histogram', field='closed_at', calendar_interval=interval_elastic) \
@@ -316,7 +323,7 @@ def ttc_closed_issues_bokeh(elastic, from_date, to_date):
     return json.dumps(json_item(plot))
 
 
-def closed_created_issues_ratio_bokeh(elastic, from_date, to_date):
+def closed_created_issues_ratio_bokeh(elastic, urls, from_date, to_date):
     """Generates a visualization showing the ratio between closed and
     created issues in a given date"""
 
@@ -324,6 +331,7 @@ def closed_created_issues_ratio_bokeh(elastic, from_date, to_date):
 
     s = Search(using=elastic, index='all') \
         .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .query(Q('terms', origin=urls)) \
         .extra(size=0)
     s.aggs.bucket('created_issues', 'filter', Q('range', created_at={'gte': from_date, "lte": to_date})) \
           .bucket('dates', 'date_histogram', field='created_at', calendar_interval=interval_elastic)

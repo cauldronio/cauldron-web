@@ -182,7 +182,7 @@ function copy_kibana_public_link() {
   } catch (err) {
     console.log('Oops, unable to copy');
   }
-    
+
   share_button = $(this);
   share_button.tooltip('show');
   setTimeout(function () {share_button.tooltip('hide')}, 1000)
@@ -202,4 +202,23 @@ var getUrlParameter = function getUrlParameter(sParam) {
             return sParameterName[1] === undefined ? true : decodeURIComponent(sParameterName[1]);
         }
     }
+};
+
+
+var getURLParameterList = function getURLParameterList(sParam) {
+    var sPageURL = window.location.search.substring(1),
+        sURLVariables = sPageURL.split('&'),
+        params = [],
+        sParameterName,
+        i;
+
+    for (i = 0; i < sURLVariables.length; i++) {
+        sParameterName = sURLVariables[i].split('=');
+
+        if (sParameterName[0] === sParam) {
+            params.push(sParameterName[1] === undefined ? true : decodeURIComponent(sParameterName[1]));
+        }
+    }
+
+    return params;
 };

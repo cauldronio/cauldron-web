@@ -43,13 +43,14 @@ def is_still_active(last_contribution_date, ref_date):
     return elapsedTime < timedelta(90)
 
 
-def organizational_diversity_authors(elastic, from_date, to_date):
+def organizational_diversity_authors(elastic, urls, from_date, to_date):
     """Shows the number of git authors who contribute to a project
     grouped by their organization domain"""
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='git') \
         .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
+        .query(Q('terms', origin=urls)) \
         .query(~Q('match', files=0)) \
         .extra(size=0)
     s.aggs.bucket('domains', 'terms', field='author_domain', size=10, order={'authors': 'desc'}) \
@@ -130,13 +131,14 @@ def organizational_diversity_authors(elastic, from_date, to_date):
     return json.dumps(json_item(plot))
 
 
-def organizational_diversity_commits(elastic, from_date, to_date):
+def organizational_diversity_commits(elastic, urls, from_date, to_date):
     """Shows the number of git commits of a project
     grouped by the organization domain of their authors"""
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='git') \
         .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
+        .query(Q('terms', origin=urls)) \
         .query(~Q('match', files=0)) \
         .extra(size=0)
     s.aggs.bucket('domains', 'terms', field='author_domain', size=10, order={'commits': 'desc'}) \

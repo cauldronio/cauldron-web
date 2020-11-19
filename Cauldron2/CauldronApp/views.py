@@ -349,6 +349,21 @@ def request_show_project(request, project_id):
     context['has_gitlab'] = GitLabRepository.objects.filter(projects=project).exists()
     context['has_meetup'] = MeetupRepository.objects.filter(projects=project).exists()
 
+    context['repos'] = []
+    for repo in repositories:
+        if repo.backend == Repository.GIT:
+            context['repos'].append({'backend':'fa-git-square',
+                                     'url': repo.git.datasource_url})
+        elif repo.backend == Repository.GITHUB:
+            context['repos'].append({'backend':'fa-github',
+                                     'url': repo.github.datasource_url})
+        elif repo.backend == Repository.GITLAB:
+            context['repos'].append({'backend':'fa-gitlab',
+                                     'url': repo.gitlab.datasource_url})
+        elif repo.backend == Repository.MEETUP:
+            context['repos'].append({'backend':'fa-meetup',
+                                     'url': repo.meetup.datasource_url})
+
     context['editable'] = ((request.user.is_authenticated and request.user == project.creator) or
                            request.user.is_superuser)
 
@@ -706,9 +721,15 @@ def request_compare_projects(request):
         except ValueError:
             to_date = datetime.datetime.now()
 
+        urls = []
+        for project in projects:
+            urls.extend(project.url_list())
+
+        logger.error(urls)
+
         if projects.count() > 0:
-            context['metrics'] = get_compare_metrics(projects, from_date, to_date)
-            context['charts'] = get_compare_charts(projects, from_date, to_date)
+            context['metrics'] = get_compare_metrics(projects, urls, from_date, to_date)
+            context['charts'] = get_compare_charts(projects, urls, from_date, to_date)
 
     return render(request, 'cauldronapp/compare/projects_compare.html', context=context)
 
@@ -730,13 +751,18 @@ def request_project_metrics(request, project_id):
         from_date = datetime.datetime.strptime(from_str, '%Y-%m-%d')
     except ValueError:
         from_date = datetime.datetime.now() - relativedelta(years=1)
+
     try:
         to_str = request.GET.get('to', '')
         to_date = datetime.datetime.strptime(to_str, '%Y-%m-%d')
     except ValueError:
         to_date = datetime.datetime.now()
 
-    return JsonResponse(metrics.get_category_metrics(project, category, from_date, to_date))
+    urls = request.GET.getlist('repo_url[]')
+    if not urls:
+        urls = project.url_list()
+
+    return JsonResponse(metrics.get_category_metrics(project, category, urls, from_date, to_date))
 
 
 def request_delete_project(request, project_id):

@@ -22,13 +22,14 @@ from ..utils import configure_figure, configure_heatmap, get_interval, weekday_v
 logger = logging.getLogger(__name__)
 
 
-def issues_opened(elastic, from_date, to_date):
+def issues_opened(elastic, urls, from_date, to_date):
     """Get number of created issues in GitHub and GitLab in a period of time"""
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all')\
         .filter('range', created_at={'gte': from_date_es, "lte": to_date_es}) \
-        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1))
+        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .query(Q('terms', origin=urls))
 
     try:
         response = s.count()
@@ -42,14 +43,15 @@ def issues_opened(elastic, from_date, to_date):
         return 'X'
 
 
-def issues_closed(elastic, from_date, to_date):
+def issues_closed(elastic, urls, from_date, to_date):
     """Get number of closed issues in GitHub and GitLab in period of time"""
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all')\
         .filter('range', closed_at={'gte': from_date_es, "lte": to_date_es})\
         .filter('match', state='closed')\
-        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1))
+        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .query(Q('terms', origin=urls))
 
     try:
         response = s.count()
@@ -63,10 +65,11 @@ def issues_closed(elastic, from_date, to_date):
         return 'X'
 
 
-def issues_open_on(elastic, date):
+def issues_open_on(elastic, urls, date):
     """Get the number of issues that were open on a specific day"""
     s = Search(using=elastic, index='all') \
-        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1))\
+        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .query(Q('terms', origin=urls)) \
         .query(Q('range', created_at={'lte': date}) &
                (Q('range', closed_at={'gte': date}) | Q('terms', state=['open', 'opened'])))
 
@@ -272,13 +275,14 @@ def issues_closed_bokeh_compare(elastics, from_date, to_date):
     return json.dumps(json_item(plot))
 
 
-def issues_open_closed_bokeh(elastic, from_date, to_date):
+def issues_open_closed_bokeh(elastic, urls, from_date, to_date):
     """Visualization of opened and closed issues in the specified time rage"""
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
     interval_name, interval_elastic, bar_width = get_interval(from_date, to_date)
     s = Search(using=elastic, index='all') \
-        .query('bool', filter=(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)))\
+        .query('bool', filter=(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1))) \
+        .query(Q('terms', origin=urls)) \
         .extra(size=0)
     s.aggs.bucket('range_open', 'filter', Q('range', created_at={'gte': from_date_es, "lte": to_date}))\
         .bucket('open', 'date_histogram', field='created_at', calendar_interval=interval_elastic)
@@ -429,14 +433,15 @@ def issues_open_age_opened_bokeh(elastic):
     return json.dumps(json_item(plot))
 
 
-def issues_open_weekday_bokeh(elastic, from_date, to_date):
+def issues_open_weekday_bokeh(elastic, urls, from_date, to_date):
     """Get issues open per week day in the specified range of time"""
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all') \
         .filter('range', created_at={'gte': from_date_es, "lte": to_date_es}) \
+        .query(Q('terms', origin=urls)) \
         .query('bool', filter=(Q('match', pull_request=False) |
-                               Q('match', is_gitlab_issue=1)))\
+                               Q('match', is_gitlab_issue=1))) \
         .extra(size=0)
     s.aggs.bucket('issue_weekday', 'terms', script="doc['created_at'].value.dayOfWeek", size=7)
 
@@ -469,12 +474,13 @@ def issues_open_weekday_bokeh(elastic, from_date, to_date):
     return json.dumps(json_item(plot))
 
 
-def issues_closed_weekday_bokeh(elastic, from_date, to_date):
+def issues_closed_weekday_bokeh(elastic, urls, from_date, to_date):
     """Get issues closed per week day in the specified range of time"""
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all') \
         .filter('range', closed_at={'gte': from_date_es, "lte": to_date_es}) \
+        .query(Q('terms', origin=urls)) \
         .query('bool', filter=((Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) &
                                Q('exists', field='closed_at'))) \
         .extra(size=0)
@@ -509,7 +515,7 @@ def issues_closed_weekday_bokeh(elastic, from_date, to_date):
     return json.dumps(json_item(plot))
 
 
-def issues_opened_heatmap_bokeh(elastic, from_date, to_date):
+def issues_opened_heatmap_bokeh(elastic, urls, from_date, to_date):
     """Get issues opened per week day and per hour of the day in the
     specified range of time"""
     from_date_es = from_date.strftime("%Y-%m-%d")
@@ -517,6 +523,7 @@ def issues_opened_heatmap_bokeh(elastic, from_date, to_date):
 
     s = Search(using=elastic, index='all') \
         .filter('range', created_at={'gte': from_date_es, "lte": to_date_es}) \
+        .query(Q('terms', origin=urls)) \
         .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
         .extra(size=0)
     s.aggs.bucket('weekdays', 'terms', script="doc['created_at'].value.dayOfWeek", size=7, order={'_term': 'asc'}) \
@@ -577,7 +584,7 @@ def issues_opened_heatmap_bokeh(elastic, from_date, to_date):
     return json.dumps(json_item(plot))
 
 
-def issues_closed_heatmap_bokeh(elastic, from_date, to_date):
+def issues_closed_heatmap_bokeh(elastic, urls, from_date, to_date):
     """Get issues closed per week day and per hour of the day in the
     specified range of time"""
     from_date_es = from_date.strftime("%Y-%m-%d")
@@ -585,6 +592,7 @@ def issues_closed_heatmap_bokeh(elastic, from_date, to_date):
 
     s = Search(using=elastic, index='all') \
         .filter('range', closed_at={'gte': from_date_es, "lte": to_date_es}) \
+        .query(Q('terms', origin=urls)) \
         .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
         .extra(size=0)
     s.aggs.bucket('weekdays', 'terms', script="doc['closed_at'].value.dayOfWeek", size=7, order={'_term': 'asc'}) \
