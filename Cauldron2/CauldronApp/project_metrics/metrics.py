@@ -141,6 +141,12 @@ def get_compare_charts(projects, from_date, to_date):
     charts = {
         'git_commits_bokeh_compare': activity_commits.git_commits_bokeh_compare(elastics, from_date, to_date),
         'git_authors_bokeh_compare': community_commits.git_authors_bokeh_compare(elastics, from_date, to_date),
+        'issues_created_bokeh_compare': activity_issues.issues_created_bokeh_compare(elastics, from_date, to_date),
+        'issues_closed_bokeh_compare': activity_issues.issues_closed_bokeh_compare(elastics, from_date, to_date),
+        'issue_submitters_bokeh_compare': community_issues.issue_submitters_bokeh_compare(elastics, from_date, to_date),
+        'reviews_created_bokeh_compare': activity_reviews.reviews_created_bokeh_compare(elastics, from_date, to_date),
+        'reviews_closed_bokeh_compare': activity_reviews.reviews_closed_bokeh_compare(elastics, from_date, to_date),
+        'review_submitters_bokeh_compare': community_reviews.review_submitters_bokeh_compare(elastics, from_date, to_date),
     }
 
     return charts

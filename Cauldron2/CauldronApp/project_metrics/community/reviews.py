@@ -3,15 +3,18 @@ import json
 
 import pandas
 from datetime import datetime, timedelta
+from functools import reduce
 
 from elasticsearch import ElasticsearchException
 from elasticsearch_dsl import Search, Q
 
 from bokeh.embed import json_item
 from bokeh.models import ColumnDataSource, tools, Range1d
-from bokeh.palettes import Blues, Greens, Greys, Reds
+from bokeh.palettes import Blues, Greens, Greys, Reds, Category10
 from bokeh.plotting import figure
 from bokeh.transform import dodge
+
+from CauldronApp.models import Project
 
 from .common import get_seniority, is_still_active
 from ..utils import configure_figure, get_interval
@@ -69,24 +72,111 @@ def authors_entering(elastic, from_date, to_date):
         return 'X'
 
 
-def authors_active_bokeh(elastic, from_date, to_date):
-    """Get evolution of Authors in PRs and MRs"""
-    from_date_es = from_date.strftime("%Y-%m-%d")
-    to_date_es = to_date.strftime("%Y-%m-%d")
-    interval_name, interval_elastic, bar_width = get_interval(from_date, to_date)
+def review_submitters_buckets(elastic, from_date, to_date, interval):
+    """Makes a query to ES to get the number of review submitters grouped by date"""
     s = Search(using=elastic, index='all') \
-        .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
+        .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) \
         .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
         .extra(size=0)
+    s.aggs.bucket("dates", 'date_histogram', field='grimoire_creation_date', calendar_interval=interval) \
+          .bucket('authors', 'cardinality', field='author_uuid')
 
-    s.aggs.bucket("bucket1", 'date_histogram', field='grimoire_creation_date', calendar_interval=interval_elastic)\
-        .bucket('authors', 'cardinality', field='author_uuid')
     try:
         response = s.execute()
-        authors_buckets = response.aggregations.bucket1.buckets
+        dates_buckets = response.aggregations.dates.buckets
     except ElasticsearchException as e:
         logger.warning(e)
-        authors_buckets = []
+        dates_buckets = []
+
+    return dates_buckets
+
+
+def review_submitters_bokeh_compare(elastics, from_date, to_date):
+    """Generates a projects comparison about review submitters along the time"""
+    interval_name, interval_elastic, _ = get_interval(from_date, to_date)
+
+    authors_buckets = dict()
+    for project_id in elastics:
+        elastic = elastics[project_id]
+        authors_buckets[project_id] = review_submitters_buckets(elastic, from_date, to_date, interval_elastic)
+
+    data = []
+    for project_id in authors_buckets:
+        authors_bucket = authors_buckets[project_id]
+
+        # Create the data structure
+        timestamps, authors = [], []
+        for item in authors_bucket:
+            timestamps.append(item.key)
+            authors.append(item.authors.value)
+
+        data.append(pandas.DataFrame(list(zip(timestamps, authors)),
+                    columns =['timestamps', f'authors_{project_id}']))
+
+    # Merge the dataframes in case they have different lengths
+    data = reduce(lambda df1,df2: pandas.merge(df1,df2,on='timestamps',how='outer',sort=True).fillna(0), data)
+
+    # Create the Bokeh visualization
+    plot = figure(x_axis_type="datetime",
+                  x_axis_label='Time',
+                  y_axis_label='# Authors',
+                  height=300,
+                  sizing_mode="stretch_width",
+                  tools='')
+    plot.title.text = '# Review submitters over time'
+    configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
+                           '-/blob/master/guides/metrics/community/authors-reviews.md')
+    if not data.empty:
+        plot.x_range = Range1d(from_date - timedelta(days=1), to_date + timedelta(days=1))
+
+    source = ColumnDataSource(data=data)
+
+    names = []
+    tooltips = [(interval_name, '@timestamps{%F}')]
+    for idx, project_id in enumerate(authors_buckets):
+        try:
+            project = Project.objects.get(pk=project_id)
+            project_name = project.name
+        except Project.DoesNotExist:
+            project_name = "Unknown"
+
+        if idx == 0:
+            names.append(f'authors_{project_id}')
+
+        tooltips.append((f'submitters {project_name}', f'@authors_{project_id}'))
+
+        plot.circle(x='timestamps', y=f'authors_{project_id}',
+                    name=f'authors_{project_id}',
+                    color=Category10[5][idx],
+                    size=8,
+                    source=source)
+
+        plot.line(x='timestamps', y=f'authors_{project_id}',
+                  line_width=4,
+                  line_color=Category10[5][idx],
+                  legend_label=project_name,
+                  source=source)
+
+    plot.add_tools(tools.HoverTool(
+        names=names,
+        tooltips=tooltips,
+        formatters={
+            '@timestamps': 'datetime'
+        },
+        mode='vline',
+        toggleable=False
+    ))
+
+    plot.legend.location = "top_left"
+
+    return json.dumps(json_item(plot))
+
+
+def authors_active_bokeh(elastic, from_date, to_date):
+    """Generates a visualization showing the review submitters along the time"""
+    interval_name, interval_elastic, bar_width = get_interval(from_date, to_date)
+
+    authors_buckets = review_submitters_buckets(elastic, from_date, to_date, interval_elastic)
 
     # Create the Bokeh visualization
     timestamp, authors = [], []

@@ -131,8 +131,15 @@
                         </tr>
                     </tbody>
                 </table>
-                <div id="chart-commits-compare"></div>
-                <div id="chart-authors-compare"></div>
+                <div id="chart-commits-compare-overview"></div>
+                <div class="row">
+                  <div class="col-md">
+                    <div id="chart-issues-created-compare-overview"></div>
+                  </div>
+                  <div class="col-md">
+                    <div id="chart-reviews-created-compare-overview"></div>
+                  </div>
+                </div>
             </div>
             <!-- End Overview -->
             <!-- Start Git Activity -->
@@ -203,6 +210,7 @@
                         </tr>
                     </tbody>
                 </table>
+                <div id="chart-commits-compare"></div>
             </div>
             <!-- End Git Activity -->
             <!-- Start Issues Activity -->
@@ -273,6 +281,8 @@
                         </tr>
                     </tbody>
                 </table>
+                <div id="chart-issues-created-compare"></div>
+                <div id="chart-issues-closed-compare"></div>
             </div>
             <!-- End Issues Activity -->
             <!-- Start Reviews Activity -->
@@ -343,6 +353,8 @@
                         </tr>
                     </tbody>
                 </table>
+                <div id="chart-reviews-created-compare"></div>
+                <div id="chart-reviews-closed-compare"></div>
             </div>
             <!-- End Reviews Activity-->
             <!-- Start Community -->
@@ -395,6 +407,9 @@
                         </tr>
                     </tbody>
                 </table>
+                <div id="chart-git-authors-compare"></div>
+                <div id="chart-issue-submitters-compare"></div>
+                <div id="chart-review-submitters-compare"></div>
             </div>
             <!-- End Community -->
         </div>
@@ -407,8 +422,8 @@
 
 {% block javascript %}
 <script src="https://cdn.bokeh.org/bokeh/release/bokeh-2.2.1.min.js" crossorigin="anonymous"></script>
-<script src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-2.2.1.min.js" crossorigin="anonymous"> </script>
-<script src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-2.2.1.min.js" crossorigin="anonymous"> </script>
+<script src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-2.2.1.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-2.2.1.min.js" crossorigin="anonymous"></script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.25.3/moment.min.js" integrity="sha256-C66CaAImteEKZPYvgng9j10J/45e9sAuZyfPYCwp4gE=" crossorigin="anonymous"></script>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
@@ -417,8 +432,22 @@
 <script>
 document.addEventListener('DOMContentLoaded', function(event) {
     var graphs = {
+        // Overview
+        "chart-commits-compare-overview": {{ charts.git_commits_bokeh_compare | safe }},
+        "chart-issues-created-compare-overview": {{ charts.issues_created_bokeh_compare | safe }},
+        "chart-reviews-created-compare-overview": {{ charts.reviews_created_bokeh_compare | safe }},
+        // Commits Activity
         "chart-commits-compare": {{ charts.git_commits_bokeh_compare | safe }},
-        "chart-authors-compare": {{ charts.git_authors_bokeh_compare | safe }},
+        // Issues Activity
+        "chart-issues-created-compare": {{ charts.issues_created_bokeh_compare | safe }},
+        "chart-issues-closed-compare": {{ charts.issues_closed_bokeh_compare | safe }},
+        // PRs/MRs Activity
+        "chart-reviews-created-compare": {{ charts.reviews_created_bokeh_compare | safe }},
+        "chart-reviews-closed-compare": {{ charts.reviews_closed_bokeh_compare | safe }},
+        // Community
+        "chart-git-authors-compare": {{ charts.git_authors_bokeh_compare | safe }},
+        "chart-issue-submitters-compare": {{ charts.issue_submitters_bokeh_compare | safe }},
+        "chart-review-submitters-compare": {{ charts.review_submitters_bokeh_compare | safe }},
     }
 
     for (var k in graphs) {

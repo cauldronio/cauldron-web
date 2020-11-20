@@ -9,13 +9,15 @@ from functools import reduce
 from bokeh.embed import json_item
 from bokeh.models import ColumnDataSource, tools, Range1d
 from bokeh.models import BasicTicker, ColorBar, LinearColorMapper, PrintfTickFormatter
-from bokeh.palettes import Blues
+from bokeh.palettes import Blues, Category10
 from bokeh.plotting import figure
+
+from CauldronApp.models import Project
 
 from elasticsearch import ElasticsearchException
 from elasticsearch_dsl import Search, Q
 
-from ..utils import configure_figure, configure_heatmap, weekday_vbar_figure, WEEKDAY, get_interval
+from ..utils import configure_figure, configure_heatmap, get_interval, weekday_vbar_figure, WEEKDAY
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +79,196 @@ def reviews_open_on(elastic, date):
         return response
     else:
         return 'X'
+
+
+def reviews_created_bokeh_compare(elastics, from_date, to_date):
+    """Generates a projects comparison about reviews created"""
+    interval_name, interval_elastic, _ = get_interval(from_date, to_date)
+
+    dates_buckets = dict()
+    for project_id in elastics:
+        elastic = elastics[project_id]
+
+        s = Search(using=elastic, index='all') \
+            .filter('range', created_at={'gte': from_date, 'lte': to_date}) \
+            .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
+            .extra(size=0)
+        s.aggs.bucket('dates', 'date_histogram', field='created_at', calendar_interval=interval_elastic)
+
+        try:
+            response = s.execute()
+            buckets = response.aggregations.dates.buckets
+        except ElasticsearchException as e:
+            logger.warning(e)
+            buckets = []
+
+        dates_buckets[project_id] = buckets
+
+    data = []
+    for project_id in dates_buckets:
+        dates_bucket = dates_buckets[project_id]
+
+        # Create the data structure
+        reviews, timestamps = [], []
+        for item in dates_bucket:
+            timestamps.append(item.key)
+            reviews.append(item.doc_count)
+
+        data.append(pandas.DataFrame(list(zip(timestamps, reviews)),
+                    columns =['timestamps', f'reviews_{project_id}']))
+
+    # Merge the dataframes in case they have different lengths
+    data = reduce(lambda df1,df2: pandas.merge(df1,df2,on='timestamps',how='outer',sort=True).fillna(0), data)
+
+    # Create the Bokeh visualization
+    plot = figure(x_axis_type="datetime",
+                  x_axis_label='Time',
+                  y_axis_label='# Reviews',
+                  height=300,
+                  sizing_mode="stretch_width",
+                  tools='')
+    plot.title.text = '# Reviews created over time'
+    configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
+                           '-/blob/master/guides/metrics/activity/reviews-created-chart.md')
+    if not data.empty:
+        plot.x_range = Range1d(from_date - timedelta(days=1), to_date + timedelta(days=1))
+
+    source = ColumnDataSource(data=data)
+
+    names = []
+    tooltips = [(interval_name, '@timestamps{%F}')]
+    for idx, project_id in enumerate(dates_buckets):
+        try:
+            project = Project.objects.get(pk=project_id)
+            project_name = project.name
+        except Project.DoesNotExist:
+            project_name = "Unknown"
+
+        if idx == 0:
+            names.append(f'reviews_{project_id}')
+
+        tooltips.append((f'reviews created ({project_name})', f'@reviews_{project_id}'))
+
+        plot.circle(x='timestamps', y=f'reviews_{project_id}',
+                    name=f'reviews_{project_id}',
+                    color=Category10[5][idx],
+                    size=8,
+                    source=source)
+
+        plot.line(x='timestamps', y=f'reviews_{project_id}',
+                  line_width=4,
+                  line_color=Category10[5][idx],
+                  legend_label=project_name,
+                  source=source)
+
+    plot.add_tools(tools.HoverTool(
+        names=names,
+        tooltips=tooltips,
+        formatters={
+            '@timestamps': 'datetime'
+        },
+        mode='vline',
+        toggleable=False
+    ))
+
+    plot.legend.location = "top_left"
+
+    return json.dumps(json_item(plot))
+
+
+def reviews_closed_bokeh_compare(elastics, from_date, to_date):
+    """Generates a projects comparison about reviews closed"""
+    interval_name, interval_elastic, _ = get_interval(from_date, to_date)
+
+    dates_buckets = dict()
+    for project_id in elastics:
+        elastic = elastics[project_id]
+
+        s = Search(using=elastic, index='all') \
+            .filter('range', closed_at={'gte': from_date, 'lte': to_date}) \
+            .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
+            .extra(size=0)
+        s.aggs.bucket('dates', 'date_histogram', field='closed_at', calendar_interval=interval_elastic)
+
+        try:
+            response = s.execute()
+            buckets = response.aggregations.dates.buckets
+        except ElasticsearchException as e:
+            logger.warning(e)
+            buckets = []
+
+        dates_buckets[project_id] = buckets
+
+    data = []
+    for project_id in dates_buckets:
+        dates_bucket = dates_buckets[project_id]
+
+        # Create the data structure
+        reviews, timestamps = [], []
+        for item in dates_bucket:
+            timestamps.append(item.key)
+            reviews.append(item.doc_count)
+
+        data.append(pandas.DataFrame(list(zip(timestamps, reviews)),
+                    columns =['timestamps', f'reviews_{project_id}']))
+
+    # Merge the dataframes in case they have different lengths
+    data = reduce(lambda df1,df2: pandas.merge(df1,df2,on='timestamps',how='outer',sort=True).fillna(0), data)
+
+    # Create the Bokeh visualization
+    plot = figure(x_axis_type="datetime",
+                  x_axis_label='Time',
+                  y_axis_label='# Reviews',
+                  height=300,
+                  sizing_mode="stretch_width",
+                  tools='')
+    plot.title.text = '# Reviews closed over time'
+    configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
+                           '-/blob/master/guides/metrics/activity/reviews-closed-chart.md')
+    if not data.empty:
+        plot.x_range = Range1d(from_date - timedelta(days=1), to_date + timedelta(days=1))
+
+    source = ColumnDataSource(data=data)
+
+    names = []
+    tooltips = [(interval_name, '@timestamps{%F}')]
+    for idx, project_id in enumerate(dates_buckets):
+        try:
+            project = Project.objects.get(pk=project_id)
+            project_name = project.name
+        except Project.DoesNotExist:
+            project_name = "Unknown"
+
+        if idx == 0:
+            names.append(f'reviews_{project_id}')
+
+        tooltips.append((f'reviews closed ({project_name})', f'@reviews_{project_id}'))
+
+        plot.circle(x='timestamps', y=f'reviews_{project_id}',
+                    name=f'reviews_{project_id}',
+                    color=Category10[5][idx],
+                    size=8,
+                    source=source)
+
+        plot.line(x='timestamps', y=f'reviews_{project_id}',
+                  line_width=4,
+                  line_color=Category10[5][idx],
+                  legend_label=project_name,
+                  source=source)
+
+    plot.add_tools(tools.HoverTool(
+        names=names,
+        tooltips=tooltips,
+        formatters={
+            '@timestamps': 'datetime'
+        },
+        mode='vline',
+        toggleable=False
+    ))
+
+    plot.legend.location = "top_left"
+
+    return json.dumps(json_item(plot))
 
 
 def reviews_open_closed_bokeh(elastic, from_date, to_date):
