@@ -18,6 +18,11 @@ $(function() {
     $('select[name=repo_url]').val(urls);
     $('.selectpicker').selectpicker('refresh');
 
+    $('select').on('hidden.bs.select', function() {
+        $('select option:selected').prependTo('select');
+        $(this).selectpicker('refresh');
+    });
+
     updateSelectForm();
 
     //"html_id": "key from Django"
@@ -194,6 +199,9 @@ $(function() {
         $('#repository-select-from-date').val(start.format('YYYY-MM-DD'));
         $('#repository-select-to-date').val(end.format('YYYY-MM-DD'));
         $('#repository-select-tab').val(tab);
+
+        $('select option:selected').prependTo('select');
+        $('select').selectpicker('refresh');
     }
 
 
