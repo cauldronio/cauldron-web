@@ -1,9 +1,8 @@
 from django.shortcuts import render
 from django.http import HttpResponseRedirect, JsonResponse
-from django.contrib.auth import login, logout
+from django.contrib.auth import login, logout, get_user_model
 from django.urls import reverse
 from django.db import transaction
-from django.db.models import Q
 from django.views.decorators.http import require_http_methods
 
 from CauldronApp.pages import Pages
@@ -11,33 +10,31 @@ from CauldronApp import kibana_objects, utils
 from CauldronApp.project_metrics import metrics
 from CauldronApp import datasources
 
-from CauldronApp.models import Project
-
-from poolsched.models import GHToken, GLToken, MeetupToken, Intention
+from cauldron_apps.poolsched_github.models import GHToken
+from cauldron_apps.poolsched_gitlab.models import GLToken
+from cauldron_apps.poolsched_meetup.models import MeetupToken
+from poolsched.models import Intention
+from poolsched.models.jobs import Log
 
 import logging
+import datetime
 from random import choice
 from string import ascii_lowercase, digits
 from urllib.parse import urlencode
-import datetime
 from dateutil.relativedelta import relativedelta
-from django.contrib.auth import get_user_model
 
 from Cauldron2.settings import ES_IN_HOST, ES_IN_PORT, ES_IN_PROTO, ES_ADMIN_PASSWORD, \
                                KIB_IN_HOST, KIB_IN_PORT, KIB_IN_PROTO, KIB_OUT_URL, \
                                KIB_PATH
 from Cauldron2 import settings
 
-from CauldronApp.models import GithubUser, GitlabUser, MeetupUser, Repository, \
-                               AnonymousUser, UserWorkspace
-
-from CauldronApp.models.repository import GitLabRepository, GitRepository, GitHubRepository, MeetupRepository
+from CauldronApp.models import Project, GithubUser, GitlabUser, MeetupUser, AnonymousUser, UserWorkspace, ProjectRole
+from CauldronApp.models import Repository, GitLabRepository, GitRepository, GitHubRepository, MeetupRepository
 
 from CauldronApp.opendistro_utils import OpendistroApi, BACKEND_INDICES
 from CauldronApp.oauth.github import GitHubOAuth
 from CauldronApp.oauth.gitlab import GitLabOAuth
 from CauldronApp.oauth.meetup import MeetupOAuth
-from poolsched.models.jobs import Log
 
 from .project_metrics.metrics import get_compare_metrics, get_compare_charts
 
@@ -590,8 +587,9 @@ def request_remove_from_project(request, project_id):
         return JsonResponse({'status': 'error', 'message': 'We need a url to delete'},
                             status=400)
 
-    repo = Repository.objects.filter(id=repo_id).first()
-    if not repo:
+    try:
+        repo = Repository.objects.get_subclass(id=repo_id)
+    except Repository.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': 'Repository not found'},
                             status=404)
     repo.projects.remove(project)
@@ -644,10 +642,23 @@ def request_new_project(request):
     project = Project.objects.create(name='My project', creator=request.user)
     project.name = f"Project {project.id}"
     project.save()
-    project.create_elastic_role()
+    create_es_role(project)
 
     # TODO: If something is wrong delete the project
     return HttpResponseRedirect(reverse('show_project', kwargs={'project_id': project.id}))
+
+
+def create_es_role(project):
+    if hasattr(project, 'projectrole'):
+        return
+    role = f"role_project_{project.id}"
+    backend_role = f"br_project_{project.id}"
+
+    od_api = OpendistroApi(ES_IN_URL, settings.ES_ADMIN_PASSWORD)
+    od_api.create_role(role)
+    od_api.create_mapping(role, backend_roles=[backend_role])
+
+    ProjectRole.objects.create(role=role, backend_role=backend_role, project=project)
 
 
 def request_refresh_project(request, project_id):
@@ -1077,143 +1088,6 @@ def status_info():
     context['repos_meetup_count'] = Repository.objects.exclude(dashboards=None).filter(backend="meetup").count()
 
     return context
-
-
-def admin_page(request):
-    """
-    View for the administration page to show an overview of each dashboard
-    :param request:
-    :return:
-    """
-    context = create_context(request)
-
-    if not request.user.is_authenticated or not request.user.is_superuser:
-        context['title'] = "User Not Allowed"
-        context['description'] = "Only Admin users allowed"
-        return render(request, 'cauldronapp/error.html', status=403,
-                      context=context)
-    if request.method != 'GET':
-        context['title'] = "Method Not Allowed"
-        context['description'] = "Only GET methods allowed"
-        return render(request, 'cauldronapp/error.html', status=405,
-                      context=context)
-
-    dashboards = Dashboard.objects.all()
-    if dashboards:
-        search = request.GET.get('search')
-        if search is not None:
-            query = Q(creator__first_name__icontains=search) | Q(name__icontains=search)
-            dashboards = dashboards.filter(query)
-
-        sort_by = request.GET.get('sort_by')
-        if sort_by is not None and sort_by in Dashboard.SORT_CHOICES:
-            reverse = False
-            if sort_by[0] == '-':
-                reverse = True
-                sort_by = sort_by[1:]
-
-            if sort_by == 'name':
-                dashboards = sorted(dashboards, key=lambda d: d.name, reverse=reverse)
-            elif sort_by == 'owner':
-                dashboards = sorted(dashboards, key=lambda d: d.creator.first_name, reverse=reverse)
-            elif sort_by == 'created':
-                dashboards = sorted(dashboards, key=lambda d: d.created, reverse=reverse)
-            elif sort_by == 'modified':
-                dashboards = sorted(dashboards, key=lambda d: d.modified, reverse=reverse)
-            elif sort_by == 'total_tasks':
-                dashboards = sorted(dashboards, key=lambda d: d.tasks_count, reverse=reverse)
-            elif sort_by == 'completed_tasks':
-                dashboards = sorted(dashboards, key=lambda d: d.completed_tasks_count, reverse=reverse)
-            elif sort_by == 'running_tasks':
-                dashboards = sorted(dashboards, key=lambda d: d.running_tasks_count, reverse=reverse)
-            elif sort_by == 'pending_tasks':
-                dashboards = sorted(dashboards, key=lambda d: d.pending_tasks_count, reverse=reverse)
-            elif sort_by == 'error_tasks':
-                dashboards = sorted(dashboards, key=lambda d: d.error_tasks_count, reverse=reverse)
-            elif sort_by == 'total_repositories':
-                dashboards = sorted(dashboards, key=lambda d: d.repos_count, reverse=reverse)
-            elif sort_by == 'git':
-                dashboards = sorted(dashboards, key=lambda d: d.repos_git_count, reverse=reverse)
-            elif sort_by == 'github':
-                dashboards = sorted(dashboards, key=lambda d: d.repos_github_count, reverse=reverse)
-            elif sort_by == 'gitlab':
-                dashboards = sorted(dashboards, key=lambda d: d.repos_gitlab_count, reverse=reverse)
-            elif sort_by == 'meetup':
-                dashboards = sorted(dashboards, key=lambda d: d.repos_meetup_count, reverse=reverse)
-
-        p = Pages(dashboards, 10)
-        page_number = request.GET.get('page', 1)
-        page_obj = p.pages.get_page(page_number)
-        context['page_obj'] = page_obj
-        context['pages_to_show'] = p.pages_to_show(page_obj.number)
-        context['dashboards'] = page_obj.object_list
-
-    context.update(status_info())
-
-    return render(request, 'cauldronapp/admin/admin.html', context=context)
-
-
-def admin_page_users(request):
-    """
-    View for the administration page to show an overview of each user
-    :param request:
-    :return:
-    """
-    context = create_context(request)
-
-    if not request.user.is_authenticated or not request.user.is_superuser:
-        context['title'] = "User Not Allowed"
-        context['description'] = "Only Admin users allowed"
-        return render(request, 'cauldronapp/error.html', status=403,
-                      context=context)
-    if request.method != 'GET':
-        context['title'] = "Method Not Allowed"
-        context['description'] = "Only GET methods allowed"
-        return render(request, 'cauldronapp/error.html', status=405,
-                      context=context)
-
-    users = User.objects.all()
-
-    search = request.GET.get('search')
-    if search is not None:
-        users = users.filter(first_name__icontains=search)
-
-    sort_by = request.GET.get('sort_by')
-    if sort_by is not None:
-        reverse = False
-        if sort_by[0] == '-':
-            reverse = True
-            sort_by = sort_by[1:]
-
-        if sort_by == 'name':
-            users = sorted(users, key=lambda u: u.first_name, reverse=reverse)
-        elif sort_by == 'joined':
-            users = sorted(users, key=lambda u: u.date_joined, reverse=reverse)
-        elif sort_by == 'dashboards':
-            users = sorted(users, key=lambda u: u.dashboard_set.count(), reverse=reverse)
-        elif sort_by == 'admin':
-            users = sorted(users, key=lambda u: u.is_superuser, reverse=reverse)
-
-    p = Pages(users, 10)
-    page_number = request.GET.get('page', 1)
-    page_obj = p.pages.get_page(page_number)
-    context['page_obj'] = page_obj
-    context['pages_to_show'] = p.pages_to_show(page_obj.number)
-
-    context['users'] = []
-    for user in page_obj.object_list:
-        user_entry = dict()
-        user_entry['user'] = user
-        user_entry['tokens'] = {
-            'github': Token.objects.filter(backend='github', user=user).first(),
-            'gitlab': Token.objects.filter(backend='gitlab', user=user).first(),
-            'meetup': Token.objects.filter(backend='meetup', user=user).first(),
-        }
-        context['users'].append(user_entry)
-
-    context.update(status_info())
-
-    return render(request, 'cauldronapp/admin/admin-users.html', context=context)
 
 
 def upgrade_user(request):

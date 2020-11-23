@@ -1,5 +1,5 @@
 from django.contrib import admin
-from CauldronApp import models
+from cauldron_apps.cauldron import models
 
 
 # Register your models here.

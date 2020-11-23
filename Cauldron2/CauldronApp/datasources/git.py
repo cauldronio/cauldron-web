@@ -1,5 +1,5 @@
 from CauldronApp.models import GitRepository
-from poolsched import api as sched_api
+from cauldron_apps.poolsched_git.api import analyze_git_repo_obj
 
 
 def analyze_git(project, url):
@@ -8,4 +8,4 @@ def analyze_git(project, url):
     if created:
         repo.link_sched_repo()
     repo.projects.add(project)
-    sched_api.analyze_git_repo_obj(project.creator, repo.repo_sched)
+    analyze_git_repo_obj(project.creator, repo.repo_sched)

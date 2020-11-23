@@ -13,3 +13,4 @@ python-dateutil>=2.8.1,<3
 pandas>=1.0.5,<1.1
 django-model-utils>=4.0
 git+https://gitlab.com/cauldronio/cauldron-pool-scheduler.git
+git+https://gitlab.com/cauldronio/cauldron-common-apps.git

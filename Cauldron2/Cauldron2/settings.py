@@ -47,7 +47,6 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
-    'profile.apps.ProfileConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -56,7 +55,13 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'CauldronApp.apps.CauldronAppConfig',
     'metrics.apps.MetricsConfig',
-    'poolsched.apps.PoolschedConfig',
+    'profile.apps.ProfileConfig',
+    'poolsched',
+    'cauldron_apps.cauldron',
+    'cauldron_apps.poolsched_git',
+    'cauldron_apps.poolsched_github',
+    'cauldron_apps.poolsched_gitlab',
+    'cauldron_apps.poolsched_meetup',
 ]
 
 MIDDLEWARE = [

@@ -5,7 +5,7 @@ import logging
 
 from CauldronApp.models import GitLabRepository
 from CauldronApp.datasources import git
-from poolsched import api as sched_api
+from cauldron_apps.poolsched_gitlab.api import analyze_gl_repo_obj
 
 
 def parse_input_data(data):
@@ -36,7 +36,7 @@ def analyze_gitlab(project, owner, repo):
     if created:
         repo.link_sched_repo()
     repo.projects.add(project)
-    sched_api.analyze_gl_repo_obj(project.creator, repo.repo_sched)
+    analyze_gl_repo_obj(project.creator, repo.repo_sched)
 
 
 def analyze_data(project, data, commits=False, issues=False, forks=False):

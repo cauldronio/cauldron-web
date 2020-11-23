@@ -1,6 +1,8 @@
 from django.shortcuts import render, redirect
 from CauldronApp.views import create_context, delete_user
-from poolsched.models import GHToken, GLToken, MeetupToken
+from cauldron_apps.poolsched_github.models import GHToken
+from cauldron_apps.poolsched_gitlab.models import GLToken
+from cauldron_apps.poolsched_meetup.models import MeetupToken
 from django.contrib.auth.decorators import login_required
 
 from .forms import ProfileEditForm

@@ -1,9 +1,9 @@
 import re
 from github import Github
 
+from cauldron_apps.poolsched_github.api import analyze_gh_repo_obj
 from CauldronApp.models import GitHubRepository
 from CauldronApp.datasources import git
-from poolsched import api as sched_api
 
 
 def parse_input_data(data):
@@ -34,7 +34,7 @@ def analyze_github(project, owner, repo):
     if not repo.repo_sched:
         repo.link_sched_repo()
     repo.projects.add(project)
-    sched_api.analyze_gh_repo_obj(project.creator, repo.repo_sched)
+    analyze_gh_repo_obj(project.creator, repo.repo_sched)
 
 
 def analyze_data(project, data, commits=False, issues=False, forks=False):
@@ -75,6 +75,3 @@ def analyze_data(project, data, commits=False, issues=False, forks=False):
                 'code': 400}
 
     return {'status': 'ok', 'code': 200}
-
-
-

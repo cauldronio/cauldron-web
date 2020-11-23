@@ -1,5 +1,5 @@
 from django import template
-from ..models import Repository
+from cauldron_apps.cauldron.models import Repository
 
 register = template.Library()
 
