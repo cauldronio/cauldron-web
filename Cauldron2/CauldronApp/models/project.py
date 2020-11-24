@@ -83,17 +83,10 @@ class Project(models.Model):
     def url_list(self):
         """Returns a list with the URLs of the repositories within the project"""
         urls = []
-        repos = self.repository_set.all()
 
-        for repo in repos:
-            if repo.backend == Repository.GIT:
-                urls.append(repo.git.datasource_url)
-            elif repo.backend == Repository.GITHUB:
-                urls.append(repo.github.datasource_url)
-            elif repo.backend == Repository.GITLAB:
-                urls.append(repo.gitlab.datasource_url)
-            elif repo.backend == Repository.MEETUP:
-                urls.append(repo.meetup.datasource_url)
+        for repo in self.repository_set.select_subclasses():
+            urls.append(repo.datasource_url)
+        repos = self.repository_set.all()
 
         return urls
 

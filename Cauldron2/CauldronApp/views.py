@@ -725,8 +725,6 @@ def request_compare_projects(request):
         for project in projects:
             urls.extend(project.url_list())
 
-        logger.error(urls)
-
         if projects.count() > 0:
             context['metrics'] = get_compare_metrics(projects, urls, from_date, to_date)
             context['charts'] = get_compare_charts(projects, urls, from_date, to_date)
