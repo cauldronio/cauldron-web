@@ -48,7 +48,7 @@ urlpatterns = [
 
     path('logs/<int:logs_id>', views.request_logs, name='show_logs'),
 
-    # - path('dashboard/<int:dash_id>', views.request_show_project, name="show_dashboard"),
+    path('admin-kibana', views.request_kibana_admin, name='kibana_admin'),
 
     path('projects/info', views.request_projects_info),
 

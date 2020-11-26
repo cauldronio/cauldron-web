@@ -909,6 +909,19 @@ def request_public_kibana(request, project_id):
     return HttpResponseRedirect(url)
 
 
+def request_kibana_admin(request):
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return custom_403(request)
+
+    jwt_key = utils.get_jwt_key('admin', 'admin')
+
+    url = "{}/app/kibana#/discover?jwtToken={}".format(
+        KIB_OUT_URL,
+        jwt_key
+    )
+    return HttpResponseRedirect(url)
+
+
 def request_delete_token(request):
     """Function for deleting a token from a user. It deletes the tasks associate with that token"""
     if request.method != 'POST':

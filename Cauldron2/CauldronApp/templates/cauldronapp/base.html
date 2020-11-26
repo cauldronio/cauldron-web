@@ -145,12 +145,13 @@
 
             {% if request.user.is_superuser %}
             <a class="dropdown-item" href="{% url 'admin:index' %}">Admin page</a>
+            <a class="dropdown-item" target="_blank" href="{% url 'kibana_admin' %}">Kibana admin</a>
             {% if matomo_enabled %}
-            <a class="dropdown-item" href="{{ matomo_url }}">Matomo</a>
+            <a class="dropdown-item" target="_blank" href="{{ matomo_url }}">Matomo</a>
             {% endif %}
             {% endif %}
             {% if request.user.is_superuser and hatstall_url %}
-            <a class="dropdown-item" href="{{ hatstall_url }}">Hatstall</a>
+            <a class="dropdown-item" target="_blank" href="{{ hatstall_url }}">Hatstall</a>
             {% endif %}
             <a class="dropdown-item" href="{% url 'homepage' %}">My projects</a>
             <a class="dropdown-item" href="{% url 'profile:index' %}">Settings</a>
