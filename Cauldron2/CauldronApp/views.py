@@ -915,7 +915,7 @@ def request_kibana_admin(request):
 
     jwt_key = utils.get_jwt_key('admin', 'admin')
 
-    url = "{}/app/kibana#/discover?jwtToken={}".format(
+    url = "{}/app/discover?jwtToken={}".format(
         KIB_OUT_URL,
         jwt_key
     )
