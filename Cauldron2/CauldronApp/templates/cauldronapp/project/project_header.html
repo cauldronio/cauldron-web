@@ -58,13 +58,12 @@
           <!-- End add data source -->
           <!-- Compare -->
           {% if projects_compare %}
-          <div class="ml-3 mb-1 dropdown show">
-            <a class="btn btn-orange dropdown-toggle" href="#" role="button" id="compare-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Compare</a>
-            <div class="dropdown-menu scrollable-menu" aria-labelledby="compare-dropdown">
-              {% for project_compare in projects_compare %}
-              <a class="dropdown-item" href="{% url 'compare_projects' %}?projects={{project.pk}}&projects={{project_compare.pk}}" target="_blank">{{ project_compare.name }}</a>
-              {% endfor %}
-            </div>
+          <div class="ml-3 mb-1">
+              <select class="selectpicker" title="Compare" data-style="btn btn-orange text-light" data-selected-text-format="static" data-live-search="true" data-size="5" data-width="fit" onchange="location = this.value;">
+                  {% for project_compare in projects_compare %}
+                  <option value="{% url 'compare_projects' %}?projects={{project.pk}}&projects={{project_compare.pk}}">{{ project_compare.name }}</option>
+                  {% endfor %}
+              </select>
           </div>
           {% endif %}
           <!-- End compare -->

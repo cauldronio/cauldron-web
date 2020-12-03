@@ -709,7 +709,7 @@ def request_compare_projects(request):
     else:
         projects = Project.objects.none()
 
-    if projects.count() > 2:
+    if projects.count() > 5:
         return custom_403(request)
 
     context['projects'] = projects

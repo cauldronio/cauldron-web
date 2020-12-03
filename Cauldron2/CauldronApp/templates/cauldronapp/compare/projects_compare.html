@@ -28,19 +28,45 @@
     {% if user_projects|length > 0 %}
     <form method="GET" class="form-inline justify-content-between">
         <div class="form-group mb-2">
-            <select name="projects" class="selectpicker mr-2" title="Select a project..." data-style="btn-outline-dark" data-live-search="true" data-size="5" data-showTick="true">
+            <select name="projects" id="project-select-0" class="selectpicker mr-2" title="Select a project..." data-style="btn-outline-dark" data-live-search="true" data-size="5" data-showTick="true" data-width="auto" required>
                 {% for project in user_projects %}
                 <option value="{{ project.id }}">{{ project.name }}</option>
                 {% endfor %}
             </select>
 
-            <span class="font-weight-bold d-block d-md-inline mr-2"><i class="fas fa-times"></i></span>
+            <span class="font-weight-bold mr-2"><i class="fas fa-times"></i></span>
 
-            <select name="projects" class="selectpicker mr-2" title="Select a project..." data-style="btn-outline-dark" data-live-search="true" data-size="5">
+            <select name="projects" id="project-select-1" class="selectpicker mr-2" title="Select a project..." data-style="btn-outline-dark" data-live-search="true" data-size="5" data-showTick="true" data-width="auto" required>
                 {% for project in user_projects %}
                 <option value="{{ project.id }}">{{ project.name }}</option>
                 {% endfor %}
             </select>
+
+            <span id="times-2" class="font-weight-bold mr-2 d-none"><i class="fas fa-times"></i></span>
+
+            <select name="projects" id="project-select-2" class="selectpicker mr-2" title="Select a project..." data-style="btn-outline-dark" data-live-search="true" data-size="5" data-showTick="true" data-width="auto" disabled required>
+                {% for project in user_projects %}
+                <option value="{{ project.id }}">{{ project.name }}</option>
+                {% endfor %}
+            </select>
+
+            <span id="times-3" class="font-weight-bold mr-2 d-none"><i class="fas fa-times"></i></span>
+
+            <select name="projects" id="project-select-3" class="selectpicker mr-2" title="Select a project..." data-style="btn-outline-dark" data-live-search="true" data-size="5" data-showTick="true" data-width="auto" disabled required>
+                {% for project in user_projects %}
+                <option value="{{ project.id }}">{{ project.name }}</option>
+                {% endfor %}
+            </select>
+
+            <span id="times-4" class="font-weight-bold mr-2 d-none"><i class="fas fa-times"></i></span>
+
+            <select name="projects" id="project-select-4" class="selectpicker mr-2" title="Select a project..." data-style="btn-outline-dark" data-live-search="true" data-size="5" data-showTick="true" data-width="auto" disabled required>
+                {% for project in user_projects %}
+                <option value="{{ project.id }}">{{ project.name }}</option>
+                {% endfor %}
+            </select>
+
+            <button type="button" id="addProjectButton" class="btn btn-outline-dark font-weight-bold mr-2"><i class="fas fa-plus"></i></button>
 
             <button type="submit" class="btn btn-outline-dark"><strong>Compare</strong></button>
         </div>
@@ -428,6 +454,28 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.25.3/moment.min.js" integrity="sha256-C66CaAImteEKZPYvgng9j10J/45e9sAuZyfPYCwp4gE=" crossorigin="anonymous"></script>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
 
+<script>
+$(function() {
+    for (i = 2; i < 5; i++) {
+        $('#project-select-'+i).selectpicker('hide');
+    }
+});
+
+$('#addProjectButton').on('click', function(event) {
+    event.preventDefault();
+    var non_disabled = $("select:not(:disabled)").length;
+    if (non_disabled < 5) {
+        $('#times-'+non_disabled).removeClass('d-none');
+        $('#project-select-'+non_disabled).selectpicker('show');
+        $('#project-select-'+non_disabled).attr('disabled',false);
+        $('#project-select-'+non_disabled).selectpicker('refresh');
+    }
+
+    if (non_disabled >= 4) {
+        $('#addProjectButton').addClass('d-none');
+    }
+});
+</script>
 {% if projects|length > 0 %}
 <script>
 document.addEventListener('DOMContentLoaded', function(event) {
@@ -502,6 +550,26 @@ $(function() {
     }, cb);
 
     $('#date-picker-input').val(start.format('YYYY-MM-DD') + ' - ' + end.format('YYYY-MM-DD'));
+});
+</script>
+
+<script>
+$(function() {
+    var projects = getURLParameterList('projects');
+    if (projects.length <= 5) {
+        for (const [index, project] of projects.entries()) {
+            $('#times-'+index).removeClass('d-none');
+            $('#project-select-'+index).selectpicker('show');
+            $('#project-select-'+index).val(project);
+            $('#project-select-'+index).attr('disabled',false);
+            $('#project-select-'+index).selectpicker('refresh');
+        }
+    }
+
+    var non_disabled = $("select:not(:disabled)").length;
+    if (non_disabled >= 5) {
+        $('#addProjectButton').addClass('d-none');
+    }
 });
 </script>
 {% endif %}
