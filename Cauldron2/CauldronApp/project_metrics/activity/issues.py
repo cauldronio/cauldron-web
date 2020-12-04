@@ -4,6 +4,7 @@ from collections import defaultdict
 from datetime import timedelta
 import calendar
 import pandas
+import re
 from functools import reduce
 
 from bokeh.embed import json_item
@@ -650,5 +651,175 @@ def issues_closed_heatmap_bokeh(elastic, urls, from_date, to_date):
                          label_standoff=6, border_line_color=None,
                          location=(0, 0))
     plot.add_layout(color_bar, 'right')
+
+    return json.dumps(json_item(plot))
+
+
+def issues_created_by_repository(elastic, from_date, to_date):
+    """Shows the number of issues created in a project
+    grouped by repository"""
+    s = Search(using=elastic, index='all') \
+        .filter('range', created_at={'gte': from_date, 'lte': to_date}) \
+        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .extra(size=0)
+    s.aggs.bucket('repositories', 'terms', field='repository', size=10)
+
+    try:
+        response = s.execute()
+        repos_buckets = response.aggregations.repositories.buckets
+    except ElasticsearchException as e:
+        logger.warning(e)
+        repos_buckets = []
+
+    data = {
+        'repo': [],
+        'value': []
+    }
+    for repo in repos_buckets:
+        data['repo'].append(repo.key)
+        data['value'].append(repo.doc_count)
+
+    # Request for other repositories
+    repos_ignored = [Q('match_phrase', repository=repo) for repo in data['repo']]
+
+    s = Search(using=elastic, index='all') \
+        .filter('range', created_at={'gte': from_date, 'lte': to_date}) \
+        .filter('exists', field='repository') \
+        .query(Q('bool', must_not=repos_ignored)) \
+        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .extra(size=0)
+
+    try:
+        issues_other_repos = s.count()
+    except ElasticsearchException as e:
+        logger.warning(e)
+        issues_other_repos = 0
+
+    data['repo'].append('other')
+    data['value'].append(issues_other_repos)
+
+    # Remove the 'https://' string
+    data['repo'] = [re.sub(r'^https?:\/\/', '', url) for url in data['repo']]
+
+    # Flip the list
+    data['repo'].reverse()
+    data['value'].reverse()
+
+    plot = figure(y_range=data['repo'],
+                  y_axis_label='Repository',
+                  x_axis_label='# Issues',
+                  height=300,
+                  sizing_mode="stretch_width",
+                  tools='')
+
+    plot.title.text = '# Issues created by repository'
+    configure_figure(plot,
+                     'https://gitlab.com/cauldronio/cauldron/'
+                     '-/blob/master/guides/metrics/activity/issues-created-by-repository.md',
+                     vertical=False)
+
+    source = ColumnDataSource(data=dict(
+        repos=data['repo'],
+        issues=data['value']
+    ))
+
+    plot.hbar(y='repos', right='issues',
+              source=source,
+              height=0.5,
+              color=Blues[3][0])
+
+    plot.add_tools(tools.HoverTool(
+        tooltips=[
+            ('repo', '@repos'),
+            ('issues', '@issues')
+        ],
+        mode='hline',
+        toggleable=False
+    ))
+
+    return json.dumps(json_item(plot))
+
+
+def issues_closed_by_repository(elastic, from_date, to_date):
+    """Shows the number of issues closed in a project
+    grouped by repository"""
+    s = Search(using=elastic, index='all') \
+        .filter('range', closed_at={'gte': from_date, 'lte': to_date}) \
+        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .extra(size=0)
+    s.aggs.bucket('repositories', 'terms', field='repository', size=10)
+
+    try:
+        response = s.execute()
+        repos_buckets = response.aggregations.repositories.buckets
+    except ElasticsearchException as e:
+        logger.warning(e)
+        repos_buckets = []
+
+    data = {
+        'repo': [],
+        'value': []
+    }
+    for repo in repos_buckets:
+        data['repo'].append(repo.key)
+        data['value'].append(repo.doc_count)
+
+    # Request for other repositories
+    repos_ignored = [Q('match_phrase', repository=repo) for repo in data['repo']]
+
+    s = Search(using=elastic, index='all') \
+        .filter('range', closed_at={'gte': from_date, 'lte': to_date}) \
+        .filter('exists', field='repository') \
+        .query(Q('bool', must_not=repos_ignored)) \
+        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .extra(size=0)
+
+    try:
+        issues_other_repos = s.count()
+    except ElasticsearchException as e:
+        logger.warning(e)
+        issues_other_repos = 0
+
+    data['repo'].append('other')
+    data['value'].append(issues_other_repos)
+
+    # Remove the 'https://' string
+    data['repo'] = [re.sub(r'^https?:\/\/', '', url) for url in data['repo']]
+
+    # Flip the list
+    data['repo'].reverse()
+    data['value'].reverse()
+
+    plot = figure(y_range=data['repo'],
+                  y_axis_label='Repository',
+                  x_axis_label='# Issues',
+                  height=300,
+                  sizing_mode="stretch_width",
+                  tools='')
+
+    plot.title.text = '# Issues closed by repository'
+    configure_figure(plot,
+                     'https://gitlab.com/cauldronio/cauldron/'
+                     '-/blob/master/guides/metrics/activity/issues-closed-by-repository.md',
+                     vertical=False)
+
+    source = ColumnDataSource(data=dict(
+        repos=data['repo'],
+        issues=data['value']
+    ))
+
+    plot.hbar(y='repos', right='issues',
+              source=source,
+              height=0.5,
+              color=Blues[3][0])
+
+    plot.add_tools(tools.HoverTool(
+        tooltips=[
+            ('repo', '@repos'),
+            ('issues', '@issues')
+        ],
+        mode='hline',
+        toggleable=False
+    ))
 
     return json.dumps(json_item(plot))

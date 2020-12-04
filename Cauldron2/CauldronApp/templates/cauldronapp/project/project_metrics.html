@@ -296,7 +296,12 @@
           </div>
         </div>
         <div class="row">
-          <div id="chart-commits-heatmap"></div>
+          <div class="col-md-6">
+            <div id="chart-commits-heatmap"></div>
+          </div>
+          <div class="col-md-6">
+            <div id="chart-commits-by-repository"></div>
+          </div>
         </div>
       </div>
       {% endif %}
@@ -359,6 +364,14 @@
             <div id="chart-issues-closed-heatmap"></div>
           </div>
         </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div id="chart-issues-created-by-repository"></div>
+          </div>
+          <div class="col-md-6">
+            <div id="chart-issues-closed-by-repository"></div>
+          </div>
+        </div>
       </div>
       {% endif %}
       <!-- End Issues ACTIVITY -->
@@ -418,6 +431,14 @@
           </div>
           <div class="col-md-6">
             <div id="chart-reviews-closed-heatmap"></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div id="chart-reviews-created-by-repository"></div>
+          </div>
+          <div class="col-md-6">
+            <div id="chart-reviews-closed-by-repository"></div>
           </div>
         </div>
       </div>

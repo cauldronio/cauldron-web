@@ -278,6 +278,7 @@ def activity_git_metrics(elastic, urls, from_date, to_date):
     metrics['commits_hour_day_bokeh'] = activity_commits.git_commits_hour_day_bokeh(elastic, urls, from_date, to_date)
     metrics['commits_weekday_bokeh'] = activity_commits.git_commits_weekday_bokeh(elastic, urls, from_date, to_date)
     metrics['commits_heatmap_bokeh'] = activity_commits.git_commits_heatmap_bokeh(elastic, urls, from_date, to_date)
+    metrics['commits_by_repository_bokeh'] = activity_commits.commits_by_repository(elastic, from_date, to_date)
     return metrics
 
 
@@ -305,6 +306,8 @@ def activity_issues_metrics(elastic, urls, from_date, to_date):
     metrics['issues_closed_weekday_bokeh'] = activity_issues.issues_closed_weekday_bokeh(elastic, urls, from_date, to_date)
     metrics['issues_opened_heatmap_bokeh'] = activity_issues.issues_opened_heatmap_bokeh(elastic, urls, from_date, to_date)
     metrics['issues_closed_heatmap_bokeh'] = activity_issues.issues_closed_heatmap_bokeh(elastic, urls, from_date, to_date)
+    metrics['issues_created_by_repository_bokeh'] = activity_issues.issues_created_by_repository(elastic, from_date, to_date)
+    metrics['issues_closed_by_repository_bokeh'] = activity_issues.issues_closed_by_repository(elastic, from_date, to_date)
     return metrics
 
 
@@ -332,6 +335,8 @@ def activity_reviews_metrics(elastic, urls, from_date, to_date):
     metrics['reviews_closed_weekday_bokeh'] = activity_reviews.reviews_closed_weekday_bokeh(elastic, urls, from_date, to_date)
     metrics['reviews_opened_heatmap_bokeh'] = activity_reviews.reviews_opened_heatmap_bokeh(elastic, urls, from_date, to_date)
     metrics['reviews_closed_heatmap_bokeh'] = activity_reviews.reviews_closed_heatmap_bokeh(elastic, urls, from_date, to_date)
+    metrics['reviews_created_by_repository_bokeh'] = activity_reviews.reviews_created_by_repository(elastic, from_date, to_date)
+    metrics['reviews_closed_by_repository_bokeh'] = activity_reviews.reviews_closed_by_repository(elastic, from_date, to_date)
     return metrics
 
 

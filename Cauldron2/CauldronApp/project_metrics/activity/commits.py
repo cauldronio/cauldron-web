@@ -521,3 +521,88 @@ def git_lines_changed_bokeh(elastic, urls, from_date, to_date):
 
     plot.legend.location = "top_left"
     return json.dumps(json_item(plot))
+
+
+def commits_by_repository(elastic, from_date, to_date):
+    """Shows the number of git commits of a project
+    grouped by repository"""
+    s = Search(using=elastic, index='git') \
+        .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) \
+        .query(~Q('match', files=0)) \
+        .extra(size=0)
+    s.aggs.bucket('repositories', 'terms', field='repo_name', size=10, order={'commits': 'desc'}) \
+          .metric('commits', 'cardinality', field='hash')
+
+    try:
+        response = s.execute()
+        repos_buckets = response.aggregations.repositories.buckets
+    except ElasticsearchException as e:
+        logger.warning(e)
+        repos_buckets = []
+
+    data = {
+        'repo': [],
+        'value': []
+    }
+    for repo in repos_buckets:
+        data['repo'].append(repo.key)
+        data['value'].append(repo.commits.value)
+
+    # Request for other repositories
+    repos_ignored = [Q('match_phrase', repo_name=repo) for repo in data['repo']]
+
+    s = Search(using=elastic, index='git') \
+        .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) \
+        .filter('exists', field='repo_name') \
+        .query(Q('bool', must_not=repos_ignored)) \
+        .query(~Q('match', files=0)) \
+        .extra(size=0)
+    s.aggs.bucket('commits', 'cardinality', field='hash')
+
+    try:
+        response = s.execute()
+        commits_other_repos = response.aggregations.commits.value
+    except ElasticsearchException as e:
+        logger.warning(e)
+        commits_other_repos = 0
+
+    data['repo'].append('other')
+    data['value'].append(commits_other_repos)
+
+    # Flip the list
+    data['repo'].reverse()
+    data['value'].reverse()
+
+    plot = figure(y_range=data['repo'],
+                  y_axis_label='Repository',
+                  x_axis_label='# Commits',
+                  height=300,
+                  sizing_mode="stretch_both",
+                  tools='')
+
+    plot.title.text = '# Commits by repository'
+    configure_figure(plot,
+                     'https://gitlab.com/cauldronio/cauldron/'
+                     '-/blob/master/guides/metrics/activity/commits-by-repository.md',
+                     vertical=False)
+
+    source = ColumnDataSource(data=dict(
+        repos=data['repo'],
+        commits=data['value']
+    ))
+
+    plot.hbar(y='repos', right='commits',
+              source=source,
+              height=0.5,
+              color=Blues[3][0])
+
+    plot.add_tools(tools.HoverTool(
+        tooltips=[
+            ('repo', '@repos'),
+            ('commits', '@commits')
+        ],
+        mode='hline',
+        toggleable=False
+    ))
+
+    return json.dumps(json_item(plot))
