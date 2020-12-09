@@ -1,6 +1,7 @@
 var BackendFilter = 'any';
 var StatusFilter = 'all';
 var Project_ID = window.location.pathname.split('/')[2];
+var OnGoingActions = {};
 
 $(document).ready(function(){
     $('form#gh_add').submit(submitBackend);
@@ -16,6 +17,8 @@ $(document).ready(function(){
     $('.btn-datasource').click(onSelectDataSource);
 
     getSummary();
+
+    getOnGoingActions();
 });
 
 
@@ -184,4 +187,31 @@ function onDataFail(data, target) {
     } else {
         showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
     }
+}
+
+
+/***********************************
+ *        GET OWNER ACTIONS        *
+ ************************************/
+function getOnGoingActions(){
+    $.get(url=`/project/${Project_ID}/ongoing-owners`, function(data){
+        var currentOngoingLength = Object.keys(OnGoingActions).length;
+        if (currentOngoingLength && (!data['owners'] || currentOngoingLength > data['owners'].length) ){
+            window.location.reload();
+        } else if (!data['owners'] || data['owners'].length == 0){
+            return
+        } else {
+            data['owners'].forEach(function(item, index){
+                var key = `${item['backend']}-${item['owner']}`;
+                if (!OnGoingActions[key]){
+                    OnGoingActions[key] = true;
+                    var div = $('<div/>').addClass("alert alert-info row align-items-center");
+                    div.append('<div class="col-auto"><div class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div></div>');
+                    div.append(`<div class="col">Adding owner <strong>${item['owner']}</strong> from <strong>${item['backend']}</strong></div>`);
+                    $('#ongoing-actions').append(div);
+                }
+            });
+            setTimeout(getOnGoingActions, 3000);
+        }
+    });
 }

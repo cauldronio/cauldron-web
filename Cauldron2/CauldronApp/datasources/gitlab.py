@@ -1,11 +1,10 @@
 import re
-import time
-import requests
-import logging
 
 from CauldronApp.models import GitLabRepository
 from CauldronApp.datasources import git
 from cauldron_apps.poolsched_gitlab.api import analyze_gl_repo_obj
+from cauldron_apps.cauldron.models import IAddGLOwner
+from cauldron_apps.poolsched_gitlab.models import GLInstance
 
 
 def parse_input_data(data):
@@ -49,22 +48,15 @@ def analyze_data(project, data, commits=False, issues=False, forks=False):
             return {'status': 'error',
                     'message': 'Token not found for the creator of the project',
                     'code': 400}
-        try:
-            gitlab_list, git_list = get_gitlab_repos(owner, token.token, forks)
-        except Exception as e:
-            logging.warning("Error for Gitlab owner {}: {}".format(owner, e))
-            return {'status': 'error',
-                    'message': 'Error from GitLab API. Does that user exist?',
-                    'code': 404}
-        if issues:
-            for url in gitlab_list:
-                url_parsed = url.split('/')
-                owner_url = url_parsed[-2]
-                repo_url = url_parsed[-1]
-                analyze_gitlab(project, owner_url, repo_url)
-        if commits:
-            for url in git_list:
-                git.analyze_git(project, url)
+        instance = GLInstance.objects.get(name='GitLab')
+        IAddGLOwner.objects.create(user=project.creator,
+                                   owner=owner,
+                                   instance=instance,
+                                   project=project,
+                                   commits=commits,
+                                   issues=issues,
+                                   forks=forks,
+                                   analyze=True)
     elif owner and repository:
         if issues:
             token = project.creator.gltokens.first()
@@ -84,85 +76,3 @@ def analyze_data(project, data, commits=False, issues=False, forks=False):
                 'code': 400}
 
     return {'status': 'ok', 'code': 200}
-
-
-def get_gitlab_repos(owner, token, forks=False):
-    """
-    Get all the repositories from a owner or a group
-    Limited to 5 seconds
-    :param owner: Group or user name
-    :param token: Token for gitlab authentication. Must be oauth
-    :param forks: Get owner forks
-    :return: Tuple of list of (gitlab repositories and git repositories)
-    """
-    init_time = time.time()
-    git_urls = list()
-    gitlab_urls = list()
-    # GROUP REPOSITORIES
-    headers = {'Authorization': "Bearer {}".format(token)}
-    r_group = requests.get('https://gitlab.com/api/v4/groups/{}'.format(owner), headers=headers)
-    if r_group.ok:
-        r = requests.get('https://gitlab.com/api/v4/groups/{}/projects?visibility=public'.format(owner),
-                         headers=headers)
-        if not r.ok:
-            raise Exception('Projects not found for that group')
-        for project in r.json():
-            gitlab_urls.append(project['web_url'])
-            git_urls.append(project['http_url_to_repo'])
-
-        gl_urls_sg, git_urls_sg = get_urls_subgroups(owner, init_time, forks)
-        gitlab_urls += gl_urls_sg
-        git_urls += git_urls_sg
-        return gitlab_urls, git_urls
-
-    # USER REPOSITORIES
-    r = requests.get("https://gitlab.com/api/v4/search?scope=users&search={}".format(owner), headers=headers)
-    if not r.ok or len(r.json()) <= 0:
-        raise Exception('User/group not found in GitLab, or the API is not working')
-    user = r.json()[0]
-    r = requests.get("https://gitlab.com/api/v4/users/{}/projects?visibility=public".format(user['id']),
-                     headers=headers)
-    if not r.ok:
-        raise Exception('Error in GitLab API retrieving user projects')
-    for project in r.json():
-        if ('forked_from_project' not in project) or forks:
-            git_urls.append(project['http_url_to_repo'])
-            gitlab_urls.append(project['web_url'])
-
-    return gitlab_urls, git_urls
-
-
-def get_urls_subgroups(group, init_time=time.time(), forks=False):
-    """
-    Get repositories from subgroups
-    Limited to 6 seconds
-    NOTE: Auth token doesn't work with subgroups, no token required here (last update: 07-2019)
-    :param group:
-    :param init_time: The time it started
-    :param forks: get forks
-    :return: gl_urls, git_urls
-    """
-    gitlab_urls, git_urls = list(), list()
-    r = requests.get('https://gitlab.com/api/v4/groups/{}/subgroups'.format(group))
-    if not r.ok:
-        return gitlab_urls, git_urls
-    for subgroup in r.json():
-        path = "{}%2F{}".format(group, subgroup['path'])
-        r = requests.get('https://gitlab.com/api/v4/groups/{}/projects?visibility=public'.format(path))
-        if not r.ok:
-            continue
-        else:
-            for project in r.json():
-                if ('forked_from_project' not in project) or forks:
-                    main_group = project['path_with_namespace'].split('/')[0]
-                    subgroup = '%2F'.join(project['path_with_namespace'].split('/')[1:])
-                    gitlab_urls.append('https://gitlab.com/{}/{}'.format(main_group, subgroup))
-                    git_urls.append(project['http_url_to_repo'])
-        gl_urls_sub, git_urls_sub = get_urls_subgroups(path, init_time, forks)
-        gitlab_urls += gl_urls_sub
-        git_urls += git_urls_sub
-        logging.error("Elapsed: {}".format(time.time()-init_time))
-        if time.time() > init_time + 6:
-            return gitlab_urls, git_urls
-
-    return gitlab_urls, git_urls

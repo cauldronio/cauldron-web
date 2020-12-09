@@ -1,9 +1,9 @@
 import re
-from github import Github
 
 from cauldron_apps.poolsched_github.api import analyze_gh_repo_obj
 from CauldronApp.models import GitHubRepository
 from CauldronApp.datasources import git
+from cauldron_apps.cauldron.models import IAddGHOwner
 
 
 def parse_input_data(data):
@@ -47,16 +47,13 @@ def analyze_data(project, data, commits=False, issues=False, forks=False):
             return {'status': 'error',
                     'message': 'Token not found for the creator of the project',
                     'code': 400}
-        github = Github(token.token)
-
-        repositories = github.get_user(owner).get_repos()
-        for repo_gh in repositories:
-            if not repo_gh.fork or forks:
-                if issues:
-                    analyze_github(project, owner, repo_gh.name)
-                if commits:
-                    git.analyze_git(project, repo_gh.clone_url)
-
+        IAddGHOwner.objects.create(user=project.creator,
+                                   owner=owner,
+                                   project=project,
+                                   commits=commits,
+                                   issues=issues,
+                                   forks=forks,
+                                   analyze=True)
     elif owner and repository:
         if issues:
             token = project.creator.ghtokens.first()

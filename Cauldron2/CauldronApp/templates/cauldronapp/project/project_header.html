@@ -57,7 +57,7 @@
           </div>
           <!-- End add data source -->
           <!-- Compare -->
-          {% if projects_compare %}
+          {% if projects_compare and repositories_count > 0 %}
           <div class="ml-3 mb-1">
               <select class="selectpicker" title="Compare" data-style="btn btn-orange text-light" data-selected-text-format="static" data-live-search="true" data-size="5" data-width="fit" onchange="location = this.value;">
                   {% for project_compare in projects_compare %}
@@ -87,8 +87,9 @@
         {% endif %}
       </div>
     </div>
-    <div class="">
-      {% if repositories_count > 0 %}
+
+    <div class="d-flex align-items-end flex-column">
+      <div>
         <h3>Project information</h3>
         <b>Repositories:</b>
         <span id="num-repos">0</span><span id="general-status"><!--This content is generated via JS--></span>
@@ -97,9 +98,15 @@
         {% else %}
         <a href="{% url 'show_project_repos' project.id %}">Show details</a>
         {% endif %}
-      {% endif %}
+        <div id="ongoing-actions" class="mt-2">
+
+        </div>
+      </div>
+
     </div>
+
   </div>
+
   {% if project.is_outdated %}
   <div class="alert alert-warning alert-dismissible mb-0 mt-1 fade show" role="alert">
     <strong>Data outdated!</strong> Some of the analyzed repositories have not been updated since {{project.last_refresh|date:'N j, Y'}}. The data could have inconsistencies...

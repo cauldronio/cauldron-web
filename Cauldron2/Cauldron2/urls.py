@@ -41,6 +41,7 @@ urlpatterns = [
     path('project/<int:project_id>/repositories', views.request_project_repositories, name="show_project_repos"),
     path('project/<int:project_id>/repositories/add', views.request_add_to_project, name="add_project_repos"),
     path('project/<int:project_id>/repositories/remove', views.request_remove_from_project, name="remove_project_repos"),
+    path('project/<int:project_id>/ongoing-owners', views.request_ongoing_owners, name='project_ongoing_owners'),
 
     path('repository/<int:repo_id>/refresh', views.request_refresh_repository, name='refresh_repository'),
     path('repository/<int:repo_id>/actions', views.request_repo_actions, name='show_repository_actions'),

@@ -13,6 +13,7 @@ from CauldronApp import datasources
 from cauldron_apps.poolsched_github.models import GHToken
 from cauldron_apps.poolsched_gitlab.models import GLToken
 from cauldron_apps.poolsched_meetup.models import MeetupToken
+from cauldron_apps.cauldron.models import IAddGHOwner, IAddGLOwner
 from poolsched.models import Intention
 from poolsched.models.jobs import Log
 
@@ -31,7 +32,7 @@ from Cauldron2 import settings
 from CauldronApp.models import Project, GithubUser, GitlabUser, MeetupUser, AnonymousUser, UserWorkspace, ProjectRole
 from CauldronApp.models import Repository, GitLabRepository, GitRepository, GitHubRepository, MeetupRepository
 
-from CauldronApp.opendistro_utils import OpendistroApi, BACKEND_INDICES
+from cauldron_apps.cauldron.opendistro import OpendistroApi
 from CauldronApp.oauth.github import GitHubOAuth
 from CauldronApp.oauth.gitlab import GitLabOAuth
 from CauldronApp.oauth.meetup import MeetupOAuth
@@ -121,7 +122,7 @@ def request_github_oauth(request):
         datasources.github.analyze_data(project,
                                         data_add['data'], data_add['commits'],
                                         data_add['issues'], data_add['forks'])
-        update_elastic_role(project)
+        project.update_elastic_role()
 
     if last_page:
         return HttpResponseRedirect(last_page)
@@ -192,7 +193,7 @@ def request_gitlab_oauth(request):
         datasources.gitlab.analyze_data(project,
                                         data_add['data'], data_add['commits'],
                                         data_add['issues'], data_add['forks'])
-        update_elastic_role(project)
+        project.update_elastic_role()
     if last_page:
         return HttpResponseRedirect(last_page)
 
@@ -234,7 +235,7 @@ def request_meetup_oauth(request):
     if data_add and data_add['backend'] == 'meetup':
         project = Project.objects.get(id=data_add['proj_id'])
         datasources.meetup.analyze_data(project, data_add['data'])
-        update_elastic_role(project)
+        project.update_elastic_role()
 
     if last_page:
         return HttpResponseRedirect(last_page)
@@ -483,7 +484,7 @@ def request_add_to_project(request, project_id):
     if backend == 'git':
         data = data.strip()
         datasources.git.analyze_git(project, data)
-        update_elastic_role(project)
+        project.update_elastic_role()
         return JsonResponse({'status': 'ok'})
 
     if backend == 'github':
@@ -511,7 +512,7 @@ def request_add_to_project(request, project_id):
                                 status=401)
         output = datasources.github.analyze_data(project=project, data=data, commits=analyze_commits,
                                                  issues=analyze_issues, forks=forks)
-        update_elastic_role(project)
+        project.update_elastic_role()
 
         return JsonResponse(output, status=output['code'])
 
@@ -543,7 +544,7 @@ def request_add_to_project(request, project_id):
                                 status=401)
         output = datasources.gitlab.analyze_data(project=project, data=data, commits=analyze_commits,
                                                  issues=analyze_issues, forks=forks)
-        update_elastic_role(project)
+        project.update_elastic_role()
         return JsonResponse(output, status=output['code'])
 
     elif backend == 'meetup':
@@ -593,7 +594,7 @@ def request_remove_from_project(request, project_id):
         return JsonResponse({'status': 'error', 'message': 'Repository not found'},
                             status=404)
     repo.projects.remove(project)
-    update_elastic_role(project)
+    project.update_elastic_role()
     repo.remove_intentions(request.user)
     return JsonResponse({'status': 'deleted'})
 
@@ -1032,6 +1033,18 @@ def request_project_summary(request, project_id):
     return JsonResponse(summary)
 
 
+def request_ongoing_owners(request, project_id):
+    """Return a JSON with the ongoing owners requested"""
+    response = {'owners': []}
+    gh_owners = IAddGHOwner.objects.filter(project_id=project_id)
+    gl_owners = IAddGLOwner.objects.filter(project_id=project_id)
+    for gh_owner in gh_owners:
+        response['owners'].append({'backend': 'github', 'owner': gh_owner.owner})
+    for gl_owner in gl_owners:
+        response['owners'].append({'backend': 'gitlab', 'owner': gl_owner.owner})
+    return JsonResponse(response)
+
+
 def request_repos_info(request):
     info = []
 
@@ -1206,28 +1219,6 @@ def request_delete_user(request):
     delete_user(user)
 
     return HttpResponseRedirect(reverse('admin_page_users'))
-
-
-def update_elastic_role(project):
-    odfe_api = OpendistroApi(ES_IN_URL, ES_ADMIN_PASSWORD)
-    permissions = []
-    for index in BACKEND_INDICES['git']:
-        url_list = [repo.datasource_url for repo in GitRepository.objects.filter(projects=project)]
-        index_permissions = OpendistroApi.create_index_permissions(url_list, index)
-        permissions.append(index_permissions)
-    for index in BACKEND_INDICES['github']:
-        url_list = [repo.datasource_url for repo in GitHubRepository.objects.filter(projects=project)]
-        index_permissions = OpendistroApi.create_index_permissions(url_list, index)
-        permissions.append(index_permissions)
-    for index in BACKEND_INDICES['gitlab']:
-        url_list = [repo.datasource_url for repo in GitLabRepository.objects.filter(projects=project)]
-        index_permissions = OpendistroApi.create_index_permissions(url_list, index)
-        permissions.append(index_permissions)
-    for index in BACKEND_INDICES['meetup']:
-        url_list = [repo.datasource_url for repo in MeetupRepository.objects.filter(projects=project)]
-        index_permissions = OpendistroApi.create_index_permissions(url_list, index)
-        permissions.append(index_permissions)
-    odfe_api.update_elastic_role(project.projectrole.role, permissions)
 
 
 def stats_page(request):
