@@ -101,7 +101,7 @@ def git_authors_bokeh_compare(elastics, urls, from_date, to_date):
                   height=300,
                   sizing_mode="stretch_width",
                   tools='')
-    plot.title.text = '# Git authors over time'
+    plot.title.text = '# Git authors'
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
                            '-/blob/master/guides/metrics/community/authors-commits.md')
     if not data.empty:

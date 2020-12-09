@@ -123,24 +123,24 @@ def get_authors_bucket(elastic, urls, from_date, to_date, interval):
         .query(Q('terms', origin=urls)) \
         .extra(size=0)
 
-    s.aggs.bucket('bucket1', 'date_histogram', field='grimoire_creation_date', calendar_interval=interval) \
-          .bucket('bucket2', 'filters',
-                  filters={'Maintainers': Q('match', is_git_commit=1),
-                           'Contributors': (Q('match', pull_request=True) | Q('match', merge_request=True)),
-                           'Users': (Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)),
-                           'Observers': Q('match', is_meetup_rsvp=1)
+    s.aggs.bucket('dates', 'date_histogram', field='grimoire_creation_date', calendar_interval=interval) \
+          .bucket('categories', 'filters',
+                  filters={'commit_authors': Q('match', is_git_commit=1),
+                           'issue_submitters': (Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)),
+                           'review_submitters': (Q('match', pull_request=True) | Q('match', merge_request=True)),
+                           'meetup_users': Q('match', is_meetup_rsvp=1)
                            },
                   ) \
-          .bucket('bucket3', 'cardinality', field='author_uuid')
+          .bucket('authors', 'cardinality', field='author_uuid')
 
     try:
         response = s.execute()
-        authors_bucket = response.aggregations.bucket1.buckets
+        buckets = response.aggregations.dates.buckets
     except ElasticsearchException as e:
         logger.warning(e)
-        authors_bucket = []
+        buckets = []
 
-    return authors_bucket
+    return buckets
 
 
 # This code could be useful someday, DON'T REMOVE IT
@@ -160,20 +160,20 @@ def author_evolution_bokeh_compare(elastics, urls, from_date, to_date):
         authors_bucket = authors_buckets[project_id]
 
         # Create the data structure
-        contributors, maintainers, observers, users, timestamps = [], [], [], [], []
+        timestamps, commit_authors, issue_submitters, review_submitters, meetup_users = [], [], [], [], []
         for item in authors_bucket:
             timestamps.append(item.key)
-            values = item.bucket2.buckets
-            contributors.append(values.Contributors.bucket3.value)
-            maintainers.append(values.Maintainers.bucket3.value)
-            observers.append(values.Observers.bucket3.value)
-            users.append(values.Users.bucket3.value)
+            categories = item.categories.buckets
+            commit_authors.append(categories.commit_authors.authors.value)
+            issue_submitters.append(categories.issue_submitters.authors.value)
+            review_submitters.append(categories.review_submitters.authors.value)
+            meetup_users.append(categories.meetup_users.authors.value)
 
-        data[f'contributors_{project_id}'] = contributors
-        data[f'maintainers_{project_id}'] = maintainers
-        data[f'observers_{project_id}'] = observers
-        data[f'users_{project_id}'] = users
         data[f'timestamps_{project_id}'] = timestamps
+        data[f'commit_authors_{project_id}'] = commit_authors
+        data[f'issue_submitters_{project_id}'] = issue_submitters
+        data[f'review_submitters_{project_id}'] = review_submitters
+        data[f'meetup_users_{project_id}'] = meetup_users
 
     # Create the Bokeh visualization
     plot = figure(x_axis_type="datetime",
@@ -182,7 +182,7 @@ def author_evolution_bokeh_compare(elastics, urls, from_date, to_date):
                   height=300,
                   sizing_mode="stretch_width",
                   tools='')
-    plot.title.text = '# Authors per category over time'
+    plot.title.text = '# Authors'
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
                            '-/blob/master/guides/metrics/overview/authors-evolution.md')
     if any(data.values()):
@@ -201,11 +201,11 @@ def author_evolution_bokeh_compare(elastics, urls, from_date, to_date):
             project_name = "Unknown"
 
         if idx == 0:
-            names.append(f'maintainers_{project_id}')
+            names.append(f'commit_authors_{project_id}')
             tooltips.append((interval_name, f'@timestamps_{project_id}{{%F}}'))
             formatters[f'@timestamps_{project_id}'] = 'datetime'
 
-        for i, category in enumerate(('contributors', 'maintainers', 'observers', 'users')):
+        for i, category in enumerate(('commit_authors', 'issue_submitters', 'review_submitters', 'meetup_users')):
             tooltips.append((f'{category} {project_name}', f'@{category}_{project_id}'))
             plot.line(x=f'timestamps_{project_id}', y=f'{category}_{project_id}',
                       name=f'{category}_{project_id}',
@@ -236,90 +236,90 @@ def author_evolution_bokeh(elastic, urls, from_date, to_date):
     authors_buckets = get_authors_bucket(elastic, urls, from_date_es, to_date_es, interval_elastic)
 
     # Create the Bokeh visualization
-    x, contrib, maintainers, observers, users = [], [], [], [], []
+    timestamps, commit_authors, issue_submitters, review_submitters, meetup_users = [], [], [], [], []
     for item in authors_buckets:
-        x.append(item.key)
-        values = item.bucket2.buckets
-        contrib.append(values.Contributors.bucket3.value)
-        maintainers.append(values.Maintainers.bucket3.value)
-        observers.append(values.Observers.bucket3.value)
-        users.append(values.Users.bucket3.value)
+        timestamps.append(item.key)
+        categories = item.categories.buckets
+        commit_authors.append(categories.commit_authors.authors.value)
+        issue_submitters.append(categories.issue_submitters.authors.value)
+        review_submitters.append(categories.review_submitters.authors.value)
+        meetup_users.append(categories.meetup_users.authors.value)
 
     plot = figure(x_axis_type="datetime",
                   y_axis_label='# Authors',
                   height=300,
                   sizing_mode="stretch_width",
                   tools='')
-    plot.title.text = '# Authors per category over time'
+    plot.title.text = '# Authors'
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
                            '-/blob/master/guides/metrics/overview/authors-evolution.md')
-    if len(x) > 0:
+    if len(timestamps) > 0:
         plot.x_range = Range1d(from_date - timedelta(days=1), to_date + timedelta(days=1))
 
     source = ColumnDataSource(data=dict(
-        x=x,
-        contrib=contrib,
-        maintainers=maintainers,
-        observers=observers,
-        users=users
+        timestamps=timestamps,
+        commit_authors=commit_authors,
+        issue_submitters=issue_submitters,
+        review_submitters=review_submitters,
+        meetup_users=meetup_users
     ))
 
-    plot.circle(x='x', y='contrib',
+    plot.circle(x='timestamps', y='commit_authors',
+                name='commit_authors',
                 color=Blues[6][0],
                 size=8,
                 source=source)
 
-    plot.line(x='x', y='contrib',
+    plot.line(x='timestamps', y='commit_authors',
               line_width=4,
               line_color=Blues[6][0],
-              legend_label='contributors',
+              legend_label='Authors (Git)',
               source=source)
 
-    plot.circle(x='x', y='maintainers',
-                name='maintainers',
+    plot.circle(x='timestamps', y='issue_submitters',
                 color=Blues[6][1],
                 size=8,
                 source=source)
 
-    plot.line(x='x', y='maintainers',
+    plot.line(x='timestamps', y='issue_submitters',
               line_width=4,
               line_color=Blues[6][1],
-              legend_label='maintainers',
+              legend_label='Submitters (Issues)',
               source=source)
 
-    plot.circle(x='x', y='observers',
+    plot.circle(x='timestamps', y='review_submitters',
                 color=Blues[6][2],
                 size=8,
                 source=source)
 
-    plot.line(x='x', y='observers',
+    plot.line(x='timestamps', y='review_submitters',
               line_width=4,
               line_color=Blues[6][2],
-              legend_label='observers',
+              legend_label='Submitters (Reviews)',
               source=source)
 
-    plot.circle(x='x', y='users',
+    plot.circle(x='timestamps', y='meetup_users',
                 color=Blues[6][3],
                 size=8,
                 source=source)
 
-    plot.line(x='x', y='users',
+    plot.line(x='timestamps', y='meetup_users',
               line_width=4,
               line_color=Blues[6][3],
-              legend_label='users',
+              legend_label='Users (Meetup)',
               source=source)
 
     plot.add_tools(tools.HoverTool(
-        names=['maintainers'],
+        names=['commit_authors'],
         tooltips=[
-            (interval_name, '@x{%F}'),
-            ('contributors', '@contrib'),
-            ('maintainers', '@maintainers'),
-            ('observers', '@observers'),
-            ('users', '@users')
+            (interval_name, '@timestamps{%F}'),
+            ('commit_authors', '@commit_authors'),
+            ('issue_submitters', '@issue_submitters'),
+            ('review_submitters', '@review_submitters'),
+            ('meetup_users', '@meetup_users')
         ],
         formatters={
-            '@x': 'datetime'
+            '@timestamps': 'datetime'
         },
         mode='vline',
         toggleable=False

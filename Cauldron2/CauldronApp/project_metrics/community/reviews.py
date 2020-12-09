@@ -126,7 +126,7 @@ def review_submitters_bokeh_compare(elastics, urls, from_date, to_date):
                   height=300,
                   sizing_mode="stretch_width",
                   tools='')
-    plot.title.text = '# Review submitters over time'
+    plot.title.text = '# Review submitters'
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
                            '-/blob/master/guides/metrics/community/authors-reviews.md')
     if not data.empty:

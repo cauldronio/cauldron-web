@@ -131,7 +131,7 @@ def reviews_created_bokeh_compare(elastics, from_date, to_date):
                   height=300,
                   sizing_mode="stretch_width",
                   tools='')
-    plot.title.text = '# Reviews created over time'
+    plot.title.text = '# Reviews created'
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
                            '-/blob/master/guides/metrics/activity/reviews-created-chart.md')
     if not data.empty:
@@ -226,7 +226,7 @@ def reviews_closed_bokeh_compare(elastics, from_date, to_date):
                   height=300,
                   sizing_mode="stretch_width",
                   tools='')
-    plot.title.text = '# Reviews closed over time'
+    plot.title.text = '# Reviews closed'
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
                            '-/blob/master/guides/metrics/activity/reviews-closed-chart.md')
     if not data.empty:
@@ -325,9 +325,9 @@ def reviews_open_closed_bokeh(elastic, urls, from_date, to_date):
                   height=300,
                   sizing_mode="stretch_width",
                   tools='')
-    plot.title.text = '# Reviews open/closed'
+    plot.title.text = '# Reviews started/closed'
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
-                           '-/blob/master/guides/metrics/activity/reviews-open-closed.md')
+                           '-/blob/master/guides/metrics/activity/reviews-created-closed.md')
     if not data.empty:
         plot.x_range = Range1d(from_date - timedelta(days=1), to_date + timedelta(days=1))
 
@@ -353,14 +353,14 @@ def reviews_open_closed_bokeh(elastic, urls, from_date, to_date):
     plot.line(x='timestamps', y='reviews_created',
               line_width=4,
               line_color=Blues[3][1],
-              legend_label='reviews created',
+              legend_label='reviews started',
               source=source)
 
     plot.add_tools(tools.HoverTool(
         names=['reviews_created'],
         tooltips=[
             (interval_name, '@timestamps{%F}'),
-            ('reviews created', '@reviews_created'),
+            ('reviews started', '@reviews_created'),
             ('reviews closed', '@reviews_closed')
         ],
         formatters={

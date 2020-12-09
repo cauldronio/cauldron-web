@@ -107,6 +107,45 @@ function onSubmitRename(ev) {
 }
 
 
+function show_descriptions() {
+  var charts_without_description = $('#charts-without-description');
+  var charts_with_description = $('#charts-with-description');
+
+  $('#toggle-btn').html($('<i/>',{class:'fa fa-eye-slash'}));
+  $('#toggle-btn').removeClass('show-descriptions-btn');
+  $('#toggle-btn').addClass('hide-descriptions-btn');
+  $('#toggle-btn').attr('data-original-title', 'Hide descriptions');
+
+  charts_without_description.fadeOut();
+  charts_with_description.fadeIn();
+}
+
+
+function hide_descriptions() {
+  var charts_without_description = $('#charts-without-description');
+  var charts_with_description = $('#charts-with-description');
+
+  $('#toggle-btn').html($('<i/>',{class:'fa fa-eye'}));
+  $('#toggle-btn').removeClass('hide-descriptions-btn');
+  $('#toggle-btn').addClass('show-descriptions-btn');
+  $('#toggle-btn').attr('data-original-title', 'Show descriptions');
+
+  charts_with_description.fadeOut();
+  charts_without_description.fadeIn();
+}
+
+
+function toggle_descriptions() {
+  if ($('#toggle-btn').hasClass('show-descriptions-btn')) {
+    show_descriptions();
+    eraseCookie('project_metrics_description');
+  } else {
+    hide_descriptions();
+    setCookie('project_metrics_description', 'dismiss', 0);
+  }
+}
+
+
 /****************************
  *    ADD DATA SOURCES      *
  ****************************/

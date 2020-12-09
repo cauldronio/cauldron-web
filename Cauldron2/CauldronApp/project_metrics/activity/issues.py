@@ -132,7 +132,7 @@ def issues_created_bokeh_compare(elastics, from_date, to_date):
                   height=300,
                   sizing_mode="stretch_width",
                   tools='')
-    plot.title.text = '# Issues created over time'
+    plot.title.text = '# Issues created'
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
                            '-/blob/master/guides/metrics/activity/issues-created-chart.md')
     if not data.empty:
@@ -227,7 +227,7 @@ def issues_closed_bokeh_compare(elastics, from_date, to_date):
                   height=300,
                   sizing_mode="stretch_width",
                   tools='')
-    plot.title.text = '# Issues closed over time'
+    plot.title.text = '# Issues closed'
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
                            '-/blob/master/guides/metrics/activity/issues-closed-chart.md')
     if not data.empty:
@@ -327,8 +327,8 @@ def issues_open_closed_bokeh(elastic, urls, from_date, to_date):
                   sizing_mode="stretch_width",
                   tools='')
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
-                           '-/blob/master/guides/metrics/activity/issues-open-closed.md')
-    plot.title.text = '# Issues open/closed'
+                           '-/blob/master/guides/metrics/activity/issues-created-closed.md')
+    plot.title.text = '# Issues created/closed'
     if not data.empty:
         plot.x_range = Range1d(from_date - timedelta(days=1), to_date + timedelta(days=1))
 

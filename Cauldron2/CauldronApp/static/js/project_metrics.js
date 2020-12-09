@@ -25,10 +25,15 @@ $(function() {
 
     updateSelectForm();
 
+    if (getCookie('project_metrics_description') != 'dismiss') {
+      show_descriptions();
+    }
+
     //"html_id": "key from Django"
     var VIZ_KEYS = {
         'commits_bokeh': "chart-commits",
         'commits_bokeh_overview': "chart-commits-overview",
+        'commits_bokeh_overview_without_description': "chart-commits-overview-without-description",
         'commits_activity_overview_bokeh': "chart-commits-activity-overview",
         'commits_lines_changed_bokeh': "chart-lines-touched",
         'commits_hour_day_bokeh': "chart-commits-hour",
@@ -45,9 +50,12 @@ $(function() {
         'reviews_opened_heatmap_bokeh': "chart-reviews-opened-heatmap",
         'reviews_closed_heatmap_bokeh': "chart-reviews-closed-heatmap",
         "author_evolution_bokeh": "chart-people-overview",
+        "author_evolution_bokeh_without_description": "chart-people-overview-without-description",
         "issues_open_closed_bokeh_overview": "chart-issues-overview",
+        "issues_open_closed_bokeh_overview_without_description": "chart-issues-overview-without-description",
         'issues_open_closed_activity_overview_bokeh': "chart-issues-open-closed-activity-overview",
         "reviews_open_closed_bokeh_overview": "chart-pull-requests-overview",
+        "reviews_open_closed_bokeh_overview_without_description": "chart-pull-requests-overview-without-description",
         'reviews_open_closed_activity_overview_bokeh': "chart-reviews-open-closed-activity-overview",
         "commits_authors_active_bokeh": "chart-authors-git-active",
         "commits_authors_active_community_overview_bokeh": "chart-authors-git-active-community-overview",
@@ -277,6 +285,11 @@ $(function() {
 
     $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
         tab = e.target.dataset.category;
+        if (tab != 'overview') {
+          $('#toggle-btn').prop('disabled', true);
+        } else {
+          $('#toggle-btn').prop('disabled', false);
+        }
         var start_str = start.format('YYYY-MM-DD');
         var end_str = end.format('YYYY-MM-DD');
         var payload = `?from_date=${start_str}&to_date=${end_str}&tab=${tab}`

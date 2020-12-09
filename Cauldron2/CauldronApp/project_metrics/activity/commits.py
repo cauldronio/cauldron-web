@@ -130,9 +130,9 @@ def git_commits_bokeh_line(elastic, urls, from_date, to_date):
                   height=300,
                   sizing_mode="stretch_width",
                   tools='')
-    plot.title.text = '# Commits over time'
+    plot.title.text = '# Commits'
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
-                           '-/blob/master/guides/metrics/activity/commits-over-time.md')
+                           '-/blob/master/guides/metrics/activity/commits-chart.md')
     if len(timestamp) > 0:
         plot.x_range = Range1d(from_date - timedelta(days=1), to_date + timedelta(days=1))
 
@@ -200,9 +200,9 @@ def git_commits_bokeh_compare(elastics, urls, from_date, to_date):
                   height=300,
                   sizing_mode="stretch_width",
                   tools='')
-    plot.title.text = '# Commits over time'
+    plot.title.text = '# Commits'
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
-                           '-/blob/master/guides/metrics/activity/commits-over-time.md')
+                           '-/blob/master/guides/metrics/activity/commits-chart.md')
     if not data.empty:
         plot.x_range = Range1d(from_date - timedelta(days=1), to_date + timedelta(days=1))
 
@@ -268,9 +268,9 @@ def git_commits_bokeh(elastic, urls, from_date, to_date):
                   height=300,
                   sizing_mode="stretch_width",
                   tools='')
-    plot.title.text = '# Commits over time'
+    plot.title.text = '# Commits'
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
-                           '-/blob/master/guides/metrics/activity/commits-over-time.md')
+                           '-/blob/master/guides/metrics/activity/commits-chart.md')
     if len(timestamp) > 0:
         plot.x_range = Range1d(from_date - timedelta(days=1), to_date + timedelta(days=1))
 

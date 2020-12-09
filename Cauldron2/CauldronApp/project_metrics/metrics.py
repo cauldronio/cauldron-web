@@ -193,10 +193,14 @@ def overview_metrics(elastic, urls, from_date, to_date):
     metrics['issues_created_range'] = activity_issues.issues_opened(elastic, urls, from_date, to_date)
     metrics['issues_closed_range'] = activity_issues.issues_closed(elastic, urls, from_date, to_date)
     metrics['issues_time_to_close'] = other.issues_time_to_close(elastic, urls, from_date, to_date)
-    metrics['commits_bokeh_overview'] = activity_commits.git_commits_bokeh(elastic, urls, from_date, to_date)
+    metrics['commits_bokeh_overview'] = activity_commits.git_commits_bokeh_line(elastic, urls, from_date, to_date)
+    metrics['commits_bokeh_overview_without_description'] = metrics['commits_bokeh_overview']
     metrics['author_evolution_bokeh'] = other.author_evolution_bokeh(elastic, urls, from_date, to_date)
+    metrics['author_evolution_bokeh_without_description'] = metrics['author_evolution_bokeh']
     metrics['issues_open_closed_bokeh_overview'] = activity_issues.issues_open_closed_bokeh(elastic, urls, from_date, to_date)
+    metrics['issues_open_closed_bokeh_overview_without_description'] = metrics['issues_open_closed_bokeh_overview']
     metrics['reviews_open_closed_bokeh_overview'] = activity_reviews.reviews_open_closed_bokeh(elastic, urls, from_date, to_date)
+    metrics['reviews_open_closed_bokeh_overview_without_description'] = metrics['reviews_open_closed_bokeh_overview']
     return metrics
 
 
