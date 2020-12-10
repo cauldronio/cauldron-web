@@ -14,6 +14,7 @@ from cauldron_apps.poolsched_github.models import GHToken
 from cauldron_apps.poolsched_gitlab.models import GLToken
 from cauldron_apps.poolsched_meetup.models import MeetupToken
 from cauldron_apps.cauldron.models import IAddGHOwner, IAddGLOwner
+from cauldron_apps.poolsched_export.models.iexportgit import IExportGitCSV
 from poolsched.models import Intention
 from poolsched.models.jobs import Log
 
@@ -329,6 +330,7 @@ def project_common(request, project_id):
     context = create_context(request)
     context['project'] = project
     context['repositories_count'] = project.repository_set.count()
+    context['has_git'] = GitRepository.objects.filter(projects=project).exists()
     context['editable'] = ((request.user.is_authenticated and request.user == project.creator) or
                            request.user.is_superuser)
     if request.user.is_authenticated:
@@ -1019,6 +1021,15 @@ def request_ongoing_owners(request, project_id):
     for gl_owner in gl_owners:
         response['owners'].append({'backend': 'gitlab', 'owner': gl_owner.owner})
     return JsonResponse(response)
+
+
+def request_create_git_csv(request, project_id):
+    try:
+        project = Project.objects.get(id=project_id)
+    except Project.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'project not found'})
+    IExportGitCSV.objects.get_or_create(defaults={'user': request.user}, project=project)
+    return JsonResponse({'status': 'ok'})
 
 
 def request_repos_info(request):
