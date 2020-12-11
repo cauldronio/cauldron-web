@@ -273,7 +273,7 @@ def author_evolution_bokeh(elastic, urls, from_date, to_date):
     plot.line(x='timestamps', y='commit_authors',
               line_width=4,
               line_color=Blues[6][0],
-              legend_label='Authors (Git)',
+              legend_label='Authors',
               source=source)
 
     plot.circle(x='timestamps', y='issue_submitters',
@@ -306,7 +306,7 @@ def author_evolution_bokeh(elastic, urls, from_date, to_date):
     plot.line(x='timestamps', y='meetup_users',
               line_width=4,
               line_color=Blues[6][3],
-              legend_label='Users (Meetup)',
+              legend_label='Attendees (Meetup)',
               source=source)
 
     plot.add_tools(tools.HoverTool(
@@ -316,7 +316,7 @@ def author_evolution_bokeh(elastic, urls, from_date, to_date):
             ('commit_authors', '@commit_authors'),
             ('issue_submitters', '@issue_submitters'),
             ('review_submitters', '@review_submitters'),
-            ('meetup_users', '@meetup_users')
+            ('meetup_attendees', '@meetup_users')
         ],
         formatters={
             '@timestamps': 'datetime'
