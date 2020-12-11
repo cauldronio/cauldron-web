@@ -3,6 +3,14 @@ from cauldron_apps.cauldron.models import Repository
 
 register = template.Library()
 
+FA_ICONS = {
+    Repository.GIT: 'fab fa-git-square',
+    Repository.GITHUB: 'fab fa-github',
+    Repository.GITLAB: 'fab fa-gitlab',
+    Repository.MEETUP: 'fab fa-meetup',
+}
+
+
 @register.simple_tag
 def url_replace(request, field, value):
     '''
@@ -88,3 +96,12 @@ def get_sorting_link(request, field):
             return '-' + field
 
     return field
+
+
+@register.filter
+def backend_fa_icon(backend):
+    """This tag returns the Font Awesome icon for a backend"""
+    try:
+        return FA_ICONS[backend]
+    except KeyError:
+        return "fas fa-question"

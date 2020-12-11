@@ -1,3 +1,5 @@
+{% load cauldron_tags %}
+
 <div>
 
   <div class="card">
@@ -72,7 +74,7 @@
 
             <select name="repo_url" class="selectpicker mr-2" title="Select a repository..." data-size="5" multiple data-max-options="50" data-style="btn-outline-dark" data-selected-text-format="count > 1" data-live-search="true">
               {% for repo in repos %}
-              <option value={{repo.url}} data-icon="fab {{repo.backend}}">{{repo.url}}</option>
+              <option value={{repo.datasource_url}} data-icon="{{repo.backend | backend_fa_icon}}">{{repo.datasource_url}}</option>
               {% endfor %}
             </select>
 

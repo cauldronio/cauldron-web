@@ -322,48 +322,37 @@ def generate_request_token_message(backend):
            f'and <a href="{reverse("privacy")}">privacy</a> document'
 
 
+def project_common(request, project_id):
+    """Create common items for the project. Return project object and context.
+    If project does not exist, raise exception"""
+    project = Project.objects.get(pk=project_id)
+    context = create_context(request)
+    context['project'] = project
+    context['repositories_count'] = project.repository_set.count()
+    context['editable'] = ((request.user.is_authenticated and request.user == project.creator) or
+                           request.user.is_superuser)
+    if request.user.is_authenticated:
+        context['projects_compare'] = request.user.project_set.exclude(pk=project.pk)
+
+    return project, context
+
+
 def request_show_project(request, project_id):
-    """ View for a project"""
+    """ View for a project and metrics"""
     if request.method != 'GET':
         return custom_405(request, request.method)
 
     try:
-        project = Project.objects.get(pk=project_id)
+        project, context = project_common(request, project_id)
     except Project.DoesNotExist:
         return custom_404(request, "The project requested was not found in this server")
 
-    context = create_context(request)
-    context['project'] = project
-
-    if request.user.is_authenticated:
-        context['projects_compare'] = request.user.project_set.exclude(pk=project.pk)
-
-    repositories = project.repository_set.all()
-
-    context['repositories_count'] = repositories.count()
     context['render_table'] = False
     context['has_git'] = GitRepository.objects.filter(projects=project).exists()
     context['has_github'] = GitHubRepository.objects.filter(projects=project).exists()
     context['has_gitlab'] = GitLabRepository.objects.filter(projects=project).exists()
     context['has_meetup'] = MeetupRepository.objects.filter(projects=project).exists()
-
-    context['repos'] = []
-    for repo in repositories:
-        if repo.backend == Repository.GIT:
-            context['repos'].append({'backend':'fa-git-square',
-                                     'url': repo.git.datasource_url})
-        elif repo.backend == Repository.GITHUB:
-            context['repos'].append({'backend':'fa-github',
-                                     'url': repo.github.datasource_url})
-        elif repo.backend == Repository.GITLAB:
-            context['repos'].append({'backend':'fa-gitlab',
-                                     'url': repo.gitlab.datasource_url})
-        elif repo.backend == Repository.MEETUP:
-            context['repos'].append({'backend':'fa-meetup',
-                                     'url': repo.meetup.datasource_url})
-
-    context['editable'] = ((request.user.is_authenticated and request.user == project.creator) or
-                           request.user.is_superuser)
+    context['repos'] = project.repository_set.all().select_subclasses()
 
     return render(request, 'cauldronapp/project/project.html', context=context)
 
@@ -374,25 +363,12 @@ def request_project_repositories(request, project_id):
         return custom_405(request, request.method)
 
     try:
-        project = Project.objects.get(pk=project_id)
+        project, context = project_common(request, project_id)
     except Project.DoesNotExist:
         return custom_404(request, "The project requested was not found in this server")
 
-    # TODO: Rewrite as project context (same for header for repositories and visualizations)
-    repositories = project.repository_set.all()
-    context = create_context(request)
     context['render_table'] = True
-    context['project'] = project
-    context['repositories_count'] = repositories.count()
-    context['editable'] = (request.user.is_authenticated and request.user == project.creator) or \
-                          request.user.is_superuser
-    if request.user.is_authenticated:
-        context['projects_compare'] = request.user.project_set.exclude(pk=project.pk)
-
-    # context['debug'] = Repository.objects.filter(projects=project, backend='GI').select_subclasses()[0].status
-
-    repositories = Repository.objects.filter(projects=project)
-
+    repositories = project.repository_set.all()
     p = Pages(repositories.select_subclasses(), 10)
     page_number = request.GET.get('page', 1)
     page_obj = p.pages.get_page(page_number)
