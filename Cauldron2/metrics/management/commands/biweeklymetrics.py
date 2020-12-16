@@ -1,13 +1,17 @@
 from django.core.management.base import BaseCommand
+from django.contrib.auth import get_user_model
 
 from elasticsearch_dsl.connections import connections
 from elasticsearch.connection import create_ssl_context
 import datetime
 import ssl
 
-from CauldronApp.models import User, Dashboard, CompletedTask
+from CauldronApp.models import Project
+from poolsched.models import ArchivedIntention
 from Cauldron2 import settings
 from metrics import models, elastic_models
+
+User = get_user_model()
 
 
 def first_date(date):
@@ -47,7 +51,10 @@ class Command(BaseCommand):
         else:
             date_metrics = datetime.date.today()
 
-        self.stdout.write(self.style.SUCCESS(f"Collecting metrics from {first_date(date_metrics)} to {last_date(date_metrics)}"))
+        non_empty_projects = Project.objects.exclude(repository=None)
+
+        self.stdout.write(
+            self.style.SUCCESS(f"Collecting metrics from {first_date(date_metrics)} to {last_date(date_metrics)}"))
 
         users_created = User.objects.filter(date_joined__date__gte=first_date(date_metrics),
                                             date_joined__date__lte=last_date(date_metrics)).count()
@@ -57,46 +64,49 @@ class Command(BaseCommand):
                                            last_login__date__lte=last_date(date_metrics)).count()
         self.stdout.write(self.style.SUCCESS(f"Active users: {active_users}"))
 
-        projects_created = Dashboard.objects.filter(created__date__gte=first_date(date_metrics),
-                                                    created__date__lte=last_date(date_metrics)).count()
+        projects_created = non_empty_projects.filter(created__date__gte=first_date(date_metrics),
+                                                     created__date__lte=last_date(date_metrics)).count()
         self.stdout.write(self.style.SUCCESS(f"Projects created: {projects_created}"))
 
-        completed_tasks = CompletedTask.objects.filter(completed__date__gte=first_date(date_metrics),
-                                                       completed__date__lte=last_date(date_metrics)).count()
-        self.stdout.write(self.style.SUCCESS(f"Completed tasks: {completed_tasks}"))
+        completed_tasks = ArchivedIntention.objects.filter(completed__date__gte=first_date(date_metrics),
+                                                           completed__date__lte=last_date(date_metrics)).count()
+        self.stdout.write(self.style.SUCCESS(f"Archived intentions: {completed_tasks}"))
 
-        projects_per_user = Dashboard.objects.filter(created__date__lte=last_date(date_metrics)).exclude(repository=None).count() / User.objects.filter(date_joined__date__lte=last_date(date_metrics)).filter(dashboard__in=Dashboard.objects.exclude(repository=None)).distinct().count()
+        projects_per_user = non_empty_projects.filter(created__date__lte=last_date(date_metrics)).count() / User.objects.filter(date_joined__date__lte=last_date(date_metrics)).filter(project__in=non_empty_projects).distinct().count()
         self.stdout.write(self.style.SUCCESS(f"Projects per user: {projects_per_user}"))
 
-        activated_users = User.objects.filter(dashboard__in=Dashboard.objects.exclude(repository=None)).exclude(dashboard__created__date__lt=first_date(date_metrics)).distinct().count()
+        activated_users = User.objects.filter(project__in=non_empty_projects).exclude(project__created__date__lt=first_date(date_metrics)).distinct().count()
         self.stdout.write(self.style.SUCCESS(f"Activated Users: {activated_users}"))
 
-        real_users = User.objects.exclude(token=None).filter(date_joined__date__lte=last_date(date_metrics)).count()
+        real_users = User.objects.filter(anonymoususer=None).filter(date_joined__date__lte=last_date(date_metrics)).count()
         self.stdout.write(self.style.SUCCESS(f"Real Users: {real_users}"))
 
-        m2 = User.objects.exclude(token=None).filter(last_login__date__gte=first_date(date_metrics),
-                                                     last_login__date__lte=last_date(date_metrics)).count()
+        # M2 = Authenticated users and logged in the period
+        m2 = User.objects.filter(anonymoususer=None).filter(last_login__date__gte=first_date(date_metrics),
+                                                             last_login__date__lte=last_date(date_metrics)).count()
         self.stdout.write(self.style.SUCCESS(f"M2: {m2}"))
 
-        m3 = User.objects.filter(dashboard__in=Dashboard.objects.filter(modified__date__gte=first_date(date_metrics),
-                                                                        modified__date__lte=last_date(date_metrics))).distinct().count()
+        # M3 = Users that has created at least one intention in the period selected
+        m3 = User.objects.filter(archivedintention__created__date__gte=first_date(date_metrics),
+                                 archivedintention__created__date__lte=last_date(date_metrics)).distinct().count()
+
         self.stdout.write(self.style.SUCCESS(f"M3: {m3}"))
 
         if options['save']:
             models.BiweeklyCreatedUsers.objects.update_or_create(date=date_metrics,
-                                                                defaults={'total': users_created})
+                                                                 defaults={'total': users_created})
             models.BiweeklyLoggedUsers.objects.update_or_create(date=date_metrics,
-                                                               defaults={'total': active_users})
+                                                                defaults={'total': active_users})
             models.BiweeklyCreatedProjects.objects.update_or_create(date=date_metrics,
-                                                                   defaults={'total': projects_created})
+                                                                    defaults={'total': projects_created})
             models.BiweeklyCompletedTasks.objects.update_or_create(date=date_metrics,
-                                                                  defaults={'total': completed_tasks})
+                                                                   defaults={'total': completed_tasks})
             models.BiweeklyProjectsPerUser.objects.update_or_create(date=date_metrics,
-                                                                   defaults={'total': projects_per_user})
+                                                                    defaults={'total': projects_per_user})
             models.BiweeklyActivatedUsers.objects.update_or_create(date=date_metrics,
-                                                                defaults={'total': activated_users})
+                                                                   defaults={'total': activated_users})
             models.BiweeklyRealUsers.objects.update_or_create(date=date_metrics,
-                                                           defaults={'total': real_users})
+                                                              defaults={'total': real_users})
             models.BiweeklyM2.objects.update_or_create(date=date_metrics,
                                                        defaults={'total': m2})
             models.BiweeklyM3.objects.update_or_create(date=date_metrics,

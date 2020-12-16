@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand
+from django.contrib.auth import get_user_model
 
 from elasticsearch_dsl.connections import connections
 from elasticsearch.connection import create_ssl_context
@@ -6,8 +7,11 @@ import datetime
 import ssl
 
 from Cauldron2 import settings
-from CauldronApp.models import User, Dashboard, CompletedTask
+from CauldronApp.models import Project
+from poolsched.models import ArchivedIntention
 from metrics import models, elastic_models
+
+User = get_user_model()
 
 
 class Command(BaseCommand):
@@ -39,6 +43,8 @@ class Command(BaseCommand):
         else:
             date_metrics = datetime.date.today()
 
+        non_empty_projects = Project.objects.exclude(repository=None)
+
         self.stdout.write(self.style.SUCCESS(f"Collecting metrics from {date_metrics}"))
 
         users_created = User.objects.filter(date_joined__date=date_metrics).count()
@@ -47,25 +53,27 @@ class Command(BaseCommand):
         active_users = User.objects.filter(last_login__date=date_metrics).count()
         self.stdout.write(self.style.SUCCESS(f"Active users: {active_users}"))
 
-        projects_created = Dashboard.objects.filter(created__date=date_metrics).count()
+        projects_created = Project.objects.filter(created__date=date_metrics).count()
         self.stdout.write(self.style.SUCCESS(f"Projects created: {projects_created}"))
 
-        completed_tasks = CompletedTask.objects.filter(completed__date=date_metrics).count()
+        completed_tasks = ArchivedIntention.objects.filter(completed__date=date_metrics).count()
         self.stdout.write(self.style.SUCCESS(f"Completed tasks: {completed_tasks}"))
 
-        projects_per_user = Dashboard.objects.filter(created__date__lte=date_metrics).exclude(repository=None).count() / User.objects.filter(date_joined__date__lte=date_metrics).filter(dashboard__in=Dashboard.objects.exclude(repository=None)).distinct().count()
+        projects_per_user = non_empty_projects.filter(created__date__lte=date_metrics).count() / User.objects.filter(date_joined__date__lte=date_metrics).filter(project__in=non_empty_projects).distinct().count()
         self.stdout.write(self.style.SUCCESS(f"Projects per user: {projects_per_user}"))
 
-        activated_users = User.objects.filter(dashboard__in=Dashboard.objects.exclude(repository=None)).exclude(dashboard__created__date__lt=date_metrics).distinct().count()
+        activated_users = User.objects.filter(project__in=non_empty_projects).exclude(project__created__date__lt=date_metrics).distinct().count()
         self.stdout.write(self.style.SUCCESS(f"Activated Users: {activated_users}"))
 
-        real_users = User.objects.exclude(token=None).filter(date_joined__date__lte=date_metrics).count()
+        real_users = User.objects.filter(anonymoususer=None).filter(date_joined__date__lte=date_metrics).count()
         self.stdout.write(self.style.SUCCESS(f"Real Users: {real_users}"))
 
-        m2 = User.objects.exclude(token=None).filter(last_login__date=date_metrics).count()
+        # M2 = Authenticated users and logged in the period
+        m2 = User.objects.filter(anonymoususer=None).filter(last_login__date=date_metrics).count()
         self.stdout.write(self.style.SUCCESS(f"M2: {m2}"))
 
-        m3 = User.objects.filter(dashboard__in=Dashboard.objects.filter(modified__date=date_metrics)).distinct().count()
+        # M3 = Users that has created at least one intention in the period selected
+        m3 = User.objects.filter(archivedintention__created__date=datetime.datetime.now()).distinct().count()
         self.stdout.write(self.style.SUCCESS(f"M3: {m3}"))
 
         if options['save']:

@@ -1,13 +1,18 @@
 from django.core.management.base import BaseCommand
+from django.contrib.auth import get_user_model
 
 from elasticsearch_dsl.connections import connections
 from elasticsearch.connection import create_ssl_context
-import datetime, calendar
+import datetime
+import calendar
 import ssl
 
-from CauldronApp.models import User, Dashboard, CompletedTask
+from CauldronApp.models import Project
+from poolsched.models import ArchivedIntention
 from Cauldron2 import settings
 from metrics import models, elastic_models
+
+User = get_user_model()
 
 
 def first_date(date):
@@ -60,6 +65,8 @@ class Command(BaseCommand):
         else:
             date_metrics = datetime.date.today()
 
+        non_empty_projects = Project.objects.exclude(repository=None)
+
         self.stdout.write(self.style.SUCCESS(f"Collecting metrics from {date_metrics.strftime('%Y-%m')}"))
 
         users_created = User.objects.filter(date_joined__month=date_metrics.month,
@@ -70,27 +77,30 @@ class Command(BaseCommand):
                                            last_login__year=date_metrics.year).count()
         self.stdout.write(self.style.SUCCESS(f"Active users: {active_users}"))
 
-        projects_created = Dashboard.objects.filter(created__month=date_metrics.month,
+        projects_created = Project.objects.filter(created__month=date_metrics.month,
                                                     created__year=date_metrics.year).count()
         self.stdout.write(self.style.SUCCESS(f"Projects created: {projects_created}"))
 
-        completed_tasks = CompletedTask.objects.filter(completed__month=date_metrics.month,
-                                                       completed__year=date_metrics.year).count()
+        completed_tasks = ArchivedIntention.objects.filter(completed__month=date_metrics.month,
+                                                           completed__year=date_metrics.year).count()
         self.stdout.write(self.style.SUCCESS(f"Completed tasks: {completed_tasks}"))
 
-        projects_per_user = Dashboard.objects.filter(created__date__lte=last_date(date_metrics)).exclude(repository=None).count() / User.objects.filter(date_joined__date__lte=last_date(date_metrics)).filter(dashboard__in=Dashboard.objects.exclude(repository=None)).distinct().count()
+        projects_per_user = non_empty_projects.filter(created__date__lte=last_date(date_metrics)).count() / User.objects.filter(date_joined__date__lte=last_date(date_metrics)).filter(project__in=non_empty_projects).distinct().count()
         self.stdout.write(self.style.SUCCESS(f"Projects per user: {projects_per_user}"))
 
-        activated_users = User.objects.filter(dashboard__in=Dashboard.objects.exclude(repository=None)).exclude(dashboard__created__date__lt=first_date(date_metrics)).distinct().count()
+        activated_users = User.objects.filter(project__in=non_empty_projects).exclude(project__created__date__lt=first_date(date_metrics)).distinct().count()
         self.stdout.write(self.style.SUCCESS(f"Activated Users: {activated_users}"))
 
-        real_users = User.objects.exclude(token=None).filter(date_joined__date__lte=last_date(date_metrics)).count()
+        real_users = User.objects.filter(anonymoususer=None).filter(date_joined__date__lte=last_date(date_metrics)).count()
         self.stdout.write(self.style.SUCCESS(f"Real Users: {real_users}"))
 
-        m2 = User.objects.exclude(token=None).filter(last_login__month=date_metrics.month, last_login__year=date_metrics.year).count()
+        # M2 = Authenticated users and logged in the period
+        m2 = User.objects.filter(anonymoususer=None).filter(last_login__month=date_metrics.month, last_login__year=date_metrics.year).count()
         self.stdout.write(self.style.SUCCESS(f"M2: {m2}"))
 
-        m3 = User.objects.filter(dashboard__in=Dashboard.objects.filter(modified__month=date_metrics.month, modified__year=date_metrics.year)).distinct().count()
+        # M3 = Users that has created at least one intention in the period selected
+        m3 = User.objects.filter(archivedintention__created__month=date_metrics.month,
+                                 archivedintention__created__year=date_metrics.year).distinct().count()
         self.stdout.write(self.style.SUCCESS(f"M3: {m3}"))
 
         if options['save']:
