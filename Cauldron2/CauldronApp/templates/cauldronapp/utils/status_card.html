@@ -6,27 +6,26 @@
                 <strong>Server</strong>: {{request.get_host}}
             </h4>
             <h5>
-                <strong>Total Projects</strong>: {{dash_count}}
+                <strong>Total Projects (with data)</strong>: {{total_projects}} ({{total_projects_with_repos}})
+            </h5>
+            <h5>
+                <strong>Total Users (authenticated)</strong>: {{total_users}} ({{total_users_authenticated}})
             </h5>
             <hr>
             <h5>
-                <strong>Total Tasks</strong>: {{tasks_count}}
+                <strong>Total tasks</strong>: {{total_intentions}}
             </h5>
             <h6>
                 <i class="fas fa-check text-success"></i>
-                <strong>Completed tasks</strong>: {{completed_tasks_count}}
+                <strong>Completed tasks</strong>: {{success_intentions}}
             </h6>
             <h6>
                 <div class="fas fa-spinner"></div>
-                <strong>Running tasks</strong>: {{running_tasks_count}}
-            </h6>
-            <h6>
-                <div class="fas fa-circle" style="color:#0079d3"></div>
-                <strong>Pending tasks</strong>: {{pending_tasks_count}}
+                <strong>Running tasks</strong>: {{running_intentions}}
             </h6>
             <h6>
                 <i class="fas fa-exclamation-triangle text-warning"></i>
-                <strong>Error tasks</strong>: {{error_tasks_count}}
+                <strong>Error tasks</strong>: {{error_intentions}}
             </h6>
             <hr>
             <h5>

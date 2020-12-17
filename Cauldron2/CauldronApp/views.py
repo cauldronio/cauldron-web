@@ -15,7 +15,7 @@ from cauldron_apps.poolsched_gitlab.models import GLToken
 from cauldron_apps.poolsched_meetup.models import MeetupToken
 from cauldron_apps.cauldron.models import IAddGHOwner, IAddGLOwner
 from cauldron_apps.poolsched_export.models.iexportgit import IExportGitCSV
-from poolsched.models import Intention
+from poolsched.models import Intention, ArchivedIntention
 from poolsched.models.jobs import Log
 
 import logging
@@ -1085,21 +1085,24 @@ def status_info():
     """
     context = dict()
 
-    # Total Dashboards
-    context['dash_count'] = Project.objects.count()
-    # Total Tasks
-    context['tasks_count'] = Task.objects.count() + CompletedTask.objects.filter(old=False).count()
-    context['completed_tasks_count'] = CompletedTask.objects.filter(status="COMPLETED", old=False).count()
-    context['running_tasks_count'] = Task.objects.exclude(worker_id="").count()
-    context['pending_tasks_count'] = Task.objects.filter(worker_id="").count()
-    context['error_tasks_count'] = CompletedTask.objects.filter(status="ERROR", old=False).count()
-    # Total Data sources (Formerly Repositories)
-    context['repos_count'] = Repository.objects.exclude(dashboards=None).count()
-    context['repos_git_count'] = Repository.objects.exclude(dashboards=None).filter(backend="git").count()
-    context['repos_github_count'] = Repository.objects.exclude(dashboards=None).filter(backend="github").count()
-    context['repos_gitlab_count'] = Repository.objects.exclude(dashboards=None).filter(backend="gitlab").count()
-    context['repos_meetup_count'] = Repository.objects.exclude(dashboards=None).filter(backend="meetup").count()
-
+    # Total Projects
+    context['total_projects'] = Project.objects.count()
+    context['total_projects_with_repos'] = Project.objects.exclude(repository=None).count()
+    # Total Users
+    context['total_users'] = User.objects.count()
+    context['total_users_authenticated'] = User.objects.filter(anonymoususer__isnull=True).count()
+    # Total Intentions
+    intentions_count = Intention.objects.count()
+    context['total_intentions'] = intentions_count + ArchivedIntention.objects.count()
+    context['running_intentions'] = intentions_count
+    context['success_intentions'] = ArchivedIntention.objects.filter(status=ArchivedIntention.OK).count()
+    context['error_intentions'] = ArchivedIntention.objects.filter(status=ArchivedIntention.ERROR).count()
+    # Total Repositories
+    context['repos_count'] = Repository.objects.exclude(projects=None).count()
+    context['repos_git_count'] = GitRepository.objects.exclude(projects=None).count()
+    context['repos_github_count'] = GitHubRepository.objects.exclude(projects=None).count()
+    context['repos_gitlab_count'] = GitLabRepository.objects.exclude(projects=None).count()
+    context['repos_meetup_count'] = MeetupRepository.objects.exclude(projects=None).count()
     return context
 
 
@@ -1215,15 +1218,7 @@ def stats_page(request):
     :return:
     """
     context = create_context(request)
-
-    if request.method != 'GET':
-        context['title'] = "Method Not Allowed"
-        context['description'] = "Only GET methods allowed"
-        return render(request, 'cauldronapp/error.html', status=405,
-                      context=context)
-
     context.update(status_info())
-
     return render(request, 'cauldronapp/stats.html', context=context)
 
 
