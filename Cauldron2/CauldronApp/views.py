@@ -37,6 +37,9 @@ from cauldron_apps.cauldron.opendistro import OpendistroApi
 from CauldronApp.oauth.github import GitHubOAuth
 from CauldronApp.oauth.gitlab import GitLabOAuth
 from CauldronApp.oauth.meetup import MeetupOAuth
+from cauldron_apps.poolsched_github.models import IGHRaw
+from cauldron_apps.poolsched_gitlab.models import IGLRaw
+from cauldron_apps.poolsched_meetup.models import IMeetupRaw
 
 from .project_metrics.metrics import get_compare_metrics, get_compare_charts
 
@@ -469,7 +472,7 @@ def request_add_to_project(request, project_id):
         analyze_commits = 'commits' in request.POST
         analyze_issues = 'issues' in request.POST
         forks = 'forks' in request.POST
-        if not hasattr(project.creator, 'githubuser'):
+        if not project.creator.ghtokens.filter(instance='GitHub').exists():
             if request.user != project.creator:
                 return JsonResponse({'status': 'error',
                                      'message': 'Project owner needs a GitHub token '
@@ -498,7 +501,7 @@ def request_add_to_project(request, project_id):
         analyze_commits = 'commits' in request.POST
         analyze_issues = 'issues' in request.POST
         forks = 'forks' in request.POST
-        if not hasattr(project.creator, 'gitlabuser'):
+        if not project.creator.gltokens.filter(instance='GitLab').exists():
             if request.user != project.creator:
                 return JsonResponse({'status': 'error',
                                      'message': 'Project owner needs a GitLab token to '
@@ -526,7 +529,7 @@ def request_add_to_project(request, project_id):
         return JsonResponse(output, status=output['code'])
 
     elif backend == 'meetup':
-        if not hasattr(project.creator, 'meetupuser'):
+        if not project.creator.meetuptokens.exists():
             if request.user != project.creator:
                 return JsonResponse({'status': 'error',
                                      'message': 'Project owner needs a Meetup token to'
@@ -653,11 +656,13 @@ def request_refresh_project(request, project_id):
                                                            f'you are not the owner'},
                             status=400)
 
+    refresh_count = 0
     for repo in project.repository_set.select_subclasses():
-        repo.refresh(project.creator)
+        if repo.refresh(project.creator):
+            refresh_count += 1
 
     return JsonResponse({'status': 'reanalyze',
-                         'message': "Refreshing all the repositories"})
+                         'message': f"Refreshing {refresh_count} repositories"})
 
 
 def request_refresh_repository(request, repo_id):
@@ -667,8 +672,11 @@ def request_refresh_repository(request, repo_id):
     except Repository.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': f"Repository {repo_id} does not exist"},
                             status=404)
-    repo.refresh(request.user)
-    return JsonResponse({'status': 'reanalyze'})
+    refresh = repo.refresh(request.user)
+    if refresh:
+        return JsonResponse({'status': 'reanalyze'})
+    else:
+        return JsonResponse({'status': 'Unable to refresh the selected repository. A token is needed'})
 
 
 def request_compare_projects(request):
@@ -911,40 +919,28 @@ def request_delete_token(request):
 
     identity = request.POST.get('identity', None)
     if identity == 'github':
-        if hasattr(request.user, 'githubuser'):
-            token = Token.objects.filter(backend=identity, user=request.user).first()
-            tasks = Task.objects.filter(tokens=token)
-            for task in tasks:
-                if len(task.tokens.all()) == 1 and not task.worker_id:
-                    task.delete()
-            request.user.githubuser.delete()
+        tokens = request.user.ghtokens.filter(instance='GitHub')
+        for token in tokens:
+            IGHRaw.objects.filter(user=request.user, job__isnull=True, repo__instance='GitHub').delete()
+            IAddGHOwner.objects.filter(user=request.user, job__isnull=True, instance='GitHub').delete()
             token.delete()
         return JsonResponse({'status': 'ok'})
-
     elif identity == 'gitlab':
-        if hasattr(request.user, 'gitlabuser'):
-            token = Token.objects.filter(backend=identity, user=request.user).first()
-            tasks = Task.objects.filter(tokens=token)
-            for task in tasks:
-                if len(task.tokens.all()) == 1 and not task.worker_id:
-                    task.delete()
-            request.user.gitlabuser.delete()
+        tokens = request.user.gltokens.filter(instance='GitLab')
+        for token in tokens:
+            IGLRaw.objects.filter(user=request.user, job__isnull=True, repo__instance='GitLab').delete()
+            IAddGLOwner.objects.filter(user=request.user, job__isnull=True, instance='GitLab').delete()
             token.delete()
         return JsonResponse({'status': 'ok'})
-
     elif identity == 'meetup':
-        if hasattr(request.user, 'meetupuser'):
-            token = Token.objects.filter(backend=identity, user=request.user).first()
-            tasks = Task.objects.filter(tokens=token)
-            for task in tasks:
-                if len(task.tokens.all()) == 1 and not task.worker_id:
-                    task.delete()
-            request.user.meetupuser.delete()
+        tokens = request.user.meetuptokens.all()
+        for token in tokens:
+            IMeetupRaw.objects.filter(user=request.user, job__isnull=True).delete()
             token.delete()
         return JsonResponse({'status': 'ok'})
 
     else:
-        return JsonResponse({'status': 'error', 'message': 'Unkown identity: {}'.format(identity)})
+        return JsonResponse({'status': 'error', 'message': 'Unknown identity: {}'.format(identity)})
 
 
 def create_context(request):
