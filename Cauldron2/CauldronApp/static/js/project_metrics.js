@@ -2,7 +2,7 @@
  *    METRICS AND VISUALIZATIONS   *
  ***********************************/
 $(function() {
-    var categories = ['overview', 'activity-overview', 'activity-git', 'activity-issues', 'activity-reviews', 'community-overview', 'community-git', 'community-issues', 'community-reviews', 'performance-overview', 'performance-issues', 'performance-reviews'];
+    var categories = ['overview', 'activity-overview', 'activity-git', 'activity-issues', 'activity-reviews', 'community-overview', 'community-git', 'community-issues', 'community-reviews', 'performance-overview', 'performance-issues', 'performance-reviews', 'chaoss'];
     var start = getUrlParameter('from_date');
     var end = getUrlParameter('to_date');
     var urls = getURLParameterList('repo_url');
@@ -91,6 +91,15 @@ $(function() {
         "reviews_still_open_bokeh": "chart-reviews-still-open",
         "reviews_closed_ttc_bokeh": "chart-reviews-closed-ttc",
         "reviews_closed_created_ratio_bokeh": "chart-reviews-closed-created-ratio",
+        // CHAOSS SECTION
+        "reviews_closed_mean_duration_heatmap_bokeh_chaoss": "chart-reviews-closed-mean-duration-chaoss",
+        "reviews_closed_mean_duration_heatmap_bokeh_chaoss_without_description": "chart-reviews-closed-mean-duration-chaoss-without-description",
+        "issues_created_closed_bokeh_chaoss": "chart-issues-created-closed-chaoss",
+        "issues_created_closed_bokeh_chaoss_without_description": "chart-issues-created-closed-chaoss-without-description",
+        "drive_by_and_repeat_contributor_counts_bokeh_chaoss": "chart-drive-by-and-repeat-contributor-counts-chaoss",
+        "drive_by_and_repeat_contributor_counts_bokeh_chaoss_without_description": "chart-drive-by-and-repeat-contributor-counts-chaoss-without-description",
+        "commits_weekday_bokeh_chaoss": "chart-commits-weekday-chaoss",
+        "commits_weekday_bokeh_chaoss_without_description": "chart-commits-weekday-chaoss-without-description",
     }
 
     var METRICS_ACTIVITY_OVERVIEW = {
@@ -285,7 +294,7 @@ $(function() {
 
     $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
         tab = e.target.dataset.category;
-        if (tab != 'overview') {
+        if (!['overview', 'chaoss'].includes(tab)) {
           $('#toggle-btn').prop('disabled', true);
         } else {
           $('#toggle-btn').prop('disabled', false);

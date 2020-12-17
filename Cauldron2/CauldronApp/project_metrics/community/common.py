@@ -43,6 +43,16 @@ def is_still_active(last_contribution_date, ref_date):
     return elapsedTime < timedelta(90)
 
 
+def get_contributor_type(total_contributions):
+    """Determine if a contributor is a drive-by contributor (less
+    than five contributions) or a repeat contributor (more than five
+    contibutions)"""
+    if total_contributions < 5:
+        return "drive-by"
+
+    return "repeat"
+
+
 def organizational_diversity_authors(elastic, urls, from_date, to_date):
     """Shows the number of git authors who contribute to a project
     grouped by their organization domain"""

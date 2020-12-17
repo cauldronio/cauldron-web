@@ -1,4 +1,5 @@
 {% load cauldron_tags %}
+{% load static %}
 
 <div>
 
@@ -55,6 +56,9 @@
             <a class="dropdown-item" data-category="performance-issues" data-toggle="tab" role="tab" href="#performance-issues">Issues</a>
             <a class="dropdown-item" data-category="performance-reviews" data-toggle="tab" role="tab" href="#performance-reviews">Reviews</a>
           </div>
+        </li>
+        <li class="nav-item" role="presentation">
+          <a class="nav-link" data-category="chaoss" data-toggle="tab" href="#chaoss" role="tab" aria-controls="chaoss" aria-selected="true"><img src="{% static '/img/chaoss_logo.png' %}" width="90" height="25" class="d-inline-block align-top" alt=""></a>
         </li>
         {% if repositories_count > 0 %}
         <li class="nav-item">
@@ -135,7 +139,7 @@
           </div>
           {% endif %}
         </div>
-        <div id="charts-with-description" style="display:none;">
+        <div class="charts-with-description" style="display:none;">
           {% if has_git %}
           <button onclick="toggle_descriptions();" type="button" class="btn btn-sm mt-2 float-right btn-outline-dark hide-descriptions-btn" data-toggle="tooltip" data-original-title="Hide descriptions"><i class="fas fa-eye-slash"></i></button>
           <div class="row">
@@ -194,7 +198,7 @@
           </div>
           {% endif %}
         </div>
-        <div id="charts-without-description">
+        <div class="charts-without-description">
           <div class="row">
             {% if has_git %}
             <div class="col-md-6">
@@ -871,6 +875,92 @@
         </div>
       </div>
       <!-- End Performance Reviews -->
+      <!-- Start CHAOSS section -->
+      <div id="chaoss" class="mb-4 tab-pane fade" role="tabpanel" >
+        <div class="charts-with-description" style="display:none;">
+          {% if has_gitlab or has_github %}
+          <button onclick="toggle_descriptions();" type="button" class="btn btn-sm mt-2 float-right btn-outline-dark hide-descriptions-btn" data-toggle="tooltip" data-original-title="Hide descriptions"><i class="fas fa-eye-slash"></i></button>
+          <div class="row">
+            <div class="col-md-6">
+              <div id="chart-reviews-closed-mean-duration-chaoss"></div>
+            </div>
+            <div class="col-md-6 card my-auto" style="border:none;">
+              <div class="card-body">
+                <h5 class="card-title">Mean and median duration (days) of all closed reviews</h5>
+                <p class="card-text">This heat map compares the responsiveness of a repository to reviews (pull requests and merge requests). The light blue indicates review response times that are fastest; the red indicates the time slots with slowest response times. White boxes indicate time slots in which no reviews were closed. The minimum and maximum are determined by the pool of repositories within the project. For GitHub repositories, both accepted and declined pull requests are taking into account. For GitLab repositories, only the declined are being shown.</p>
+                <p class="card-text">Metric inspired by the <img src="{% static '/img/chaoss_logo.png' %}" width="90" height="25" class="d-inline-block align-top" alt=""> report, and <img src="{% static '/img/augur_logo.png' %}" width="90" height="25" class="d-inline-block align-top" alt=""></p>
+                <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/mean-and-median-duration-reviews-closed.md" class="card-link">Read more</a>
+              </div>
+            </div>
+          </div>
+          <button onclick="toggle_descriptions();" type="button" class="btn btn-sm mt-2 float-left btn-outline-dark hide-descriptions-btn" data-toggle="tooltip" data-original-title="Hide descriptions"><i class="fas fa-eye-slash"></i></button>
+          <div class="row">
+            <div class="col-md-6 card my-auto" style="border:none;">
+              <div class="card-body">
+                <h5 class="card-title"># Issues created/closed</h5>
+                <p class="card-text">Number of issues shows activity in the issue tracking system, usually including bug reports, feature requests, and other tasks that are tracked with issues (tickets). We measure, for each week, the number of issues that were opened (created) or closed during it. Not only the absolute numbers, but also the relationship between open and closed issues is important in this chart: if many more issues are consistently being opened than closed, the project is not dealing with all the new stuff that is entering the issue tracking system.</p>
+                <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/issues-created-closed.md" class="card-link">Read more</a>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div id="chart-issues-created-closed-chaoss"></div>
+            </div>
+          </div>
+          {% endif %}
+          {% if has_git %}
+          <button onclick="toggle_descriptions();" type="button" class="btn btn-sm mt-2 float-right btn-outline-dark hide-descriptions-btn" data-toggle="tooltip" data-original-title="Hide descriptions"><i class="fas fa-eye-slash"></i></button>
+          <div class="row">
+            <div class="col-md-6">
+              <div id="chart-drive-by-and-repeat-contributor-counts-chaoss"></div>
+            </div>
+            <div class="col-md-6 card my-auto" style="border:none;">
+              <div class="card-body">
+                <h5 class="card-title">Drive-by and repeat contributor counts</h5>
+                <p class="card-text">This graph shows the number of new contributors in the specified time period and indicates how may were drive-by or repeat contributors. Drive-by contributors are contributors who make less than the required 5 contributions in the specified time period. Repeat contributors are contributors who made 5 or more contributions in the specified time period and their first contribution is in the specified time period.</p>
+                <p class="card-text">Metric inspired by the <img src="{% static '/img/chaoss_logo.png' %}" width="90" height="25" class="d-inline-block align-top" alt=""> report, and <img src="{% static '/img/augur_logo.png' %}" width="90" height="25" class="d-inline-block align-top" alt=""></p>
+                <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/community/drive-by-and-repeat-contributor-counts.md" class="card-link">Read more</a>
+              </div>
+            </div>
+          </div>
+          <button onclick="toggle_descriptions();" type="button" class="btn btn-sm mt-2 float-left btn-outline-dark hide-descriptions-btn" data-toggle="tooltip" data-original-title="Hide descriptions"><i class="fas fa-eye-slash"></i></button>
+          <div class="row">
+            <div class="col-md-6 card my-auto" style="border:none;">
+              <div class="card-body">
+                <h5 class="card-title"># Commits by weekday</h5>
+                <p class="card-text">This bar chart shows how commit activity is distributed across the days of the week. When activity only occurs on workdays, the community may have mostly paid contributors who work during the week. Activity on the weekends may indicate volunteer activities.</p>
+                <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/commits-by-weekday.md" class="card-link">Read more</a>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div id="chart-commits-weekday-chaoss"></div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+        <div class="charts-without-description">
+          {% if has_gitlab or has_github %}
+          <div class="row">
+            <div class="col-md-6">
+              <div id="chart-reviews-closed-mean-duration-chaoss-without-description"></div>
+            </div>
+            <div class="col-md-6">
+              <div id="chart-issues-created-closed-chaoss-without-description"></div>
+            </div>
+          </div>
+          {% endif %}
+          {% if has_git %}
+          <div class="row">
+            <div class="col-md-6">
+              <div id="chart-drive-by-and-repeat-contributor-counts-chaoss-without-description"></div>
+            </div>
+            <div class="col-md-6">
+              <div id="chart-commits-weekday-chaoss-without-description"></div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      <!-- End CHAOSS section -->
     </div>
   </div>
 </div>

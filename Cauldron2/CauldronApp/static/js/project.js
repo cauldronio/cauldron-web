@@ -151,8 +151,8 @@ function onSubmitRename(ev) {
 
 
 function show_descriptions() {
-  var charts_without_description = $('#charts-without-description');
-  var charts_with_description = $('#charts-with-description');
+  var charts_without_description = $('.charts-without-description');
+  var charts_with_description = $('.charts-with-description');
 
   $('#toggle-btn').html($('<i/>',{class:'fa fa-eye-slash'}));
   $('#toggle-btn').removeClass('show-descriptions-btn');
@@ -165,8 +165,8 @@ function show_descriptions() {
 
 
 function hide_descriptions() {
-  var charts_without_description = $('#charts-without-description');
-  var charts_with_description = $('#charts-with-description');
+  var charts_without_description = $('.charts-without-description');
+  var charts_with_description = $('.charts-with-description');
 
   $('#toggle-btn').html($('<i/>',{class:'fa fa-eye'}));
   $('#toggle-btn').removeClass('hide-descriptions-btn');

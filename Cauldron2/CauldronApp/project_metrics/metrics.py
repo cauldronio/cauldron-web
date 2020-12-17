@@ -181,18 +181,22 @@ def get_category_metrics(project, category, urls, from_date, to_date):
         return performance_issues_metrics(elastic, urls, from_date, to_date)
     elif category == 'performance-reviews':
         return performance_reviews_metrics(elastic, urls, from_date, to_date)
+    elif category == 'chaoss':
+        return chaoss_metrics(elastic, urls, from_date, to_date)
     else:
         return overview_metrics(elastic, urls, from_date, to_date)
 
 
 def overview_metrics(elastic, urls, from_date, to_date):
     metrics = dict()
+    # Metrics
     metrics['commits_range'] = activity_commits.git_commits(elastic, urls, from_date, to_date)
     metrics['reviews_opened'] = activity_reviews.reviews_opened(elastic, urls, from_date, to_date)
     metrics['review_duration'] = other.review_duration(elastic, urls, from_date, to_date)
     metrics['issues_created_range'] = activity_issues.issues_opened(elastic, urls, from_date, to_date)
     metrics['issues_closed_range'] = activity_issues.issues_closed(elastic, urls, from_date, to_date)
     metrics['issues_time_to_close'] = other.issues_time_to_close(elastic, urls, from_date, to_date)
+    # Visualizations
     metrics['commits_bokeh_overview'] = activity_commits.git_commits_bokeh_line(elastic, urls, from_date, to_date)
     metrics['commits_bokeh_overview_without_description'] = metrics['commits_bokeh_overview']
     metrics['author_evolution_bokeh'] = other.author_evolution_bokeh(elastic, urls, from_date, to_date)
@@ -465,4 +469,18 @@ def performance_reviews_metrics(elastic, urls, from_date, to_date):
     metrics['reviews_still_open_bokeh'] = performance_reviews.reviews_still_open_by_creation_date_bokeh(elastic, urls)
     metrics['reviews_closed_ttc_bokeh'] = performance_reviews.ttc_closed_reviews_bokeh(elastic, urls, from_date, to_date)
     metrics['reviews_closed_created_ratio_bokeh'] = performance_reviews.closed_created_reviews_ratio_bokeh(elastic, urls, from_date, to_date)
+    return metrics
+
+
+def chaoss_metrics(elastic, urls, from_date, to_date):
+    metrics = dict()
+    # Visualizations
+    metrics['reviews_closed_mean_duration_heatmap_bokeh_chaoss'] = activity_reviews.reviews_closed_mean_duration_heatmap_bokeh(elastic, urls, from_date, to_date)
+    metrics['reviews_closed_mean_duration_heatmap_bokeh_chaoss_without_description'] = metrics['reviews_closed_mean_duration_heatmap_bokeh_chaoss']
+    metrics['issues_created_closed_bokeh_chaoss'] = activity_issues.issues_open_closed_bokeh(elastic, urls, from_date, to_date)
+    metrics['issues_created_closed_bokeh_chaoss_without_description'] = metrics['issues_created_closed_bokeh_chaoss']
+    metrics['drive_by_and_repeat_contributor_counts_bokeh_chaoss'] = community_commits.drive_by_and_repeat_contributor_counts(elastic, urls, from_date, to_date)
+    metrics['drive_by_and_repeat_contributor_counts_bokeh_chaoss_without_description'] = metrics['drive_by_and_repeat_contributor_counts_bokeh_chaoss']
+    metrics['commits_weekday_bokeh_chaoss'] = activity_commits.git_commits_weekday_bokeh(elastic, urls, from_date, to_date)
+    metrics['commits_weekday_bokeh_chaoss_without_description'] = metrics['commits_weekday_bokeh_chaoss']
     return metrics

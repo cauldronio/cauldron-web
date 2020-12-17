@@ -10,13 +10,13 @@ from elasticsearch_dsl import Search, Q
 
 from bokeh.embed import json_item
 from bokeh.models import ColumnDataSource, tools, Range1d
-from bokeh.palettes import Blues, Greens, Greys, Reds, Category10
+from bokeh.palettes import Blues, Greens, Greys, Reds, Category10, Oranges
 from bokeh.plotting import figure
 from bokeh.transform import dodge
 
 from CauldronApp.models import Project
 
-from .common import get_seniority, is_still_active
+from .common import get_seniority, is_still_active, get_contributor_type
 from ..utils import configure_figure, get_interval
 
 logger = logging.getLogger(__name__)
@@ -511,4 +511,109 @@ def authors_retained_ratio_bokeh(elastic, urls, snap_date):
     ))
 
     plot.legend.location = "top_right"
+    return json.dumps(json_item(plot))
+
+
+def drive_by_and_repeat_contributor_counts(elastic, urls, from_date, to_date):
+    """Shows the drive-by and repeat contributors (git) counts in a community"""
+
+    interval_name, interval_elastic, bar_width = get_interval(from_date, to_date)
+
+    s = Search(using=elastic, index='git') \
+        .filter('range', grimoire_creation_date={"lt": to_date}) \
+        .query(Q('terms', origin=urls)) \
+        .query(~Q('match', files=0)) \
+        .extra(size=0)
+    s.aggs.bucket('authors', 'terms', field='author_uuid', size=30000) \
+          .metric('first_contribution', 'min', field='grimoire_creation_date') \
+          .metric('total_contributions', 'cardinality', field='hash')
+
+    try:
+        response = s.execute()
+        authors_buckets = response.aggregations.authors.buckets
+    except ElasticsearchException as e:
+        logger.warning(e)
+        authors_buckets = []
+
+    authors_first_contribution = {}
+    authors_total_contributions = {}
+    for author in authors_buckets:
+        authors_first_contribution[author.key] = author.first_contribution.value / 1000
+        authors_total_contributions[author.key] = author.total_contributions.value
+
+    authors_first_contribution_df = pandas.DataFrame(authors_first_contribution.items(), columns=['author_id', 'first_contribution'])
+    authors_total_contributions_df = pandas.DataFrame(authors_total_contributions.items(), columns=['author_id', 'total_contributions'])
+
+    # Filter by date
+    from_date_ts = datetime.timestamp(from_date)
+    to_date_ts = datetime.timestamp(to_date)
+    authors_first_contribution_df = authors_first_contribution_df[authors_first_contribution_df["first_contribution"].between(from_date_ts, to_date_ts)]
+
+    authors = pandas.merge(authors_first_contribution_df, authors_total_contributions_df, on='author_id')
+
+    # Round to day of the week or the month if necessary
+    authors['first_contribution'] = pandas.to_datetime(authors['first_contribution'], unit='s')
+    if interval_elastic == '1M':
+        authors['first_contribution'] = authors['first_contribution'].apply(lambda x: x.date() - timedelta(days=(x.day-1)))
+    elif interval_elastic == '1w':
+        authors['first_contribution'] = authors['first_contribution'].apply(lambda x: x.date() - timedelta(days=x.weekday()))
+
+    authors['contributor_type'] = authors['total_contributions'].apply(lambda x: get_contributor_type(x))
+
+    # Group by drive-by authors
+    drive_by_authors = authors.loc[authors['contributor_type'] == 'drive-by']
+    drive_by_authors = drive_by_authors.groupby('first_contribution').size().reset_index(name='drive_by_authors')
+
+    # Group by repeat authors
+    repeat_authors = authors.loc[authors['contributor_type'] == 'repeat']
+    repeat_authors = repeat_authors.groupby('first_contribution').size().reset_index(name='repeat_authors')
+
+    authors = pandas.merge(drive_by_authors, repeat_authors, on='first_contribution', how='outer')
+    authors = authors.sort_values('first_contribution')
+    # Only the NaN values of drive_by_authors are turned into 0 to avoid
+    # an ugly effect in the chart
+    authors['drive_by_authors'] = authors['drive_by_authors'].fillna(0)
+
+    timestamps, drive_by_authors, repeat_authors = [], [], []
+    for index, row in authors.iterrows():
+        timestamps.append(datetime.combine(row['first_contribution'], datetime.min.time()).timestamp() * 1000)
+        drive_by_authors.append(row['drive_by_authors'])
+        repeat_authors.append(row['repeat_authors'])
+
+    plot = figure(x_axis_type="datetime",
+                  x_axis_label='Time',
+                  y_axis_label='# Contributors',
+                  height=300,
+                  sizing_mode="stretch_width",
+                  tools='')
+    plot.y_range.start = 0
+    plot.title.text = f'Drive-by and Repeat Contributor Counts'
+    configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
+                           '-/blob/master/guides/metrics/community/drive-by-and-repeat-contributor-counts.md')
+
+    source = ColumnDataSource(data=dict(
+        timestamps=timestamps,
+        drive_by=drive_by_authors,
+        repeat=repeat_authors
+    ))
+
+    plot.vbar_stack(x='timestamps', width=bar_width,
+                    stackers=['drive_by', 'repeat'],
+                    source=source,
+                    color=[Blues[3][0], Oranges[4][1]],
+                    legend_label=['Drive-by', 'Repeat'])
+
+    plot.add_tools(tools.HoverTool(
+        tooltips=[
+            (interval_name, '@timestamps{%F}'),
+            ('drive_by', '@drive_by'),
+            ('repeat', '@repeat')
+        ],
+        formatters={
+            '@timestamps': 'datetime'
+        },
+        toggleable=False
+    ))
+
+    plot.legend.location = "top_left"
     return json.dumps(json_item(plot))

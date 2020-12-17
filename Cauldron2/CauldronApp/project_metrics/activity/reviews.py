@@ -819,3 +819,80 @@ def reviews_closed_by_repository(elastic, from_date, to_date):
     ))
 
     return json.dumps(json_item(plot))
+
+
+def reviews_closed_mean_duration_heatmap_bokeh(elastic, urls, from_date, to_date):
+    """Shows the mean duration (in days) of the reviews closed per week in the
+    specified range of time"""
+
+    interval_name, interval_elastic, _ = get_interval(from_date, to_date)
+    s = Search(using=elastic, index='all') \
+        .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
+        .query(Q('terms', origin=urls)) \
+        .filter('range', closed_at={'gte': from_date, "lte": to_date}) \
+        .extra(size=0)
+    s.aggs.bucket('dates', 'date_histogram', field='closed_at', calendar_interval=interval_elastic, format='yyyy-MM-dd') \
+          .metric('ttc_avg', 'avg', field='time_to_close_days') \
+          .metric('ttc_median', 'percentiles', field='time_to_close_days', percents=[50])
+
+    try:
+        response = s.execute()
+        dates_buckets = response.aggregations.dates.buckets
+    except ElasticsearchException as e:
+        logger.warning(e)
+        dates_buckets = []
+
+    days = []
+    for item in dates_buckets:
+        days.append(item.key_as_string)
+
+    # In case there is no data, a default date range is generated to avoid failure
+    if not days:
+        days = [d.strftime('%Y-%m-%d') for d in pandas.date_range(from_date,to_date)]
+
+    categories = ['mean', 'median']
+
+    data = dict.fromkeys(days)
+    for day in days:
+        data[day] = dict.fromkeys(categories, 0)
+
+    for item in dates_buckets:
+        data[item.key_as_string]['mean'] = item.ttc_avg.value
+        data[item.key_as_string]['median'] = item.ttc_median.values['50.0']
+
+    data = pandas.DataFrame(data)
+    data.index.name = "Category"
+    data.columns.name = "Day"
+
+    df = pandas.DataFrame(data.stack(), columns=['ttc']).reset_index()
+
+    colors = ['#00a5c2', '#006dc6', '#0032ca', '#4900d2', '#8b00d5', '#ce00d9', '#dd00a5', '#e10065', '#e50021']
+    mapper = LinearColorMapper(palette=colors, low=df.ttc.min(), high=df.ttc.max())
+
+    TOOLS = "hover,save,pan,box_zoom,reset,wheel_zoom"
+
+    plot = figure(title="Mean and median duration (days) of all closed reviews",
+                  x_range=days, y_range=list(reversed(categories)),
+                  x_axis_location="below", height=300,
+                  sizing_mode="stretch_width",
+                  tools=TOOLS, toolbar_location='below',
+                  tooltips=[('date', '@Day'), ('ttc', '@ttc')])
+
+    plot.xaxis.major_label_orientation = 1.0
+
+    configure_heatmap(plot, 'https://gitlab.com/cauldronio/cauldron/'
+                            '-/blob/master/guides/metrics/activity/mean-and-median-duration-reviews-closed.md')
+
+    plot.rect(x="Day", y="Category", width=1, height=1,
+              source=df,
+              fill_color={'field': 'ttc', 'transform': mapper},
+              line_color=None)
+
+    color_bar = ColorBar(color_mapper=mapper,
+                         ticker=BasicTicker(desired_num_ticks=len(colors)),
+                         formatter=PrintfTickFormatter(format="%d"),
+                         label_standoff=6, border_line_color=None,
+                         location=(0, 0))
+    plot.add_layout(color_bar, 'right')
+
+    return json.dumps(json_item(plot))
