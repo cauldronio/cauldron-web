@@ -6,5 +6,5 @@ Here we import all the 'cauldron' models to make it easier to use from this repo
 from cauldron_apps.cauldron.models import \
     Project, ProjectRole, AnonymousUser, UserWorkspace, \
     Repository, MeetupRepository, GitRepository, GitHubRepository, GitLabRepository, \
-    MeetupUser, GithubUser, GitlabUser
+    MeetupUser, GithubUser, GitlabUser, GnomeUser
 

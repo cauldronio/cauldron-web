@@ -15,6 +15,7 @@ def index(request):
     context['tokens'] = {
         'github': GHToken.objects.filter(user=request.user, instance='GitHub').first(),
         'gitlab': GLToken.objects.filter(user=request.user, instance='GitLab').first(),
+        'gnome': GLToken.objects.filter(user=request.user, instance='Gnome').first(),
         'meetup': MeetupToken.objects.filter(user=request.user).first(),
     }
 

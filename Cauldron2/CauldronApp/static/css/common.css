@@ -197,3 +197,35 @@ footer a:hover {
 table {
    color: #333!important;
 }
+
+.btn-block img {
+    float: left;
+    margin: 4px 15px 0 5px;
+    min-width: 15px;
+    height: 1em;
+    width: auto;
+}
+
+.gnome-icon {
+    background: url('/static/img/GnomeLogo.png') no-repeat 0px 0px;
+    background-size: 15px;
+    display: inline-block;
+    height: 15px;
+    width: 15px;
+}
+
+.gnome-icon-white {
+    background: url('/static/img/GnomeLogoWhite.png') no-repeat 0px 0px;
+    background-size: 15px;
+    display: inline-block;
+    height: 15px;
+    width: 15px;
+}
+
+.gnome-icon-gray-big {
+    background: url('/static/img/GnomeLogoGray.png') no-repeat 0px 0px;
+    background-size: 32px;
+    display: inline-block;
+    height: 32px;
+    width: 32px;
+}

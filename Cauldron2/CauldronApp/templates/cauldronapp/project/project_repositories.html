@@ -41,15 +41,7 @@
           </div>
         </td>
         <td class="repo-url">
-          {% if repo.backend == "GH" %}
-          <i class="fab fa-github"></i>
-          {% elif repo.backend == "GL" %}
-          <i class="fab fa-gitlab"></i>
-          {% elif repo.backend == "ME" %}
-          <i class="fab fa-meetup"></i>
-          {% else %}
-          <i class="fab fa-git-square"></i>
-          {% endif %}
+          <i class="{{repo.backend | backend_fa_icon}}"></i>
           <a href="{{ repo.repository_link }}">{{ repo.datasource_url }}</a>
         </td>
         <td>

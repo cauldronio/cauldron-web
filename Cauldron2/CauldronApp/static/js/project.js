@@ -67,6 +67,9 @@ function getSummary() {
         if (data.gitlab){
             status_output += `. <b>GitLab:</b> ${data.gitlab}`
         }
+        if (data.gnome){
+            status_output += `. <b>Gnome:</b> ${data.gnome}`
+        }
         if (data.meetup){
             status_output += `. <b>Meetup:</b> ${data.meetup}`
         }

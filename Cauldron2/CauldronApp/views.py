@@ -10,9 +10,9 @@ from CauldronApp import kibana_objects, utils
 from CauldronApp.project_metrics import metrics
 from CauldronApp import datasources
 
-from cauldron_apps.poolsched_github.models import GHToken
-from cauldron_apps.poolsched_gitlab.models import GLToken
-from cauldron_apps.poolsched_meetup.models import MeetupToken
+from cauldron_apps.poolsched_github.models import GHToken, IGHRaw
+from cauldron_apps.poolsched_gitlab.models import GLToken, GLInstance, IGLRaw
+from cauldron_apps.poolsched_meetup.models import MeetupToken, IMeetupRaw
 from cauldron_apps.cauldron.models import IAddGHOwner, IAddGLOwner
 from cauldron_apps.poolsched_export.models.iexportgit import IExportGitCSV
 from poolsched.models import Intention, ArchivedIntention
@@ -30,16 +30,14 @@ from Cauldron2.settings import ES_IN_HOST, ES_IN_PORT, ES_IN_PROTO, ES_ADMIN_PAS
                                KIB_PATH
 from Cauldron2 import settings
 
-from CauldronApp.models import Project, GithubUser, GitlabUser, MeetupUser, AnonymousUser, UserWorkspace, ProjectRole
+from CauldronApp.models import Project, GithubUser, GitlabUser, MeetupUser, GnomeUser, \
+    AnonymousUser, UserWorkspace, ProjectRole
 from CauldronApp.models import Repository, GitLabRepository, GitRepository, GitHubRepository, MeetupRepository
 
 from cauldron_apps.cauldron.opendistro import OpendistroApi
 from CauldronApp.oauth.github import GitHubOAuth
 from CauldronApp.oauth.gitlab import GitLabOAuth
 from CauldronApp.oauth.meetup import MeetupOAuth
-from cauldron_apps.poolsched_github.models import IGHRaw
-from cauldron_apps.poolsched_gitlab.models import IGLRaw
-from cauldron_apps.poolsched_meetup.models import IMeetupRaw
 
 from .project_metrics.metrics import get_compare_metrics, get_compare_charts
 
@@ -139,6 +137,7 @@ def merge_accounts(user_origin, user_dest):
     GithubUser.objects.filter(user=user_origin).update(user=user_dest)
     GitlabUser.objects.filter(user=user_origin).update(user=user_dest)
     MeetupUser.objects.filter(user=user_origin).update(user=user_dest)
+    GnomeUser.objects.filter(user=user_origin).update(user=user_dest)
     Project.objects.filter(creator=user_origin).update(creator=user_dest)
     GHToken.objects.filter(user=user_origin).update(user=user_dest)
     GLToken.objects.filter(user=user_origin).update(user=user_dest)
@@ -166,11 +165,11 @@ def merge_workspaces(old_user, new_user):
 
 # TODO: Add state
 def request_gitlab_oauth(request):
+    redirect_uri = request.build_absolute_uri(reverse('gitlab_callback')).replace('http', 'https')
     code = request.GET.get('code', None)
     if not code:
         return custom_404(request, "Code not found in the GitLab callback")
-    redirect_uri = f"https://{request.get_host()}{GitLabOAuth.REDIRECT_PATH}"
-    gitlab = GitLabOAuth(settings.GL_CLIENT_ID, settings.GL_CLIENT_SECRET, redirect_uri)
+    gitlab = GitLabOAuth(settings.GL_CLIENT_ID, settings.GL_CLIENT_SECRET, redirect_uri, instance=GitLabOAuth.GITLAB)
     error = gitlab.authenticate(code)
     if error:
         return custom_500(request, error)
@@ -190,13 +189,15 @@ def request_gitlab_oauth(request):
                                                             f"visualization in you current account so that you do not "
                                                             f"loose anything"}
 
-    GLToken.objects.update_or_create(user=request.user, defaults={'token': oauth_user.token})
+    instance = GLInstance.objects.get(name='GitLab')
+    GLToken.objects.update_or_create(user=request.user, instance=instance, defaults={'token': oauth_user.token})
 
     if data_add and data_add['backend'] == 'gitlab':
         project = Project.objects.get(id=data_add['proj_id'])
         datasources.gitlab.analyze_data(project,
                                         data_add['data'], data_add['commits'],
-                                        data_add['issues'], data_add['forks'])
+                                        data_add['issues'], data_add['forks'],
+                                        instance='GitLab')
         project.update_elastic_role()
     if last_page:
         return HttpResponseRedirect(last_page)
@@ -212,7 +213,7 @@ def request_meetup_oauth(request):
     code = request.GET.get('code', None)
     if not code:
         return custom_404(request, "Code not found in the Meetup callback")
-    redirect_uri = f"https://{request.get_host()}{MeetupOAuth.REDIRECT_PATH}"
+    redirect_uri = request.build_absolute_uri(reverse('meetup_callback')).replace('http', 'https')
     meetup = MeetupOAuth(settings.MEETUP_CLIENT_ID, settings.MEETUP_CLIENT_SECRET, redirect_uri)
     error = meetup.authenticate(code)
     if error:
@@ -233,8 +234,8 @@ def request_meetup_oauth(request):
                                                             f"visualization in you current account so that you do not "
                                                             f"loose anything"}
 
-    GLToken.objects.update_or_create(user=request.user, defaults={'token': oauth_user.token,
-                                                                  'refresh_token': oauth_user.refresh_token})
+    MeetupToken.objects.update_or_create(user=request.user, defaults={'token': oauth_user.token,
+                                                                      'refresh_token': oauth_user.refresh_token})
 
     if data_add and data_add['backend'] == 'meetup':
         project = Project.objects.get(id=data_add['proj_id'])
@@ -247,11 +248,49 @@ def request_meetup_oauth(request):
     return HttpResponseRedirect(reverse('homepage'))
 
 
+def request_gnome_callback(request):
+    redirect_uri = request.build_absolute_uri(reverse('gnome_callback')).replace('http', 'https')
+    code = request.GET.get('code', None)
+    gitlab = GitLabOAuth(settings.GNOME_CLIENT_ID, settings.GNOME_CLIENT_SECRET, redirect_uri, GitLabOAuth.GNOME)
+    error = gitlab.authenticate(code)
+    if error:
+        return custom_404(request, error)
+    oauth_user = gitlab.user_data()
+
+    is_admin = oauth_user.username in settings.CAULDRON_ADMINS['GNOME']
+
+    # Take the state of the session before authentication
+    data_add = request.session.pop('add_repo', None)
+    last_page = request.session.pop('last_page', None)
+
+    merged = authenticate_user(request, GnomeUser, oauth_user, is_admin)
+    if merged:
+        request.session['alert_notification'] = {'title': 'Account merged',
+                                                 'message': f"You already had a Cauldron user with this GitLab account."
+                                                            f" We have proceeded to merge all the projects and "
+                                                            f"visualization in you current account so that you do not "
+                                                            f"loose anything"}
+    instance = GLInstance.objects.get(name='Gnome')
+    GLToken.objects.update_or_create(user=request.user, instance=instance, defaults={'token': oauth_user.token})
+
+    if data_add and data_add['backend'] == 'gnome':
+        project = Project.objects.get(id=data_add['proj_id'])
+        datasources.gitlab.analyze_data(project,
+                                        data_add['data'], data_add['commits'],
+                                        data_add['issues'], data_add['forks'],
+                                        instance='Gnome')
+        project.update_elastic_role()
+    if last_page:
+        return HttpResponseRedirect(last_page)
+
+    return HttpResponseRedirect(reverse('homepage'))
+
+
 def authenticate_user(request, backend_model, oauth_user, is_admin=False):
     """
     Authenticate an oauth request and merge with existent accounts if needed
     :param request: request from login callback
-    :param backend_model: GitlabUser, GithubUser, MeetupUser ...
+    :param backend_model: GitlabUser, GithubUser, MeetupUser, GnomeUser ...
     :param oauth_user: user information obtained from the backend
     :param is_admin: flag to indicate that the user to authenticate is an admin
     :return: boolean. The user has been merged
@@ -382,39 +421,6 @@ def request_project_repositories(request, project_id):
 
     return render(request, 'cauldronapp/project/project.html', context=context)
 
-    # TODO: Implement filters
-    repositories = Repository.objects.filter(projects=self)
-
-    search = request.GET.get('search')
-    if search is not None:
-        repositories = repositories.filter(url__icontains=search)
-
-    kind = request.GET.getlist('kind')
-    if kind and set(kind).issubset(set(Repository.BACKEND_CHOICES)):
-        repositories = repositories.filter(backend__in=kind)
-
-    status = request.GET.getlist('status')
-    if status and set(status).issubset(set(Repository.STATUS_CHOICES)):
-        repositories = [obj for obj in repositories.all() if obj.status in status]
-
-    sort_by = request.GET.get('sort_by')
-    if sort_by is not None and sort_by in Repository.SORT_CHOICES:
-        reverse = False
-        if sort_by[0] == '-':
-            reverse = True
-            sort_by = sort_by[1:]
-
-        if sort_by == 'kind':
-            repositories = sorted(repositories, key=lambda r: r.backend, reverse=reverse)
-        elif sort_by == 'status':
-            repositories = sorted(repositories, key=lambda r: r.status, reverse=reverse)
-        elif sort_by == 'refresh':
-            repositories = sorted(repositories, key=lambda r: r.last_refresh, reverse=not reverse)
-        elif sort_by == 'duration':
-            repositories = sorted(repositories, key=lambda r: r.duration, reverse=reverse)
-
-    return render(request, 'cauldronapp/project/project.html', context=context)
-
 
 def request_repo_actions(request, repo_id):
     """View for a repository. It shows all the intentions related"""
@@ -514,17 +520,48 @@ def request_add_to_project(request, project_id):
                                            'forks': forks,
                                            'issues': analyze_issues}
             request.session['last_page'] = reverse('show_project', kwargs={'project_id': project.id})
+            redirect_uri = request.build_absolute_uri(reverse('gitlab_callback')).replace('http', 'https')
             params = urlencode({'client_id': settings.GL_CLIENT_ID,
                                 'response_type': 'code',
-                                'redirect_uri': "https://{}{}".format(request.get_host(),
-                                                                      GitLabOAuth.REDIRECT_PATH)})
-            gl_url_oauth = f"{GitLabOAuth.AUTH_URL}?{params}"
+                                'redirect_uri': redirect_uri})
+            gl_url_oauth = f"{GitLabOAuth.INSTANCES['GitLab']['auth_url']}?{params}"
             return JsonResponse({'status': 'error',
                                  'message': generate_request_token_message("GitLab"),
                                  'redirect': gl_url_oauth},
                                 status=401)
         output = datasources.gitlab.analyze_data(project=project, data=data, commits=analyze_commits,
                                                  issues=analyze_issues, forks=forks)
+        project.update_elastic_role()
+        return JsonResponse(output, status=output['code'])
+
+    elif backend == 'gnome':
+        analyze_commits = 'commits' in request.POST
+        analyze_issues = 'issues' in request.POST
+        forks = 'forks' in request.POST
+        if not project.creator.gltokens.filter(instance='Gnome').exists():
+            if request.user != project.creator:
+                return JsonResponse({'status': 'error',
+                                     'message': 'Project owner needs a GitLab(GNOME) token to '
+                                                'analyze this kind of repositories'},
+                                    status=401)
+            request.session['add_repo'] = {'data': data,
+                                           'backend': backend,
+                                           'proj_id': project.id,
+                                           'commits': analyze_commits,
+                                           'forks': forks,
+                                           'issues': analyze_issues}
+            request.session['last_page'] = reverse('show_project', kwargs={'project_id': project.id})
+            redirect_uri = request.build_absolute_uri(reverse('gnome_callback')).replace('http', 'https')
+            params = urlencode({'client_id': settings.GNOME_CLIENT_ID,
+                                'response_type': 'code',
+                                'redirect_uri': redirect_uri})
+            gl_url_oauth = f"{GitLabOAuth.INSTANCES['Gnome']['auth_url']}?{params}"
+            return JsonResponse({'status': 'error',
+                                 'message': generate_request_token_message("GitLab for Gnome"),
+                                 'redirect': gl_url_oauth},
+                                status=401)
+        output = datasources.gitlab.analyze_data(project=project, data=data, commits=analyze_commits,
+                                                 issues=analyze_issues, forks=forks, instance='Gnome')
         project.update_elastic_role()
         return JsonResponse(output, status=output['code'])
 
@@ -938,7 +975,13 @@ def request_delete_token(request):
             IMeetupRaw.objects.filter(user=request.user, job__isnull=True).delete()
             token.delete()
         return JsonResponse({'status': 'ok'})
-
+    elif identity == 'gnome':
+        tokens = request.user.gltokens.filter(instance='Gnome')
+        for token in tokens:
+            IGLRaw.objects.filter(user=request.user, job__isnull=True, repo__instance='Gnome').delete()
+            IAddGLOwner.objects.filter(user=request.user, job__isnull=True, instance='Gnome').delete()
+            token.delete()
+        return JsonResponse({'status': 'ok'})
     else:
         return JsonResponse({'status': 'error', 'message': 'Unknown identity: {}'.format(identity)})
 
@@ -954,9 +997,12 @@ def create_context(request):
     # Generate information for identities
     context['gh_uri_identity'] = GitHubOAuth.AUTH_URL
     context['gh_client_id'] = settings.GH_CLIENT_ID
-    context['gl_uri_identity'] = GitLabOAuth.AUTH_URL
+    context['gl_uri_identity'] = GitLabOAuth.INSTANCES['GitLab']['auth_url']
     context['gl_client_id'] = settings.GL_CLIENT_ID
-    context['gl_uri_redirect'] = "https://{}{}".format(request.get_host(), GitLabOAuth.REDIRECT_PATH)
+    context['gl_uri_redirect'] = request.build_absolute_uri(reverse('gitlab_callback')).replace('http', 'https')
+    context['gnome_uri_identity'] = GitLabOAuth.INSTANCES['Gnome']['auth_url']
+    context['gnome_client_id'] = settings.GNOME_CLIENT_ID
+    context['gnome_uri_redirect'] = request.build_absolute_uri(reverse('gnome_callback')).replace('http', 'https')
     context['meetup_uri_identity'] = MeetupOAuth.AUTH_URL
     context['meetup_client_id'] = settings.MEETUP_CLIENT_ID
     context['meetup_uri_redirect'] = "https://{}{}".format(request.get_host(), MeetupOAuth.REDIRECT_PATH)
@@ -971,6 +1017,8 @@ def create_context(request):
             context['photo_user'] = request.user.gitlabuser.photo
         elif hasattr(request.user, 'meetupuser'):
             context['photo_user'] = request.user.meetupuser.photo
+        elif hasattr(request.user, 'gnomeuser'):
+            context['photo_user'] = request.user.gnomeuser.photo
         else:
             context['photo_user'] = '/static/img/profile-default.png'
 
@@ -981,6 +1029,7 @@ def create_context(request):
     context['github_enabled'] = hasattr(request.user, 'githubuser')
     context['gitlab_enabled'] = hasattr(request.user, 'gitlabuser')
     context['meetup_enabled'] = hasattr(request.user, 'meetupuser')
+    context['gnome_enabled'] = hasattr(request.user, 'gnomeuser')
 
     # Matomo link
     context['matomo_enabled'] = settings.MATOMO_ENABLED
@@ -1011,11 +1060,14 @@ def request_ongoing_owners(request, project_id):
     """Return a JSON with the ongoing owners requested"""
     response = {'owners': []}
     gh_owners = IAddGHOwner.objects.filter(project_id=project_id)
-    gl_owners = IAddGLOwner.objects.filter(project_id=project_id)
+    gl_owners = IAddGLOwner.objects.filter(project_id=project_id, instance='GitLab')
+    gnome_owners = IAddGLOwner.objects.filter(project_id=project_id, instance='Gnome')
     for gh_owner in gh_owners:
         response['owners'].append({'backend': 'github', 'owner': gh_owner.owner})
     for gl_owner in gl_owners:
         response['owners'].append({'backend': 'gitlab', 'owner': gl_owner.owner})
+    for gnome_owner in gnome_owners:
+        response['owners'].append({'backend': 'gnome', 'owner': gnome_owner.owner})
     return JsonResponse(response)
 
 
@@ -1097,7 +1149,8 @@ def status_info():
     context['repos_count'] = Repository.objects.exclude(projects=None).count()
     context['repos_git_count'] = GitRepository.objects.exclude(projects=None).count()
     context['repos_github_count'] = GitHubRepository.objects.exclude(projects=None).count()
-    context['repos_gitlab_count'] = GitLabRepository.objects.exclude(projects=None).count()
+    context['repos_gitlab_count'] = GitLabRepository.objects.exclude(projects=None, instance='GitLab').count()
+    context['repos_gnome_count'] = GitLabRepository.objects.exclude(projects=None, instance='Gnome').count()
     context['repos_meetup_count'] = MeetupRepository.objects.exclude(projects=None).count()
     return context
 

@@ -7,8 +7,9 @@ from cauldron_apps.cauldron.models import IAddGLOwner
 from cauldron_apps.poolsched_gitlab.models import GLInstance
 
 
-def parse_input_data(data):
+def parse_input_data(data, domain):
     """Return a tuple (owner, repository). Return None in owner or repository in the case was not found"""
+    domain_escaped = re.escape(domain)
     gl_user_regex = '([a-zA-Z0-9_\.][a-zA-Z0-9_\-\.]{1,200}[a-zA-Z0-9_\-]|[a-zA-Z0-9_])'
     gl_repo_regex = '((?:[a-zA-Z0-9_\.][a-zA-Z0-9_\-\.]*(?:\/)?)+)'
     data = data.strip()
@@ -16,10 +17,10 @@ def parse_input_data(data):
     re_user = re.match('^{}$'.format(gl_user_regex), data)
     if re_user:
         return re_user.groups()[0], None
-    re_url_user = re.match(f'^https?:\/\/gitlab\.com\/{gl_user_regex}\/?$', data)
+    re_url_user = re.match(f'^{domain_escaped}\/{gl_user_regex}\/?$', data)
     if re_url_user:
         return re_url_user.groups()[0], None
-    re_url_repo = re.match(f'^https?:\/\/gitlab\.com\/{gl_user_regex}\/{gl_repo_regex}(?:.git)?$', data)
+    re_url_repo = re.match(f'^{domain_escaped}\/{gl_user_regex}\/{gl_repo_regex}(?:.git)?$', data)
     if re_url_repo:
         return re_url_repo.groups()[0], re_url_repo.groups()[1]
     re_user_repo = re.match(f'{gl_user_regex}/{gl_repo_regex}$', data)
@@ -29,29 +30,29 @@ def parse_input_data(data):
     return None, None
 
 
-def analyze_gitlab(project, owner, repo):
+def analyze_gitlab(project, owner, repo, instance):
     """IMPORTANT: update the repo role after this call"""
-    repo, created = GitLabRepository.objects.get_or_create(owner=owner, repo=repo)
+    repo, created = GitLabRepository.objects.get_or_create(owner=owner, repo=repo, instance=instance)
     if created:
         repo.link_sched_repo()
     repo.projects.add(project)
     analyze_gl_repo_obj(project.creator, repo.repo_sched)
 
 
-def analyze_data(project, data, commits=False, issues=False, forks=False):
+def analyze_data(project, data, commits=False, issues=False, forks=False, instance='GitLab'):
     """IMPORTANT: update the repo role after this call"""
-    owner, repository = parse_input_data(data)
+    instance_obj = GLInstance.objects.get(name=instance)
+    owner, repository = parse_input_data(data, instance_obj.endpoint)
 
     if owner and not repository:
-        token = project.creator.gltokens.first()
+        token = project.creator.gltokens.filter(instance=instance_obj).first()
         if not token:
             return {'status': 'error',
                     'message': 'Token not found for the creator of the project',
                     'code': 400}
-        instance = GLInstance.objects.get(name='GitLab')
         IAddGLOwner.objects.create(user=project.creator,
                                    owner=owner,
-                                   instance=instance,
+                                   instance=instance_obj,
                                    project=project,
                                    commits=commits,
                                    issues=issues,
@@ -59,15 +60,15 @@ def analyze_data(project, data, commits=False, issues=False, forks=False):
                                    analyze=True)
     elif owner and repository:
         if issues:
-            token = project.creator.gltokens.first()
+            token = project.creator.gltokens.filter(instance=instance_obj).first()
             if not token:
                 return {'status': 'error',
                         'message': 'Token not found for the creator of the project',
                         'code': 400}
             repo_encoded = '%2F'.join(repository.strip('/').split('/'))
-            analyze_gitlab(project, owner, repo_encoded)
+            analyze_gitlab(project, owner, repo_encoded, instance_obj)
         if commits:
-            url = f'https://gitlab.com/{owner}/{repository}.git'
+            url = f"{instance_obj.endpoint}/{owner}/{repository}.git"
             git.analyze_git(project, url)
     else:
         return {'status': 'error',

@@ -216,6 +216,19 @@
             </form>
           </div>
 
+          <div class="text-center">
+            <form action="{{ gnome_uri_identity }}" method="GET">
+              <input type="hidden" name="client_id" value="{{ gnome_client_id }}">
+              <input type="hidden" name="response_type" value="code">
+              <input type="hidden" name="redirect_uri" value="{{ gnome_uri_redirect }}">
+              <button type="submit" class="btn btn-gitlab btn-block" aria-haspopup="true" aria-expanded="false">
+                <i class="gnome-icon-white"></i>
+                Sign in with <b>GitLab for Gnome</b>
+              </button>
+            </form>
+          </div>
+
+
         </div>
         <div class="modal-footer">
           <p class="text-muted">We will store your token for your analysis. You can revoke the use at any time</p>

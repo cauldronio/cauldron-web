@@ -58,10 +58,10 @@
                     <div class="text-xs font-weight-bold text-dark text-uppercase">GitHub Token</div>
                     {% if tokens.github %}
                     <div class="dropdown no-arrow">
-                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLinkGH" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
                         </a>
-                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink">
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLinkGH">
                             <div class="dropdown-header">Token actions:</div>
                             <a class="dropdown-item" id="delete-gh-token" href="#">Revoke</a>
                         </div>
@@ -100,10 +100,10 @@
                     <div class="text-xs font-weight-bold text-warning text-uppercase">Gitlab Token</div>
                     {% if tokens.gitlab %}
                     <div class="dropdown no-arrow">
-                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLinkGL" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
                         </a>
-                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink">
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLinkGL">
                             <div class="dropdown-header">Token actions:</div>
                             <a class="dropdown-item" id="delete-gl-token" href="#">Revoke</a>
                         </div>
@@ -142,10 +142,10 @@
                     <div class="text-xs font-weight-bold text-danger text-uppercase">Meetup Token</div>
                     {% if tokens.meetup %}
                     <div class="dropdown no-arrow">
-                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLinkMeetup" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
                         </a>
-                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink">
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLinkMeetup">
                             <div class="dropdown-header">Token actions:</div>
                             <a class="dropdown-item" id="delete-meetup-token" href="#">Revoke</a>
                         </div>
@@ -175,6 +175,50 @@
                 </div>
             </div>
         </div>
+    </div>
+    <div class="row">
+        <!-- Gnome Token Card -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100">
+                <!-- Card Header - Dropdown -->
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <div class="text-xs font-weight-bold text-warning text-uppercase">Gnome Token</div>
+                    {% if tokens.gnome %}
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLinkGnome" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLinkGnome">
+                            <div class="dropdown-header">Token actions:</div>
+                            <a class="dropdown-item" id="delete-gnome-token" href="#">Revoke</a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <!-- Card Body -->
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% if tokens.gnome %}
+                                    {% if tokens.gnome.is_ready %}
+                                    Status: <i class="fas fa-check text-success" data-toggle="tooltip" title="Ready to use"></i>
+                                    {% else %}
+                                    Status: <i class="fas fa-history" data-toggle="tooltip" title="Token in cooldown"></i> (<span data-countdown='{{ tokens.gnome.reset|date:"U000" }}'></span>)
+                                    {% endif %}
+                                {% else %}
+                                Not defined
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="gnome-icon-gray-big"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <hr class="my-4">

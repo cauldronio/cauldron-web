@@ -59,6 +59,7 @@ function refreshProjects() {
             $('#project-' + project.id + '-git').html(project.git);
             $('#project-' + project.id + '-github').html(project.github);
             $('#project-' + project.id + '-gitlab').html(project.gitlab);
+            $('#project-' + project.id + '-gnome').html(project.gnome);
             $('#project-' + project.id + '-meetup').html(project.meetup);
             $('#project-' + project.id + '-running').html(project.running);
             if (project.running > 0) {

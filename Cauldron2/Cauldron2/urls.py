@@ -19,9 +19,11 @@ from CauldronApp import views
 from Cauldron2 import settings
 
 urlpatterns = [
-    path('github-login', views.request_github_oauth),
-    path('gitlab-login', views.request_gitlab_oauth),
-    path('meetup-login', views.request_meetup_oauth),
+    path('github-login', views.request_github_oauth, name='github_callback'),
+    path('gitlab-login', views.request_gitlab_oauth, name='gitlab_callback'),
+    path('meetup-login', views.request_meetup_oauth, name='meetup_callback'),
+    path('gnome-login', views.request_gnome_callback, name='gnome_callback'),
+
     path('logout', views.request_logout),
     path('delete-token', views.request_delete_token),
 
@@ -58,11 +60,6 @@ urlpatterns = [
     path('privacy/', views.privacy, name="privacy"),
     path('cookies/', views.cookies, name="cookies"),
 
-    # path('admin-page/', views.admin_page, name="admin_page"),
-    # path('admin-page/users/', views.admin_page_users, name="admin_page_users"),
-    # path('admin-page/users/upgrade/', views.upgrade_user, name="upgrade_user"),
-    # path('admin-page/users/downgrade/', views.downgrade_user, name="downgrade_user"),
-    # path('admin-page/users/delete/', views.request_delete_user, name="delete_user"),
     path('profile/', include('profile.urls')),
 
     path('stats/', views.stats_page, name="stats"),
