@@ -264,64 +264,82 @@ def author_evolution_bokeh(elastic, urls, from_date, to_date):
         meetup_users=meetup_users
     ))
 
-    plot.circle(x='timestamps', y='commit_authors',
-                name='commit_authors',
-                color=Blues[6][0],
-                size=8,
-                source=source)
+    names = []
+    tooltips=[
+        (interval_name, '@timestamps{%F}'),
+    ]
 
-    plot.line(x='timestamps', y='commit_authors',
-              line_width=4,
-              line_color=Blues[6][0],
-              legend_label='Authors',
-              source=source)
+    if any(commit_authors):
+        plot.circle(x='timestamps', y='commit_authors',
+                    name='commit_authors',
+                    color=Blues[6][0],
+                    size=8,
+                    source=source)
 
-    plot.circle(x='timestamps', y='issue_submitters',
-                color=Blues[6][1],
-                size=8,
-                source=source)
+        plot.line(x='timestamps', y='commit_authors',
+                  line_width=4,
+                  line_color=Blues[6][0],
+                  legend_label='Authors',
+                  source=source)
 
-    plot.line(x='timestamps', y='issue_submitters',
-              line_width=4,
-              line_color=Blues[6][1],
-              legend_label='Submitters (Issues)',
-              source=source)
+        names.append('commit_authors')
+        tooltips.append(('commit_authors', '@commit_authors'))
 
-    plot.circle(x='timestamps', y='review_submitters',
-                color=Blues[6][2],
-                size=8,
-                source=source)
+    if any(issue_submitters):
+        plot.circle(x='timestamps', y='issue_submitters',
+                    name='issue_submitters',
+                    color=Blues[6][1],
+                    size=8,
+                    source=source)
 
-    plot.line(x='timestamps', y='review_submitters',
-              line_width=4,
-              line_color=Blues[6][2],
-              legend_label='Submitters (Reviews)',
-              source=source)
+        plot.line(x='timestamps', y='issue_submitters',
+                  line_width=4,
+                  line_color=Blues[6][1],
+                  legend_label='Submitters (Issues)',
+                  source=source)
 
-    plot.circle(x='timestamps', y='meetup_users',
-                color=Blues[6][3],
-                size=8,
-                source=source)
+        names.append('issue_submitters')
+        tooltips.append(('issue_submitters', '@issue_submitters'))
 
-    plot.line(x='timestamps', y='meetup_users',
-              line_width=4,
-              line_color=Blues[6][3],
-              legend_label='Attendees (Meetup)',
-              source=source)
+    if any(review_submitters):
+        plot.circle(x='timestamps', y='review_submitters',
+                    name='review_submitters',
+                    color=Blues[6][2],
+                    size=8,
+                    source=source)
+
+        plot.line(x='timestamps', y='review_submitters',
+                  line_width=4,
+                  line_color=Blues[6][2],
+                  legend_label='Submitters (Reviews)',
+                  source=source)
+
+        names.append('review_submitters')
+        tooltips.append(('review_submitters', '@review_submitters'))
+
+    if any(meetup_users):
+        plot.circle(x='timestamps', y='meetup_users',
+                    name='meetup_users',
+                    color=Blues[6][3],
+                    size=8,
+                    source=source)
+
+        plot.line(x='timestamps', y='meetup_users',
+                  line_width=4,
+                  line_color=Blues[6][3],
+                  legend_label='Attendees (Meetup)',
+                  source=source)
+
+        names.append('meetup_users')
+        tooltips.append(('meetup_attendees', '@meetup_users'))
 
     plot.add_tools(tools.HoverTool(
-        names=['commit_authors'],
-        tooltips=[
-            (interval_name, '@timestamps{%F}'),
-            ('commit_authors', '@commit_authors'),
-            ('issue_submitters', '@issue_submitters'),
-            ('review_submitters', '@review_submitters'),
-            ('meetup_attendees', '@meetup_users')
-        ],
+        names=names,
+        tooltips=tooltips,
         formatters={
             '@timestamps': 'datetime'
         },
-        mode='vline',
+        mode='mouse',
         toggleable=False
     ))
 
