@@ -281,42 +281,55 @@ def reviews_open_closed_bokeh(elastic, urls, from_date, to_date):
     to_date_es = to_date.strftime("%Y-%m-%d")
     interval_name, interval_elastic, bar_width = get_interval(from_date, to_date)
     s = Search(using=elastic, index='all') \
-        .query('bool', filter=(Q('match', pull_request=True) | Q('match', merge_request=True))) \
+        .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
         .query(Q('terms', origin=urls)) \
         .extra(size=0)
     s.aggs.bucket('range_open', 'filter', Q('range', created_at={'gte': from_date_es, "lte": to_date_es})) \
         .bucket('open', 'date_histogram', field='created_at', calendar_interval=interval_elastic)
     s.aggs.bucket('range_closed', 'filter', Q('range', closed_at={'gte': from_date_es, "lte": to_date_es})) \
         .bucket('closed', 'date_histogram', field='closed_at', calendar_interval=interval_elastic)
+    s.aggs.bucket('range_merged', 'filter', Q('range', merged_at={'gte': from_date_es, "lte": to_date_es})) \
+        .bucket('merged', 'date_histogram', field='merged_at', calendar_interval=interval_elastic)
 
     try:
         response = s.execute()
-        closed_buckets = response.aggregations.range_closed.closed.buckets
         open_buckets = response.aggregations.range_open.open.buckets
+        closed_buckets = response.aggregations.range_closed.closed.buckets
+        merged_buckets = response.aggregations.range_merged.merged.buckets
     except ElasticsearchException as e:
         logger.warning(e)
-        closed_buckets = []
         open_buckets = []
+        closed_buckets = []
+        merged_buckets = []
 
     # Create the data structure
-    timestamps_closed, reviews_closed = [], []
-    for citem in closed_buckets:
-        timestamps_closed.append(citem.key)
-        reviews_closed.append(citem.doc_count)
-
     timestamps_created, reviews_created = [], []
     for oitem in open_buckets:
         timestamps_created.append(oitem.key)
         reviews_created.append(oitem.doc_count)
 
+    timestamps_closed, reviews_closed = [], []
+    for citem in closed_buckets:
+        timestamps_closed.append(citem.key)
+        reviews_closed.append(citem.doc_count)
+
+    timestamps_merged, reviews_merged = [], []
+    for mitem in merged_buckets:
+        timestamps_merged.append(mitem.key)
+        reviews_merged.append(mitem.doc_count)
+
     data = []
-    data.append(pandas.DataFrame(list(zip(timestamps_closed, reviews_closed)),
-                columns =['timestamps', 'reviews_closed']))
     data.append(pandas.DataFrame(list(zip(timestamps_created, reviews_created)),
                 columns =['timestamps', 'reviews_created']))
+    data.append(pandas.DataFrame(list(zip(timestamps_closed, reviews_closed)),
+                columns =['timestamps', 'reviews_closed']))
+    data.append(pandas.DataFrame(list(zip(timestamps_merged, reviews_merged)),
+                columns =['timestamps', 'reviews_merged']))
 
     # Merge the dataframes in case they have different lengths
     data = reduce(lambda df1,df2: pandas.merge(df1,df2,on='timestamps',how='outer',sort=True).fillna(0), data)
+    # We are counting the rejected and merged reviews as closed reviews
+    data['reviews_closed'] = data['reviews_closed'] + data['reviews_merged']
 
     # Create the Bokeh visualization
     plot = figure(x_axis_type="datetime",
