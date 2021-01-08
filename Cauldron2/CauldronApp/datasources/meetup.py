@@ -31,7 +31,6 @@ def analyze_meetup(project, group):
 
 
 def analyze_data(project, data):
-    """IMPORTANT: update the repo role after this call"""
     group = parse_input_data(data)
     if group:
         r = requests.get('https://api.meetup.com/{}'.format(group),
@@ -43,6 +42,8 @@ def analyze_data(project, data):
                     'message': f'Error from Meetup API. {error_msg}',
                     'code': 500}
         analyze_meetup(project, group)
+
+        project.update_elastic_role()
 
         return {'status': 'ok', 'code': 200}
 

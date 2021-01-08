@@ -40,7 +40,6 @@ def analyze_gitlab(project, owner, repo, instance):
 
 
 def analyze_data(project, data, commits=False, issues=False, forks=False, instance='GitLab'):
-    """IMPORTANT: update the repo role after this call"""
     instance_obj = GLInstance.objects.get(name=instance)
     owner, repository = parse_input_data(data, instance_obj.endpoint)
 
@@ -70,6 +69,7 @@ def analyze_data(project, data, commits=False, issues=False, forks=False, instan
         if commits:
             url = f"{instance_obj.endpoint}/{owner}/{repository}.git"
             git.analyze_git(project, url)
+        project.update_elastic_role()
     else:
         return {'status': 'error',
                 'message': "We couldn't guess what do you mean with that string. "

@@ -124,7 +124,6 @@ def request_github_oauth(request):
         datasources.github.analyze_data(project,
                                         data_add['data'], data_add['commits'],
                                         data_add['issues'], data_add['forks'])
-        project.update_elastic_role()
 
     if last_page:
         return HttpResponseRedirect(last_page)
@@ -198,7 +197,6 @@ def request_gitlab_oauth(request):
                                         data_add['data'], data_add['commits'],
                                         data_add['issues'], data_add['forks'],
                                         instance='GitLab')
-        project.update_elastic_role()
     if last_page:
         return HttpResponseRedirect(last_page)
 
@@ -240,7 +238,6 @@ def request_meetup_oauth(request):
     if data_add and data_add['backend'] == 'meetup':
         project = Project.objects.get(id=data_add['proj_id'])
         datasources.meetup.analyze_data(project, data_add['data'])
-        project.update_elastic_role()
 
     if last_page:
         return HttpResponseRedirect(last_page)
@@ -499,7 +496,6 @@ def request_add_to_project(request, project_id):
                                 status=401)
         output = datasources.github.analyze_data(project=project, data=data, commits=analyze_commits,
                                                  issues=analyze_issues, forks=forks)
-        project.update_elastic_role()
 
         return JsonResponse(output, status=output['code'])
 
@@ -531,7 +527,6 @@ def request_add_to_project(request, project_id):
                                 status=401)
         output = datasources.gitlab.analyze_data(project=project, data=data, commits=analyze_commits,
                                                  issues=analyze_issues, forks=forks)
-        project.update_elastic_role()
         return JsonResponse(output, status=output['code'])
 
     elif backend == 'gnome':

@@ -38,7 +38,6 @@ def analyze_github(project, owner, repo):
 
 
 def analyze_data(project, data, commits=False, issues=False, forks=False):
-    """IMPORTANT: update the repo role after this call"""
     owner, repository = parse_input_data(data)
 
     if owner and not repository:
@@ -65,6 +64,7 @@ def analyze_data(project, data, commits=False, issues=False, forks=False):
         if commits:
             url = f"https://github.com/{owner}/{repository}.git"
             git.analyze_git(project, url)
+        project.update_elastic_role()
     else:
         return {'status': 'error',
                 'message': "We couldn't guess what do you mean with that string. "
