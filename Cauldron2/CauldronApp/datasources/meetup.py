@@ -3,6 +3,7 @@ import requests
 
 from CauldronApp.models import MeetupRepository
 from cauldron_apps.poolsched_meetup.api import analyze_meetup_repo_obj
+from cauldron_apps.cauldron_actions.models import AddMeetupRepoAction
 
 
 def parse_input_data(data):
@@ -28,6 +29,7 @@ def analyze_meetup(project, group):
         repo.link_sched_repo()
     repo.projects.add(project)
     analyze_meetup_repo_obj(project.creator, repo.repo_sched)
+    AddMeetupRepoAction.objects.create(creator=project.creator, project=project, repository=repo)
 
 
 def analyze_data(project, data):

@@ -5,6 +5,7 @@ from CauldronApp.datasources import git
 from cauldron_apps.poolsched_gitlab.api import analyze_gl_repo_obj
 from cauldron_apps.cauldron.models import IAddGLOwner
 from cauldron_apps.poolsched_gitlab.models import GLInstance
+from cauldron_apps.cauldron_actions.models import AddGitLabOwnerAction, AddGitLabRepoAction
 
 
 def parse_input_data(data, domain):
@@ -37,6 +38,7 @@ def analyze_gitlab(project, owner, repo, instance):
         repo.link_sched_repo()
     repo.projects.add(project)
     analyze_gl_repo_obj(project.creator, repo.repo_sched)
+    AddGitLabRepoAction.objects.create(creator=project.creator, project=project, repository=repo)
 
 
 def analyze_data(project, data, commits=False, issues=False, forks=False, instance='GitLab'):
@@ -57,6 +59,9 @@ def analyze_data(project, data, commits=False, issues=False, forks=False, instan
                                    issues=issues,
                                    forks=forks,
                                    analyze=True)
+        AddGitLabOwnerAction.objects.create(creator=project.creator, project=project,
+                                            instance=instance, owner=owner, commits=commits,
+                                            issues=issues, forks=forks)
     elif owner and repository:
         if issues:
             token = project.creator.gltokens.filter(instance=instance_obj).first()

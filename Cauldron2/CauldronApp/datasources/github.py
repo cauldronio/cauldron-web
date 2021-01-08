@@ -4,6 +4,7 @@ from cauldron_apps.poolsched_github.api import analyze_gh_repo_obj
 from CauldronApp.models import GitHubRepository
 from CauldronApp.datasources import git
 from cauldron_apps.cauldron.models import IAddGHOwner
+from cauldron_apps.cauldron_actions.models import AddGitHubRepoAction, AddGitHubOwnerAction
 
 
 def parse_input_data(data):
@@ -35,6 +36,7 @@ def analyze_github(project, owner, repo):
         repo.link_sched_repo()
     repo.projects.add(project)
     analyze_gh_repo_obj(project.creator, repo.repo_sched)
+    AddGitHubRepoAction.objects.create(creator=project.creator, project=project, repository=repo)
 
 
 def analyze_data(project, data, commits=False, issues=False, forks=False):
@@ -53,6 +55,8 @@ def analyze_data(project, data, commits=False, issues=False, forks=False):
                                    issues=issues,
                                    forks=forks,
                                    analyze=True)
+        AddGitHubOwnerAction.objects.create(creator=project.creator, project=project,
+                                            owner=owner, commits=commits, issues=issues, forks=forks)
     elif owner and repository:
         if issues:
             token = project.creator.ghtokens.first()

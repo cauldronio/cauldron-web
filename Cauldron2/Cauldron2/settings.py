@@ -86,6 +86,7 @@ INSTALLED_APPS = [
     'cauldron_apps.poolsched_gitlab',
     'cauldron_apps.poolsched_meetup',
     'cauldron_apps.poolsched_export',
+    'cauldron_apps.cauldron_actions',
 ]
 if HATSTALL_ENABLED:
     INSTALLED_APPS.append('hatstall')

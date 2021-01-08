@@ -609,6 +609,7 @@ def request_remove_from_project(request, project_id):
     repo.projects.remove(project)
     project.update_elastic_role()
     repo.remove_intentions(request.user)
+    repo.create_remove_action(project)
     return JsonResponse({'status': 'deleted'})
 
 
