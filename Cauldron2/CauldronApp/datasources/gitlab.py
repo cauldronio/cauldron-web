@@ -60,7 +60,7 @@ def analyze_data(project, data, commits=False, issues=False, forks=False, instan
                                    forks=forks,
                                    analyze=True)
         AddGitLabOwnerAction.objects.create(creator=project.creator, project=project,
-                                            instance=instance, owner=owner, commits=commits,
+                                            instance=instance_obj, owner=owner, commits=commits,
                                             issues=issues, forks=forks)
     elif owner and repository:
         if issues:
