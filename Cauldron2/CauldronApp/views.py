@@ -1035,6 +1035,10 @@ def create_context(request):
     if settings.HATSTALL_ENABLED:
         context['hatstall_url'] = "/hatstall"
 
+    # Plausible Analytics
+    context['plausible_analytics_enabled'] = settings.PLAUSIBLE_ANALYTICS_ENABLED
+    context['plausible_analytics_url'] = settings.PLAUSIBLE_ANALYTICS_URL
+
     # Google Analytics
     if settings.GOOGLE_ANALYTICS_ID:
         context['google_analytics_id'] = settings.GOOGLE_ANALYTICS_ID

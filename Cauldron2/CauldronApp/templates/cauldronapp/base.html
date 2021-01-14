@@ -58,6 +58,11 @@
   </script>
   {% endif %}
 
+  {% if plausible_analytics_enabled %}
+  <!-- Plausible Analytics JS -->
+  <script async defer data-domain={{request.get_host}} src="https://plausible.io/js/plausible.js"></script>
+  {% endif %}
+
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
 
@@ -146,6 +151,9 @@
             {% if request.user.is_superuser %}
             <a class="dropdown-item" href="{% url 'admin:index' %}">Admin page</a>
             <a class="dropdown-item" target="_blank" href="{% url 'kibana_admin' %}">Kibana admin</a>
+            {% if plausible_analytics_url %}
+            <a class="dropdown-item" target="_blank" href="{{ plausible_analytics_url }}">Plausible Analytics</a>
+            {% endif %}
             {% if matomo_enabled %}
             <a class="dropdown-item" target="_blank" href="{{ matomo_url }}">Matomo</a>
             {% endif %}

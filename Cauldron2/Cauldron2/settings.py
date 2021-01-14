@@ -47,13 +47,17 @@ DB_HOST = os.environ.get('DB_HOST')
 DB_PORT = os.environ.get('DB_PORT')
 
 # Matomo
-MATOMO_ENABLED = os.environ.get('MATOMO_ENABLED')
+MATOMO_ENABLED = os.environ.get('MATOMO_ENABLED', False) in (True, 'True')
 MATOMO_PORT = os.environ.get('MATOMO_PORT')
 MATOMO_URL = f'https://{CAULDRON_HOST}:{MATOMO_PORT}'
 
 # Hatstall/Sortinghat
 HATSTALL_ENABLED = os.environ.get('HATSTALL_ENABLED') in ('True', 'true')
 SORTINGHAT = HATSTALL_ENABLED  # Just define the variable for some files
+
+# Plausible Analytics
+PLAUSIBLE_ANALYTICS_ENABLED = os.environ.get('PLAUSIBLE_ANALYTICS_ENABLED', False) in (True, 'True')
+PLAUSIBLE_ANALYTICS_URL = os.environ.get('PLAUSIBLE_ANALYTICS_URL')
 
 # Other
 GOOGLE_ANALYTICS_ID = os.environ.get('GOOGLE_ANALYTICS_ID')
