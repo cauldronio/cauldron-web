@@ -12,16 +12,16 @@ GH_CLIENT_ID = os.environ.get('GH_CLIENT_ID')
 GH_CLIENT_SECRET = os.environ.get('GH_CLIENT_SECRET')
 
 # GitLab Oauth keys
-GL_CLIENT_ID = os.environ.get('GL_CLIENT_ID')
-GL_CLIENT_SECRET = os.environ.get('GL_CLIENT_SECRET')
+GL_CLIENT_ID_GITLAB = os.environ.get('GL_CLIENT_ID')
+GL_CLIENT_SECRET_GITLAB = os.environ.get('GL_CLIENT_SECRET')
 
 # Meetup Oauth keys
 MEETUP_CLIENT_ID = os.environ.get('MEETUP_CLIENT_ID')
 MEETUP_CLIENT_SECRET = os.environ.get('MEETUP_CLIENT_SECRET')
 
 # GNOME Oauth keys
-GNOME_CLIENT_ID = os.environ.get('GNOME_CLIENT_ID')
-GNOME_CLIENT_SECRET = os.environ.get('GNOME_CLIENT_SECRET')
+GL_CLIENT_ID_GNOME = os.environ.get('GNOME_CLIENT_ID')
+GL_CLIENT_SECRET_GNOME = os.environ.get('GNOME_CLIENT_SECRET')
 
 # Webserver
 CAULDRON_HOST = os.environ.get('CAULDRON_HOST')
@@ -88,7 +88,7 @@ INSTALLED_APPS = [
     'cauldron_apps.cauldron',
     'cauldron_apps.poolsched_git',
     'cauldron_apps.poolsched_github',
-    'cauldron_apps.poolsched_gitlab',
+    'cauldron_apps.poolsched_gitlab.apps.CauldronGitlabConfig',
     'cauldron_apps.poolsched_meetup',
     'cauldron_apps.poolsched_export',
     'cauldron_apps.cauldron_actions',
@@ -199,3 +199,5 @@ USE_TZ = True
 LOGIN_URL = 'homepage'
 
 STATIC_URL = '/static/'
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

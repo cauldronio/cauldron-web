@@ -201,15 +201,10 @@
           </div>
 
           <div class="text-center">
-            <form action="{{ gl_uri_identity }}" method="GET">
-              <input type="hidden" name="client_id" value="{{ gl_client_id }}">
-              <input type="hidden" name="response_type" value="code">
-              <input type="hidden" name="redirect_uri" value="{{ gl_uri_redirect }}">
-              <button type="submit" class="btn btn-gitlab btn-block" aria-haspopup="true" aria-expanded="false">
-                <i class="fab fa-gitlab"></i>
-                Sign in with <b>GitLab</b>
-              </button>
-            </form>
+            <a class="btn btn-gitlab btn-block" href="{% url 'gitlab_oauth' 'gitlab' %}">
+              <i class="fab fa-gitlab"></i>
+              Sign in with <b>GitLab</b>
+            </a>
           </div>
 
           <div class="text-center">
@@ -225,15 +220,10 @@
           </div>
 
           <div class="text-center">
-            <form action="{{ gnome_uri_identity }}" method="GET">
-              <input type="hidden" name="client_id" value="{{ gnome_client_id }}">
-              <input type="hidden" name="response_type" value="code">
-              <input type="hidden" name="redirect_uri" value="{{ gnome_uri_redirect }}">
-              <button type="submit" class="btn btn-gitlab btn-block" aria-haspopup="true" aria-expanded="false">
-                <i class="gnome-icon-white"></i>
-                Sign in with <b>GitLab for Gnome</b>
-              </button>
-            </form>
+            <a class="btn btn-gitlab btn-block" href="{% url 'gitlab_oauth' 'gnome' %}">
+              <i class="gnome-icon-white"></i>
+              Sign in with <b>GitLab for Gnome</b>
+            </a>
           </div>
 
 

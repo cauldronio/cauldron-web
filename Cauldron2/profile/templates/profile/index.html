@@ -98,7 +98,7 @@
                 <!-- Card Header - Dropdown -->
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                     <div class="text-xs font-weight-bold text-warning text-uppercase">Gitlab Token</div>
-                    {% if tokens.gitlab %}
+                    {% if tokens.gitlab.gitlab %}
                     <div class="dropdown no-arrow">
                         <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLinkGL" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
@@ -115,11 +115,11 @@
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {% if tokens.gitlab %}
-                                    {% if tokens.gitlab.is_ready %}
+                                {% if tokens.gitlab.gitlab %}
+                                    {% if tokens.gitlab.gitlab.is_ready %}
                                     Status: <i class="fas fa-check text-success" data-toggle="tooltip" title="Ready to use"></i>
                                     {% else %}
-                                    Status: <i class="fas fa-history" data-toggle="tooltip" title="Token in cooldown"></i> (<span data-countdown='{{ tokens.gitlab.reset|date:"U000" }}'></span>)
+                                    Status: <i class="fas fa-history" data-toggle="tooltip" title="Token in cooldown"></i> (<span data-countdown='{{ tokens.gitlab.gitlab.reset|date:"U000" }}'></span>)
                                     {% endif %}
                                 {% else %}
                                 Not defined
@@ -183,7 +183,7 @@
                 <!-- Card Header - Dropdown -->
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                     <div class="text-xs font-weight-bold text-warning text-uppercase">Gnome Token</div>
-                    {% if tokens.gnome %}
+                    {% if tokens.gitlab.gnome %}
                     <div class="dropdown no-arrow">
                         <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLinkGnome" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
@@ -200,11 +200,11 @@
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {% if tokens.gnome %}
-                                    {% if tokens.gnome.is_ready %}
+                                {% if tokens.gitlab.gnome %}
+                                    {% if tokens.gitlab.gnome.is_ready %}
                                     Status: <i class="fas fa-check text-success" data-toggle="tooltip" title="Ready to use"></i>
                                     {% else %}
-                                    Status: <i class="fas fa-history" data-toggle="tooltip" title="Token in cooldown"></i> (<span data-countdown='{{ tokens.gnome.reset|date:"U000" }}'></span>)
+                                    Status: <i class="fas fa-history" data-toggle="tooltip" title="Token in cooldown"></i> (<span data-countdown='{{ tokens.gitlab.gnome.reset|date:"U000" }}'></span>)
                                     {% endif %}
                                 {% else %}
                                 Not defined

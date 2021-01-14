@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from CauldronApp.views import create_context, delete_user
 from cauldron_apps.poolsched_github.models import GHToken
-from cauldron_apps.poolsched_gitlab.models import GLToken
+from cauldron_apps.poolsched_gitlab.models import GLToken, GLInstance
 from cauldron_apps.poolsched_meetup.models import MeetupToken
 from django.contrib.auth.decorators import login_required
 
@@ -14,10 +14,12 @@ def index(request):
     context['user'] = request.user
     context['tokens'] = {
         'github': GHToken.objects.filter(user=request.user, instance='GitHub').first(),
-        'gitlab': GLToken.objects.filter(user=request.user, instance='GitLab').first(),
-        'gnome': GLToken.objects.filter(user=request.user, instance='Gnome').first(),
         'meetup': MeetupToken.objects.filter(user=request.user).first(),
+        'gitlab': {}
     }
+    for instance in GLInstance.objects.values_list('slug', flat=True):
+        context['tokens']['gitlab'][instance] = GLToken.objects.filter(user=request.user,
+                                                                       instance__slug=instance).first()
 
     if request.method == 'POST':
         form = ProfileEditForm(request.POST, instance=request.user)

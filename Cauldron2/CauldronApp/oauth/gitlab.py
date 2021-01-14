@@ -1,45 +1,38 @@
 import requests
+from urllib.parse import urljoin, urlencode
+
+from django.urls import reverse
 from gitlab import Gitlab
+from django.http import HttpResponseRedirect, HttpResponse
 
 from CauldronApp.oauth import oauth
+from cauldron_apps.poolsched_gitlab.models import GLInstance
 
 
 class GitLabOAuth(oauth.OAuth):
-    GITLAB = 'GitLab'
-    GNOME = 'Gnome'
-    INSTANCES = {
-        GITLAB: {
-            'url': 'https://gitlab.com',
-            'auth_url': 'https://gitlab.com/oauth/authorize',
-            'token_url': 'https://gitlab.com/oauth/token'
-        },
-        GNOME: {
-            'url': 'https://gitlab.gnome.org',
-            'auth_url': 'https://gitlab.gnome.org/oauth/authorize',
-            'token_url': 'https://gitlab.gnome.org/oauth/token'
-        }
-    }
+    AUTH_PATH = '/oauth/authorize'
+    TOKEN_PATH = '/oauth/token'
 
-    def __init__(self, client_id, client_secret, redirect_uri, instance):
-        self.client_id = client_id
-        self.client_secret = client_secret
-        self.redirect_uri = redirect_uri
+    def __init__(self, instance, callback_uri):
+        self.callback_uri = callback_uri
         self.token = None
         self.refresh_token = None
-        self.instance = self.INSTANCES[instance]
+        self.instance = instance
 
     def authenticate(self, code):
         headers = {
             'Accept': 'application/json'
         }
         params = {
-            'client_id': self.client_id,
-            'client_secret': self.client_secret,
+            'client_id': self.instance.client_id,
+            'client_secret': self.instance.client_secret,
             'code': code,
             'grant_type': 'authorization_code',
-            'redirect_uri': self.redirect_uri
+            'redirect_uri': self.callback_uri
         }
-        r = requests.post(self.instance['token_url'],
+        import logging
+        logging.error(params, code, self.instance.endpoint, self.TOKEN_PATH)
+        r = requests.post(urljoin(self.instance.endpoint, self.TOKEN_PATH),
                           params=params,
                           headers=headers)
         if not r.ok:
@@ -49,10 +42,24 @@ class GitLabOAuth(oauth.OAuth):
             return f"GitLab API Error. Oauth token not found for the authorization"
 
     def user_data(self):
-        gl = Gitlab(url=self.instance['url'], oauth_token=self.token)
+        gl = Gitlab(url=self.instance.endpoint, oauth_token=self.token)
         gl.auth()
         return oauth.OAuthUser(username=gl.user.attributes['username'],
                                name=gl.user.attributes['username'],
                                photo=gl.user.attributes['avatar_url'],
                                token=self.token,
                                refresh_token=self.refresh_token)
+
+
+def start_oauth(request, backend):
+    """Start the Oauth authentication for this backend"""
+    try:
+        instance = GLInstance.objects.get(slug=backend)
+    except GLInstance.DoesNotExist:
+        return HttpResponse(f'Backend {backend} not found.', status=404)
+    redirect_uri = request.build_absolute_uri(reverse('gitlab_callback', kwargs={'backend': backend}))
+    params = urlencode({'client_id': instance.client_id,
+                        'response_type': 'code',
+                        'redirect_uri': redirect_uri})
+    oauth_url = urljoin(instance.endpoint, GitLabOAuth.AUTH_PATH)
+    return HttpResponseRedirect(f"{oauth_url}?{params}")

@@ -41,38 +41,39 @@ def analyze_gitlab(project, owner, repo, instance):
     AddGitLabRepoAction.objects.create(creator=project.creator, project=project, repository=repo)
 
 
-def analyze_data(project, data, commits=False, issues=False, forks=False, instance='GitLab'):
-    instance_obj = GLInstance.objects.get(name=instance)
-    owner, repository = parse_input_data(data, instance_obj.endpoint)
+def analyze_data(project, data, commits=False, issues=False, forks=False, instance=None):
+    if not instance:
+        instance = GLInstance.objects.get(name='GitLab')
+    owner, repository = parse_input_data(data, instance.endpoint)
 
     if owner and not repository:
-        token = project.creator.gltokens.filter(instance=instance_obj).first()
+        token = project.creator.gltokens.filter(instance=instance).first()
         if not token:
             return {'status': 'error',
                     'message': 'Token not found for the creator of the project',
                     'code': 400}
         IAddGLOwner.objects.create(user=project.creator,
                                    owner=owner,
-                                   instance=instance_obj,
+                                   instance=instance,
                                    project=project,
                                    commits=commits,
                                    issues=issues,
                                    forks=forks,
                                    analyze=True)
         AddGitLabOwnerAction.objects.create(creator=project.creator, project=project,
-                                            instance=instance_obj, owner=owner, commits=commits,
+                                            instance=instance, owner=owner, commits=commits,
                                             issues=issues, forks=forks)
     elif owner and repository:
         if issues:
-            token = project.creator.gltokens.filter(instance=instance_obj).first()
+            token = project.creator.gltokens.filter(instance=instance).first()
             if not token:
                 return {'status': 'error',
                         'message': 'Token not found for the creator of the project',
                         'code': 400}
             repo_encoded = '%2F'.join(repository.strip('/').split('/'))
-            analyze_gitlab(project, owner, repo_encoded, instance_obj)
+            analyze_gitlab(project, owner, repo_encoded, instance)
         if commits:
-            url = f"{instance_obj.endpoint}/{owner}/{repository}.git"
+            url = f"{instance.endpoint}/{owner}/{repository}.git"
             git.analyze_git(project, url)
         project.update_elastic_role()
     else:

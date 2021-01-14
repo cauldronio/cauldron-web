@@ -15,14 +15,17 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from CauldronApp import views
+from CauldronApp import views, oauth
 from Cauldron2 import settings
 
 urlpatterns = [
+    path('oauth/gitlab/<str:backend>', oauth.gitlab.start_oauth, name='gitlab_oauth'),
+    # path('oauth/github', oauth.github.start_oauth, name='github_oauth'),
+    # path('oauth/meetup', oauth.meetup.start_oauth, name='meetup_oauth'),
+
     path('github-login', views.request_github_oauth, name='github_callback'),
-    path('gitlab-login', views.request_gitlab_oauth, name='gitlab_callback'),
+    path('gitlab-login/<str:backend>', views.request_gitlab_oauth, name='gitlab_callback'),
     path('meetup-login', views.request_meetup_oauth, name='meetup_callback'),
-    path('gnome-login', views.request_gnome_callback, name='gnome_callback'),
 
     path('logout', views.request_logout),
     path('delete-token', views.request_delete_token),
