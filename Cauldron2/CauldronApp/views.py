@@ -1,23 +1,3 @@
-from django.shortcuts import render
-from django.http import HttpResponseRedirect, JsonResponse
-from django.contrib.auth import login, logout, get_user_model
-from django.urls import reverse
-from django.db import transaction
-from django.views.decorators.http import require_http_methods
-
-from CauldronApp.pages import Pages
-from CauldronApp import kibana_objects, utils
-from CauldronApp.project_metrics import metrics
-from CauldronApp import datasources
-
-from cauldron_apps.poolsched_github.models import GHToken, IGHRaw
-from cauldron_apps.poolsched_gitlab.models import GLToken, GLInstance, IGLRaw
-from cauldron_apps.poolsched_meetup.models import MeetupToken, IMeetupRaw
-from cauldron_apps.cauldron.models import IAddGHOwner, IAddGLOwner
-from cauldron_apps.poolsched_export.models.iexportgit import IExportGitCSV
-from poolsched.models import Intention, ArchivedIntention
-from poolsched.models.jobs import Log
-
 import logging
 import datetime
 from random import choice
@@ -25,21 +5,29 @@ from string import ascii_lowercase, digits
 from urllib.parse import urlencode
 from dateutil.relativedelta import relativedelta
 
-from Cauldron2.settings import ES_IN_HOST, ES_IN_PORT, ES_IN_PROTO, ES_ADMIN_PASSWORD, \
-                               KIB_IN_HOST, KIB_IN_PORT, KIB_IN_PROTO, KIB_OUT_URL, \
-                               KIB_PATH
+from django.shortcuts import render
+from django.http import HttpResponseRedirect, JsonResponse
+from django.contrib.auth import login, logout, get_user_model
+from django.urls import reverse
+from django.db import transaction
+from django.views.decorators.http import require_http_methods
+
 from Cauldron2 import settings
 
-from CauldronApp.models import Project, GithubUser, GitlabUser, MeetupUser, GnomeUser, \
-    AnonymousUser, UserWorkspace, ProjectRole
-from CauldronApp.models import Repository, GitLabRepository, GitRepository, GitHubRepository, MeetupRepository
+from CauldronApp import kibana_objects, utils, datasources
+from CauldronApp.pages import Pages
+from CauldronApp.oauth import GitHubOAuth, GitLabOAuth, MeetupOAuth
+from CauldronApp.project_metrics import metrics
 
+from poolsched.models import Intention, ArchivedIntention
+from poolsched.models.jobs import Log
+from cauldron_apps.poolsched_github.models import GHToken, IGHRaw
+from cauldron_apps.poolsched_gitlab.models import GLToken, GLInstance, IGLRaw
+from cauldron_apps.poolsched_meetup.models import MeetupToken, IMeetupRaw
+from cauldron_apps.poolsched_export.models.iexportgit import IExportGitCSV
+from cauldron_apps.cauldron.models import IAddGHOwner, IAddGLOwner, Project, OauthUser, AnonymousUser, \
+    UserWorkspace, ProjectRole, Repository, GitLabRepository, GitRepository, GitHubRepository, MeetupRepository
 from cauldron_apps.cauldron.opendistro import OpendistroApi
-from CauldronApp.oauth.github import GitHubOAuth
-from CauldronApp.oauth.gitlab import GitLabOAuth
-from CauldronApp.oauth.meetup import MeetupOAuth
-
-from .project_metrics.metrics import get_compare_metrics, get_compare_charts
 
 import urllib3
 
@@ -49,8 +37,8 @@ User = get_user_model()
 
 JOB_LOGS = '/job_logs'
 
-ES_IN_URL = "{}://{}:{}".format(ES_IN_PROTO, ES_IN_HOST, ES_IN_PORT)
-KIB_IN_URL = "{}://{}:{}{}".format(KIB_IN_PROTO, KIB_IN_HOST, KIB_IN_PORT, KIB_PATH)
+ES_IN_URL = "{}://{}:{}".format(settings.ES_IN_PROTO, settings.ES_IN_HOST, settings.ES_IN_PORT)
+KIB_IN_URL = "{}://{}:{}{}".format(settings.KIB_IN_PROTO, settings.KIB_IN_HOST, settings.KIB_IN_PORT, settings.KIB_PATH)
 
 logger = logging.getLogger(__name__)
 
@@ -110,7 +98,7 @@ def request_github_oauth(request):
     data_add = request.session.pop('add_repo', None)
     last_page = request.session.pop('last_page', None)
 
-    merged = authenticate_user(request, GithubUser, oauth_user, is_admin)
+    merged = authenticate_user(request, 'github', oauth_user, is_admin)
     if merged:
         request.session['alert_notification'] = {'title': 'Account merged',
                                                  'message': f"You already had a Cauldron user with this GitHub account."
@@ -133,10 +121,7 @@ def request_github_oauth(request):
 
 def merge_accounts(user_origin, user_dest):
     """Change the references of that user to another one"""
-    GithubUser.objects.filter(user=user_origin).update(user=user_dest)
-    GitlabUser.objects.filter(user=user_origin).update(user=user_dest)
-    MeetupUser.objects.filter(user=user_origin).update(user=user_dest)
-    GnomeUser.objects.filter(user=user_origin).update(user=user_dest)
+    OauthUser.objects.filter(user=user_origin).update(user=user_dest)
     Project.objects.filter(creator=user_origin).update(creator=user_dest)
     GHToken.objects.filter(user=user_origin).update(user=user_dest)
     GLToken.objects.filter(user=user_origin).update(user=user_dest)
@@ -158,8 +143,8 @@ def merge_workspaces(old_user, new_user):
         return
     if not hasattr(new_user, 'userworkspace'):
         create_workspace(new_user)
-    obj = kibana_objects.export_all_objects(KIB_IN_URL, ES_ADMIN_PASSWORD, old_user.userworkspace.tenant_name)
-    kibana_objects.import_object(KIB_IN_URL, ES_ADMIN_PASSWORD, obj, new_user.userworkspace.tenant_name)
+    obj = kibana_objects.export_all_objects(KIB_IN_URL, settings.ES_ADMIN_PASSWORD, old_user.userworkspace.tenant_name)
+    kibana_objects.import_object(KIB_IN_URL, settings.ES_ADMIN_PASSWORD, obj, new_user.userworkspace.tenant_name)
 
 
 # TODO: Add state
@@ -180,7 +165,7 @@ def request_gitlab_oauth(request):
     data_add = request.session.pop('add_repo', None)
     last_page = request.session.pop('last_page', None)
 
-    merged = authenticate_user(request, GitlabUser, oauth_user, is_admin)
+    merged = authenticate_user(request, 'gitlab', oauth_user, is_admin)
     if merged:
         request.session['alert_notification'] = {'title': 'Account merged',
                                                  'message': f"You already had a Cauldron user with this GitLab account."
@@ -224,7 +209,7 @@ def request_meetup_oauth(request):
     data_add = request.session.pop('add_repo', None)
     last_page = request.session.pop('last_page', None)
 
-    merged = authenticate_user(request, MeetupUser, oauth_user, is_admin)
+    merged = authenticate_user(request, 'meetup', oauth_user, is_admin)
     if merged:
         request.session['alert_notification'] = {'title': 'Account merged',
                                                  'message': f"You already had a Cauldron user with this Meetup account."
@@ -260,7 +245,7 @@ def request_gnome_callback(request):
     data_add = request.session.pop('add_repo', None)
     last_page = request.session.pop('last_page', None)
 
-    merged = authenticate_user(request, GnomeUser, oauth_user, is_admin)
+    merged = authenticate_user(request, 'gnome', oauth_user, is_admin)
     if merged:
         request.session['alert_notification'] = {'title': 'Account merged',
                                                  'message': f"You already had a Cauldron user with this GitLab account."
@@ -283,18 +268,21 @@ def request_gnome_callback(request):
     return HttpResponseRedirect(reverse('homepage'))
 
 
-def authenticate_user(request, backend_model, oauth_user, is_admin=False):
+def authenticate_user(request, backend, oauth_info, is_admin=False):
     """
     Authenticate an oauth request and merge with existent accounts if needed
     :param request: request from login callback
-    :param backend_model: GitlabUser, GithubUser, MeetupUser, GnomeUser ...
-    :param oauth_user: user information obtained from the backend
+    :param backend: git, github, gitlab, gnome...
+    :param oauth_info: user information obtained from the backend
     :param is_admin: flag to indicate that the user to authenticate is an admin
     :return: boolean. The user has been merged
     """
     merged = False
-    backend_entity = backend_model.objects.filter(username=oauth_user.username).first()
-    backend_user = backend_entity.user if backend_entity else None
+    try:
+        existing_oauth_user = OauthUser.objects.get(backend=backend, username=oauth_info.username)
+        backend_user = existing_oauth_user.user
+    except OauthUser.DoesNotExist:
+        backend_user = None
 
     if backend_user:
         if request.user.is_authenticated and backend_user != request.user:
@@ -313,13 +301,13 @@ def authenticate_user(request, backend_model, oauth_user, is_admin=False):
             anony_user = AnonymousUser.objects.filter(user=request.user).first()
             if anony_user:
                 anony_user.delete()
-                request.user.first_name = oauth_user.name
+                request.user.first_name = oauth_info.name
                 request.user.save()
 
         else:
             # No one is authenticated and backend user doesn't exist
             # Create account
-            dj_user = create_django_user(oauth_user.name)
+            dj_user = create_django_user(oauth_info.name)
             login(request, dj_user)
 
         # If it is an admin user, upgrade it
@@ -327,7 +315,10 @@ def authenticate_user(request, backend_model, oauth_user, is_admin=False):
             upgrade_to_admin(request.user)
 
         # Create the backend entity and associate with the account
-        backend_model.objects.create(user=request.user, username=oauth_user.username, photo=oauth_user.photo)
+        OauthUser.objects.create(user=request.user,
+                                 backend=backend,
+                                 username=oauth_info.username,
+                                 photo=oauth_info.photo)
 
     return merged
 
@@ -757,8 +748,8 @@ def request_compare_projects(request):
             urls.extend(project.url_list())
 
         if projects.count() > 0:
-            context['metrics'] = get_compare_metrics(projects, urls, from_date, to_date)
-            context['charts'] = get_compare_charts(projects, urls, from_date, to_date)
+            context['metrics'] = metrics.get_compare_metrics(projects, urls, from_date, to_date)
+            context['charts'] = metrics.get_compare_charts(projects, urls, from_date, to_date)
 
     return render(request, 'cauldronapp/compare/projects_compare.html', context=context)
 
@@ -817,7 +808,7 @@ def delete_project(project):
     with transaction.atomic():
         for repo in project.repository_set.select_subclasses():
             repo.remove_intentions(project.creator)
-    odfe_api = OpendistroApi(ES_IN_URL, ES_ADMIN_PASSWORD)
+    odfe_api = OpendistroApi(ES_IN_URL, settings.ES_ADMIN_PASSWORD)
     odfe_api.delete_mapping(project.projectrole.role)
     odfe_api.delete_role(project.projectrole.role)
     project.delete()
@@ -852,7 +843,7 @@ def request_workspace(request, project_id):
     jwt_key = utils.get_jwt_key(name, [project.projectrole.backend_role, project.creator.userworkspace.backend_role])
 
     url = "{}/app/kibana?jwtToken={}&security_tenant={}#/dashboard/a9513820-41c0-11ea-a32a-715577273fe3".format(
-        KIB_OUT_URL,
+        settings.KIB_OUT_URL,
         jwt_key,
         project.creator.userworkspace.tenant_name
     )
@@ -872,7 +863,7 @@ def create_workspace(user):
                                  tenant_name=tenant_name,
                                  tenant_role=tenant_role,
                                  backend_role=backend_role)
-    odfe_api = OpendistroApi(ES_IN_URL, ES_ADMIN_PASSWORD)
+    odfe_api = OpendistroApi(ES_IN_URL, settings.ES_ADMIN_PASSWORD)
     odfe_api.create_tenant(tenant_name)
     permissions = {
         "index_permissions": [{
@@ -895,8 +886,8 @@ def create_workspace(user):
     odfe_api.create_mapping(role=tenant_role, backend_roles=[backend_role])
 
     # Import global objects
-    obj = kibana_objects.export_all_objects(KIB_IN_URL, ES_ADMIN_PASSWORD, "global")
-    kibana_objects.import_object(KIB_IN_URL, ES_ADMIN_PASSWORD, obj, tenant_name)
+    obj = kibana_objects.export_all_objects(KIB_IN_URL, settings.ES_ADMIN_PASSWORD, "global")
+    kibana_objects.import_object(KIB_IN_URL, settings.ES_ADMIN_PASSWORD, obj, tenant_name)
 
 
 def remove_workspace(user):
@@ -905,7 +896,7 @@ def remove_workspace(user):
     :param user:
     :return:
     """
-    odfe_api = OpendistroApi(ES_IN_URL, ES_ADMIN_PASSWORD)
+    odfe_api = OpendistroApi(ES_IN_URL, settings.ES_ADMIN_PASSWORD)
     odfe_api.delete_mapping(user.userworkspace.tenant_role)
     odfe_api.delete_role(user.userworkspace.tenant_role)
     odfe_api.delete_tenant(user.userworkspace.tenant_name)
@@ -923,7 +914,7 @@ def request_public_kibana(request, project_id):
 
     jwt_key = utils.get_jwt_key(f"Public {project_id}", project.projectrole.backend_role)
 
-    url = f"{KIB_OUT_URL}/app/kibana" \
+    url = f"{settings.KIB_OUT_URL}/app/kibana" \
           f"?jwtToken={jwt_key}&security_tenant=global#/dashboard/a834f080-41b1-11ea-a32a-715577273fe3"
 
     return HttpResponseRedirect(url)
@@ -936,7 +927,7 @@ def request_kibana_admin(request):
     jwt_key = utils.get_jwt_key('admin', 'admin')
 
     url = "{}/app/discover?jwtToken={}".format(
-        KIB_OUT_URL,
+        settings.KIB_OUT_URL,
         jwt_key
     )
     return HttpResponseRedirect(url)
@@ -1007,25 +998,14 @@ def create_context(request):
     context['authenticated'] = request.user.is_authenticated
     if request.user.is_authenticated:
         context['auth_user_username'] = request.user.first_name
-        if hasattr(request.user, 'githubuser'):
-            context['photo_user'] = request.user.githubuser.photo
-        elif hasattr(request.user, 'gitlabuser'):
-            context['photo_user'] = request.user.gitlabuser.photo
-        elif hasattr(request.user, 'meetupuser'):
-            context['photo_user'] = request.user.meetupuser.photo
-        elif hasattr(request.user, 'gnomeuser'):
-            context['photo_user'] = request.user.gnomeuser.photo
+        oauth_user = OauthUser.objects.filter(user=request.user).first()
+        if oauth_user:
+            context['photo_user'] = oauth_user.photo
         else:
             context['photo_user'] = '/static/img/profile-default.png'
 
     # Message that should be shown to the user
     context['alert_notification'] = request.session.pop('alert_notification', None)
-
-    # Information about the accounts connected
-    context['github_enabled'] = hasattr(request.user, 'githubuser')
-    context['gitlab_enabled'] = hasattr(request.user, 'gitlabuser')
-    context['meetup_enabled'] = hasattr(request.user, 'meetupuser')
-    context['gnome_enabled'] = hasattr(request.user, 'gnomeuser')
 
     # Matomo link
     context['matomo_enabled'] = settings.MATOMO_ENABLED
