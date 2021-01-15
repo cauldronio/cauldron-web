@@ -1,0 +1,69 @@
+<div id="activity-overview" class="mb-4 tab-pane fade" role="tabpanel" >
+  <div class="row py-4 border">
+    {% if has_git %}
+    <div class="col-md">
+      <div class="row">
+        <div class="col-xl">
+          <p class="font-weight-bold text-muted mb-3"># Commits <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/commits.md"><i class="far fa-question-circle"></i></a></p>
+          <p class="h5 font-weight-bold text-gray-800"><span id="number_commits_activity_overview"> {{ metrics.commits_activity_overview }}</span></p>
+        </div>
+        <div class="col-xl border-left">
+          <p class="font-weight-bold text-muted mb-3"># Lines/commit <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/lines-commit.md"><i class="far fa-question-circle"></i></a></p>
+          <p class="h5 font-weight-bold text-gray-800"><span id="number_lines_commit_activity_overview">{{ metrics.lines_commit_activity_overview|stringformat:".2f" }}</span></p>
+        </div>
+        <div class="col-xl border-left">
+          <p class="font-weight-bold text-muted mb-3"># Lines/commit/file <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/lines-commit-file.md"><i class="far fa-question-circle"></i></a></p>
+          <p class="h5 font-weight-bold text-gray-800"><span id="number_lines_commit_file_activity_overview">{{ metrics.lines_commit_file_activity_overview|stringformat:".2f" }}</span></p>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    {% if has_gitlab or has_github %}
+    <div class="col-md">
+      <div class="row">
+        <div class="col-xl border-left">
+          <p class="font-weight-bold text-muted mb-3"># Issues created <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/issues-created.md"><i class="far fa-question-circle"></i></a></p>
+          <p class="h5 font-weight-bold text-gray-800"><span id="number_issues_created_activity_overview"> {{ metrics.issues_created_activity_overview }}</span></p>
+        </div>
+        <div class="col-xl border-left">
+          <p class="font-weight-bold text-muted mb-3"># Issues closed <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/issues-closed.md"><i class="far fa-question-circle"></i></a></p>
+          <p class="h5 font-weight-bold text-gray-800"><span id="number_issues_closed_activity_overview">{{ metrics.issues_closed_activity_overview }}</span></p>
+        </div>
+        <div class="col-xl border-left">
+          <p class="font-weight-bold text-muted mb-3"># Issues open <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/issues-open.md"><i class="far fa-question-circle"></i></a></p>
+          <p class="h5 font-weight-bold text-gray-800"><span id="number_issues_open_activity_overview">{{ metrics.issues_open_activity_overview }}</span></p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md">
+      <div class="row">
+        <div class="col-xl border-left">
+          <p class="font-weight-bold text-muted mb-3"># Pull/Merge requests created <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/pull-merge-requests-created.md"><i class="far fa-question-circle"></i></a></p>
+          <p class="h5 font-weight-bold text-gray-800"><span id="number_reviews_created_activity_overview"> {{ metrics.reviews_created_activity_overview }}</span></p>
+        </div>
+        <div class="col-xl border-left">
+          <p class="font-weight-bold text-muted mb-3"># Pull/Merge requests closed <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/pull-merge-requests-closed.md"><i class="far fa-question-circle"></i></a></p>
+          <p class="h5 font-weight-bold text-gray-800"><span id="number_reviews_closed_activity_overview">{{ metrics.reviews_closed_activity_overview }}</span></p>
+        </div>
+        <div class="col-xl border-left">
+          <p class="font-weight-bold text-muted mb-3"># Pull/Merge requests open <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/pull-merge-requests-open.md"><i class="far fa-question-circle"></i></a></p>
+          <p class="h5 font-weight-bold text-gray-800"><span id="number_reviews_open_activity_overview">{{ metrics.reviews_open_activity_overview }}</span></p>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  {% if has_git %}
+  <div class="row">
+    <div id="chart-commits-activity-overview"></div>
+  </div>
+  {% endif %}
+  {% if has_github or has_gitlab %}
+  <div class="row">
+    <div id="chart-issues-open-closed-activity-overview"></div>
+  </div>
+  <div class="row">
+    <div id="chart-reviews-open-closed-activity-overview"></div>
+  </div>
+  {% endif %}
+</div>

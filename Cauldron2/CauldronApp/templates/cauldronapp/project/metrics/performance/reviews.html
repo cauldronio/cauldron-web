@@ -1,0 +1,53 @@
+<div id="performance-reviews" class="mb-4 tab-pane fade" role="tabpanel" >
+        <div class="row py-4 border">
+          <div class="col-md-6">
+            <p class="font-weight-bold text-muted mb-3">Time to close (median) <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/performance/reviews-time-to-close-median.md"><i class="far fa-question-circle"></i></a></p>
+            <div class="row">
+              <div class="col-4">
+                <p class="h5 font-weight-bold text-gray-800"><span id="reviews_time_to_close_median_last_month">{{ metrics.reviews_time_to_close_median_last_month }}</span> days</p>
+                <p class="text-muted mb-1">Last month</p>
+              </div>
+              <div class="col-4">
+                <p class="h5 font-weight-bold text-gray-800"><span id="reviews_time_to_close_median_last_year">{{ metrics.reviews_time_to_close_median_last_year }}</span> days</p>
+                <p class="text-muted mb-1">Last year</p>
+              </div>
+              <div class="col-4">
+                <p id="reviews_time_to_close_median_yoy" class="h5 font-weight-bold text-gray-800">{{ metrics.reviews_time_to_close_median_yoy | stringformat:"+.2f" }}%</p>
+                <p class="text-muted mb-1">Year-over-year</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 border-left">
+            <div class="row">
+              <div class="col-4">
+                <p class="font-weight-bold text-muted mb-3">Time open (average) <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/performance/reviews-time-open-average.md"><i class="far fa-question-circle"></i></a></p>
+                <p class="h5 font-weight-bold text-gray-800"><span id="reviews_time_open_average">{{ metrics.reviews_time_open_average }}</span> days</p>
+              </div>
+              <div class="col-4">
+                <p class="font-weight-bold text-muted mb-3">Time open (median) <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/performance/reviews-time-open-median.md"><i class="far fa-question-circle"></i></a></p>
+                <p class="h5 font-weight-bold text-gray-800"><span id="reviews_time_open_median">{{ metrics.reviews_time_open_median }}</span> days</p>
+              </div>
+              <div class="col-4">
+                <p class="font-weight-bold text-muted mb-3">Open reviews <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/performance/open-reviews.md"><i class="far fa-question-circle"></i></a></p>
+                <p id="open_reviews" class="h5 font-weight-bold text-gray-800">{{ metrics.open_reviews }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div id="chart-reviews-created-ttc"></div>
+          </div>
+          <div class="col-md-6">
+            <div id="chart-reviews-still-open"></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div id="chart-reviews-closed-ttc"></div>
+          </div>
+          <div class="col-md-6">
+            <div id="chart-reviews-closed-created-ratio"></div>
+          </div>
+        </div>
+      </div>

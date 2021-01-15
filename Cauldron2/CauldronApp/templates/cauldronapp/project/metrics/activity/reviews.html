@@ -1,0 +1,65 @@
+<div id="activity-reviews" class="mb-4 tab-pane fade" role="tabpanel" >
+        <div class="row py-4 border">
+          <div class="col-md-6">
+            <p class="font-weight-bold text-muted mb-3"># Pull/Merge requests created <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/pull-merge-requests-created.md"><i class="far fa-question-circle"></i></a></p>
+            <div class="row">
+              <div class="col-4">
+                <p id="number_reviews_open_last_month" class="h5 font-weight-bold text-gray-800">{{ metrics.reviews_open_last_month }}</p>
+                <p class="text-muted mb-1">Last month</p>
+              </div>
+              <div class="col-4">
+                <p id="number_reviews_open_last_year" class="h5 font-weight-bold text-gray-800">{{metrics.reviews_open_last_year}}</p>
+                <p class="text-muted mb-1">Last year</p>
+              </div>
+              <div class="col-4">
+                <p id="number_reviews_open_yoy" class="h5 font-weight-bold text-gray-800">{{metrics.reviews_open_yoy | stringformat:"+.2f" }}%</p>
+                <p class="text-muted mb-1">Year-over-year</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 border-left">
+            <p class="font-weight-bold text-muted mb-3"># Pull/Merge requests closed <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/pull-merge-requests-closed.md"><i class="far fa-question-circle"></i></a></p>
+            <div class="row">
+              <div class="col-4">
+                <p id="number_reviews_closed_last_month" class="h5 font-weight-bold text-gray-800">{{ metrics.reviews_closed_last_month }}</p>
+                <p class="text-muted mb-1">Last month</p>
+              </div>
+              <div class="col-4">
+                <p id="number_reviews_closed_last_year" class="h5 font-weight-bold text-gray-800">{{metrics.reviews_closed_last_year}}</p>
+                <p class="text-muted mb-1">Last year</p>
+              </div>
+              <div class="col-4">
+                <p id="number_reviews_closed_yoy" class="h5 font-weight-bold text-gray-800">{{metrics.reviews_closed_yoy | stringformat:"+.2f" }}%</p>
+                <p class="text-muted mb-1">Year-over-year</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div id="chart-reviews-open-closed"></div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div id="chart-reviews-open-weekday"></div>
+          </div>
+          <div class="col-md-6">
+            <div id="chart-reviews-closed-weekday"></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div id="chart-reviews-opened-heatmap"></div>
+          </div>
+          <div class="col-md-6">
+            <div id="chart-reviews-closed-heatmap"></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div id="chart-reviews-created-by-repository"></div>
+          </div>
+          <div class="col-md-6">
+            <div id="chart-reviews-closed-by-repository"></div>
+          </div>
+        </div>
+      </div>

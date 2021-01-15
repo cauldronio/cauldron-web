@@ -1,0 +1,54 @@
+<div id="performance-overview" class="mb-4 tab-pane fade" role="tabpanel" >
+        <div class="row py-4 border">
+          <div class="col-md-6">
+            <p class="font-weight-bold text-muted mb-3">Issues</p>
+            <div class="row">
+              <div class="col-4">
+                <p class="font-weight-bold text-muted mb-3">Time open (average) <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/performance/issues-time-open-average.md"><i class="far fa-question-circle"></i></a></p>
+                <p class="h5 font-weight-bold text-gray-800"><span id="issues_time_open_average_performance_overview">{{ metrics.issues_time_open_average_performance_overview }}</span> days</p>
+              </div>
+              <div class="col-4">
+                <p class="font-weight-bold text-muted mb-3">Time open (median) <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/performance/issues-time-open-median.md"><i class="far fa-question-circle"></i></a></p>
+                <p class="h5 font-weight-bold text-gray-800"><span id="issues_time_open_median_performance_overview">{{ metrics.issues_time_open_median_performance_overview }}</span> days</p>
+              </div>
+              <div class="col-4">
+                <p class="font-weight-bold text-muted mb-3">Open issues <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/performance/open-issues.md"><i class="far fa-question-circle"></i></a></p>
+                <p id="open_issues_performance_overview" class="h5 font-weight-bold text-gray-800">{{ metrics.open_issues_performance_overview }}</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 border-left">
+            <p class="font-weight-bold text-muted mb-3">Reviews</p>
+            <div class="row">
+              <div class="col-4">
+                <p class="font-weight-bold text-muted mb-3">Time open (average) <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/performance/reviews-time-open-average.md"><i class="far fa-question-circle"></i></a></p>
+                <p class="h5 font-weight-bold text-gray-800"><span id="reviews_time_open_average_performance_overview">{{ metrics.reviews_time_open_average_performance_overview }}</span> days</p>
+              </div>
+              <div class="col-4">
+                <p class="font-weight-bold text-muted mb-3">Time open (median) <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/performance/reviews-time-open-median.md"><i class="far fa-question-circle"></i></a></p>
+                <p class="h5 font-weight-bold text-gray-800"><span id="reviews_time_open_median_performance_overview">{{ metrics.reviews_time_open_median_performance_overview }}</span> days</p>
+              </div>
+              <div class="col-4">
+                <p class="font-weight-bold text-muted mb-3">Open reviews <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/performance/open-reviews.md"><i class="far fa-question-circle"></i></a></p>
+                <p id="open_reviews_performance_overview" class="h5 font-weight-bold text-gray-800">{{ metrics.open_reviews_performance_overview }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div id="chart-issues-created-ttc-performance-overview"></div>
+          </div>
+          <div class="col-md-6">
+            <div id="chart-reviews-created-ttc-performance-overview"></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div id="chart-issues-closed-ttc-performance-overview"></div>
+          </div>
+          <div class="col-md-6">
+            <div id="chart-reviews-closed-ttc-performance-overview"></div>
+          </div>
+        </div>
+      </div>

@@ -1,0 +1,59 @@
+<div id="community-overview" class="mb-4 tab-pane fade" role="tabpanel" >
+  <div class="row py-4 border">
+    <div class="col-md">
+      <p class="font-weight-bold text-muted mb-3"># Active people <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/community/active-people.md"><i class="far fa-question-circle"></i></a></p>
+      <div class="row">
+        {% if has_git %}
+        <div class="col-md">
+          <p class="h5 font-weight-bold text-gray-800"><span id="active_people_git_community_overview">{{ metrics.active_people_git_community_overview }}</span></p>
+          <p class="text-muted mb-1">Git authors</p>
+        </div>
+        {% endif %}
+        {% if has_gitlab or has_github %}
+        <div class="col-md">
+          <p class="h5 font-weight-bold text-gray-800"><span id="active_people_issues_community_overview">{{metrics.active_people_issues_community_overview}}</span></p>
+          <p class="text-muted mb-1">Issue authors</p>
+        </div>
+        <div class="col-md">
+          <p class="h5 font-weight-bold text-gray-800"><span id="active_people_patches_community_overview">{{metrics.active_people_patches_community_overview}}</span></p>
+          <p class="text-muted mb-1">PRs/MRs submitters</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="col-md border-left">
+      <p class="font-weight-bold text-muted mb-3"># Onboardings <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/community/onboardings.md"><i class="far fa-question-circle"></i></a></p>
+      <div class="row">
+        {% if has_git %}
+        <div class="col-md">
+          <p class="h5 font-weight-bold text-gray-800"><span id="onboardings_git_community_overview">{{metrics.onboardings_git_community_overview}}</span></p>
+          <p class="text-muted mb-1">Git authors</p>
+        </div>
+        {% endif %}
+        {% if has_gitlab or has_github %}
+        <div class="col-md">
+          <p class="h5 font-weight-bold text-gray-800"><span id="onboardings_issues_community_overview">{{metrics.onboardings_issues_community_overview}}</span></p>
+          <p class="text-muted mb-1">Issue authors</p>
+        </div>
+        <div class="col-md">
+          <p class="h5 font-weight-bold text-gray-800"><span id="onboardings_patches_community_overview">{{metrics.onboardings_patches_community_overview}}</span></p>
+          <p class="text-muted mb-1">PRs/MRs submitters</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% if has_git %}
+  <div class="row">
+    <div id="chart-authors-git-active-community-overview"></div>
+  </div>
+  {% endif %}
+  {% if has_gitlab or has_github %}
+  <div class="row">
+    <div id="chart-authors-issues-active-community-overview"></div>
+  </div>
+  <div class="row">
+    <div id="chart-authors-reviews-active-community-overview"></div>
+  </div>
+  {% endif %}
+</div>

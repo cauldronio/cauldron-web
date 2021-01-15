@@ -1,0 +1,65 @@
+<div id="activity-issues" class="mb-4 tab-pane fade" role="tabpanel" >
+        <div class="row py-4 border">
+          <div class="col-md-6">
+            <p class="font-weight-bold text-muted mb-3"># Issues created <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/issues-created.md"><i class="far fa-question-circle"></i></a></p>
+            <div class="row">
+              <div class="col-4">
+                <p id="number_issues_open_last_month" class="h5 font-weight-bold text-gray-800">{{ metrics.issues_open_last_month }}</p>
+                <p class="text-muted mb-1">Last month</p>
+              </div>
+              <div class="col-4">
+                <p id="number_issues_open_last_year" class="h5 font-weight-bold text-gray-800">{{metrics.issues_open_last_year}}</p>
+                <p class="text-muted mb-1">Last year</p>
+              </div>
+              <div class="col-4">
+                <p id="number_issues_open_yoy" class="h5 font-weight-bold text-gray-800">{{metrics.issues_open_yoy | stringformat:"+.2f" }}%</p>
+                <p class="text-muted mb-1">Year-over-year</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 border-left">
+            <p class="font-weight-bold text-muted mb-3"># Issues closed <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/issues-closed.md"><i class="far fa-question-circle"></i></a></p>
+            <div class="row">
+              <div class="col-4">
+                <p id="number_issues_closed_last_month" class="h5 font-weight-bold text-gray-800">{{ metrics.issues_closed_last_month }}</p>
+                <p class="text-muted mb-1">Last month</p>
+              </div>
+              <div class="col-4">
+                <p id="number_issues_closed_last_year" class="h5 font-weight-bold text-gray-800">{{metrics.issues_closed_last_year}}</p>
+                <p class="text-muted mb-1">Last year</p>
+              </div>
+              <div class="col-4">
+                <p id="number_issues_closed_yoy" class="h5 font-weight-bold text-gray-800">{{metrics.issues_closed_yoy | stringformat:"+.2f" }}%</p>
+                <p class="text-muted mb-1">Year-over-year</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div id="chart-issues-open-closed"></div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div id="chart-issues-open-weekday"></div>
+          </div>
+          <div class="col-md-6">
+            <div id="chart-issues-closed-weekday"></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div id="chart-issues-opened-heatmap"></div>
+          </div>
+          <div class="col-md-6">
+            <div id="chart-issues-closed-heatmap"></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div id="chart-issues-created-by-repository"></div>
+          </div>
+          <div class="col-md-6">
+            <div id="chart-issues-closed-by-repository"></div>
+          </div>
+        </div>
+      </div>
