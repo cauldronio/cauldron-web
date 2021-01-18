@@ -107,7 +107,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 if HATSTALL_ENABLED:
-    INSTALLED_APPS.append('Cauldron2.middleware.HatstallAuthorizationMiddleware')
+    MIDDLEWARE.append('Cauldron2.middleware.HatstallAuthorizationMiddleware')
 
 ROOT_URLCONF = 'Cauldron2.urls'
 
