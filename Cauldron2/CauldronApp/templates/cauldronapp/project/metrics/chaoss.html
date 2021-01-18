@@ -50,13 +50,13 @@
           <div class="row">
             <div class="col-md-6 card my-auto" style="border:none;">
               <div class="card-body">
-                <h5 class="card-title"># Commits by weekday</h5>
-                <p class="card-text">This bar chart shows how commit activity is distributed across the days of the week. When activity only occurs on workdays, the community may have mostly paid contributors who work during the week. Activity on the weekends may indicate volunteer activities.</p>
-                <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/commits-by-weekday.md" class="card-link">Read more</a>
+                <h5 class="card-title"># Commits by hour and weekday</h5>
+                <p class="card-text">The heatmap shows what times of day contributors in their local time zone contribute. Activity that clusters between regular office hours on workdays can indicate activity by contributors who do this as part of their job. Activity during evenings and weekends can indicate volunteer activity.</p>
+                <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/commits-heatmap.md" class="card-link">Read more</a>
               </div>
             </div>
             <div class="col-md-6">
-              <div id="chart-commits-weekday-chaoss"></div>
+              <div id="chart-commits-heatmap-chaoss"></div>
             </div>
           </div>
           {% endif %}
@@ -78,7 +78,7 @@
               <div id="chart-drive-by-and-repeat-contributor-counts-chaoss-without-description"></div>
             </div>
             <div class="col-md-6">
-              <div id="chart-commits-weekday-chaoss-without-description"></div>
+              <div id="chart-commits-heatmap-chaoss-without-description"></div>
             </div>
           </div>
           {% endif %}

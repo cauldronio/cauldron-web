@@ -481,6 +481,6 @@ def chaoss_metrics(elastic, urls, from_date, to_date):
     metrics['issues_created_closed_bokeh_chaoss_without_description'] = metrics['issues_created_closed_bokeh_chaoss']
     metrics['drive_by_and_repeat_contributor_counts_bokeh_chaoss'] = community_commits.drive_by_and_repeat_contributor_counts(elastic, urls, from_date, to_date)
     metrics['drive_by_and_repeat_contributor_counts_bokeh_chaoss_without_description'] = metrics['drive_by_and_repeat_contributor_counts_bokeh_chaoss']
-    metrics['commits_weekday_bokeh_chaoss'] = activity_commits.git_commits_weekday_bokeh(elastic, urls, from_date, to_date)
-    metrics['commits_weekday_bokeh_chaoss_without_description'] = metrics['commits_weekday_bokeh_chaoss']
+    metrics['commits_heatmap_bokeh_chaoss'] = activity_commits.git_commits_heatmap_bokeh(elastic, urls, from_date, to_date)
+    metrics['commits_heatmap_bokeh_chaoss_without_description'] = metrics['commits_heatmap_bokeh_chaoss']
     return metrics

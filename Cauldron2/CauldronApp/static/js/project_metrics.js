@@ -98,8 +98,8 @@ $(function() {
         "issues_created_closed_bokeh_chaoss_without_description": "chart-issues-created-closed-chaoss-without-description",
         "drive_by_and_repeat_contributor_counts_bokeh_chaoss": "chart-drive-by-and-repeat-contributor-counts-chaoss",
         "drive_by_and_repeat_contributor_counts_bokeh_chaoss_without_description": "chart-drive-by-and-repeat-contributor-counts-chaoss-without-description",
-        "commits_weekday_bokeh_chaoss": "chart-commits-weekday-chaoss",
-        "commits_weekday_bokeh_chaoss_without_description": "chart-commits-weekday-chaoss-without-description",
+        "commits_heatmap_bokeh_chaoss": "chart-commits-heatmap-chaoss",
+        "commits_heatmap_bokeh_chaoss_without_description": "chart-commits-heatmap-chaoss-without-description",
     }
 
     var METRICS_ACTIVITY_OVERVIEW = {
