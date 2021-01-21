@@ -25,10 +25,8 @@ logger = logging.getLogger(__name__)
 
 def reviews_opened(elastic, urls, from_date, to_date):
     """Get number of Merge requests and Pull requests opened in the specified range"""
-    from_date_es = from_date.strftime("%Y-%m-%d")
-    to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all')\
-        .filter('range', created_at={'gte': from_date_es, "lte": to_date_es}) \
+        .filter('range', created_at={'gte': from_date, "lte": to_date}) \
         .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
         .query(Q('terms', origin=urls))
 
@@ -46,10 +44,9 @@ def reviews_opened(elastic, urls, from_date, to_date):
 
 def reviews_closed(elastic, urls, from_date, to_date):
     """Get number of Merge requests and Pull requests closed in the specified range"""
-    from_date_es = from_date.strftime("%Y-%m-%d")
-    to_date_es = to_date.strftime("%Y-%m-%d")
-    s = Search(using=elastic, index='all')\
-        .filter('range', closed_at={'gte': from_date_es, "lte": to_date_es}) \
+    s = Search(using=elastic, index='all') \
+        .query(Q('range', closed_at={'gte': from_date, "lte": to_date}) |
+               Q('range', merged_at={'gte': from_date, "lte": to_date})) \
         .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
         .query(Q('terms', origin=urls))
 
@@ -66,23 +63,23 @@ def reviews_closed(elastic, urls, from_date, to_date):
 
 
 def reviews_open_on(elastic, urls, date):
-    """Get the number of reviews that were open on a specific day"""
+    # TODO: This metric is equal to performance/open_reviews
+    """Gives the number of open reviews in a given date"""
     s = Search(using=elastic, index='all') \
         .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
         .query(Q('terms', origin=urls)) \
         .query(Q('range', created_at={'lte': date}) &
-               (Q('range', closed_at={'gte': date}) | Q('terms', state=['open', 'opened'])))
+              (Q('range', closed_at={'gte': date}) |
+               Q('range', merged_at={'gte': date}) |
+               Q('terms', state=['open', 'opened'])))
 
     try:
         response = s.count()
     except ElasticsearchException as e:
         logger.warning(e)
-        response = None
+        response = '?'
 
-    if response is not None:
-        return response
-    else:
-        return 'X'
+    return response
 
 
 def reviews_created_bokeh_compare(elastics, from_date, to_date):
@@ -184,37 +181,50 @@ def reviews_closed_bokeh_compare(elastics, from_date, to_date):
     """Generates a projects comparison about reviews closed"""
     interval_name, interval_elastic, _ = get_interval(from_date, to_date)
 
-    dates_buckets = dict()
+    data = []
     for project_id in elastics:
         elastic = elastics[project_id]
 
         s = Search(using=elastic, index='all') \
-            .filter('range', closed_at={'gte': from_date, 'lte': to_date}) \
             .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
             .extra(size=0)
-        s.aggs.bucket('dates', 'date_histogram', field='closed_at', calendar_interval=interval_elastic)
+        s.aggs.bucket('closed', 'filter', Q('range', closed_at={'gte': from_date, "lte": to_date})) \
+              .bucket('reviews', 'date_histogram', field='closed_at', calendar_interval=interval_elastic)
+        s.aggs.bucket('merged', 'filter', Q('range', merged_at={'gte': from_date, "lte": to_date})) \
+              .bucket('reviews', 'date_histogram', field='merged_at', calendar_interval=interval_elastic)
 
         try:
             response = s.execute()
-            buckets = response.aggregations.dates.buckets
+            closed_buckets = response.aggregations.closed.reviews.buckets
+            merged_buckets = response.aggregations.merged.reviews.buckets
         except ElasticsearchException as e:
             logger.warning(e)
-            buckets = []
-
-        dates_buckets[project_id] = buckets
-
-    data = []
-    for project_id in dates_buckets:
-        dates_bucket = dates_buckets[project_id]
+            closed_buckets = []
+            merged_buckets = []
 
         # Create the data structure
-        reviews, timestamps = [], []
-        for item in dates_bucket:
-            timestamps.append(item.key)
-            reviews.append(item.doc_count)
+        timestamps_closed, reviews_closed = [], []
+        for item in closed_buckets:
+            timestamps_closed.append(item.key)
+            reviews_closed.append(item.doc_count)
 
-        data.append(pandas.DataFrame(list(zip(timestamps, reviews)),
-                    columns =['timestamps', f'reviews_{project_id}']))
+        timestamps_merged, reviews_merged = [], []
+        for item in merged_buckets:
+            timestamps_merged.append(item.key)
+            reviews_merged.append(item.doc_count)
+
+        project_data = []
+        project_data.append(pandas.DataFrame(list(zip(timestamps_closed, reviews_closed)),
+                    columns =['timestamps', f'reviews_closed_{project_id}']))
+        project_data.append(pandas.DataFrame(list(zip(timestamps_merged, reviews_merged)),
+                    columns =['timestamps', f'reviews_merged_{project_id}']))
+
+        # Merge the dataframes in case they have different lengths
+        project_data = reduce(lambda df1,df2: pandas.merge(df1,df2,on='timestamps',how='outer',sort=True).fillna(0), project_data)
+        # We are counting the rejected and merged reviews as closed reviews
+        project_data[f'reviews_{project_id}'] = project_data[f'reviews_closed_{project_id}'] + project_data[f'reviews_merged_{project_id}']
+
+        data.append(project_data)
 
     # Merge the dataframes in case they have different lengths
     data = reduce(lambda df1,df2: pandas.merge(df1,df2,on='timestamps',how='outer',sort=True).fillna(0), data)
@@ -236,7 +246,7 @@ def reviews_closed_bokeh_compare(elastics, from_date, to_date):
 
     names = []
     tooltips = [(interval_name, '@timestamps{%F}')]
-    for idx, project_id in enumerate(dates_buckets):
+    for idx, project_id in enumerate(elastics):
         try:
             project = Project.objects.get(pk=project_id)
             project_name = project.name
@@ -487,27 +497,31 @@ def reviews_open_weekday_bokeh(elastic, urls, from_date, to_date):
 
 def reviews_closed_weekday_bokeh(elastic, urls, from_date, to_date):
     """Get reviews closed by week day in the specified range of time"""
-    from_date_es = from_date.strftime("%Y-%m-%d")
-    to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all') \
-        .filter('range', closed_at={'gte': from_date_es, "lte": to_date_es}) \
+        .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
         .query(Q('terms', origin=urls)) \
-        .query('bool', filter=((Q('match', pull_request=True) | Q('match', merge_request=True)) &
-                               Q('exists', field='closed_at'))) \
         .extra(size=0)
-    s.aggs.bucket('review_weekday', 'terms', script="doc['closed_at'].value.dayOfWeek", size=7)
+    s.aggs.bucket('closed', 'filter', Q('range', closed_at={'gte': from_date, "lte": to_date})) \
+          .bucket('weekdays', 'terms', script="doc['closed_at'].value.dayOfWeek", size=7)
+    s.aggs.bucket('merged', 'filter', Q('range', merged_at={'gte': from_date, "lte": to_date})) \
+          .bucket('weekdays', 'terms', script="doc['merged_at'].value.dayOfWeek", size=7)
 
     try:
         response = s.execute()
-        reviews_bucket = response.aggregations.review_weekday.buckets
+        closed_buckets = response.aggregations.closed.weekdays.buckets
+        merged_buckets = response.aggregations.merged.weekdays.buckets
     except ElasticsearchException as e:
         logger.warning(e)
-        reviews_bucket = []
+        closed_buckets = []
+        merged_buckets = []
 
     # Create the Bokeh visualization
     reviews_dict = defaultdict(int)
-    for weekday_item in reviews_bucket:
+    for weekday_item in closed_buckets:
         reviews_dict[weekday_item.key] = weekday_item.doc_count
+
+    for weekday_item in merged_buckets:
+        reviews_dict[weekday_item.key] += weekday_item.doc_count
 
     reviews = []
     for i, k in enumerate(WEEKDAY):
@@ -598,23 +612,26 @@ def reviews_opened_heatmap_bokeh(elastic, urls, from_date, to_date):
 def reviews_closed_heatmap_bokeh(elastic, urls, from_date, to_date):
     """Get reviews closed per week day and per hour of the day in the
     specified range of time"""
-    from_date_es = from_date.strftime("%Y-%m-%d")
-    to_date_es = to_date.strftime("%Y-%m-%d")
 
     s = Search(using=elastic, index='all') \
-        .filter('range', closed_at={'gte': from_date_es, "lte": to_date_es}) \
-        .query(Q('terms', origin=urls)) \
         .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
+        .query(Q('terms', origin=urls)) \
         .extra(size=0)
-    s.aggs.bucket('weekdays', 'terms', script="doc['closed_at'].value.dayOfWeek", size=7, order={'_term': 'asc'}) \
+    s.aggs.bucket('closed', 'filter', Q('range', closed_at={'gte': from_date, "lte": to_date})) \
+          .bucket('weekdays', 'terms', script="doc['closed_at'].value.dayOfWeek", size=7, order={'_term': 'asc'}) \
           .bucket('hours', 'terms', script="doc['closed_at'].value.getHourOfDay()", size=24, order={'_term': 'asc'})
+    s.aggs.bucket('merged', 'filter', Q('range', merged_at={'gte': from_date, "lte": to_date})) \
+          .bucket('weekdays', 'terms', script="doc['merged_at'].value.dayOfWeek", size=7, order={'_term': 'asc'}) \
+          .bucket('hours', 'terms', script="doc['merged_at'].value.getHourOfDay()", size=24, order={'_term': 'asc'})
 
     try:
         response = s.execute()
-        weekdays = response.aggregations.weekdays.buckets
+        closed_buckets = response.aggregations.closed.weekdays.buckets
+        merged_buckets = response.aggregations.merged.weekdays.buckets
     except ElasticsearchException as e:
         logger.warning(e)
-        weekdays = []
+        closed_buckets = []
+        merged_buckets = []
 
     days = list(calendar.day_abbr)
     hours = list(map(str, range(24)))
@@ -623,10 +640,17 @@ def reviews_closed_heatmap_bokeh(elastic, urls, from_date, to_date):
     for day in days:
         data[day] = dict.fromkeys(hours, 0)
 
-    for weekday in weekdays:
+    # Closed reviews
+    for weekday in closed_buckets:
         day = days[int(weekday.key) - 1]
         for hour in weekday.hours.buckets:
-            data[day][hour.key] = hour.doc_count
+            data[day][hour.key] += hour.doc_count
+
+    # Merged reviews
+    for weekday in merged_buckets:
+        day = days[int(weekday.key) - 1]
+        for hour in weekday.hours.buckets:
+            data[day][hour.key] += hour.doc_count
 
     data = pandas.DataFrame(data)
     data.index.name = "Hour"
@@ -753,7 +777,8 @@ def reviews_closed_by_repository(elastic, from_date, to_date):
     """Shows the number of reviews closed in a project
     grouped by repository"""
     s = Search(using=elastic, index='all') \
-        .query(Q('range', closed_at={'gte': from_date, 'lte': to_date}) | Q('range', merged_at={'gte': from_date, 'lte': to_date})) \
+        .query(Q('range', closed_at={'gte': from_date, 'lte': to_date}) |
+               Q('range', merged_at={'gte': from_date, 'lte': to_date})) \
         .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
         .extra(size=0)
     s.aggs.bucket('repositories', 'terms', field='repository', size=10)

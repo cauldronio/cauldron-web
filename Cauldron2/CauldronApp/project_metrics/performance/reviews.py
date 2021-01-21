@@ -2,6 +2,7 @@ import json
 import logging
 from datetime import datetime, timedelta
 import pandas
+from functools import reduce
 
 from bokeh.embed import json_item
 from bokeh.models import ColumnDataSource, tools, Range1d
@@ -17,11 +18,12 @@ logger = logging.getLogger(__name__)
 
 
 def median_time_to_close(elastic, urls, from_date, to_date):
-    """Gives the median time to close for closed reviews in a period"""
+    """Gives the median time to close for closed (and merged) reviews in a period"""
     s = Search(using=elastic, index='all') \
         .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
+        .query(Q('range', closed_at={'gte': from_date, 'lte': to_date}) |
+               Q('range', merged_at={'gte': from_date, 'lte': to_date})) \
         .query(Q('terms', origin=urls)) \
-        .filter('range', closed_at={'gte': from_date, "lte": to_date}) \
         .extra(size=0)
     s.aggs.bucket('ttc_percentiles', 'percentiles', field='time_to_close_days', percents=[50])
 
@@ -43,7 +45,9 @@ def average_open_time(elastic, urls, date):
         .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
         .query(Q('terms', origin=urls)) \
         .query(Q('range', created_at={'lte': date}) &
-              (Q('range', closed_at={'gte': date}) | Q('terms', state=['open', 'opened']))) \
+              (Q('range', closed_at={'gte': date}) |
+               Q('range', merged_at={'gte': date}) |
+               Q('terms', state=['open', 'opened']))) \
         .source('created_at')
 
     try:
@@ -72,7 +76,9 @@ def median_open_time(elastic, urls, date):
         .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
         .query(Q('terms', origin=urls)) \
         .query(Q('range', created_at={'lte': date}) &
-              (Q('range', closed_at={'gte': date}) | Q('terms', state=['open', 'opened']))) \
+              (Q('range', closed_at={'gte': date}) |
+               Q('range', merged_at={'gte': date}) |
+               Q('terms', state=['open', 'opened']))) \
         .source('created_at')
 
     try:
@@ -96,12 +102,15 @@ def median_open_time(elastic, urls, date):
 
 
 def open_reviews(elastic, urls, date):
+    # TODO: This metric is equal to activity/reviews_open_on
     """Gives the number of open reviews in a given date"""
     s = Search(using=elastic, index='all') \
         .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
         .query(Q('terms', origin=urls)) \
         .query(Q('range', created_at={'lte': date}) &
-              (Q('range', closed_at={'gte': date}) | Q('terms', state=['open', 'opened'])))
+              (Q('range', closed_at={'gte': date}) |
+               Q('range', merged_at={'gte': date}) |
+               Q('terms', state=['open', 'opened'])))
 
     try:
         response = s.count()
@@ -324,7 +333,7 @@ def ttc_closed_reviews_bokeh(elastic, urls, from_date, to_date):
 
 
 def closed_created_reviews_ratio_bokeh(elastic, urls, from_date, to_date):
-    """Generates a visualization showing the ratio between closed and
+    """Generates a visualization showing the ratio between closed (and merged) and
     created reviews in a given date"""
 
     interval_name, interval_elastic, _ = get_interval(from_date, to_date)
@@ -337,32 +346,47 @@ def closed_created_reviews_ratio_bokeh(elastic, urls, from_date, to_date):
           .bucket('dates', 'date_histogram', field='created_at', calendar_interval=interval_elastic)
     s.aggs.bucket('closed_reviews', 'filter', Q('range', closed_at={'gte': from_date, "lte": to_date})) \
           .bucket('dates', 'date_histogram', field='closed_at', calendar_interval=interval_elastic)
+    s.aggs.bucket('merged_reviews', 'filter', Q('range', merged_at={'gte': from_date, "lte": to_date})) \
+          .bucket('dates', 'date_histogram', field='merged_at', calendar_interval=interval_elastic)
 
     try:
         response = s.execute()
-        creation_dates_buckets = response.aggregations.created_reviews.dates.buckets
-        closing_dates_buckets = response.aggregations.closed_reviews.dates.buckets
+        created_buckets = response.aggregations.created_reviews.dates.buckets
+        closed_buckets = response.aggregations.closed_reviews.dates.buckets
+        merged_buckets = response.aggregations.merged_reviews.dates.buckets
     except ElasticsearchException as e:
         logger.warning(e)
-        creation_dates_buckets = []
-        closing_dates_buckets = []
+        created_buckets = []
+        closed_buckets = []
+        merged_buckets = []
 
     # Create the data structure for created reviews
-    reviews_created, creation_dates_timestamps = [], []
-    for date in creation_dates_buckets:
-        creation_dates_timestamps.append(date.key)
+    reviews_created, timestamps_created = [], []
+    for date in created_buckets:
+        timestamps_created.append(date.key)
         reviews_created.append(date.doc_count)
 
     # Create the data structure for closed reviews
-    reviews_closed, closing_dates_timestamps = [], []
-    for date in closing_dates_buckets:
-        closing_dates_timestamps.append(date.key)
+    reviews_closed, timestamps_closed = [], []
+    for date in closed_buckets:
+        timestamps_closed.append(date.key)
         reviews_closed.append(date.doc_count)
 
-    creation_dates = pandas.DataFrame(list(zip(creation_dates_timestamps, reviews_created)), columns =['timestamps', 'reviews_created'])
-    closing_dates = pandas.DataFrame(list(zip(closing_dates_timestamps, reviews_closed)), columns =['timestamps', 'reviews_closed'])
+    # Create the data structure for merged reviews
+    reviews_merged, timestamps_merged = [], []
+    for date in merged_buckets:
+        timestamps_merged.append(date.key)
+        reviews_merged.append(date.doc_count)
 
-    data = pandas.merge(creation_dates, closing_dates, on='timestamps', how='outer', sort=True).fillna(0)
+    data = []
+    data.append(pandas.DataFrame(list(zip(timestamps_created, reviews_created)), columns =['timestamps', 'reviews_created']))
+    data.append(pandas.DataFrame(list(zip(timestamps_closed, reviews_closed)), columns =['timestamps', 'reviews_closed']))
+    data.append(pandas.DataFrame(list(zip(timestamps_merged, reviews_merged)), columns =['timestamps', 'reviews_merged']))
+
+    # Merge the dataframes in case they have different lengths
+    data = reduce(lambda df1,df2: pandas.merge(df1,df2,on='timestamps',how='outer',sort=True).fillna(0), data)
+    # We are counting the rejected and merged reviews as closed reviews
+    data['reviews_closed'] = data['reviews_closed'] + data['reviews_merged']
 
     data['ratio'] = data['reviews_closed'] / data['reviews_created']
 
