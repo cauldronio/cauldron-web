@@ -19,10 +19,7 @@
         <div class="col-lg-5 text-center text-lg-left">
           <h1 class="font-weight-bold my-4">Level Up Software Development Analytics</h1>
           <p class="mb-3">Cauldron allows project managers, analysts, and developers to understand more about the community and processes involved in software development</p>
-          <form action="{% url 'new_project' %}" method="post" class="create-project">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-light btn-lg my-3" role="button">Analyze a Project</button>
-          </form>
+          <a class="btn btn-light btn-lg my-3" href="{% url 'create_project' %}">Analyze a Project</a>
         </div>
         <div class="col-lg-4 text-lg-left">
           <img class="img-fluid" src="{% static 'img/three_images.png' %}" alt="">
@@ -55,10 +52,7 @@
         </div>
       </div>
       <div class="row justify-content-center text-center">
-        <form action="{% url 'new_project' %}" method="post" class="create-project">
-          {% csrf_token %}
-          <button type="submit" class="btn btn-primary btn-lg my-3" role="button">Analyze a Project</button>
-        </form>
+        <a class="btn btn-primary btn-lg my-3" href="{% url 'create_project' %}">Analyze a Project</a>
       </div>
     </div>
   </section>
@@ -130,10 +124,7 @@
 
       </div>
       <div class="row justify-content-center text-center">
-        <form action="{% url 'new_project' %}" method="post" class="create-project">
-          {% csrf_token %}
-          <button type="submit" class="btn btn-primary btn-lg my-3" role="button">Analyze a Project</button>
-        </form>
+        <a class="btn btn-primary btn-lg my-3" href="{% url 'create_project' %}">Analyze a Project</a>
       </div>
     </div>
   </section>

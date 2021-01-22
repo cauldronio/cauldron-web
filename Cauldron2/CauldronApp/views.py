@@ -1,5 +1,6 @@
 import logging
 import datetime
+import random
 from random import choice
 from string import ascii_lowercase, digits
 from urllib.parse import urlencode
@@ -98,6 +99,7 @@ def request_github_oauth(request):
     # Save the state of the session
     data_add = request.session.pop('add_repo', None)
     last_page = request.session.pop('last_page', None)
+    new_project_info = request.session.get('new_project')
 
     merged = authenticate_user(request, 'github', oauth_user, is_admin)
     if merged:
@@ -113,6 +115,8 @@ def request_github_oauth(request):
         datasources.github.analyze_data(project,
                                         data_add['data'], data_add['commits'],
                                         data_add['issues'], data_add['forks'])
+
+    request.session['new_project'] = new_project_info
 
     if last_page:
         return HttpResponseRedirect(last_page)
@@ -168,6 +172,7 @@ def request_gitlab_oauth(request, backend):
     # Save the state of the session
     data_add = request.session.pop('add_repo', None)
     last_page = request.session.pop('last_page', None)
+    new_project_info = request.session.get('new_project')
 
     merged = authenticate_user(request, backend, oauth_user, is_admin)
     if merged:
@@ -185,6 +190,9 @@ def request_gitlab_oauth(request, backend):
                                         data_add['data'], data_add['commits'],
                                         data_add['issues'], data_add['forks'],
                                         instance=instance)
+
+    request.session['new_project'] = new_project_info
+
     if last_page:
         return HttpResponseRedirect(last_page)
 
@@ -211,6 +219,7 @@ def request_meetup_oauth(request):
     # Save the state of the session
     data_add = request.session.pop('add_repo', None)
     last_page = request.session.pop('last_page', None)
+    new_project_info = request.session.get('new_project')
 
     merged = authenticate_user(request, 'meetup', oauth_user, is_admin)
     if merged:
@@ -226,6 +235,8 @@ def request_meetup_oauth(request):
     if data_add and data_add['backend'] == 'meetup':
         project = Project.objects.get(id=data_add['proj_id'])
         datasources.meetup.analyze_data(project, data_add['data'])
+
+    request.session['new_project'] = new_project_info
 
     if last_page:
         return HttpResponseRedirect(last_page)
@@ -560,10 +571,172 @@ def request_rename_project(request, project_id):
     return JsonResponse({'status': 'Ok', 'message': 'Name updated successfully'})
 
 
+def create_project(request):
+    error = None
+    if request.method == 'POST':
+        if 'name' in request.POST:
+            data = request.session.get('new_project', dict())
+            data['name'] = request.POST['name']
+            request.session['new_project'] = data
+            return JsonResponse({'name': request.POST['name']})
+
+        elif 'add' in request.POST:
+            error = create_project_add(request)
+
+        elif 'delete' in request.POST:
+            error = create_project_delete(request)
+
+        elif 'create' in request.POST:
+            return request_new_project(request)
+
+    context = create_context(request)
+    context['error'] = error
+    if request.user.is_authenticated:
+        context['github_enabled'] = request.user.ghtokens.filter(instance='GitHub').exists()
+        context['gitlab_enabled'] = request.user.gltokens.filter(instance='GitLab').exists()
+        context['gnome_enabled'] = request.user.gltokens.filter(instance='Gnome').exists()
+        context['meetup_enabled'] = request.user.meetuptokens.exists()
+
+    context['new_project'] = request.session.get('new_project')
+
+    request.session['last_page'] = reverse('create_project')
+    return render(request, 'cauldronapp/create_project/base.html', context=context)
+
+
+def random_id(size):
+    return ''.join(random.choice(ascii_lowercase) for _ in range(size))
+
+
+def create_project_add(request):
+    backend = request.POST.get('backend')
+    if backend == 'git':
+        data = request.POST.get('data')
+        if not data:
+            return {'status': 'error', 'message': 'URL not found for Git repository'}
+        data = data.strip()
+
+        data_project = request.session.get('new_project', {})
+        if 'actions' not in data_project:
+            data_project['actions'] = []
+        data_project['actions'].append({'id': random_id(5), 'backend': 'git', 'data': data, 'attrs': {'Commits': True}})
+        request.session['new_project'] = data_project
+
+    elif backend == 'github':
+        data = request.POST.get('data')
+        if not data:
+            return {'status': 'error', 'message': 'Data not found to add'}
+        if not request.user.is_authenticated or not request.user.ghtokens.filter(instance='GitHub').exists():
+            return {'status': 'error', 'message': 'User not authenticated. Refresh the page.'}
+        commits = 'commits' in request.POST
+        issues = 'issues' in request.POST
+        forks = 'forks' in request.POST
+        data_owner, data_repo = datasources.github.parse_input_data(data)
+        if data_owner and data_repo:
+            data_store = f'{data_owner}/{data_repo}'
+            attrs_store = {'Commits': commits, 'Issues/PRs': issues}
+        elif data_owner:
+            data_store = data_owner
+            attrs_store = {'Commits': commits, 'Issues/PRs': issues, 'Forks': forks}
+        else:
+            return {'status': 'error', 'message': f'Unable to parse {data}'}
+
+        data_project = request.session.get('new_project', dict())
+        if 'actions' not in data_project:
+            data_project['actions'] = []
+        data_project['actions'].append({'id': random_id(5), 'backend': 'github',
+                                        'data': data_store, 'attrs': attrs_store})
+        request.session['new_project'] = data_project
+
+    elif backend == 'gitlab':
+        data = request.POST.get('data')
+        instance = request.POST.get('instance')
+        if not data or not instance:
+            return {'status': 'error', 'message': 'Data not found to add'}
+        if not request.user.is_authenticated or not request.user.gltokens.filter(instance__slug=instance).exists():
+            return {'status': 'error', 'message': 'User not authenticated. Refresh the page.'}
+        commits = 'commits' in request.POST
+        issues = 'issues' in request.POST
+        forks = 'forks' in request.POST
+        instance_obj = GLInstance.objects.get(slug=instance)
+        data_owner, data_repo = datasources.gitlab.parse_input_data(data, instance_obj.endpoint)
+        if data_owner and data_repo:
+            data_store = f'{data_owner}/{data_repo}'
+            attrs_store = {'Commits': commits, 'Issues/MRs': issues}
+        elif data_owner:
+            data_store = data_owner
+            attrs_store = {'Commits': commits, 'Issues/MRs': issues, 'Forks': forks}
+        else:
+            return {'status': 'error', 'message': f'Unable to parse {data}'}
+
+        data_project = request.session.get('new_project', dict())
+        if 'actions' not in data_project:
+            data_project['actions'] = []
+        data_project['actions'].append({'id': random_id(5), 'backend': 'gitlab', 'instance': instance,
+                                        'data': data_store, 'attrs': attrs_store})
+        request.session['new_project'] = data_project
+
+    elif backend == 'meetup':
+        data = request.POST.get('data')
+        if not data:
+            return {'status': 'error', 'message': 'Data not found to add'}
+        if not request.user.is_authenticated or not request.user.meetuptokens.exists():
+            return {'status': 'error', 'message': 'User not authenticated. Refresh the page.'}
+
+        group = datasources.meetup.parse_input_data(data)
+
+        data_project = request.session.get('new_project', dict())
+        if 'actions' not in data_project:
+            data_project['actions'] = []
+        data_project['actions'].append({'id': random_id(5), 'backend': 'meetup',
+                                        'data': group, 'attrs': {'Events': True}})
+        request.session['new_project'] = data_project
+
+    else:
+        return {'error': 'Not Backend specified'}
+
+
+def create_project_delete(request):
+    id_action = request.POST.get('delete')
+    if id_action is None:
+        return {'status': 'error', 'message': 'You need to select at least one item to remove'}
+
+    data = request.session.get('new_project')
+    if not data:
+        return
+    actions = data.get('actions', [])
+    if id_action == 'all':
+        actions = []
+    else:
+        index = next((i for i, item in enumerate(actions) if item['id'] == id_action), None)
+        if index is not None:
+            actions.pop(index)
+    data['actions'] = actions
+    request.session['new_project'] = data
+
+
+def _validate_data_project(request, data):
+    if not data:
+        return 'No data found'
+    if 'name' not in data:
+        return 'Name needed'
+    if not data.get('actions', None):
+        return 'Add at least one data source'
+    if len(data['name']) < 1 or len(data['name']) > 32:
+        return 'Project name should be between 1 and 32 chars'
+    if Project.objects.filter(creator=request.user, name=data['name']).exists():
+        return 'You have the same name in another Project'
+
+
 def request_new_project(request):
     """Create a new project and redirect to project"""
     if request.method != 'POST':
         return custom_405(request, request.method)
+
+    project_data = request.session.get('new_project', None)
+    error = _validate_data_project(request, project_data)
+    if error:
+        # TODO: format error
+        return custom_404(request, error)
 
     if not request.user.is_authenticated:
         user = User.objects.create_user(username=generate_random_uuid(length=96),
@@ -573,13 +746,45 @@ def request_new_project(request):
         anonym_user = AnonymousUser(user=user)
         anonym_user.save()
         login(request, user)
-
-    project = Project.objects.create(name='My project', creator=request.user)
-    project.name = f"Project {project.id}"
-    project.save()
+    project = Project.objects.create(name=project_data['name'], creator=request.user)
     create_es_role(project)
 
-    # TODO: If something is wrong delete the project
+    for action in project_data['actions']:
+        backend = action.get('backend', None)
+        if backend == 'gitlab':
+            instance = GLInstance.objects.get(slug=action.get('instance', 'gitlab'))
+            output = datasources.gitlab.analyze_data(project=project,
+                                                     data=action['data'],
+                                                     commits=action['attrs'].get('Commits', False),
+                                                     issues=action['attrs'].get('Issues/MRs', False),
+                                                     forks=action['attrs'].get('Forks', False),
+                                                     instance=instance)
+            if output and output['status'] != 'ok':
+                error = output['message']
+                break
+        elif backend == 'github':
+            output = datasources.github.analyze_data(project=project,
+                                                     data=action['data'],
+                                                     commits=action['attrs'].get('Commits', False),
+                                                     issues=action['attrs'].get('Issues/PRs', False),
+                                                     forks=action['attrs'].get('Forks', False))
+            if output and output['status'] != 'ok':
+                error = output['message']
+                break
+        elif backend == 'git':
+            datasources.git.analyze_git(project, action['data'])
+            project.update_elastic_role()
+        elif backend == 'meetup':
+            output = datasources.meetup.analyze_data(project=project, data=action['data'])
+            if output and output['status'] != 'ok':
+                error = output['message']
+                break
+    if error:
+        project.delete()
+        return custom_404(request, error)
+
+    del request.session['new_project']
+
     return HttpResponseRedirect(reverse('show_project', kwargs={'project_id': project.id}))
 
 

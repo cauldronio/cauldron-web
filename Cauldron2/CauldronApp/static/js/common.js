@@ -44,8 +44,6 @@ $(document).ready(function () {
         ev.preventDefault();
     });
 
-    $('form.create-project').on('submit', on_create_project);
-
     /**
     * Send data to Share modal
     */
@@ -189,10 +187,6 @@ function deleteToken(identity) {
             setTimeout(window.location.reload.bind(window.location), 2000)
         })
  }
-
- function on_create_project(event) {
-    showToast('Creating...', `Your project analytics environment is being set up. Wait a second.`, 'fas fa-spinner text-success', 10000);
-}
 
 function copy_kibana_public_link() {
   var project_id = $(this).attr('data-project-id');

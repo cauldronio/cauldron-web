@@ -1,5 +1,9 @@
 import requests
+from django.conf import settings
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 from github import Github
+from urllib.parse import urlencode
 
 from CauldronApp.oauth import oauth
 
@@ -40,3 +44,12 @@ class GitHubOAuth(oauth.OAuth):
                                photo=user.avatar_url,
                                token=self.token,
                                refresh_token=self.refresh_token)
+
+
+def start_oauth(request):
+    """Start the Oauth authentication for this backend"""
+    redirect_uri = request.build_absolute_uri(reverse('github_callback'))
+    params = urlencode({'client_id': settings.GH_CLIENT_ID,
+                        'response_type': 'code',
+                        'redirect_uri': redirect_uri})
+    return HttpResponseRedirect(f"{GitHubOAuth.AUTH_URL}?{params}")

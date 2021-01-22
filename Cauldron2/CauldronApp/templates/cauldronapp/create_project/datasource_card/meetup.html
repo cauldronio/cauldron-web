@@ -1,0 +1,41 @@
+<div class="card">
+  <div class="card-body">
+    <h5 class="card-title">Meetup</h5>
+    <div class="card-body">
+      {% if meetup_enabled %}
+      <form action="" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="add">
+        <input type="hidden" name="backend" value="meetup">
+        <div class="form-group">
+          <label for="meetup_data">
+            <span class="font-weight-bold">Group ID</span> or
+            <span class="font-weight-bold">group URL</span> or
+            <span class="font-weight-bold">event URL</span>
+          </label>
+          <div class="input-group">
+            <input type="text" class="form-control" id="meetup_data" name="data">
+            <div class="input-group-append">
+              <button class="btn btn-primary" type="submit">Add</button>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+        <div class="custom-control custom-checkbox">
+          <input type="checkbox" name="events" class="custom-control-input" id="checkbox-meetup-events" checked disabled>
+          <label class="custom-control-label" for="checkbox-meetup-events">Group events</label>
+          <span data-toggle="tooltip" style="float:right" title="This will analyze Meetup events">
+            <i class="fas fa-info-circle"></i>
+          </span>
+        </div>
+      </div>
+      </form>
+      {% else %}
+      <div class="container">
+        {% include 'cauldronapp/create_project/datasource_card/message_token_required.html' with datasource='Meetup' only %}
+        <a class="btn btn-large btn-meetup" href="{% url 'meetup_oauth' %}"><i class="fab fa-meetup"></i> Authorize</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>

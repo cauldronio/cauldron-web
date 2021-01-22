@@ -20,8 +20,8 @@ from Cauldron2 import settings
 
 urlpatterns = [
     path('oauth/gitlab/<str:backend>', oauth.gitlab.start_oauth, name='gitlab_oauth'),
-    # path('oauth/github', oauth.github.start_oauth, name='github_oauth'),
-    # path('oauth/meetup', oauth.meetup.start_oauth, name='meetup_oauth'),
+    path('oauth/github', oauth.github.start_oauth, name='github_oauth'),
+    path('oauth/meetup', oauth.meetup.start_oauth, name='meetup_oauth'),
 
     path('github-login', views.request_github_oauth, name='github_callback'),
     path('gitlab-login/<str:backend>', views.request_gitlab_oauth, name='gitlab_callback'),
@@ -33,8 +33,8 @@ urlpatterns = [
     path('compare', views.request_compare_projects, name="compare_projects"),
 
     path('projects', views.request_user_projects, name="user_projects"),
+    path('projects/new', views.create_project, name='create_project'),
 
-    path('project', views.request_new_project, name='new_project'),
     path('project/<int:project_id>', views.request_show_project, name="show_project"),
     path('project/<int:project_id>/summary', views.request_project_summary, name="project_summary"),
     path('project/<int:project_id>/rename', views.request_rename_project, name="rename_project"),

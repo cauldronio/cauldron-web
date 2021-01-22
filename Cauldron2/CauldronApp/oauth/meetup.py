@@ -1,4 +1,9 @@
+from urllib.parse import urlencode
+
 import requests
+from django.conf import settings
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 
 from CauldronApp.oauth import oauth
 
@@ -51,3 +56,12 @@ class MeetupOAuth(oauth.OAuth):
                                photo=photo,
                                token=self.token,
                                refresh_token=self.refresh_token)
+
+
+def start_oauth(request):
+    """Start the Oauth authentication for this backend"""
+    redirect_uri = request.build_absolute_uri(reverse('meetup_callback'))
+    params = urlencode({'client_id': settings.MEETUP_CLIENT_ID,
+                        'response_type': 'code',
+                        'redirect_uri': redirect_uri})
+    return HttpResponseRedirect(f"{MeetupOAuth.AUTH_URL}?{params}")

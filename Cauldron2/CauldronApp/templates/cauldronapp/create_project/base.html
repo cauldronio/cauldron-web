@@ -1,0 +1,131 @@
+{% extends "cauldronapp/base.html" %}
+{% load cauldron_tags %}
+{% load static %}
+
+{% block css%}
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+<link rel="stylesheet" href="{% static 'css/project.css' %}">
+<link rel="stylesheet" href="{% static 'css/create_project.css' %}">
+{% endblock %}
+
+
+{% block content %}
+<div class="container mt-5 mb-2">
+  <h1>Create a new project</h1>
+  <p class="text-muted">A project contains a set of repositories from multiple data sources. Cauldron collects and analyzes the data to display it in an elegant way.</p>
+  <hr>
+  <div class="form-group">
+    <label for="projectName" class="font-weight-bold" >Project name</label>
+    <input type="text" id="projectName" class="form-control" aria-describedby="projectNameHelper" value="{{new_project.name}}">
+    <small id="projectNameHelper" class="text-muted">
+      Must be 1-32 characters long.
+    </small>
+  </div>
+
+  <h2>Add data sources</h2>
+
+  <div class="btn-group">
+    <button type="button" class="btn btn-orange dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+      Select data source
+    </button>
+    <div id="dropdown-datasource" class="dropdown-menu" role="tablist">
+      <a class="dropdown-item" href="#tab-git">Git</a>
+      <a class="dropdown-item" href="#tab-github">GitHub</a>
+      <a class="dropdown-item" href="#tab-gitlab">GitLab</a>
+      <a class="dropdown-item" href="#tab-meetup">Meetup</a>
+      <a class="dropdown-item" href="#tab-gnome">Gnome (GitLab)</a>
+    </div>
+  </div>
+
+  <div class="mt-2 tab-content">
+    <div class="tab-pane" id="tab-git" role="tabpanel">
+    {% include "cauldronapp/create_project/datasource_card/git.html" %}
+    </div>
+    <div class="tab-pane" id="tab-github" role="tabpanel">
+    {% include "cauldronapp/create_project/datasource_card/github.html" %}
+    </div>
+    <div class="tab-pane" id="tab-gitlab" role="tabpanel">
+    {% include "cauldronapp/create_project/datasource_card/gitlab.html" %}
+    </div>
+    <div class="tab-pane" id="tab-gnome" role="tabpanel">
+    {% include "cauldronapp/create_project/datasource_card/gnome.html" %}
+    </div>
+    <div class="tab-pane" id="tab-meetup" role="tabpanel">
+    {% include "cauldronapp/create_project/datasource_card/meetup.html" %}
+    </div>
+  </div>
+
+  <div class="mt-4">
+    <h2 class="d-inline-block">Included</h2>
+    {% if new_project.actions %}
+    <form action="" method="post" class="btn-remove">
+      {% csrf_token %}
+      <input type="hidden" name="delete" value="all">
+      <button type="submit" class="btn btn-sm btn-icon-split btn-outline-danger">
+        <span class="icon"><i class="fa fa-trash-alt"></i></span>
+        <span class="text">Remove all</span>
+      </button>
+    </form>
+    {% endif %}
+  </div>
+
+
+
+  {% if not new_project.actions %}
+  <p>There isn't any data source defined</p>
+  {% endif %}
+  <ul class="list-unstyled">
+    {% for action in new_project.actions %}
+    <li class="border p-3 my-1">
+      <form action="" method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="delete" value="{{action.id}}">
+        <button type="submit" class="btn btn-sm btn-outline-danger btn-remove" aria-label="Close">
+          <i class="fa fa-trash-alt"></i>
+        </button>
+      </form>
+
+      <div class="row">
+        <div class="col-auto">
+          {% if action.backend != 'gitlab' %}
+          <i class="{{ action.backend | backend_name_fa_icon}}"></i>
+          {% else %}
+          <i class="{{ action.instance | backend_name_fa_icon}}"></i>
+          {% endif %}
+        </div>
+        <div class="col-lg-1 col-md-2">
+          {% if action.backend == 'gitlab' and action.instance != 'gitlab' %}
+          <p class="mt-0 mb-1 font-weight-bold">{{ action.instance | title }} ({{ action.backend | title }})</p>
+          {% else %}
+          <p class="mt-0 mb-1 font-weight-bold">{{ action.backend | title }}</p>
+          {% endif %}
+        </div>
+        <div class="col">
+          <p class="mt-0 mb-1 font-weight-bold text-muted">{{ action.data }}</p>
+        </div>
+        <div class="col">
+          {% for key, value in action.attrs.items %}
+          <p><i class="{{ value | icon_boolean }} mr-1"></i> {{ key }}</p>
+          {% endfor %}
+        </div>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+
+  <form method="post" action="">
+    {% csrf_token %}
+    <input type="hidden" name="create" value="true">
+    <button type="submit" class="btn btn-orange createProjectBtn" {% if not new_project.actions %}disabled{% endif %}>
+      Create project
+    </button>
+  </form>
+
+
+</div>
+{% endblock %}
+
+
+{% block javascript %}
+<script src="{% static 'js/create_project.js' %}"></script>
+{% endblock %}

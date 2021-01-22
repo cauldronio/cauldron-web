@@ -1,0 +1,56 @@
+<div class="card">
+  <div class="card-body">
+    <h5 class="card-title">GitLab</h5>
+    <div class="card-body">
+      {% if gitlab_enabled %}
+      <form action="" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="add">
+        <input type="hidden" name="backend" value="gitlab">
+        <input type="hidden" name="instance" value="gitlab">
+        <div class="form-group">
+          <label for="gl_data">
+            <span class="font-weight-bold">GitLab owner</span> or
+            <span class="font-weight-bold">owner/group/repository</span> or
+            <span class="font-weight-bold">URL</span>
+          </label>
+          <div class="input-group">
+            <input type="text" class="form-control" id="gl_data" name="data">
+            <div class="input-group-append">
+              <button class="btn btn-primary" type="submit">Add</button>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+        <div class="custom-control custom-checkbox">
+          <input type="checkbox" name="commits" class="custom-control-input" id="checkbox-gitlab-commits" checked>
+          <label class="custom-control-label" for="checkbox-gitlab-commits">Commits (Git repository)</label>
+          <span data-toggle="tooltip" style="float:right" title="This will analyze the git repositories">
+            <i class="fas fa-info-circle"></i>
+          </span>
+        </div>
+        <div class="custom-control custom-checkbox">
+          <input type="checkbox" name="issues" class="custom-control-input" id="checkbox-gitlab-issues-mrs" checked>
+          <label class="custom-control-label" for="checkbox-gitlab-issues-mrs">Issues & Merge requests</label>
+          <span data-toggle="tooltip" style="float:right" title="This will analyze GitLab issues and merge requests from the repositories">
+            <i class="fas fa-info-circle"></i>
+          </span>
+        </div>
+        <div class="custom-control custom-checkbox">
+          <input type="checkbox" name="forks" class="custom-control-input" id="checkbox-gitlab-forks">
+          <label class="custom-control-label" for="checkbox-gitlab-forks">Include owner forks</label>
+          <span data-toggle="tooltip" style="float:right" title="This will include forks from the GitLab owner in the analysis">
+            <i class="fas fa-info-circle"></i>
+          </span>
+        </div>
+      </div>
+      </form>
+      {% else %}
+      <div class="container">
+        {% include 'cauldronapp/create_project/datasource_card/message_token_required.html' with datasource='GitLab' only %}
+        <a class="btn btn-large btn-gitlab" href="{% url 'gitlab_oauth' 'gitlab' %}"><i class="fab fa-gitlab"></i> Authorize</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>

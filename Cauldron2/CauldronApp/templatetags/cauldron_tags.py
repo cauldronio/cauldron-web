@@ -11,6 +11,14 @@ FA_ICONS = {
     Repository.MEETUP: 'fab fa-meetup',
 }
 
+FA_ICONS_NAME = {
+    'git': 'fab fa-git-square',
+    'github': 'fab fa-github',
+    'gitlab': 'fab fa-gitlab',
+    'gnome': 'gnome-icon',
+    'meetup': 'fab fa-meetup',
+}
+
 
 @register.simple_tag
 def url_replace(request, field, value):
@@ -101,8 +109,29 @@ def get_sorting_link(request, field):
 
 @register.filter
 def backend_fa_icon(backend):
-    """This tag returns the Font Awesome icon for a backend"""
+    """This tag returns the Font Awesome icon for a backend repository"""
     try:
         return FA_ICONS[backend]
     except KeyError:
         return "fas fa-question"
+
+
+@register.filter
+def backend_name_fa_icon(backend):
+    """This tag returns the Font Awesome icon for a backend name"""
+    try:
+        return FA_ICONS_NAME[backend.lower()]
+    except KeyError:
+        return "fas fa-question"
+
+
+@register.filter
+def icon_boolean(true_input):
+    """Return a tick if input is not False/None/0/etc, else a cross"""
+    if true_input:
+        return "far fa-check-circle"
+    else:
+        return "far fa-times-circle"
+
+
+
