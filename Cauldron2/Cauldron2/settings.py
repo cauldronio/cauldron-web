@@ -1,5 +1,6 @@
 import os
 import json
+from logging.handlers import SysLogHandler
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -167,6 +168,23 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'syslog': {
+            'class': 'logging.handlers.SysLogHandler',
+            'address': ('syslog_service', 514)
+        }
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['syslog'],
+            'level': 'INFO',
+        }
+    }
+}
 
 LANGUAGE_CODE = 'en-us'
 
