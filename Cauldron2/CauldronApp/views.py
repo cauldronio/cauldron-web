@@ -575,7 +575,9 @@ def create_project(request):
     error = None
     if request.method == 'POST':
         if 'name' in request.POST:
-            data = request.session.get('new_project') or {}
+            data = request.session.get('new_project')
+            if data is None:
+                data = {}
             data['name'] = request.POST['name']
             request.session['new_project'] = data
             return JsonResponse({'name': request.POST['name']})
@@ -615,7 +617,9 @@ def create_project_add(request):
             return {'status': 'error', 'message': 'URL not found for Git repository'}
         data = data.strip()
 
-        data_project = request.session.get('new_project') or {}
+        data_project = request.session.get('new_project')
+        if data_project is None:
+            data_project = {}
         if 'actions' not in data_project:
             data_project['actions'] = []
         data_project['actions'].append({'id': random_id(5), 'backend': 'git', 'data': data, 'attrs': {'Commits': True}})
@@ -640,7 +644,9 @@ def create_project_add(request):
         else:
             return {'status': 'error', 'message': f'Unable to parse {data}'}
 
-        data_project = request.session.get('new_project') or {}
+        data_project = request.session.get('new_project')
+        if data_project is None:
+            data_project = {}
         if 'actions' not in data_project:
             data_project['actions'] = []
         data_project['actions'].append({'id': random_id(5), 'backend': 'github',
@@ -668,7 +674,9 @@ def create_project_add(request):
         else:
             return {'status': 'error', 'message': f'Unable to parse {data}'}
 
-        data_project = request.session.get('new_project') or {}
+        data_project = request.session.get('new_project')
+        if data_project is None:
+            data_project = {}
         if 'actions' not in data_project:
             data_project['actions'] = []
         data_project['actions'].append({'id': random_id(5), 'backend': 'gitlab', 'instance': instance,
@@ -684,7 +692,9 @@ def create_project_add(request):
 
         group = datasources.meetup.parse_input_data(data)
 
-        data_project = request.session.get('new_project') or {}
+        data_project = request.session.get('new_project')
+        if data_project is None:
+            data_project = {}
         if 'actions' not in data_project:
             data_project['actions'] = []
         data_project['actions'].append({'id': random_id(5), 'backend': 'meetup',
@@ -732,7 +742,7 @@ def request_new_project(request):
     if request.method != 'POST':
         return custom_405(request, request.method)
 
-    project_data = request.session.get('new_project') or {}
+    project_data = request.session.get('new_project')
     error = _validate_data_project(request, project_data)
     if error:
         # TODO: format error
