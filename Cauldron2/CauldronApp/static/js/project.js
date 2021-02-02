@@ -70,6 +70,9 @@ function getSummary() {
         if (data.gnome){
             status_output += `. <b>Gnome:</b> ${data.gnome}`
         }
+        if (data.kde){
+            status_output += `. <b>KDE:</b> ${data.kde}`
+        }
         if (data.meetup){
             status_output += `. <b>Meetup:</b> ${data.meetup}`
         }

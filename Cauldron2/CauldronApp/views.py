@@ -617,6 +617,7 @@ def create_project(request):
         context['github_enabled'] = request.user.ghtokens.filter(instance='GitHub').exists()
         context['gitlab_enabled'] = request.user.gltokens.filter(instance='GitLab').exists()
         context['gnome_enabled'] = request.user.gltokens.filter(instance='Gnome').exists()
+        context['kde_enabled'] = request.user.gltokens.filter(instance='KDE').exists()
         context['meetup_enabled'] = request.user.meetuptokens.exists()
 
     context['new_project'] = request.session.get('new_project')
@@ -1149,7 +1150,7 @@ def create_context(request):
     context['authenticated'] = request.user.is_authenticated
     if request.user.is_authenticated:
         context['auth_user_username'] = request.user.first_name
-        oauth_user = OauthUser.objects.filter(user=request.user).first()
+        oauth_user = OauthUser.objects.filter(user=request.user, photo__isnull=False).first()
         if oauth_user:
             context['photo_user'] = oauth_user.photo
         else:
@@ -1279,6 +1280,7 @@ def status_info():
     context['repos_github_count'] = GitHubRepository.objects.exclude(projects=None).count()
     context['repos_gitlab_count'] = GitLabRepository.objects.exclude(projects=None, instance='GitLab').count()
     context['repos_gnome_count'] = GitLabRepository.objects.exclude(projects=None, instance='Gnome').count()
+    context['repos_kde_count'] = GitLabRepository.objects.exclude(projects=None, instance='KDE').count()
     context['repos_meetup_count'] = MeetupRepository.objects.exclude(projects=None).count()
     return context
 

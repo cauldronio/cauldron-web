@@ -23,6 +23,10 @@ MEETUP_CLIENT_SECRET = os.environ.get('MEETUP_CLIENT_SECRET')
 GL_CLIENT_ID_GNOME = os.environ.get('GNOME_CLIENT_ID')
 GL_CLIENT_SECRET_GNOME = os.environ.get('GNOME_CLIENT_SECRET')
 
+# KDE Oauth keys
+GL_CLIENT_ID_KDE = os.environ.get('KDE_CLIENT_ID')
+GL_CLIENT_SECRET_KDE = os.environ.get('KDE_CLIENT_SECRET')
+
 # Webserver
 CAULDRON_HOST = os.environ.get('CAULDRON_HOST')
 CAULDRON_PORT = os.environ.get('CAULDRON_PORT')
@@ -68,6 +72,7 @@ CAULDRON_ADMINS = {
     'GITLAB': json.loads(os.environ.get('GITLAB_ADMINS', '[]')),
     'MEETUP': json.loads(os.environ.get('MEETUP_ADMINS', '[]')),
     'GNOME': json.loads(os.environ.get('GNOME_ADMINS', '[]')),
+    'KDE': json.loads(os.environ.get('KDE_ADMINS', '[]')),
 }
 
 DEBUG = True

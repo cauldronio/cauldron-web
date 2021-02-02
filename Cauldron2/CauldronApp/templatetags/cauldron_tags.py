@@ -8,6 +8,7 @@ FA_ICONS = {
     Repository.GITHUB: 'fab fa-github',
     Repository.GITLAB: 'fab fa-gitlab',
     Repository.GNOME: 'gnome-icon',
+    Repository.KDE: 'kde-icon',
     Repository.MEETUP: 'fab fa-meetup',
 }
 
@@ -16,6 +17,7 @@ FA_ICONS_NAME = {
     'github': 'fab fa-github',
     'gitlab': 'fab fa-gitlab',
     'gnome': 'gnome-icon',
+    'kde': 'kde-icon',
     'meetup': 'fab fa-meetup',
 }
 
