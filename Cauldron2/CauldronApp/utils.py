@@ -20,7 +20,7 @@ def get_jwt_key(user, backend_roles):
             "user": user,
             "roles": backend_roles
         }
-        return jwt.encode(claims, f_private.read(), algorithm='RS256')
+        return jwt.encode(claims, f_private.read(), algorithm='RS256').decode('utf-8')
 
 
 def require_authenticated(json_response=True):
