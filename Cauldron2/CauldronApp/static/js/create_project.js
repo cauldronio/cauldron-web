@@ -1,3 +1,9 @@
+$(document).ready(function(){
+    if (OpenTab){
+        $(`#link-tab-${OpenTab}`).tab('show');
+    }
+})
+
 $('#dropdown-datasource a').on('click', function (e) {
     e.preventDefault()
     $(this).tab('show')

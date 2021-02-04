@@ -53,6 +53,8 @@ class GitLabOAuth(oauth.OAuth):
 
 def start_oauth(request, backend):
     """Start the Oauth authentication for this backend"""
+    # Store data passed in QueryDict
+    request.session['store_oauth'] = request.GET.dict()
     try:
         instance = GLInstance.objects.get(slug=backend)
     except GLInstance.DoesNotExist:

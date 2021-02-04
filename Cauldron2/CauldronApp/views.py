@@ -103,6 +103,7 @@ def request_github_oauth(request):
     data_add = request.session.pop('add_repo', None)
     last_page = request.session.pop('last_page', None)
     new_project_info = request.session.get('new_project')
+    store_oauth = request.session.get('store_oauth')
 
     merged = authenticate_user(request, 'github', oauth_user, is_admin)
     if merged:
@@ -120,6 +121,7 @@ def request_github_oauth(request):
                                         data_add['issues'], data_add['forks'])
 
     request.session['new_project'] = new_project_info
+    request.session['store_oauth'] = store_oauth
 
     if last_page:
         return HttpResponseRedirect(last_page)
@@ -176,6 +178,7 @@ def request_gitlab_oauth(request, backend):
     data_add = request.session.pop('add_repo', None)
     last_page = request.session.pop('last_page', None)
     new_project_info = request.session.get('new_project')
+    store_oauth = request.session.get('store_oauth')
 
     merged = authenticate_user(request, backend, oauth_user, is_admin)
     if merged:
@@ -195,6 +198,7 @@ def request_gitlab_oauth(request, backend):
                                         instance=instance)
 
     request.session['new_project'] = new_project_info
+    request.session['store_oauth'] = store_oauth
 
     if last_page:
         return HttpResponseRedirect(last_page)
@@ -223,6 +227,7 @@ def request_meetup_oauth(request):
     data_add = request.session.pop('add_repo', None)
     last_page = request.session.pop('last_page', None)
     new_project_info = request.session.get('new_project')
+    store_oauth = request.session.get('store_oauth')
 
     merged = authenticate_user(request, 'meetup', oauth_user, is_admin)
     if merged:
@@ -240,6 +245,7 @@ def request_meetup_oauth(request):
         datasources.meetup.analyze_data(project, data_add['data'])
 
     request.session['new_project'] = new_project_info
+    request.session['store_oauth'] = store_oauth
 
     if last_page:
         return HttpResponseRedirect(last_page)
@@ -595,7 +601,11 @@ def create_project(request):
             return request_new_project(request)
 
     context = create_context(request)
-    context['error'] = error
+    context['error_message'] = error.get('message', None) if error else None
+    store_oauth = request.session.get('store_oauth')
+    if store_oauth:
+        context['open_tab'] = store_oauth.get('open_tab')
+        del request.session['store_oauth']
     if request.user.is_authenticated:
         context['github_enabled'] = request.user.ghtokens.filter(instance='GitHub').exists()
         context['gitlab_enabled'] = request.user.gltokens.filter(instance='GitLab').exists()
@@ -631,9 +641,10 @@ def create_project_add(request):
     elif backend == 'github':
         data = request.POST.get('data')
         if not data:
-            return {'status': 'error', 'message': 'Data not found to add'}
+            return {'status': 'error', 'message': 'No data entered to add'}
         if not request.user.is_authenticated or not request.user.ghtokens.filter(instance='GitHub').exists():
-            return {'status': 'error', 'message': 'User not authenticated. Refresh the page.'}
+            return {'status': 'error', 'message': 'User requesting this data is not authenticated for GitHub. '
+                                                  'Please, refresh the page.'}
         commits = 'commits' in request.POST
         issues = 'issues' in request.POST
         forks = 'forks' in request.POST
@@ -645,7 +656,7 @@ def create_project_add(request):
             data_store = data_owner
             attrs_store = {'Commits': commits, 'Issues/PRs': issues, 'Forks': forks}
         else:
-            return {'status': 'error', 'message': f'Unable to parse {data}'}
+            return {'status': 'error', 'message': f"We can't guess what do you mean with '{data}'"}
 
         data_project = request.session.get('new_project')
         if data_project is None:
@@ -660,9 +671,10 @@ def create_project_add(request):
         data = request.POST.get('data')
         instance = request.POST.get('instance')
         if not data or not instance:
-            return {'status': 'error', 'message': 'Data not found to add'}
+            return {'status': 'error', 'message': 'No data entered to add'}
         if not request.user.is_authenticated or not request.user.gltokens.filter(instance__slug=instance).exists():
-            return {'status': 'error', 'message': 'User not authenticated. Refresh the page.'}
+            return {'status': 'error', 'message': 'User requesting this data is not authenticated for GitLab. '
+                                                  'Please, refresh the page.'}
         commits = 'commits' in request.POST
         issues = 'issues' in request.POST
         forks = 'forks' in request.POST
@@ -675,7 +687,7 @@ def create_project_add(request):
             data_store = data_owner
             attrs_store = {'Commits': commits, 'Issues/MRs': issues, 'Forks': forks}
         else:
-            return {'status': 'error', 'message': f'Unable to parse {data}'}
+            return {'status': 'error', 'message': f"We can't guess what do you mean with '{data}'"}
 
         data_project = request.session.get('new_project')
         if data_project is None:
@@ -689,11 +701,14 @@ def create_project_add(request):
     elif backend == 'meetup':
         data = request.POST.get('data')
         if not data:
-            return {'status': 'error', 'message': 'Data not found to add'}
+            return {'status': 'error', 'message': 'No data entered to add'}
         if not request.user.is_authenticated or not request.user.meetuptokens.exists():
-            return {'status': 'error', 'message': 'User not authenticated. Refresh the page.'}
+            return {'status': 'error', 'message': 'User requesting this data is not authenticated for Meetup. '
+                                                  'Please, refresh the page.'}
 
         group = datasources.meetup.parse_input_data(data)
+        if not group:
+            return {'status': 'error', 'message': f"We can't guess what do you mean with '{data}'"}
 
         data_project = request.session.get('new_project')
         if data_project is None:
@@ -705,7 +720,7 @@ def create_project_add(request):
         request.session['new_project'] = data_project
 
     else:
-        return {'error': 'Not Backend specified'}
+        return {'error': 'No backend specified'}
 
 
 def create_project_delete(request):
@@ -731,13 +746,13 @@ def _validate_data_project(request, data):
     if not data:
         return 'No data found'
     if 'name' not in data:
-        return 'Name needed'
+        return 'You need to define a name for the project.'
     if not data.get('actions', None):
-        return 'Add at least one data source'
+        return 'You need to add at least one data source.'
     if len(data['name']) < 1 or len(data['name']) > 32:
-        return 'Project name should be between 1 and 32 chars'
+        return 'Project name should be between 1 and 32 chars.'
     if Project.objects.filter(creator=request.user, name=data['name']).exists():
-        return 'You have the same name in another Project'
+        return 'You have the same name in another Project. Try with a different one.'
 
 
 def request_new_project(request):

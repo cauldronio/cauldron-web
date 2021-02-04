@@ -48,6 +48,8 @@ class GitHubOAuth(oauth.OAuth):
 
 def start_oauth(request):
     """Start the Oauth authentication for this backend"""
+    # Store data passed in QueryDict
+    request.session['store_oauth'] = request.GET.dict()
     redirect_uri = request.build_absolute_uri(reverse('github_callback'))
     params = urlencode({'client_id': settings.GH_CLIENT_ID,
                         'response_type': 'code',

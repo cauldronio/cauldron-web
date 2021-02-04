@@ -33,7 +33,7 @@
       {% else %}
       <div class="container">
         {% include 'cauldronapp/create_project/datasource_card/message_token_required.html' with datasource='Meetup' only %}
-        <a class="btn btn-large btn-meetup" href="{% url 'meetup_oauth' %}"><i class="fab fa-meetup"></i> Authorize</a>
+        <a class="btn btn-large btn-meetup" href="{% url 'meetup_oauth' %}?open_tab=meetup"><i class="fab fa-meetup"></i> Authorize</a>
       </div>
       {% endif %}
     </div>

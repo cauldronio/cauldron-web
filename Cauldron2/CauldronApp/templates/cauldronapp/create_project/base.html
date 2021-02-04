@@ -11,6 +11,14 @@
 
 {% block content %}
 <div class="container mt-5 mb-2">
+  {% if error_message %}
+  <div class="alert alert-warning alert-dismissible fade show" role="alert">
+    Error: {{ error_message }}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  {% endif %}
   <h1>Create a new project</h1>
   <p class="text-muted">A project contains a set of repositories from multiple data sources. Cauldron collects and analyzes the data to display it in an elegant way.</p>
   <hr>
@@ -29,11 +37,11 @@
       Select data source
     </button>
     <div id="dropdown-datasource" class="dropdown-menu" role="tablist">
-      <a class="dropdown-item" href="#tab-git">Git</a>
-      <a class="dropdown-item" href="#tab-github">GitHub</a>
-      <a class="dropdown-item" href="#tab-gitlab">GitLab</a>
-      <a class="dropdown-item" href="#tab-meetup">Meetup</a>
-      <a class="dropdown-item" href="#tab-gnome">Gnome (GitLab)</a>
+      <a id="link-tab-git" class="dropdown-item" href="#tab-git">Git</a>
+      <a id="link-tab-github" class="dropdown-item" href="#tab-github">GitHub</a>
+      <a id="link-tab-gitlab" class="dropdown-item" href="#tab-gitlab">GitLab</a>
+      <a id="link-tab-meetup" class="dropdown-item" href="#tab-meetup">Meetup</a>
+      <a id="link-tab-gnome" class="dropdown-item" href="#tab-gnome">Gnome (GitLab)</a>
     </div>
   </div>
 
@@ -127,5 +135,6 @@
 
 
 {% block javascript %}
+<script>OpenTab = '{{open_tab|default:''}}';</script>
 <script src="{% static 'js/create_project.js' %}"></script>
 {% endblock %}
