@@ -7,22 +7,60 @@
 
 {% block content %}
   <section class="header">
-    <!-- Container for ALPHA version -->
-    <div class="container pt-3" id="alert-alpha">
-      <div class="alert alert-warning" role="alert">
-        This is an alpha version of Cauldron. All data can be removed without prior notice. Feedback is welcome!
-      </div>
-    </div>
-    <!-- END container for ALPHA version -->
     <div class="py-5 container-fluid h-100 d-inline-block">
       <div class="row justify-content-lg-center align-items-center">
-        <div class="col-lg-5 text-center text-lg-left">
+        <div class="col-lg-6 text-center text-lg-left">
           <h1 class="font-weight-bold my-4">Level Up Software Development Analytics</h1>
           <p class="mb-3">Cauldron allows project managers, analysts, and developers to understand more about the community and processes involved in software development</p>
-          <a class="btn btn-light btn-lg my-3" href="{% url 'create_project' %}">Analyze a Project</a>
+          <a class="btn btn-orange btn-lg my-3" href="{% url 'create_project' %}">Analyze a Project</a>
         </div>
-        <div class="col-lg-4 text-lg-left">
-          <img class="img-fluid" src="{% static 'img/three_images.png' %}" alt="">
+        <!-- <div class="col-lg-2 text-lg-left">-->
+        <!--   <img class="img-fluid" src="{% static 'img/three_images.png' %}" alt="">-->
+        <!-- </div>-->
+        <div class="col-lg-2 text-lg-left text-dark mb-1">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">Recommended projects</h5>
+              <table class="table">
+                <tr>
+                  <td><a href="https://cauldron.io/project/1308?from_date=2018-08-03">OpenDistro for Elasticsearch</a></td>
+                </tr>
+                <tr>
+                  <td><a href="https://cauldron.io/project/1311?from_date=2014-02-03">Kubernetes</a></td>
+                </tr>
+                <tr>
+                  <td><a href="https://cauldron.io/project/1309?from_date=2010-01-01">Ansible</a></td>
+                </tr>
+                <tr>
+                  <td><a href="https://cauldron.io/compare?projects=3652&projects=3653&from_date=2008-01-01">Rust vs Go</a></td>
+                </tr>
+                <tr>
+                  <td><a href="https://cauldron.io/compare?projects=3654&projects=3655&from_date=2009-01-01">Bitcoin vs Etherum</a></td>
+                </tr>
+                <tr>
+                  <td><a href="https://cauldron.io/compare?projects=1766&projects=1565&projects=2135&projects=2305&projects=2349&from_date=2020-01-01">COVID-19 tracker</a></td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-2 text-lg-left text-dark mb-1">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">Latest projects</h5>
+              {% if latest_projects %}
+              <table class="table">
+                {% for project in latest_projects %}
+                <tr>
+                  <td><a href="{% url 'show_project' project.id %}">{{project.name}}</a></td>
+                </tr>
+                {% endfor %}
+              </table>
+              {% else %}
+              <span class="card-text">There aren't projects created</span>
+              {% endif %}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -52,7 +90,7 @@
         </div>
       </div>
       <div class="row justify-content-center text-center">
-        <a class="btn btn-primary btn-lg my-3" href="{% url 'create_project' %}">Analyze a Project</a>
+        <a class="btn btn-orange btn-lg my-3" href="{% url 'create_project' %}">Analyze a Project</a>
       </div>
     </div>
   </section>
@@ -76,7 +114,7 @@
                 <div class="align-self-start mr-3"><i class="fas fa-bug"></i></div>
                 <div class="media-body">
                   <p class="font-weight-bold mb-1">Issue tracking</p>
-                  <p class="text-justify">GitHub Issues, GitLab Issues</p>
+                  <p class="text-justify">GitHub Issues, GitLab Issues (from GitLab, Gnome and KDE)</p>
                 </div>
               </div>
             </div>
@@ -85,7 +123,7 @@
                 <div class="align-self-start mr-3"><i class="fas fa-code-branch"></i></div>
                 <div class="media-body">
                   <p class="font-weight-bold mb-1">Source Code Review</p>
-                  <p class="text-justify">GitHub Pull Requests, GitLab Merge Requests</p>
+                  <p class="text-justify">GitHub Pull Requests, GitLab Merge Requests (from GitLab, Gnome and KDE)</p>
                 </div>
               </div>
               <div class="media">
@@ -99,32 +137,9 @@
           </div>
         </div>
 
-        <div class="col-sm-4 text-center">
-          <h2>Popular Projects</h2>
-          <p class="text-justify">
-            <ul class="list-unstyled">
-              <li class="mb-1">
-                <a target="_blank" rel="noopener noreferrer" class="font-weight-bold"  href="https://cauldron.io/project/1308">Opendistro-for-Elasticsearch</a>
-              </li>
-              <li class="mb-1">
-                <a target="_blank" rel="noopener noreferrer" class="font-weight-bold"  href="https://cauldron.io/project/1309">Ansible</a>
-              </li>
-              <li class="mb-1">
-                <a target="_blank" rel="noopener noreferrer" class="font-weight-bold"  href="https://cauldron.io/project/1310">Chaoss</a>
-              </li>
-              <li class="mb-1">
-                <a target="_blank" rel="noopener noreferrer" class="font-weight-bold"  href="https://cauldron.io/project/1311">Kubernetes</a>
-              </li>
-              <li class="mb-1">
-                <a target="_blank" rel="noopener noreferrer" class="font-weight-bold"  href="https://cauldron.io/project/1312">Cauldron.io (GitLab)</a>
-              </li>
-            </ul>
-          </p>
-        </div>
-
       </div>
       <div class="row justify-content-center text-center">
-        <a class="btn btn-primary btn-lg my-3" href="{% url 'create_project' %}">Analyze a Project</a>
+        <a class="btn btn-orange btn-lg my-3" href="{% url 'create_project' %}">Analyze a Project</a>
       </div>
     </div>
   </section>

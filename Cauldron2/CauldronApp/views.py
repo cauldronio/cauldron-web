@@ -50,7 +50,10 @@ def homepage(request):
     if request.user.is_authenticated:
         return request_user_projects(request)
 
+    latest_projects = Project.objects.order_by('-created')[:6]
+
     context = create_context(request)
+    context['latest_projects'] = latest_projects
 
     return render(request, 'cauldronapp/index.html', context=context)
 
