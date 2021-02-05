@@ -541,15 +541,22 @@ def request_remove_from_project(request, project_id):
         return JsonResponse({'status': 'error', 'message': 'We need a url to delete'},
                             status=400)
 
-    try:
-        repo = Repository.objects.get_subclass(id=repo_id)
-    except Repository.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Repository not found'},
-                            status=404)
-    repo.projects.remove(project)
-    project.update_elastic_role()
-    repo.remove_intentions(request.user)
-    repo.create_remove_action(project)
+    if repo_id == 'all':
+        for repo in project.repository_set.select_subclasses():
+            repo.remove_intentions(request.user)
+        project.action_set.all().delete()
+        project.repository_set.clear()
+        project.update_elastic_role()
+    else:
+        try:
+            repo = Repository.objects.get_subclass(id=repo_id)
+        except Repository.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Repository not found'},
+                                status=404)
+        repo.projects.remove(project)
+        project.update_elastic_role()
+        repo.remove_intentions(request.user)
+        repo.create_remove_action(project)
     return JsonResponse({'status': 'deleted'})
 
 

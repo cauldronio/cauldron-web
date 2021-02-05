@@ -29,13 +29,21 @@ function deleteRepo(event) {
     $.post(url=`/project/${Project_ID}/repositories/remove`,
            data = {'repository': id_repo})
         .done(function (data) {
-            showToast('Deleted', `The repository <b>${url_repo}</b> was deleted from this project`, 'fas fa-check-circle text-success', 1500);
-            $(`tr#repo-${id_repo}`).remove();
+            if(id_repo == 'all') {
+                window.location.reload()
+            } else {
+                showToast('Removed', `The repository <b>${url_repo}</b> was deleted from this project`, 'fas fa-check-circle text-success', 1500);
+                $(`tr#repo-${id_repo}`).remove();
+            }
         })
         .fail(function (data) {
-            showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
+            if (data.responseJSON){
+                showToast('Failed', `${data.responseJSON['status']}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
+            } else {
+                showToast('Failed', `500 internal error`, 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
+            }
         })
-        .always(function(){deleteBtn.html('Delete')})
+        .always(function(){deleteBtn.html('Remove')})
 
 }
 

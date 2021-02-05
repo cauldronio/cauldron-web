@@ -88,4 +88,13 @@
 </div>
 {% endif %}
 
-{% include "cauldronapp/utils/nav_pagination.html" %}
+<div class="d-flex flex-row justify-content-center">
+    {% include "cauldronapp/utils/nav_pagination.html" %}
+    {% if editable %}
+    <div class="my-3 ml-2">
+      <button type="button" class="btn btn-outline-danger btn-delete" data-repo="all">
+        <i class="fa fa-trash-alt"></i> <small>Remove all</small>
+      </button>
+    </div>
+    {% endif %}
+</div>
