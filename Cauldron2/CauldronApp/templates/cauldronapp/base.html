@@ -17,10 +17,10 @@
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="Level up Software Development Analytics - Cauldron">
   <meta name="twitter:description" content="Cauldron allows project managers, analysts, and developers to understand more about the community and processes involved in software development"/>
-  <meta name="twitter:image" content="{% static 'img/cauldron_logo.jpg' %}"/>
+  <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'img/cauldron_logo.jpg' %}"/>
   <meta property="og:title" content="Level up Software Development Analytics - Cauldron" />
   <meta property="og:description" content="Cauldron allows project managers, analysts, and developers to understand more about the community and processes involved in software development" />
-  <meta property="og:image" content= "{% static 'img/cauldron_logo.jpg' %}"/>
+  <meta property="og:image" content= "{{ request.scheme }}://{{ request.get_host }}{% static 'img/cauldron_logo.jpg' %}"/>
 
 
   <!-- Cookie consent -->
