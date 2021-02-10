@@ -96,7 +96,7 @@
         Cauldron <sup class="badge badge-secondary">aledo</sup>
       </a>
 
-      {% if request.resolver_match.url_name != 'show_project' and request.resolver_match.url_name != 'create_project' or repositories_count > 0 %}
+      {% if request.resolver_match.url_name != 'show_project' and request.resolver_match.url_name != 'create_project' and request.resolver_match.url_name != 'login_page' or repositories_count > 0 %}
       <a class="btn btn-icon-split btn-orange mx-2" href="{% url 'create_project' %}">
         <span class="icon"><i class="fas fa-plus"></i></span>
         <span class="text">New project</span>
@@ -165,7 +165,7 @@
             <!--<a class="dropdown-item" href="/profile">Profile</a>-->
           </div>
         </div>
-        {% else %}
+        {% elif request.resolver_match.url_name != 'login_page' %}
         <a class="btn btn-light d-block d-lg-inline-block mb-0 ml-md-3" href="#" data-toggle="modal" data-target="#modalLogin">
           Login
         </a>
@@ -178,66 +178,15 @@
 
 
   <!-- BEGIN Modal for login -->
+  {% if request.resolver_match.url_name != 'login_page' %}
   <div class="modal fade" id="modalLogin" tabindex="-1" role="dialog" aria-labelledby="modalLoginTitle"
     aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3 class="col-12 text-center">Sign in</h3>
-        </div>
-        <div class="modal-body">
-
-          <div class="text-center">
-            <form action="{{ gh_uri_identity }}" method="GET">
-              <input type="hidden" name="client_id" value="{{ gh_client_id }}">
-              <button type="submit" class="btn btn-github btn-block" aria-haspopup="true" aria-expanded="false">
-                <i class="fab fa-github"></i>
-                Sign in with <b>GitHub</b>
-              </button>
-            </form>
-          </div>
-
-          <div class="text-center">
-            <a class="btn btn-gitlab btn-block" href="{% url 'gitlab_oauth' 'gitlab' %}">
-              <i class="fab fa-gitlab"></i>
-              Sign in with <b>GitLab</b>
-            </a>
-          </div>
-
-          <div class="text-center">
-            <form action="{{ meetup_uri_identity }}" method="GET">
-              <input type="hidden" name="client_id" value="{{ meetup_client_id }}">
-              <input type="hidden" name="response_type" value="code">
-              <input type="hidden" name="redirect_uri" value="{{ meetup_uri_redirect }}">
-              <button type="submit" class="btn btn-meetup btn-block" aria-haspopup="true" aria-expanded="false">
-                <i class="fab fa-meetup"></i>
-                Sign in with <b>Meetup</b>
-              </button>
-            </form>
-          </div>
-
-          <div class="text-center">
-            <a class="btn btn-gitlab btn-block" href="{% url 'gitlab_oauth' 'gnome' %}">
-              <i class="gnome-icon-white"></i>
-              Sign in with <b>GitLab for Gnome</b>
-            </a>
-          </div>
-
-          <div class="text-center">
-            <a class="btn btn-gitlab btn-block" href="{% url 'gitlab_oauth' 'kde' %}">
-              <i class="kde-icon-white"></i>
-              Sign in with <b>GitLab for KDE</b>
-            </a>
-          </div>
-
-
-        </div>
-        <div class="modal-footer">
-          <p class="text-muted">We will store your token for your analysis. You can revoke the use at any time</p>
-        </div>
-      </div>
+      {% include "cauldronapp/utils/modal_login.html" %}
     </div>
   </div>
+
+  {% endif %}
   <!-- END Modal for login -->
 
 

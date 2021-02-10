@@ -18,6 +18,7 @@ from django.urls import path, include
 from CauldronApp import views, oauth
 from Cauldron2 import settings
 
+# IMPORTANT: Login paths must be defined in settings.LOGIN_REQUIRED_IGNORE_VIEW_NAMES
 urlpatterns = [
     path('oauth/gitlab/<str:backend>', oauth.gitlab.start_oauth, name='gitlab_oauth'),
     path('oauth/github', oauth.github.start_oauth, name='github_oauth'),
@@ -27,7 +28,8 @@ urlpatterns = [
     path('gitlab-login/<str:backend>', views.request_gitlab_oauth, name='gitlab_callback'),
     path('meetup-login', views.request_meetup_oauth, name='meetup_callback'),
 
-    path('logout', views.request_logout),
+    path('login', views.request_login, name='login_page'),
+    path('logout', views.request_logout, name='logout_page'),
     path('delete-token', views.request_delete_token),
 
     path('compare', views.request_compare_projects, name="compare_projects"),

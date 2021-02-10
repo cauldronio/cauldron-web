@@ -51,6 +51,11 @@ DB_PASSWORD = os.environ.get('DB_PASSWORD')
 DB_HOST = os.environ.get('DB_HOST')
 DB_PORT = os.environ.get('DB_PORT')
 
+# Authorization
+LIMITED_ACCESS = os.environ.get('LIMITED_ACCESS') in ('True', 'true')
+LOGIN_REQUIRED_IGNORE_VIEW_NAMES = ['gitlab_oauth', 'github_oauth', 'meetup_oauth', 'github_callback',
+                                    'gitlab_callback', 'meetup_callback', 'login_page', 'logout_page']
+
 # Matomo
 MATOMO_ENABLED = os.environ.get('MATOMO_ENABLED', False) in (True, 'True')
 MATOMO_PORT = os.environ.get('MATOMO_PORT')
@@ -114,6 +119,9 @@ MIDDLEWARE = [
 ]
 if HATSTALL_ENABLED:
     MIDDLEWARE.append('Cauldron2.middleware.HatstallAuthorizationMiddleware')
+
+if LIMITED_ACCESS:
+    MIDDLEWARE.append('Cauldron2.middleware.LoginRequiredMiddleware')
 
 ROOT_URLCONF = 'Cauldron2.urls'
 

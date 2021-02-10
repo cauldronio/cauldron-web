@@ -1,4 +1,8 @@
+from django.conf import settings
+from django.http import HttpResponseRedirect
 from django.shortcuts import render
+from django.urls import resolve, reverse
+
 from CauldronApp.views import create_context
 
 
@@ -29,3 +33,19 @@ class HatstallAuthorizationMiddleware:
         return response
 
 
+class LoginRequiredMiddleware:
+    """
+    Middleware that checks if the user is authenticated before using Cauldron.
+    """
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.user.is_authenticated:
+            return self.get_response(request)
+
+        resolver = resolve(request.path)
+        if resolver.view_name in settings.LOGIN_REQUIRED_IGNORE_VIEW_NAMES:
+            return self.get_response(request)
+
+        return HttpResponseRedirect(reverse('login_page'))

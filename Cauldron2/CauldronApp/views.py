@@ -27,7 +27,9 @@ from cauldron_apps.poolsched_gitlab.models import GLToken, GLInstance, IGLRaw
 from cauldron_apps.poolsched_meetup.models import MeetupToken, IMeetupRaw
 from cauldron_apps.poolsched_export.models.iexportgit import IExportGitCSV
 from cauldron_apps.cauldron.models import IAddGHOwner, IAddGLOwner, Project, OauthUser, AnonymousUser, \
-    UserWorkspace, ProjectRole, Repository, GitLabRepository, GitRepository, GitHubRepository, MeetupRepository
+    UserWorkspace, ProjectRole, Repository, GitLabRepository, GitRepository, GitHubRepository, MeetupRepository, \
+    AuthorizedBackendUser
+
 from cauldron_apps.cauldron.opendistro import OpendistroApi
 
 import urllib3
@@ -105,7 +107,11 @@ def request_github_oauth(request):
     new_project_info = request.session.get('new_project')
     store_oauth = request.session.get('store_oauth')
 
-    merged = authenticate_user(request, 'github', oauth_user, is_admin)
+    merged, allowed = authenticate_user(request, 'github', oauth_user, is_admin)
+    if not allowed:
+        return custom_403(request, "You are not allowed to authenticate in this server. "
+                                   "Ask any of the administrators for permission.")
+
     if merged:
         request.session['alert_notification'] = {'title': 'Account merged',
                                                  'message': f"You already had a Cauldron user with this GitHub account."
@@ -180,7 +186,11 @@ def request_gitlab_oauth(request, backend):
     new_project_info = request.session.get('new_project')
     store_oauth = request.session.get('store_oauth')
 
-    merged = authenticate_user(request, backend, oauth_user, is_admin)
+    merged, allowed = authenticate_user(request, backend, oauth_user, is_admin)
+    if not allowed:
+        return custom_403(request, "You are not allowed to authenticate in this server. "
+                                   "Ask any of the administrators for permission.")
+
     if merged:
         request.session['alert_notification'] = {'title': 'Account merged',
                                                  'message': f"You already had a Cauldron user with this GitLab account."
@@ -229,7 +239,11 @@ def request_meetup_oauth(request):
     new_project_info = request.session.get('new_project')
     store_oauth = request.session.get('store_oauth')
 
-    merged = authenticate_user(request, 'meetup', oauth_user, is_admin)
+    merged, allowed = authenticate_user(request, 'meetup', oauth_user, is_admin)
+    if not allowed:
+        return custom_403(request, "You are not allowed to authenticate in this server. "
+                                   "Ask any of the administrators for permission.")
+
     if merged:
         request.session['alert_notification'] = {'title': 'Account merged',
                                                  'message': f"You already had a Cauldron user with this Meetup account."
@@ -260,9 +274,14 @@ def authenticate_user(request, backend, oauth_info, is_admin=False):
     :param backend: git, github, gitlab...
     :param oauth_info: user information obtained from the backend
     :param is_admin: flag to indicate that the user to authenticate is an admin
-    :return: boolean. The user has been merged
+    :return: boolean, boolean. The user has been merged, the user is allowed to authenticate
     """
-    merged = False
+    if (settings.LIMITED_ACCESS and
+            not is_admin and
+            not AuthorizedBackendUser.objects.filter(backend=backend, username=oauth_info.username).exists()):
+        return False, False
+
+    merged, allowed = False, True
     try:
         existing_oauth_user = OauthUser.objects.get(backend=backend, username=oauth_info.username)
         backend_user = existing_oauth_user.user
@@ -305,7 +324,7 @@ def authenticate_user(request, backend, oauth_info, is_admin=False):
     if is_admin:
         upgrade_to_admin(request.user)
 
-    return merged
+    return merged, allowed
 
 
 def create_django_user(name):
@@ -327,6 +346,12 @@ def upgrade_to_admin(user):
 def request_logout(request):
     logout(request)
     return HttpResponseRedirect('/')
+
+
+def request_login(request):
+    context = create_context(request)
+
+    return render(request, 'cauldronapp/login.html', context=context)
 
 
 def generate_request_token_message(backend):
@@ -759,7 +784,7 @@ def _validate_data_project(request, data):
         return 'You need to add at least one data source.'
     if len(data['name']) < 1 or len(data['name']) > 32:
         return 'Project name should be between 1 and 32 chars.'
-    if Project.objects.filter(creator=request.user, name=data['name']).exists():
+    if request.user.is_authenticated and Project.objects.filter(creator=request.user, name=data['name']).exists():
         return 'You have the same name in another Project. Try with a different one.'
 
 
@@ -773,6 +798,10 @@ def request_new_project(request):
     if error:
         # TODO: format error
         return custom_404(request, error)
+
+    if settings.LIMITED_ACCESS and not request.user.is_authenticated:
+        return custom_403(request, "You are not allowed to create a new account in this server. "
+                                   "Ask any of the administrators for permission.")
 
     if not request.user.is_authenticated:
         user = User.objects.create_user(username=generate_random_uuid(length=96),
@@ -1431,15 +1460,19 @@ def cookies(request):
     return render(request, 'cauldronapp/cookies.html', context=context)
 
 
-def custom_403(request):
+def custom_403(request, message=None):
     """
     View to show the default 403 template
+    :param message:
     :param request:
     :return:
     """
     context = create_context(request)
     context['title'] = "403 Forbidden"
-    context['description'] = "You do not have the necessary permissions to perform this action"
+    if message:
+        context['description'] = message
+    else:
+        context['description'] = "You do not have the necessary permissions to perform this action"
     return render(request, 'cauldronapp/error.html', status=403, context=context)
 
 
