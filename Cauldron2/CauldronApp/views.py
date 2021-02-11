@@ -604,7 +604,7 @@ def request_rename_project(request, project_id):
         return JsonResponse({'status': 'error', 'message': "The name doesn't fit the allowed length "},
                             status=400)
 
-    if Project.objects.filter(creator=project.creator, name=name).exists():
+    if Project.objects.filter(creator=project.creator, name=name).exclude(id=project_id).exists():
         return JsonResponse({'status': 'Duplicated name', 'message': 'You have the same name in another Project'},
                             status=400)
     project.name = name
@@ -621,7 +621,12 @@ def create_project(request):
                 data = {}
             data['name'] = request.POST['name']
             request.session['new_project'] = data
-            return JsonResponse({'name': request.POST['name']})
+            if request.user.is_authenticated and \
+                    Project.objects.filter(creator=request.user, name=data['name']).exists():
+                return JsonResponse({'status': 'error', 'message': 'You have the same name defined in another project'})
+            elif len(data['name']) < 1 or len(data['name']) > 32:
+                return JsonResponse({'status': 'error', 'message': 'Must be 1-32 characters long.'})
+            return JsonResponse({'status': 'ok'}, status=200)
 
         elif 'add' in request.POST:
             error = create_project_add(request)

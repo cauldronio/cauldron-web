@@ -25,8 +25,8 @@
   <div class="form-group">
     <label for="projectName" class="font-weight-bold" >Project name</label>
     <input type="text" id="projectName" class="form-control" aria-describedby="projectNameHelper" value="{{new_project.name}}">
-    <small id="projectNameHelper" class="text-muted">
-      Must be 1-32 characters long.
+    <small id="projectNameHelper" class="invalid-feedback">
+
     </small>
   </div>
 
@@ -86,7 +86,7 @@
   {% if not new_project.actions %}
   <p>There isn't any data source defined</p>
   {% endif %}
-  <ul class="list-unstyled">
+  <ul id="actionsList" class="list-unstyled">
     {% for action in new_project.actions %}
     <li class="border p-3 my-1">
       <form action="" method="POST">
