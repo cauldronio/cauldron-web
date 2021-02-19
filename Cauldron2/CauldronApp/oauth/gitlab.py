@@ -30,8 +30,6 @@ class GitLabOAuth(oauth.OAuth):
             'grant_type': 'authorization_code',
             'redirect_uri': self.callback_uri
         }
-        import logging
-        logging.error(params, code, self.instance.endpoint, self.TOKEN_PATH)
         r = requests.post(urljoin(self.instance.endpoint, self.TOKEN_PATH),
                           params=params,
                           headers=headers)

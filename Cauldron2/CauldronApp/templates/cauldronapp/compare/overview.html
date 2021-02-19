@@ -1,0 +1,60 @@
+{% load static %}
+<div id="pills-overview" class="tab-pane fade show active" role="tabpanel" >
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col" class="text-center"><img src="{% static '/img/cauldron_logo.png' %}" width="20" height="20" alt=""></th>
+                {% for project in projects %}
+                <th scope="col" class="text-center"><a href="{% url 'show_project' project.id %}">{{ project.name }}</a></th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <th scope="row"># Commits</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.commits_range }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Pull requests</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.reviews_opened }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row">Median review duration</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.review_duration }} days</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Issues created</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.issues_created_range }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Issues closed</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.issues_closed_range }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row">Median time to close</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.issues_time_to_close }} days</td>
+                {% endfor %}
+            </tr>
+        </tbody>
+    </table>
+    <div id="chart-commits-compare-overview"></div>
+    <div class="row">
+      <div class="col-md">
+        <div id="chart-issues-created-compare-overview"></div>
+      </div>
+      <div class="col-md">
+        <div id="chart-reviews-created-compare-overview"></div>
+      </div>
+    </div>
+</div>

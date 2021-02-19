@@ -1,0 +1,71 @@
+{% load static %}
+<div id="pills-activity-issues" class="tab-pane fade show active" role="tabpanel" >
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col" class="text-center"><img src="{% static '/img/cauldron_logo.png' %}" width="20" height="20" alt=""></th>
+                {% for project in projects %}
+                <th scope="col" class="text-center"><a href="{% url 'show_project' project.id %}">{{ project.name }}</a></th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <th scope="row"># Issues created (Last month)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.issues_open_last_month }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Issues created (Last year)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.issues_open_last_year }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Issues created (Year-over-year)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.issues_open_yoy | stringformat:"+.2f" }}%</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Issues closed (Last month)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.issues_closed_last_month }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Issues closed (Last year)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.issues_closed_last_year }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Issues closed (Year-over-year)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.issues_closed_yoy | stringformat:"+.2f" }}%</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Issues open (Today)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.issues_open_today }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Issues open (1 month ago)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.issues_open_month_ago }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Issues open (1 year ago)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.issues_open_year_ago }}</td>
+                {% endfor %}
+            </tr>
+        </tbody>
+    </table>
+    <div id="chart-issues-created-compare"></div>
+    <div id="chart-issues-closed-compare"></div>
+</div>

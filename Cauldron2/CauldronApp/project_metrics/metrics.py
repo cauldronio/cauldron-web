@@ -51,26 +51,117 @@ def get_elastic_project(project):
     return elastic
 
 
-def get_compare_metrics(projects, urls, from_date, to_date):
-    now = datetime.datetime.now()
-    one_month_ago = now - relativedelta(months=1)
-    one_year_ago = now - relativedelta(years=1)
-    two_year_ago = now - relativedelta(years=2)
+def get_category_compare_metrics(projects, category, urls, from_date, to_date):
+    if category == 'overview':
+        return compare_overview_metrics(projects, urls, from_date, to_date)
+    elif category == 'activity-git':
+        return compare_activity_git_metrics(projects, urls, from_date, to_date)
+    elif category == 'activity-issues':
+        return compare_activity_issues_metrics(projects, urls, from_date, to_date)
+    elif category == 'activity-reviews':
+        return compare_activity_reviews_metrics(projects, urls, from_date, to_date)
+    elif category == 'community-overview':
+        return compare_community_overview_metrics(projects, urls, from_date, to_date)
+    else:
+        return compare_overview_metrics(projects, urls, from_date, to_date)
 
-    metrics = dict()
+
+def compare_overview_metrics(projects, urls, from_date, to_date):
+    data = dict()
+    data['metrics'] = dict()
+    data['charts'] = dict()
+
+    elastics = dict()
     for project in projects:
         elastic = get_elastic_project(project)
-        metrics[project.id] = {
+        elastics[project.id] = elastic
+        # Metrics
+        data['metrics'][project.id] = {
             'commits_range': activity_commits.git_commits(elastic, urls, from_date, to_date),
             'reviews_opened': activity_reviews.reviews_opened(elastic, urls, from_date, to_date),
             'review_duration': other.review_duration(elastic, urls, from_date, to_date),
             'issues_created_range': activity_issues.issues_opened(elastic, urls, from_date, to_date),
             'issues_closed_range': activity_issues.issues_closed(elastic, urls, from_date, to_date),
             'issues_time_to_close': other.issues_time_to_close(elastic, urls, from_date, to_date),
+        }
+
+    # Visualizations
+    data['charts']['git_commits_bokeh_compare'] = activity_commits.git_commits_bokeh_compare(elastics, urls, from_date, to_date)
+    data['charts']['issues_created_bokeh_compare'] = activity_issues.issues_created_bokeh_compare(elastics, from_date, to_date)
+    data['charts']['reviews_created_bokeh_compare'] = activity_reviews.reviews_created_bokeh_compare(elastics, from_date, to_date)
+
+
+    return data
+
+
+def compare_activity_git_metrics(projects, urls, from_date, to_date):
+    now = datetime.datetime.now()
+    one_month_ago = now - relativedelta(months=1)
+    one_year_ago = now - relativedelta(years=1)
+    two_year_ago = now - relativedelta(years=2)
+
+    data = dict()
+    data['metrics'] = dict()
+    data['charts'] = dict()
+
+    elastics = dict()
+    for project in projects:
+        elastic = get_elastic_project(project)
+        elastics[project.id] = elastic
+        # Metrics
+        data['metrics'][project.id] = {
             'commits_last_month': activity_commits.git_commits(elastic, urls, one_month_ago, now),
             'commits_last_year': activity_commits.git_commits(elastic, urls, one_year_ago, now),
             'lines_commit_last_month': activity_commits.git_lines_commit(elastic, urls, one_month_ago, now),
             'lines_commit_last_year': activity_commits.git_lines_commit(elastic, urls, one_year_ago, now),
+        }
+
+        data['metrics'][project.id]['commits_yoy'] = year_over_year(data['metrics'][project.id]['commits_last_year'],
+                                                            activity_commits.git_commits(elastic, urls, two_year_ago, one_year_ago))
+
+        data['metrics'][project.id]['lines_commit_yoy'] = year_over_year(data['metrics'][project.id]['lines_commit_last_year'],
+                                                                 activity_commits.git_lines_commit(elastic, urls, two_year_ago, one_year_ago))
+
+        try:
+            data['metrics'][project.id]['lines_commit_file_last_month'] = data['metrics'][project.id]['lines_commit_last_month'] / activity_commits.git_files_touched(elastic, urls, one_month_ago, now)
+        except (ZeroDivisionError, TypeError):
+            data['metrics'][project.id]['lines_commit_file_last_month'] = 0
+
+        try:
+            data['metrics'][project.id]['lines_commit_file_last_year'] = data['metrics'][project.id]['lines_commit_last_year'] / activity_commits.git_files_touched(elastic, urls, one_year_ago, now)
+        except (ZeroDivisionError, TypeError):
+            data['metrics'][project.id]['lines_commit_file_last_year'] = 0
+
+        try:
+            lines_commit_file_two_year_ago = activity_commits.git_lines_commit(elastic, urls, two_year_ago, one_year_ago) / activity_commits.git_files_touched(elastic, urls, two_year_ago, one_year_ago)
+        except (ZeroDivisionError, TypeError):
+            lines_commit_file_two_year_ago = 0
+
+        data['metrics'][project.id]['lines_commit_file_yoy'] = year_over_year(data['metrics'][project.id]['lines_commit_file_last_year'],
+                                                                  lines_commit_file_two_year_ago)
+
+    # Visualizations
+    data['charts']['git_commits_bokeh_compare'] = activity_commits.git_commits_bokeh_compare(elastics, urls, from_date, to_date)
+
+    return data
+
+
+def compare_activity_issues_metrics(projects, urls, from_date, to_date):
+    now = datetime.datetime.now()
+    one_month_ago = now - relativedelta(months=1)
+    one_year_ago = now - relativedelta(years=1)
+    two_year_ago = now - relativedelta(years=2)
+
+    data = dict()
+    data['metrics'] = dict()
+    data['charts'] = dict()
+
+    elastics = dict()
+    for project in projects:
+        elastic = get_elastic_project(project)
+        elastics[project.id] = elastic
+        # Metrics
+        data['metrics'][project.id] = {
             'issues_open_last_month': activity_issues.issues_opened(elastic, urls, one_month_ago, now),
             'issues_open_last_year': activity_issues.issues_opened(elastic, urls, one_year_ago, now),
             'issues_closed_last_month': activity_issues.issues_closed(elastic, urls, one_month_ago, now),
@@ -78,6 +169,37 @@ def get_compare_metrics(projects, urls, from_date, to_date):
             'issues_open_today': activity_issues.issues_open_on(elastic, urls, now),
             'issues_open_month_ago': activity_issues.issues_open_on(elastic, urls, one_month_ago),
             'issues_open_year_ago': activity_issues.issues_open_on(elastic, urls, one_year_ago),
+        }
+
+        data['metrics'][project.id]['issues_open_yoy'] = year_over_year(data['metrics'][project.id]['issues_open_last_year'],
+                                                                activity_issues.issues_opened(elastic, urls, two_year_ago, one_year_ago))
+
+        data['metrics'][project.id]['issues_closed_yoy'] = year_over_year(data['metrics'][project.id]['issues_closed_last_year'],
+                                                                  activity_issues.issues_closed(elastic, urls, two_year_ago, one_year_ago))
+
+    # Visualizations
+    data['charts']['issues_created_bokeh_compare'] = activity_issues.issues_created_bokeh_compare(elastics, from_date, to_date)
+    data['charts']['issues_closed_bokeh_compare'] = activity_issues.issues_closed_bokeh_compare(elastics, from_date, to_date)
+
+    return data
+
+
+def compare_activity_reviews_metrics(projects, urls, from_date, to_date):
+    now = datetime.datetime.now()
+    one_month_ago = now - relativedelta(months=1)
+    one_year_ago = now - relativedelta(years=1)
+    two_year_ago = now - relativedelta(years=2)
+
+    data = dict()
+    data['metrics'] = dict()
+    data['charts'] = dict()
+
+    elastics = dict()
+    for project in projects:
+        elastic = get_elastic_project(project)
+        elastics[project.id] = elastic
+        # Metrics
+        data['metrics'][project.id] = {
             'reviews_open_last_month': activity_reviews.reviews_opened(elastic, urls, one_month_ago, now),
             'reviews_open_last_year': activity_reviews.reviews_opened(elastic, urls, one_year_ago, now),
             'reviews_closed_last_month': activity_reviews.reviews_closed(elastic, urls, one_month_ago, now),
@@ -85,6 +207,32 @@ def get_compare_metrics(projects, urls, from_date, to_date):
             'reviews_open_today': activity_reviews.reviews_open_on(elastic, urls, now),
             'reviews_open_month_ago': activity_reviews.reviews_open_on(elastic, urls, one_month_ago),
             'reviews_open_year_ago': activity_reviews.reviews_open_on(elastic, urls, one_year_ago),
+        }
+
+        data['metrics'][project.id]['reviews_open_yoy'] = year_over_year(data['metrics'][project.id]['reviews_open_last_year'],
+                                                                 activity_reviews.reviews_opened(elastic, urls, two_year_ago, one_year_ago))
+
+        data['metrics'][project.id]['reviews_closed_yoy'] = year_over_year(data['metrics'][project.id]['reviews_closed_last_year'],
+                                                                   activity_reviews.reviews_closed(elastic, urls, two_year_ago, one_year_ago))
+
+    # Visualizations
+    data['charts']['reviews_created_bokeh_compare'] = activity_reviews.reviews_created_bokeh_compare(elastics, from_date, to_date)
+    data['charts']['reviews_closed_bokeh_compare'] = activity_reviews.reviews_closed_bokeh_compare(elastics, from_date, to_date)
+
+    return data
+
+
+def compare_community_overview_metrics(projects, urls, from_date, to_date):
+    data = dict()
+    data['metrics'] = dict()
+    data['charts'] = dict()
+
+    elastics = dict()
+    for project in projects:
+        elastic = get_elastic_project(project)
+        elastics[project.id] = elastic
+        # Metrics
+        data['metrics'][project.id] = {
             'active_people_git': community_commits.authors_active(elastic, urls, from_date, to_date),
             'active_people_issues': community_issues.active_submitters(elastic, urls, from_date, to_date),
             'active_people_patches': community_reviews.active_submitters(elastic, urls, from_date, to_date),
@@ -93,63 +241,12 @@ def get_compare_metrics(projects, urls, from_date, to_date):
             'onboardings_patches': community_reviews.authors_entering(elastic, urls, from_date, to_date),
         }
 
-        metrics[project.id]['commits_yoy'] = year_over_year(metrics[project.id]['commits_last_year'],
-                                                            activity_commits.git_commits(elastic, urls, two_year_ago, one_year_ago))
+    # Visualizations
+    data['charts']['git_authors_bokeh_compare'] = community_commits.git_authors_bokeh_compare(elastics, urls, from_date, to_date)
+    data['charts']['issue_submitters_bokeh_compare'] = community_issues.issue_submitters_bokeh_compare(elastics, urls, from_date, to_date)
+    data['charts']['review_submitters_bokeh_compare'] = community_reviews.review_submitters_bokeh_compare(elastics, urls, from_date, to_date)
 
-        metrics[project.id]['lines_commit_yoy'] = year_over_year(metrics[project.id]['lines_commit_last_year'],
-                                                                 activity_commits.git_lines_commit(elastic, urls, two_year_ago, one_year_ago))
-
-        metrics[project.id]['issues_open_yoy'] = year_over_year(metrics[project.id]['issues_open_last_year'],
-                                                                activity_issues.issues_opened(elastic, urls, two_year_ago, one_year_ago))
-
-        metrics[project.id]['issues_closed_yoy'] = year_over_year(metrics[project.id]['issues_closed_last_year'],
-                                                                  activity_issues.issues_closed(elastic, urls, two_year_ago, one_year_ago))
-
-        metrics[project.id]['reviews_open_yoy'] = year_over_year(metrics[project.id]['reviews_open_last_year'],
-                                                                 activity_reviews.reviews_opened(elastic, urls, two_year_ago, one_year_ago))
-
-        metrics[project.id]['reviews_closed_yoy'] = year_over_year(metrics[project.id]['reviews_closed_last_year'],
-                                                                   activity_reviews.reviews_closed(elastic, urls, two_year_ago, one_year_ago))
-
-        try:
-            metrics[project.id]['lines_commit_file_last_month'] = metrics[project.id]['lines_commit_last_month'] / activity_commits.git_files_touched(elastic, urls, one_month_ago, now)
-        except (ZeroDivisionError, TypeError):
-            metrics[project.id]['lines_commit_file_last_month'] = 0
-
-        try:
-            metrics[project.id]['lines_commit_file_last_year'] = metrics[project.id]['lines_commit_last_year'] / activity_commits.git_files_touched(elastic, urls, one_year_ago, now)
-        except (ZeroDivisionError, TypeError):
-            metrics[project.id]['lines_commit_file_last_year'] = 0
-
-        try:
-            lines_commit_file_two_year_ago = activity_commits.git_lines_commit(elastic, urls, two_year_ago, one_year_ago) / activity_commits.git_files_touched(elastic, urls, two_year_ago, one_year_ago)
-        except (ZeroDivisionError, TypeError):
-            lines_commit_file_two_year_ago = 0
-
-        metrics[project.id]['lines_commit_file_yoy'] = year_over_year(metrics[project.id]['lines_commit_file_last_year'],
-                                                                  lines_commit_file_two_year_ago)
-
-    return metrics
-
-
-def get_compare_charts(projects, urls, from_date, to_date):
-    elastics = dict()
-    for project in projects:
-        elastic = get_elastic_project(project)
-        elastics[project.id] = elastic
-
-    charts = {
-        'git_commits_bokeh_compare': activity_commits.git_commits_bokeh_compare(elastics, urls, from_date, to_date),
-        'git_authors_bokeh_compare': community_commits.git_authors_bokeh_compare(elastics, urls, from_date, to_date),
-        'issues_created_bokeh_compare': activity_issues.issues_created_bokeh_compare(elastics, from_date, to_date),
-        'issues_closed_bokeh_compare': activity_issues.issues_closed_bokeh_compare(elastics, from_date, to_date),
-        'issue_submitters_bokeh_compare': community_issues.issue_submitters_bokeh_compare(elastics, urls, from_date, to_date),
-        'reviews_created_bokeh_compare': activity_reviews.reviews_created_bokeh_compare(elastics, from_date, to_date),
-        'reviews_closed_bokeh_compare': activity_reviews.reviews_closed_bokeh_compare(elastics, from_date, to_date),
-        'review_submitters_bokeh_compare': community_reviews.review_submitters_bokeh_compare(elastics, urls, from_date, to_date),
-    }
-
-    return charts
+    return data
 
 
 def get_category_metrics(project, category, urls, from_date, to_date):

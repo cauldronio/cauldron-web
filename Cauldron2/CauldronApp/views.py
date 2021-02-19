@@ -928,6 +928,11 @@ def request_compare_projects(request):
         return custom_403(request)
 
     context['projects'] = projects
+    context['tab'] = request.GET.get('tab', 'overview')
+
+    available_tags = ['overview', 'activity-git', 'activity-issues', 'activity-reviews', 'community-overview'];
+    if context['tab'] not in available_tags:
+        context['tab'] = 'overview'
 
     if request.user.is_authenticated:
         context['user_projects'] = request.user.project_set.all()
@@ -952,10 +957,57 @@ def request_compare_projects(request):
             urls.extend(project.url_list())
 
         if projects.count() > 0:
-            context['metrics'] = metrics.get_compare_metrics(projects, urls, from_date, to_date)
-            context['charts'] = metrics.get_compare_charts(projects, urls, from_date, to_date)
+            data = metrics.get_category_compare_metrics(projects, context['tab'], urls, from_date, to_date)
+            context['metrics'] = data['metrics']
+            context['charts'] = data['charts']
 
     return render(request, 'cauldronapp/compare/projects_compare.html', context=context)
+
+
+def request_compare_projects_metrics(request):
+    """Obtain the metrics related to a projects comparison for a category. By default overview"""
+    if request.method != 'GET':
+        return custom_405(request, request.method)
+
+    category = request.GET.get('tab', 'overview')
+
+    try:
+        projects_id = list(map(int, request.GET.getlist('projects')))
+    except ValueError:
+        projects_id = []
+
+    if projects_id:
+        projects = Project.objects.filter(id__in=projects_id)
+    else:
+        projects = Project.objects.none()
+
+    if projects.count() > 5:
+        return custom_403(request)
+
+    if projects.filter(repository=None).count() > 0:
+        return custom_403(request, "Some of the selected projects do not have repositories...")
+
+    try:
+        from_str = request.GET.get('from_date', '')
+        from_date = datetime.datetime.strptime(from_str, '%Y-%m-%d')
+    except ValueError:
+        from_date = datetime.datetime.now() - relativedelta(years=1)
+
+    try:
+        to_str = request.GET.get('to_date', '')
+        to_date = datetime.datetime.strptime(to_str, '%Y-%m-%d')
+    except ValueError:
+        to_date = datetime.datetime.now()
+
+    urls = []
+    for project in projects:
+        urls.extend(project.url_list())
+
+    compare_metrics = dict()
+    if projects.count() > 0:
+        compare_metrics = metrics.get_category_compare_metrics(projects, category, urls, from_date, to_date)
+
+    return JsonResponse(compare_metrics)
 
 
 def request_project_metrics(request, project_id):

@@ -1,4 +1,5 @@
 {% extends "cauldronapp/base.html" %}
+{% load cauldron_tags %}
 {% load static %}
 
 {% block css%}
@@ -78,19 +79,19 @@
         <div class="card-header font-weight-bold">
             <ul class="nav nav-pills" id="pills-tab" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <a class="nav-link active" data-toggle="pill" href="#pills-overview" role="tab" aria-controls="pills-overview" aria-selected="true">Overview</a>
+                    <a class="nav-link {% if tab == 'overview' %}active{% endif %}" href="?{% url_replace request 'tab' 'overview' %}" role="tab" aria-controls="pills-overview" aria-selected="true">Overview</a>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <a class="nav-link" data-toggle="pill" href="#pills-activity-git" role="tab" aria-controls="pills-activity-git" aria-selected="false">Commits Activity</a>
+                    <a class="nav-link {% if tab == 'activity-git' %}active{% endif %}" href="?{% url_replace request 'tab' 'activity-git' %}" role="tab" aria-controls="pills-activity-git" aria-selected="false">Commits Activity</a>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <a class="nav-link" data-toggle="pill" href="#pills-activity-issues" role="tab" aria-controls="pills-activity-issues" aria-selected="false">Issues Activity</a>
+                    <a class="nav-link {% if tab == 'activity-issues' %}active{% endif %}" href="?{% url_replace request 'tab' 'activity-issues' %}" role="tab" aria-controls="pills-activity-issues" aria-selected="false">Issues Activity</a>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <a class="nav-link" data-toggle="pill" href="#pills-activity-reviews" role="tab" aria-controls="pills-activity-reviews" aria-selected="false">PRs/MRs Activity</a>
+                    <a class="nav-link {% if tab == 'activity-reviews' %}active{% endif %}" href="?{% url_replace request 'tab' 'activity-reviews' %}" role="tab" aria-controls="pills-activity-reviews" aria-selected="false">PRs/MRs Activity</a>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <a class="nav-link" data-toggle="pill" href="#pills-community" role="tab" aria-controls="pills-community" aria-selected="false">Community</a>
+                    <a class="nav-link {% if tab == 'community-overview' %}active{% endif %}" href="?{% url_replace request 'tab' 'community-overview' %}" role="tab" aria-controls="pills-community" aria-selected="false">Community</a>
                 </li>
                 <div class="ml-md-auto">
                     <div class="input-group">
@@ -108,335 +109,29 @@
 
         <div class="tab-content card-body">
             <!-- Start Overview -->
-            <div id="pills-overview" class="tab-pane fade show active" role="tabpanel" >
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th scope="col" class="text-center"><img src="{% static '/img/cauldron_logo.png' %}" width="20" height="20" alt=""></th>
-                            {% for project in projects %}
-                            <th scope="col" class="text-center"><a href="{% url 'show_project' project.id %}">{{ project.name }}</a></th>
-                            {% endfor %}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <th scope="row"># Commits</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.commits_range }}</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row"># Pull requests</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.reviews_opened }}</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row">Median review duration</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.review_duration }} days</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row"># Issues created</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.issues_created_range }}</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row"># Issues closed</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.issues_closed_range }}</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row">Median time to close</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.issues_time_to_close }} days</td>
-                            {% endfor %}
-                        </tr>
-                    </tbody>
-                </table>
-                <div id="chart-commits-compare-overview"></div>
-                <div class="row">
-                  <div class="col-md">
-                    <div id="chart-issues-created-compare-overview"></div>
-                  </div>
-                  <div class="col-md">
-                    <div id="chart-reviews-created-compare-overview"></div>
-                  </div>
-                </div>
-            </div>
+            {% if tab == 'overview' %}
+            {% include "cauldronapp/compare/overview.html" %}
+            {% endif %}
             <!-- End Overview -->
             <!-- Start Git Activity -->
-            <div id="pills-activity-git" class="tab-pane fade" role="tabpanel" >
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th scope="col" class="text-center"><img src="{% static '/img/cauldron_logo.png' %}" width="20" height="20" alt=""></th>
-                            {% for project in projects %}
-                            <th scope="col" class="text-center"><a href="{% url 'show_project' project.id %}">{{ project.name }}</a></th>
-                            {% endfor %}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <th scope="row"># Commits (Last month)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.commits_last_month }}</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row"># Commits (Last year)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.commits_last_year }}</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row"># Commits (Year-over-year)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.commits_yoy | stringformat:"+.2f" }}%</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row"># Lines/commit (Last month)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.lines_commit_last_month | stringformat:".2f" }}</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row"># Lines/commit (Last year)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.lines_commit_last_year | stringformat:".2f" }}</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row"># Lines/commit (Year-over-year)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.lines_commit_yoy | stringformat:"+.2f" }}%</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row"># Lines/commit/file (Last month)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.lines_commit_file_last_month | stringformat:".4f" }}</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row"># Lines/commit/file (Last year)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.lines_commit_file_last_year | stringformat:".4f" }}</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row"># Lines/commit/file (Year-over-year)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.lines_commit_file_yoy | stringformat:"+.2f" }}%</td>
-                            {% endfor %}
-                        </tr>
-                    </tbody>
-                </table>
-                <div id="chart-commits-compare"></div>
-            </div>
+            {% if tab == 'activity-git' %}
+            {% include "cauldronapp/compare/activity/commits.html" %}
+            {% endif %}
             <!-- End Git Activity -->
             <!-- Start Issues Activity -->
-            <div id="pills-activity-issues" class="tab-pane fade" role="tabpanel" >
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th scope="col" class="text-center"><img src="{% static '/img/cauldron_logo.png' %}" width="20" height="20" alt=""></th>
-                            {% for project in projects %}
-                            <th scope="col" class="text-center"><a href="{% url 'show_project' project.id %}">{{ project.name }}</a></th>
-                            {% endfor %}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <th scope="row"># Issues created (Last month)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.issues_open_last_month }}</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row"># Issues created (Last year)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.issues_open_last_year }}</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row"># Issues created (Year-over-year)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.issues_open_yoy | stringformat:"+.2f" }}%</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row"># Issues closed (Last month)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.issues_closed_last_month }}</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row"># Issues closed (Last year)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.issues_closed_last_year }}</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row"># Issues closed (Year-over-year)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.issues_closed_yoy | stringformat:"+.2f" }}%</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row"># Issues open (Today)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.issues_open_today }}</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row"># Issues open (1 month ago)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.issues_open_month_ago }}</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row"># Issues open (1 year ago)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.issues_open_year_ago }}</td>
-                            {% endfor %}
-                        </tr>
-                    </tbody>
-                </table>
-                <div id="chart-issues-created-compare"></div>
-                <div id="chart-issues-closed-compare"></div>
-            </div>
+            {% if tab == 'activity-issues' %}
+            {% include "cauldronapp/compare/activity/issues.html" %}
+            {% endif %}
             <!-- End Issues Activity -->
             <!-- Start Reviews Activity -->
-            <div id="pills-activity-reviews" class="tab-pane fade" role="tabpanel" >
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th scope="col" class="text-center"><img src="{% static '/img/cauldron_logo.png' %}" width="20" height="20" alt=""></th>
-                            {% for project in projects %}
-                            <th scope="col" class="text-center"><a href="{% url 'show_project' project.id %}">{{ project.name }}</a></th>
-                            {% endfor %}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <th scope="row"># Pull/Merge requests created (Last month)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.reviews_open_last_month }}</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row"># Pull/Merge requests created (Last year)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.reviews_open_last_year }}</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row"># Pull/Merge requests created (Year-over-year)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.reviews_open_yoy | stringformat:"+.2f" }}%</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row"># Pull/Merge requests closed (Last month)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.reviews_closed_last_month }}</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row"># Pull/Merge requests closed (Last year)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.reviews_closed_last_year }}</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row"># Pull/Merge requests closed (Year-over-year)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.reviews_closed_yoy | stringformat:"+.2f" }}%</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row"># Pull/Merge requests open (Today)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.reviews_open_today }}</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row"># Pull/Merge requests open (1 month ago)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.reviews_open_month_ago }}</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row"># Pull/Merge requests open (1 year ago)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.reviews_open_year_ago }}</td>
-                            {% endfor %}
-                        </tr>
-                    </tbody>
-                </table>
-                <div id="chart-reviews-created-compare"></div>
-                <div id="chart-reviews-closed-compare"></div>
-            </div>
+            {% if tab == 'activity-reviews' %}
+            {% include "cauldronapp/compare/activity/reviews.html" %}
+            {% endif %}
             <!-- End Reviews Activity-->
             <!-- Start Community -->
-            <div id="pills-community" class="tab-pane fade" role="tabpanel" >
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th scope="col" class="text-center"><img src="{% static '/img/cauldron_logo.png' %}" width="20" height="20" alt=""></th>
-                            {% for project in projects %}
-                            <th scope="col" class="text-center"><a href="{% url 'show_project' project.id %}">{{ project.name }}</a></th>
-                            {% endfor %}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <th scope="row"># Active people (Git authors)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.active_people_git }}</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row"># Active people (Issue submitters)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.active_people_issues }}</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row"># Active people (PRs/MRs submitters)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.active_people_patches }}</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row"># Onboardings (Git authors)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.onboardings_git }}</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row"># Onboardings (Issue submitters)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.onboardings_issues }}</td>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th scope="row"># Onboardings (PRs/MRs submitters)</th>
-                            {% for key, value in metrics.items %}
-                            <td class="text-center">{{ value.onboardings_patches }}</td>
-                            {% endfor %}
-                        </tr>
-                    </tbody>
-                </table>
-                <div id="chart-git-authors-compare"></div>
-                <div id="chart-issue-submitters-compare"></div>
-                <div id="chart-review-submitters-compare"></div>
-            </div>
+            {% if tab == 'community-overview' %}
+            {% include "cauldronapp/compare/community/overview.html" %}
+            {% endif %}
             <!-- End Community -->
         </div>
     </div>
@@ -480,25 +175,39 @@ $('#addProjectButton').on('click', function(event) {
 <script>
 document.addEventListener('DOMContentLoaded', function(event) {
     var graphs = {
+        {% if tab == 'overview' %}
         // Overview
         "chart-commits-compare-overview": {{ charts.git_commits_bokeh_compare | safe }},
         "chart-issues-created-compare-overview": {{ charts.issues_created_bokeh_compare | safe }},
         "chart-reviews-created-compare-overview": {{ charts.reviews_created_bokeh_compare | safe }},
+        {% endif %}
+        {% if tab == 'activity-git' %}
         // Commits Activity
         "chart-commits-compare": {{ charts.git_commits_bokeh_compare | safe }},
+        {% endif %}
+        {% if tab == 'activity-issues' %}
         // Issues Activity
         "chart-issues-created-compare": {{ charts.issues_created_bokeh_compare | safe }},
         "chart-issues-closed-compare": {{ charts.issues_closed_bokeh_compare | safe }},
+        {% endif %}
+        {% if tab == 'activity-reviews' %}
         // PRs/MRs Activity
         "chart-reviews-created-compare": {{ charts.reviews_created_bokeh_compare | safe }},
         "chart-reviews-closed-compare": {{ charts.reviews_closed_bokeh_compare | safe }},
+        {% endif %}
+        {% if tab == 'community-overview' %}
         // Community
         "chart-git-authors-compare": {{ charts.git_authors_bokeh_compare | safe }},
         "chart-issue-submitters-compare": {{ charts.issue_submitters_bokeh_compare | safe }},
         "chart-review-submitters-compare": {{ charts.review_submitters_bokeh_compare | safe }},
+        {% endif %}
     }
 
     for (var k in graphs) {
+        if (!document.getElementById(k)){
+            continue;
+        }
+
         item = graphs[k];
         Bokeh.embed.embed_item(item, k);
     }

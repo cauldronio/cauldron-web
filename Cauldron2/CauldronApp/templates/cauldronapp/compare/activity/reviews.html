@@ -1,0 +1,71 @@
+{% load static %}
+<div id="pills-activity-reviews" class="tab-pane fade show active" role="tabpanel" >
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col" class="text-center"><img src="{% static '/img/cauldron_logo.png' %}" width="20" height="20" alt=""></th>
+                {% for project in projects %}
+                <th scope="col" class="text-center"><a href="{% url 'show_project' project.id %}">{{ project.name }}</a></th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <th scope="row"># Pull/Merge requests created (Last month)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.reviews_open_last_month }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Pull/Merge requests created (Last year)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.reviews_open_last_year }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Pull/Merge requests created (Year-over-year)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.reviews_open_yoy | stringformat:"+.2f" }}%</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Pull/Merge requests closed (Last month)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.reviews_closed_last_month }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Pull/Merge requests closed (Last year)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.reviews_closed_last_year }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Pull/Merge requests closed (Year-over-year)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.reviews_closed_yoy | stringformat:"+.2f" }}%</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Pull/Merge requests open (Today)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.reviews_open_today }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Pull/Merge requests open (1 month ago)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.reviews_open_month_ago }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Pull/Merge requests open (1 year ago)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.reviews_open_year_ago }}</td>
+                {% endfor %}
+            </tr>
+        </tbody>
+    </table>
+    <div id="chart-reviews-created-compare"></div>
+    <div id="chart-reviews-closed-compare"></div>
+</div>

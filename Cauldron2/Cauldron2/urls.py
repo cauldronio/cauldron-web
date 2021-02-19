@@ -33,6 +33,7 @@ urlpatterns = [
     path('delete-token', views.request_delete_token),
 
     path('compare', views.request_compare_projects, name="compare_projects"),
+    path('compare/metrics', views.request_compare_projects_metrics, name="compare_projects_metrics"),
 
     path('projects', views.request_user_projects, name="user_projects"),
     path('projects/new', views.create_project, name='create_project'),

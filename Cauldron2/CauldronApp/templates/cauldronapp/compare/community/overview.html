@@ -1,0 +1,54 @@
+{% load static %}
+<div id="pills-community" class="tab-pane fade show active" role="tabpanel" >
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col" class="text-center"><img src="{% static '/img/cauldron_logo.png' %}" width="20" height="20" alt=""></th>
+                {% for project in projects %}
+                <th scope="col" class="text-center"><a href="{% url 'show_project' project.id %}">{{ project.name }}</a></th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <th scope="row"># Active people (Git authors)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.active_people_git }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Active people (Issue submitters)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.active_people_issues }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Active people (PRs/MRs submitters)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.active_people_patches }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Onboardings (Git authors)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.onboardings_git }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Onboardings (Issue submitters)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.onboardings_issues }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Onboardings (PRs/MRs submitters)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.onboardings_patches }}</td>
+                {% endfor %}
+            </tr>
+        </tbody>
+    </table>
+    <div id="chart-git-authors-compare"></div>
+    <div id="chart-issue-submitters-compare"></div>
+    <div id="chart-review-submitters-compare"></div>
+</div>

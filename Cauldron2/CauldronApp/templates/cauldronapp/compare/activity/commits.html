@@ -1,0 +1,70 @@
+{% load static %}
+<div id="pills-activity-git" class="tab-pane fade show active" role="tabpanel" >
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col" class="text-center"><img src="{% static '/img/cauldron_logo.png' %}" width="20" height="20" alt=""></th>
+                {% for project in projects %}
+                <th scope="col" class="text-center"><a href="{% url 'show_project' project.id %}">{{ project.name }}</a></th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <th scope="row"># Commits (Last month)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.commits_last_month }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Commits (Last year)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.commits_last_year }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Commits (Year-over-year)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.commits_yoy | stringformat:"+.2f" }}%</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Lines/commit (Last month)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.lines_commit_last_month | stringformat:".2f" }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Lines/commit (Last year)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.lines_commit_last_year | stringformat:".2f" }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Lines/commit (Year-over-year)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.lines_commit_yoy | stringformat:"+.2f" }}%</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Lines/commit/file (Last month)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.lines_commit_file_last_month | stringformat:".4f" }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Lines/commit/file (Last year)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.lines_commit_file_last_year | stringformat:".4f" }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="row"># Lines/commit/file (Year-over-year)</th>
+                {% for key, value in metrics.items %}
+                <td class="text-center">{{ value.lines_commit_file_yoy | stringformat:"+.2f" }}%</td>
+                {% endfor %}
+            </tr>
+        </tbody>
+    </table>
+    <div id="chart-commits-compare"></div>
+</div>
