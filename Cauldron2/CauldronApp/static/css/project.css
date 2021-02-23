@@ -57,3 +57,152 @@
     max-height: 200px;
     overflow-x: hidden;
 }
+
+
+.nav-sidebar {
+    position: fixed;
+    z-index: 500;
+    width: 220px;
+    top: 56px;
+    bottom: 0;
+    left: 0;
+    background-color: #404040;
+    display: block;
+    border-top: 1px solid #444;
+}
+
+.sidebar-with-text {
+    width: 220px;
+}
+
+.sidebar-with-icons {
+    width: 50px;
+    height: 100%;
+    align-items: center;
+}
+
+.sidebar-with-icons aside {
+    width: 50px;
+}
+
+.sidebar-with-icons .sidebar-text {
+    display: none;
+}
+
+.sidebar-with-icons .sidebar-project-image {
+    padding-right: 10px;
+    padding-left: 10px;
+}
+
+.sidebar-with-icons .sidebar-header a {
+    padding: 5px;
+}
+
+.sidebar-content {
+    overflow-y: scroll;
+    height: 100%;
+    width: 100%;
+    overflow: auto;
+}
+
+.sidebar-header {
+    position: relative;
+    margin-right: 2px;
+    background-color: #303030;
+}
+.sidebar-header a {
+    color: white;
+    font-weight: 600;
+    padding: 15px;
+    width: 100%;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+}
+
+.sidebar-project-image {
+    width: 40px;
+    height: 40px;
+    background-color: #ddd;
+    font-size: 16px;
+    text-align: center;
+    align-items: center;
+    color: black;
+    line-height: 40px;
+}
+
+.sidebar-project-title {
+    margin-left: 6px;
+}
+
+ul.sidebar-item-list {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar-item-list li a {
+    display: flex;
+    align-items: center;
+    padding: 15px 15px;
+    color: #eeeeee;
+    text-decoration: none;
+}
+
+.toggle-sidebar {
+    color: white;
+    padding: 15px;
+    width: 100%;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    background-color: #303030;
+    position: fixed;
+    bottom: 0;
+    border-top: 1px solid #1a1a1a;
+    width: 50px;
+    cursor: pointer;
+}
+
+.sidebar-with-text .toggle-sidebar {
+    width: 220px;
+}
+
+.toggle-sidebar-button {
+    font-weight: 600;
+
+}
+
+.download-menu {
+    position: absolute;
+    background-color: #404040;
+    color: white;
+    left: 50px;
+    border: 1px solid #666;
+}
+
+.download-menu .sidebar-item {
+    width: 200px;
+    height: 46px;
+    font-size: 15px;
+}
+
+.sidebar-with-text .download-menu {
+    left: 220px;
+}
+
+.sidebar-item:hover {
+    background-color: #505050;
+}
+
+.sidebar-item.active {
+    background-color: #383838;
+}
+
+.download-toggle a:hover {
+    color: #eeeeee !important;
+}
+
+.subtitle {
+    font-weight: 300;
+    font-size: 0.5em;
+}

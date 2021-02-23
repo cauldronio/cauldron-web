@@ -7,7 +7,102 @@
 {% endblock %}
 
 
+{% block sidebar %}
+  <div id="sidebar" class="sidebar-with-icons">
+    <aside class="nav-sidebar nav-icons">
+      <div class="sidebar-content">
+        <div class="sidebar-header sidebar-item">
+          <a href="{% url 'show_project' project.id %}">
+            <div class="sidebar-project-image rounded-sm">
+              <span class="project-initial">
+                {{ project.name|slice:"1"|title }}
+              </span>
+            </div>
+            <div class="sidebar-project-title sidebar-text">{{ project.name }}</div>
+          </a>
+        </div>
+        <ul class="sidebar-item-list">
+
+          <li class="sidebar-item
+                    {% if request.resolver_match.url_name == 'show_project' %}
+                    active
+                    {% endif %}
+                    ">
+            <a href="{% url 'show_project' project.id %}">
+              <i class="fas fa-home"></i>
+              <span class="ml-3 sidebar-text">Overview</span>
+            </a>
+          </li>
+
+          <li class="sidebar-item
+                    {% if request.resolver_match.url_name == 'show_project_repos' %}
+                    active
+                    {% endif %}">
+            <a href="{% url 'show_project_repos' project.id %}">
+              <i class="far fa-list-alt"></i>
+              <span class="ml-3 sidebar-text">Data sources</span>
+            </a>
+          </li>
+        {% if editable %}
+          {% comment "Actions disabled" %}
+<!--          <li class="sidebar-item">-->
+<!--            <a href="{% url 'show_project_actions' project.id %}">-->
+<!--              <i class="fas fa-history"></i>-->
+<!--              <span class="ml-3 sidebar-text">Actions</span>-->
+<!--            </a>-->
+<!--          </li>-->
+          {% endcomment %}
+          {% if repositories_count > 0 %}
+          <li class="sidebar-item">
+            <a href="{% url 'open_workspace' project.id %}" target="_blank">
+              <i class="fas fa-chart-area"></i>
+              <span class="ml-3 mr-2 sidebar-text">Data workspace <small><i class="fas fa-external-link-alt"></i></small></span>
+
+            </a>
+          </li>
+          {% endif %}
+          {% if has_git and authenticated %}
+          <li class="sidebar-item download-toggle">
+            <div class="download-menu" style="display:none;">
+              <p class="dropdown-header">Commits data as csv</p>
+              <a class="sidebar-item disabled" href="#" id="download-git-csv-link">Download</a>
+              <a class="sidebar-item" href="#" id="generate-git-csv-link">
+                <div class="spinner-border spinner-border-sm mr-1" role="status"
+                     id="spinner-git-csv-create" style="display: none;">
+                  <span class="sr-only">Loading...</span>
+                </div>
+                Create new file
+              </a>
+            </div>
+            <a type="button" tabindex="0">
+              <i class="fas fa-file-download"></i>
+              <span class="ml-3 sidebar-text">Export data <i class=" ml-1 fas fa-caret-right"></i></span>
+
+            </a>
+          </li>
+          {% endif %}
+          {% if projects_compare and repositories_count > 0 %}
+          <li class="sidebar-item">
+            <a href="{% url 'compare_projects' %}?projects={{project.id}}">
+              <i class="fas fa-exchange-alt"></i>
+              <span class="ml-3 sidebar-text">Compare</span>
+            </a>
+          </li>
+          {% endif %}
+        {% endif %}
+        </ul>
+        <div class="toggle-sidebar sidebar-item">
+          <i id="toggle-sidebar-icon" class="fas fa-angle-double-right"></i>
+          <span class="ml-3 sidebar-text">Collapse sidebar</span>
+        </div>
+      </div>
+    </aside>
+  </div>
+{% endblock %}
+
+
 {% block content %}
+  <div class="project-content">
     <div class="container-fluid">
 
       <div class="p-md-4">
@@ -22,6 +117,12 @@
             {% include "cauldronapp/project/project_metrics.html" %}
           {% endif %}
         {% else %}
+          <button type="button" class="btn btn-icon-split btn-orange mb-sm-1"
+                  data-toggle="modal" data-target="#add-datasource-modal">
+            <span class="icon"><i class="fa fa-plus"></i></span>
+            <span class="text">Add data sources</span>
+          </button>
+
           <div class="alert alert-warning alert-dismissible fade show" role="alert">
             <div class="row">
               {% if editable %}
@@ -55,6 +156,8 @@
     {% include "cauldronapp/project/datasource_modals/meetup.html" %}
     {% include "cauldronapp/project/datasource_modals/gnome.html" %}
     {% include "cauldronapp/project/datasource_modals/kde.html" %}
+
+  </div>
 
 {% endblock %}
 

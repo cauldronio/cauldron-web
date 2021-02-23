@@ -253,3 +253,11 @@ table {
     height: 32px;
     width: 32px;
 }
+
+.site-content {
+    padding-top: 56px;
+}
+
+.content-moved {
+    margin-left: 50px;
+}

@@ -22,15 +22,20 @@ function deleteRepo(event) {
     var url_repo = $(`tr#repo-${id_repo} td.repo-url`).html();
 
     var deleteBtn = $(this);
-    deleteBtn.html(`<div class="spinner-border spinner-border-sm" role="status">
-                    <span class="sr-only">Loading...</span>
-                </div>`);
+    if (id_repo != 'all'){
+        deleteBtn.html(`<div class="spinner-border spinner-border-sm" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>`);
+    } else {
+        deleteBtn.html(`<span class="icon"><div class="spinner-border spinner-border-sm" role="status"></div></span>
+                        <span class="text">Removing...</span>`);
+    }
 
     $.post(url=`/project/${Project_ID}/repositories/remove`,
            data = {'repository': id_repo})
         .done(function (data) {
             if(id_repo == 'all') {
-                window.location.reload()
+                window.location.reload();
             } else {
                 showToast('Removed', `The repository <b>${url_repo}</b> was deleted from this project`, 'fas fa-check-circle text-success', 1500);
                 $(`tr#repo-${id_repo}`).remove();
@@ -43,7 +48,14 @@ function deleteRepo(event) {
                 showToast('Failed', `500 internal error`, 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
             }
         })
-        .always(function(){deleteBtn.html('Remove')})
+        .always(function(){
+            if (id_repo == 'all'){
+                deleteBtn.html(`<span class="icon"><i class="fa fa-trash-alt"></i></span>
+                                <span class="text">Remove all</span>`)
+            } else {
+                deleteBtn.html('Remove')
+            }
+        })
 
 }
 

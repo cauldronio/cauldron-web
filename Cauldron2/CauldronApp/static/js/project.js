@@ -17,6 +17,11 @@ $(document).ready(function(){
 
     $('.btn-datasource').click(onSelectDataSource);
 
+    $('.toggle-sidebar').click(toggleSidebar);
+
+    $('.download-toggle').hover(function(){$('.download-menu').show()});
+    $('.download-toggle').mouseleave(function(){$('.download-menu').hide()});
+
     getSummary();
 
     getOnGoingActions();
@@ -37,8 +42,8 @@ function onClickEditName(ev) {
 
 
 function reanalyzeEveryRepo(event){
-    $('#reanalyze-all-spinner-dynamic').show();
-    $('#reanalyze-all-spinner-static').hide();
+    $('.reanalyze-all-spinner-dynamic').show();
+    $('.reanalyze-all-spinner-static').hide();
     $.post(url =`/project/${Project_ID}/refresh`)
         .done(function (data) {
             if (data['status'] == 'reanalyze'){
@@ -49,7 +54,8 @@ function reanalyzeEveryRepo(event){
         })
         .fail(function (data) {
             showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
-            $('#reanalyze-all-spinner').html(`<i class="fa fa-sync"></i>`)
+            $('.reanalyze-all-spinner-dynamic').hide();
+            $('.reanalyze-all-spinner-static').show();
         })
 }
 
@@ -78,11 +84,11 @@ function getSummary() {
         }
         status_output += `. <b>Running:</b> ${data.running}`
         if (data.running > 0) {
-            $('#reanalyze-all-spinner-dynamic').show();
-            $('#reanalyze-all-spinner-static').hide();
+            $('.reanalyze-all-spinner-dynamic').show();
+            $('.reanalyze-all-spinner-static').hide();
         } else {
-            $('#reanalyze-all-spinner-dynamic').hide();
-            $('#reanalyze-all-spinner-static').show();
+            $('.reanalyze-all-spinner-dynamic').hide();
+            $('.reanalyze-all-spinner-static').show();
         }
         $('#num-repos').html(data.total);
         $('#general-status').html(status_output);
@@ -260,4 +266,18 @@ function getOnGoingActions(){
             setTimeout(getOnGoingActions, 3000);
         }
     });
+}
+
+
+/****************************
+ *   Collapse sidebar       *
+ ****************************/
+function toggleSidebar(){
+    if ($('#sidebar').hasClass('sidebar-with-text')) {
+        $('#sidebar').addClass('sidebar-with-icons').removeClass('sidebar-with-text');
+        $('#toggle-sidebar-icon').removeClass('fa-angle-double-left').addClass('fa-angle-double-right');
+    } else {
+        $('#sidebar').addClass('sidebar-with-text').removeClass('sidebar-with-icons');
+        $('#toggle-sidebar-icon').removeClass('fa-angle-double-right').addClass('fa-angle-double-left');
+    }
 }

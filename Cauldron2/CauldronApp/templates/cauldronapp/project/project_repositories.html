@@ -1,6 +1,36 @@
 {% load cauldron_tags %}
+<div class="row mb-1">
+  {% if editable %}
+  <div class="ml-3">
+    <button type="button" class="btn btn-icon-split btn-orange mb-sm-1"
+            data-toggle="modal" data-target="#add-datasource-modal">
+      <span class="icon"><i class="fa fa-plus"></i></span>
+      <span class="text">Add data sources</span>
+    </button>
+  </div>
 
-{{debug}}
+  <div class="ml-3">
+    <button type="button" class="btn btn-icon-split btn-orange btn-reanalyze-all">
+      <span class="icon reanalyze-all-spinner-dynamic" style="display: none;">
+        <div class="spinner-border spinner-border-sm" role="status">
+          <span class="sr-only">Loading...</span>
+        </div>
+      </span>
+      <span class="icon reanalyze-all-spinner-static">
+        <i class="fa fa-sync"></i>
+      </span>
+      <span class="text">Refresh all data sources</span>
+    </button>
+  </div>
+
+  <div class="ml-3">
+    <button type="button" class="btn btn-icon-split btn-outline-danger btn-delete" data-repo="all">
+      <span class="icon"><i class="fa fa-trash-alt"></i></span>
+      <span class="text">Remove all</span>
+    </button>
+  </div>
+  {% endif %}
+</div>
 
 
 <div class="table-responsive">
@@ -90,11 +120,4 @@
 
 <div class="d-flex flex-row justify-content-center">
     {% include "cauldronapp/utils/nav_pagination.html" %}
-    {% if editable %}
-    <div class="my-3 ml-2">
-      <button type="button" class="btn btn-outline-danger btn-delete" data-repo="all">
-        <i class="fa fa-trash-alt"></i> <small>Remove all</small>
-      </button>
-    </div>
-    {% endif %}
 </div>

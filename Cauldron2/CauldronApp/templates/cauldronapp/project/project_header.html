@@ -7,7 +7,7 @@
         <h1 id="project-name-container">
           <span id="project-name">{{project.name}}</span>
           {% if editable %}
-          <small><a href="#" id="rename"><i class="far fa-xs fa-edit"></i></a></small>
+          <span class="subtitle"><a href="#" id="rename"><i class="far fa-xs fa-edit"></i></a></span>
           {% endif %}
         </h1>
         <!-- End project name -->
@@ -32,89 +32,6 @@
         </span>
         {% endif %}
         <!-- End share button -->
-
-        {% if editable %}
-          <!-- My workspace -->
-          {% if repositories_count > 0 %}
-          <div class="ml-3 mb-1">
-            <a class="btn btn-icon-split btn-outline-dark"
-               data-toggle="tooltip" title="Edit your dashboards in Kibana"
-               href="{% url 'open_workspace' project.id %}"
-               target="_blank">
-               <span class="icon"><i class="fas fa-wrench"></i></span>
-               <span class="text">Data Workspace</span>
-            </a>
-          </div>
-          {% endif %}
-          <!-- End my workspace -->
-          <!-- Add data source -->
-          <div class="ml-3 mb-1">
-            <button type="button" class="btn btn-icon-split btn-orange mb-sm-1"
-                    data-toggle="modal" data-target="#add-datasource-modal">
-              <span class="icon"><i class="fa fa-plus"></i></span>
-              <span class="text">Add data sources</span>
-            </button>
-          </div>
-          <!-- End add data source -->
-          <!-- Compare -->
-          {% if projects_compare and repositories_count > 0 %}
-          <div class="ml-3 mb-1">
-              <select class="selectpicker" title="Compare" data-style="btn btn-orange text-light" data-selected-text-format="static" data-live-search="true" data-size="5" data-width="fit" onchange="location = this.value;">
-                  {% for project_compare in projects_compare %}
-                  <option value="{% url 'compare_projects' %}?projects={{project.pk}}&projects={{project_compare.pk}}">{{ project_compare.name }}</option>
-                  {% endfor %}
-              </select>
-          </div>
-          {% endif %}
-          <!-- End compare -->
-          <!-- Export data -->
-          {% if has_git and authenticated %}
-          <div class="dropdown ml-3 mb-1">
-
-            <button class="btn btn-icon-split btn-orange" type="button" id="dropdownGitCSV" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              <span class="icon" id="spinner-export-csv-btn" style="display: none;">
-                <div class="spinner-border spinner-border-sm" role="status">
-                  <span class="sr-only">Loading...</span>
-                </div>
-              </span>
-              <span class="icon" id="icon-export-csv-btn" >
-                <i class="fas fa-file-csv"></i>
-              </span>
-              <span class="text">Export data</span>
-            </button>
-
-            <div class="dropdown-menu" aria-labelledby="dropdownGitCSV">
-              <p class="dropdown-header">Commits data as csv</p>
-              <a class="dropdown-item disabled" href="#" id="download-git-csv-link">Download</a>
-              <a class="dropdown-item" href="#" id="generate-git-csv-link">
-                <div class="spinner-border spinner-border-sm" role="status"
-                     id="spinner-git-csv-create" style="display: none;">
-                  <span class="sr-only">Loading...</span>
-                </div>
-                Create new file
-              </a>
-            </div>
-          </div>
-          {% endif %}
-          <!-- End export data -->
-          <!-- Refresh all -->
-          {% if repositories_count > 0 %}
-          <div class="ml-3 mb-1">
-            <button type="button" class="btn btn-icon-split btn-orange btn-reanalyze-all">
-              <span class="icon" id="reanalyze-all-spinner-dynamic" style="display: none;">
-                <div class="spinner-border spinner-border-sm" role="status">
-                  <span class="sr-only">Loading...</span>
-                </div>
-              </span>
-              <span class="icon" id="reanalyze-all-spinner-static">
-                <i class="fa fa-sync"></i>
-              </span>
-              <span class="text">Refresh all data sources</span>
-            </button>
-          </div>
-          {% endif %}
-          <!-- End refresh all -->
-        {% endif %}
       </div>
     </div>
 
@@ -123,11 +40,6 @@
         <h3>Project information</h3>
         <b>Repositories:</b>
         <span id="num-repos">0</span><span id="general-status"><!--This content is generated via JS--></span>
-        {% if render_table %}
-        <a href="{% url 'show_project' project.id %}">Hide details</a>
-        {% else %}
-        <a href="{% url 'show_project_repos' project.id %}">Show details</a>
-        {% endif %}
         <div id="ongoing-actions" class="mt-2">
 
         </div>
@@ -140,6 +52,16 @@
   {% if project.is_outdated %}
   <div class="alert alert-warning alert-dismissible mb-0 mt-1 fade show" role="alert">
     <strong>Data outdated!</strong> Some of the analyzed repositories are not updated. The data could have inconsistencies...
+    {% if editable %}
+    <a type="button" class="btn-reanalyze-all text-primary">
+      <span class="icon reanalyze-all-spinner-dynamic" style="display: none;">
+        <div class="spinner-border spinner-border-sm" role="status">
+          <span class="sr-only">Loading...</span>
+        </div>
+      </span>
+      Refresh all data sources
+    </a>
+    {% endif %}
     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
       <span aria-hidden="true">&times;</span>
     </button>

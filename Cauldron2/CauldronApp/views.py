@@ -395,6 +395,7 @@ def request_show_project(request, project_id):
     context['has_gitlab'] = GitLabRepository.objects.filter(projects=project).exists()
     context['has_meetup'] = MeetupRepository.objects.filter(projects=project).exists()
     context['repos'] = project.repository_set.all().select_subclasses()
+    context['sidebar'] = True
 
     return render(request, 'cauldronapp/project/project.html', context=context)
 
@@ -416,6 +417,7 @@ def request_project_repositories(request, project_id):
     page_obj = p.pages.get_page(page_number)
     context['page_obj'] = page_obj
     context['pages_to_show'] = p.pages_to_show(page_obj.number)
+    context['sidebar'] = True
 
     return render(request, 'cauldronapp/project/project.html', context=context)
 

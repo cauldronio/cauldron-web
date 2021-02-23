@@ -89,7 +89,7 @@
 
 <body>
   <!-- BEGIN NAVBAR -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
     <div class="container-fluid">
       <a class="navbar-brand mr-auto" href="{% url 'homepage' %}">
         <img src="{% static '/img/cauldron-logo-white.png' %}" width="30" height="30" class="d-inline-block align-top" alt="">
@@ -206,9 +206,55 @@
   </div>
   <!-- END Toast list for notifications-->
 
-  <div class="site-content">
-  {% block content %}
-  {% endblock %}
+
+  <div>
+    {% block sidebar %}
+    {% endblock %}
+    <div class="site-content {% if sidebar %}content-moved{% endif %}">
+      {% block content %}
+      {% endblock %}
+      <footer class="footer-position bg-dark text-white pt-3">
+          <div class="container-fluid">
+            <div class="row">
+              <div class="col-md-3 offset-md-1">
+                <div><a href="https://bitergia.com" target="_blank"><img src="/static/img/bitergia-w-logo-s.png" alt="Bitergia" width="120"></a></div>
+                  <p style="display:inline-block">Copyright &copy; 2021 <a href="https://bitergia.com">Bitergium SLL.</a> and its
+                    contributors.</p>
+                  <p>Some Rights Reserved.</p>
+                  <p>
+                    <a href="{% url 'terms' %}" target="_blank">Terms</a> |
+                    <a href="{% url 'privacy' %}" target="_blank">Privacy</a> |
+                    <a href="{% url 'cookies' %}" target="_blank">Cookies Policy</a>
+                </p>
+              </div>
+              <div class="col-md-4">
+                <p><a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank">
+                  <img src="/static/img/by-sa.png" width="120" alt="Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)">
+                </a></p>
+                <p>Cauldron and the Cauldron logo are
+                  trademarks of <a href="https://bitergia.com" target="_blank">Bitergium SLL.</a> in the European Union and/or
+                  other jurisdictions. All other trademarks are the property of their respective holders.</p>
+              </div>
+              <div class="col-md-4">
+              <p>Made with <abbr title="love"><span style="color: red; font-size: 1.2rem;">&hearts;</span></abbr> and <strong><a href="https://cauldronio.gitlab.io" target="_blank">free, open source software</a></strong> based on:</p>
+              <p>
+                <a href="https://chaoss.github.io/grimoirelab/" target="_blank"><img src="/static/img/wizard-y.svg"
+                    height="24" alt=""> GrimoireLab</a> |
+                <a href="https://www.djangoproject.com/" target="_blank">Django</a> |
+                <a href="https://opendistro.github.io/for-elasticsearch/" target="_blank">Open Distro for Elasticsearch</a>
+              </p>
+              <p>
+                <a href="https://status.cauldron.io/">Status</a> |
+                Follow us on <a href="https://twitter.com/cauldronio" target="_blank"><i class="fab fa-twitter" style="background: none;"></i> @cauldronio</a> |
+                <a href="https://mailchi.mp/003f1e1f6242/cauldron-newsletter" target="_blank"><i class="fa fa-envelop"></i> Newsletter</a>
+              </p>
+
+            </div>
+            </div>
+          </div>
+
+      </footer>
+    </div>
   </div>
 
   <!-- BEGIN Container for modals -->
@@ -229,49 +275,6 @@
     </div>
   </div>
   <!-- END Container for modals-->
-
-
-  <footer class="container-fluid footer-position bg-dark text-white pt-3">
-
-
-      <div class="row">
-        <div class="col-md-3 offset-md-1">
-          <div><a href="https://bitergia.com" target="_blank"><img src="/static/img/bitergia-w-logo-s.png" alt="Bitergia" width="120"></a></div>
-            <p style="display:inline-block">Copyright &copy; 2021 <a href="https://bitergia.com">Bitergium SLL.</a> and its
-              contributors.</p>
-            <p>Some Rights Reserved.</p>
-            <p>
-              <a href="{% url 'terms' %}" target="_blank">Terms</a> |
-              <a href="{% url 'privacy' %}" target="_blank">Privacy</a> |
-              <a href="{% url 'cookies' %}" target="_blank">Cookies Policy</a>
-          </p>
-        </div>
-        <div class="col-md-4">
-          <p><a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank">
-            <img src="/static/img/by-sa.png" width="120" alt="Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)">
-          </a></p>
-          <p>Cauldron and the Cauldron logo are
-            trademarks of <a href="https://bitergia.com" target="_blank">Bitergium SLL.</a> in the European Union and/or
-            other jurisdictions. All other trademarks are the property of their respective holders.</p>
-        </div>
-        <div class="col-md-4">
-          <p>Made with <abbr title="love"><span style="color: red; font-size: 1.2rem;">&hearts;</span></abbr> and <strong><a href="https://cauldronio.gitlab.io" target="_blank">free, open source software</a></strong> based on:</p>
-          <p>
-            <a href="https://chaoss.github.io/grimoirelab/" target="_blank"><img src="/static/img/wizard-y.svg"
-                height="24" alt=""> GrimoireLab</a> |
-            <a href="https://www.djangoproject.com/" target="_blank">Django</a> |
-            <a href="https://opendistro.github.io/for-elasticsearch/" target="_blank">Open Distro for Elasticsearch</a>
-          </p>
-          <p>
-            <a href="https://status.cauldron.io/">Status</a> |
-            Follow us on <a href="https://twitter.com/cauldronio" target="_blank"><i class="fab fa-twitter" style="background: none;"></i> @cauldronio</a> |
-            <a href="https://mailchi.mp/003f1e1f6242/cauldron-newsletter" target="_blank"><i class="fa fa-envelop"></i> Newsletter</a>
-          </p>
-
-        </div>
-      </div>
-
-  </footer>
 
   <!-- jQuery first, then Popper.js, then Bootstrap JS -->
   <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
