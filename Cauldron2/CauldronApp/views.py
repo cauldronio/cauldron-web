@@ -277,6 +277,7 @@ def authenticate_user(request, backend, oauth_info, is_admin=False):
     :return: boolean, boolean. The user has been merged, the user is allowed to authenticate
     """
     if (settings.LIMITED_ACCESS and
+            not request.user.is_authenticated and
             not is_admin and
             not AuthorizedBackendUser.objects.filter(backend=backend, username=oauth_info.username).exists()):
         return False, False
