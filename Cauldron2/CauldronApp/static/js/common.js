@@ -51,6 +51,14 @@ $(document).ready(function () {
         )
         ev.preventDefault();
     });
+    $('#unlink-twitter').click(function(ev){
+        showModalAlert('Do you want to unlink your Twitter account?',
+                       'We will remove the relationship wih your Twitter account from our server. If you remove it, you will no longer receive notifications via Twitter.',
+                       `<button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close">No</button>
+                        <button type="button" class="btn btn-danger" onclick="unlinkAccount('twitter')" data-dismiss="modal">Yes</button>`
+        )
+        ev.preventDefault();
+    });
 
     /**
     * Send data to Share modal
@@ -195,6 +203,30 @@ function deleteToken(identity) {
             setTimeout(window.location.reload.bind(window.location), 2000)
         })
  }
+
+
+ /**
+  * Remove the relationship with a linked account
+  */
+ function unlinkAccount(identity) {
+     $.post(url = "/unlink-account",
+            data = {'identity': identity})
+         .done(function (data) {
+             showToast('Deleted', `Your <b>${identity} account</b> relationship has been removed`, 'fas fa-check-circle text-success', 5000);
+         })
+         .fail(function (data) {
+             if(!data.hasOwnProperty('responseJSON')){
+                 showToast('Unknown error from server', `Internal error.`, 'fas fa-question-circle text-danger', ERROR_TIMEOUT_MS);
+                 console.log(data.responseText);
+                 return;
+             }
+             showToast('Failed', `There was a problem: ${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
+         })
+         .always(function(){
+             setTimeout(window.location.reload.bind(window.location), 2000)
+         })
+  }
+
 
 function copy_kibana_public_link() {
   var project_id = $(this).attr('data-project-id');

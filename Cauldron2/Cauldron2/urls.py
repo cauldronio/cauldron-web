@@ -23,14 +23,17 @@ urlpatterns = [
     path('oauth/gitlab/<str:backend>', oauth.gitlab.start_oauth, name='gitlab_oauth'),
     path('oauth/github', oauth.github.start_oauth, name='github_oauth'),
     path('oauth/meetup', oauth.meetup.start_oauth, name='meetup_oauth'),
+    path('oauth/twitter', oauth.twitter.start_oauth, name='twitter_oauth'),
 
     path('github-login', views.request_github_oauth, name='github_callback'),
     path('gitlab-login/<str:backend>', views.request_gitlab_oauth, name='gitlab_callback'),
     path('meetup-login', views.request_meetup_oauth, name='meetup_callback'),
+    path('twitter-login', views.request_twitter_oauth, name='twitter_callback'),
 
     path('login', views.request_login, name='login_page'),
     path('logout', views.request_logout, name='logout_page'),
     path('delete-token', views.request_delete_token),
+    path('unlink-account', views.request_unlink_account),
 
     path('compare', views.request_compare_projects, name="compare_projects"),
     path('compare/metrics', views.request_compare_projects_metrics, name="compare_projects_metrics"),

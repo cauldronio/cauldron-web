@@ -75,6 +75,17 @@
   color: #fff;
 }
 
+.btn-twitter {
+  color: #fff;
+  background-color: #00ACEE;
+  border-color: #00ACEE;
+}
+
+.btn-twitter:hover {
+  background-color: #008ABE;
+  color: #fff;
+}
+
 .btn-orange {
     background-color: #F79C31;
     color: #fff;

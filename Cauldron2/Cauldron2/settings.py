@@ -27,6 +27,10 @@ GL_CLIENT_SECRET_GNOME = os.environ.get('GNOME_CLIENT_SECRET')
 GL_CLIENT_ID_KDE = os.environ.get('KDE_CLIENT_ID')
 GL_CLIENT_SECRET_KDE = os.environ.get('KDE_CLIENT_SECRET')
 
+# Twitter Oauth keys
+TWITTER_CLIENT_ID = os.environ.get('TWITTER_CLIENT_ID')
+TWITTER_CLIENT_SECRET = os.environ.get('TWITTER_CLIENT_SECRET')
+
 # Webserver
 CAULDRON_HOST = os.environ.get('CAULDRON_HOST')
 CAULDRON_PORT = os.environ.get('CAULDRON_PORT')
@@ -78,6 +82,7 @@ CAULDRON_ADMINS = {
     'MEETUP': json.loads(os.environ.get('MEETUP_ADMINS', '[]')),
     'GNOME': json.loads(os.environ.get('GNOME_ADMINS', '[]')),
     'KDE': json.loads(os.environ.get('KDE_ADMINS', '[]')),
+    'TWITTER': json.loads(os.environ.get('TWITTER_ADMINS', '[]')),
 }
 
 DEBUG = True

@@ -17,7 +17,7 @@ from Cauldron2 import settings
 
 from CauldronApp import kibana_objects, utils, datasources
 from CauldronApp.pages import Pages
-from CauldronApp.oauth import GitHubOAuth, GitLabOAuth, MeetupOAuth
+from CauldronApp.oauth import GitHubOAuth, GitLabOAuth, MeetupOAuth, TwitterOAuth
 from CauldronApp.project_metrics import metrics
 
 from poolsched.models import Intention, ArchivedIntention
@@ -257,6 +257,56 @@ def request_meetup_oauth(request):
     if data_add and data_add['backend'] == 'meetup':
         project = Project.objects.get(id=data_add['proj_id'])
         datasources.meetup.analyze_data(project, data_add['data'])
+
+    request.session['new_project'] = new_project_info
+    request.session['store_oauth'] = store_oauth
+
+    if last_page:
+        return HttpResponseRedirect(last_page)
+
+    return HttpResponseRedirect(reverse('homepage'))
+
+
+# TODO: Add state
+def request_twitter_oauth(request):
+    error = request.GET.get('error', None)
+    if error:
+        return custom_404(request, f"Twitter callback error. {error}")
+
+    oauth_token = request.GET.get('oauth_token', None)
+    if not oauth_token:
+        return custom_404(request, "OAuth Token not found in the Twitter callback")
+
+    oauth_verifier = request.GET.get('oauth_verifier', None)
+    if not oauth_verifier:
+        return custom_404(request, "OAuth Verifier not found in the Twitter callback")
+
+    redirect_uri = request.build_absolute_uri(reverse('twitter_callback'))
+    twitter = TwitterOAuth(settings.TWITTER_CLIENT_ID, settings.TWITTER_CLIENT_SECRET, redirect_uri)
+    error = twitter.authenticate(oauth_token, oauth_verifier)
+    if error:
+        return custom_500(request, error)
+    oauth_user = twitter.user_data()
+
+    is_admin = oauth_user.username in settings.CAULDRON_ADMINS['TWITTER']
+
+    # Save the state of the session
+    data_add = request.session.pop('add_repo', None)
+    last_page = request.session.pop('last_page', None)
+    new_project_info = request.session.get('new_project')
+    store_oauth = request.session.get('store_oauth')
+
+    merged, allowed = authenticate_user(request, 'twitter', oauth_user, is_admin)
+    if not allowed:
+        return custom_403(request, "You are not allowed to authenticate in this server. "
+                                   "Ask any of the administrators for permission.")
+
+    if merged:
+        request.session['alert_notification'] = {'title': 'Account merged',
+                                                 'message': f"You already had a Cauldron user with this Twitter account. "
+                                                            f"We have proceeded to merge all the projects and "
+                                                            f"visualization in you current account so that you do not "
+                                                            f"loose anything"}
 
     request.session['new_project'] = new_project_info
     request.session['store_oauth'] = store_oauth
@@ -1215,6 +1265,22 @@ def request_delete_token(request):
         IGLRaw.objects.filter(user=request.user, job__isnull=True, repo__instance=gl_instance).delete()
         IAddGLOwner.objects.filter(user=request.user, job__isnull=True, instance=gl_instance).delete()
         request.user.gltokens.filter(instance=gl_instance).delete()
+        return JsonResponse({'status': 'ok'})
+
+    return JsonResponse({'status': 'error', 'message': 'Unknown identity: {}'.format(identity)})
+
+
+def request_unlink_account(request):
+    """Function for removing a linked account from a user."""
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Only POST methods allowed'}, status=405)
+
+    if not request.user.is_authenticated:
+        return JsonResponse({'status': 'error', 'message': 'You are not logged in'}, status=401)
+
+    identity = request.POST.get('identity', None)
+    if identity == 'twitter':
+        OauthUser.objects.filter(user=request.user, backend='twitter').delete()
         return JsonResponse({'status': 'ok'})
 
     return JsonResponse({'status': 'error', 'message': 'Unknown identity: {}'.format(identity)})

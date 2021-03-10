@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from CauldronApp.views import create_context, delete_user
+from CauldronApp.models import OauthUser
 from cauldron_apps.poolsched_github.models import GHToken
 from cauldron_apps.poolsched_gitlab.models import GLToken, GLInstance
 from cauldron_apps.poolsched_meetup.models import MeetupToken
@@ -12,6 +13,9 @@ from .forms import ProfileEditForm
 def index(request):
     context = create_context(request)
     context['user'] = request.user
+    context['linked_accounts'] = {
+        'twitter': OauthUser.objects.filter(user=request.user, backend='twitter').first(),
+    }
     context['tokens'] = {
         'github': GHToken.objects.filter(user=request.user, instance='GitHub').first(),
         'meetup': MeetupToken.objects.filter(user=request.user).first(),
