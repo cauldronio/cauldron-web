@@ -24,7 +24,7 @@
   </div>
 
   <div class="ml-3">
-    <button type="button" class="btn btn-icon-split btn-outline-danger btn-delete" data-repo="all">
+    <button type="button" class="btn btn-icon-split btn-outline-danger btn-delete-repo" data-repo="all">
       <span class="icon"><i class="fa fa-trash-alt"></i></span>
       <span class="text">Remove all</span>
     </button>
@@ -84,7 +84,7 @@
         </td>
         {% if editable %}
         <td>
-            <button type="button" class="btn btn-sm btn-outline-danger btn-delete" data-repo="{{repo.id}}">
+            <button type="button" class="btn btn-sm btn-outline-danger btn-delete-repo" data-repo="{{repo.id}}">
               <i class="fa fa-trash-alt"></i> <small>Remove</small>
             </button>
         </td>

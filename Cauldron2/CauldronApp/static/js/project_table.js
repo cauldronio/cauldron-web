@@ -1,7 +1,7 @@
 var LogsInterval;
 
 $(document).ready(function(){
-    $('.btn-delete').click(deleteRepo);
+
 
     $('.btn-reanalyze').click(reanalyzeRepo);
 
@@ -14,50 +14,6 @@ $(document).ready(function(){
     refreshTable();
 });
 
-
-function deleteRepo(event) {
-    var button = $(event.currentTarget);
-    var id_repo = button.attr('data-repo');
-    var backend = $(`tr#repo-${id_repo}`).attr('data-backend');
-    var url_repo = $(`tr#repo-${id_repo} td.repo-url`).html();
-
-    var deleteBtn = $(this);
-    if (id_repo != 'all'){
-        deleteBtn.html(`<div class="spinner-border spinner-border-sm" role="status">
-                        <span class="sr-only">Loading...</span>
-                    </div>`);
-    } else {
-        deleteBtn.html(`<span class="icon"><div class="spinner-border spinner-border-sm" role="status"></div></span>
-                        <span class="text">Removing...</span>`);
-    }
-
-    $.post(url=`/project/${Project_ID}/repositories/remove`,
-           data = {'repository': id_repo})
-        .done(function (data) {
-            if(id_repo == 'all') {
-                window.location.reload();
-            } else {
-                showToast('Removed', `The repository <b>${url_repo}</b> was deleted from this project`, 'fas fa-check-circle text-success', 1500);
-                $(`tr#repo-${id_repo}`).remove();
-            }
-        })
-        .fail(function (data) {
-            if (data.responseJSON){
-                showToast('Failed', `${data.responseJSON['status']}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
-            } else {
-                showToast('Failed', `500 internal error`, 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
-            }
-        })
-        .always(function(){
-            if (id_repo == 'all'){
-                deleteBtn.html(`<span class="icon"><i class="fa fa-trash-alt"></i></span>
-                                <span class="text">Remove all</span>`)
-            } else {
-                deleteBtn.html('Remove')
-            }
-        })
-
-}
 
 function reanalyzeRepo(event){
     var button = $(event.currentTarget);

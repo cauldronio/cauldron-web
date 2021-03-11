@@ -1,0 +1,84 @@
+{% load cauldron_tags %}
+
+<h2>Actions
+  <span class="subtitle" data-toggle="tooltip" data-placement="bottom" title="Experimental feature">
+    <i class="fas fa-flask"></i>
+  </span></h2>
+<div class="card">
+  <div class="card-body">
+    <p>Check the actions executed to set up the list of data source repositories of this project. Actions page allow you to re-run all or remove any of them to update the list of the tracked data source repositories.</p>
+    <p>This is an experimental feature that is not available for old projects.</p>
+  </div>
+</div>
+
+
+<div class="row mb-1">
+  {% if editable %}
+  <div class="ml-3">
+    <button type="button" class="btn btn-icon-split btn-orange mb-sm-1"
+            data-toggle="modal" data-target="#add-datasource-modal">
+      <span class="icon"><i class="fa fa-plus"></i></span>
+      <span class="text">Add data sources</span>
+    </button>
+  </div>
+
+  <div class="ml-3">
+    <form action="{% url 'refresh_project_actions' project_id=project.id %}" method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-icon-split btn-orange">
+        <span class="icon">
+          <i class="fa fa-sync"></i>
+        </span>
+        <span class="text">Rerun all actions</span>
+      </button>
+    </form>
+  </div>
+
+  <div class="ml-3">
+    <button type="button" class="btn btn-icon-split btn-outline-danger btn-delete-repo" data-repo="all">
+      <span class="icon"><i class="fa fa-trash-alt"></i></span>
+      <span class="text">Remove all actions</span>
+    </button>
+  </div>
+  {% endif %}
+</div>
+
+
+<div class="table-responsive">
+  <table id="actions-table" class="table">
+    <thead>
+      <tr>
+        <th scope="col">Data source</th>
+        <th scope="col">Action</th>
+        <th scope="col">Date</th>
+        {% if editable %}
+        <th scope="col"></th>
+        <th scope="col"></th>
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for action in actions %}
+      <tr id="action-{{action.id}}" data-action-id="{{action.id}}">
+        <td class="data-source">
+          <i class="{{action.data_source_ui | backend_name_fa_icon}}"></i>
+          {{ action.data_source_ui | title }}
+        </td>
+        <td class="action-name">
+          {{ action.name_ui | safe }}
+        </td>
+        <td class="action-date">
+          {{action.created}}
+        </td>
+        {% if editable %}
+        <td>
+            <button type="button" class="btn btn-sm btn-outline-danger action-delete" data-action="{{action.id}}">
+              <i class="fa fa-trash-alt"></i> <small>Remove</small>
+            </button>
+        </td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

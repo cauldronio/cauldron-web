@@ -26,6 +26,7 @@ from cauldron_apps.poolsched_github.models import GHToken, IGHRaw
 from cauldron_apps.poolsched_gitlab.models import GLToken, GLInstance, IGLRaw
 from cauldron_apps.poolsched_meetup.models import MeetupToken, IMeetupRaw
 from cauldron_apps.poolsched_export.models.iexportgit import IExportGitCSV
+from cauldron_apps.cauldron_actions.models import IRefreshActions
 from cauldron_apps.cauldron.models import IAddGHOwner, IAddGLOwner, Project, OauthUser, AnonymousUser, \
     UserWorkspace, ProjectRole, Repository, GitLabRepository, GitRepository, GitHubRepository, MeetupRepository, \
     AuthorizedBackendUser
@@ -419,6 +420,7 @@ def project_common(request, project_id):
     If project does not exist, raise exception"""
     project = Project.objects.get(pk=project_id)
     context = create_context(request)
+    context['sidebar'] = True
     context['project'] = project
     context['repositories_count'] = project.repository_set.count()
     context['has_git'] = GitRepository.objects.filter(projects=project).exists()
@@ -440,13 +442,12 @@ def request_show_project(request, project_id):
     except Project.DoesNotExist:
         return custom_404(request, "The project requested was not found in this server")
 
-    context['render_table'] = False
+    context['show_project_home'] = True
     context['has_git'] = GitRepository.objects.filter(projects=project).exists()
     context['has_github'] = GitHubRepository.objects.filter(projects=project).exists()
     context['has_gitlab'] = GitLabRepository.objects.filter(projects=project).exists()
     context['has_meetup'] = MeetupRepository.objects.filter(projects=project).exists()
     context['repos'] = project.repository_set.all().select_subclasses()
-    context['sidebar'] = True
 
     return render(request, 'cauldronapp/project/project.html', context=context)
 
@@ -461,19 +462,64 @@ def request_project_repositories(request, project_id):
     except Project.DoesNotExist:
         return custom_404(request, "The project requested was not found in this server")
 
-    context['render_table'] = True
+    context['show_table'] = True
     repositories = project.repository_set.all()
     p = Pages(repositories.select_subclasses(), 10)
     page_number = request.GET.get('page', 1)
     page_obj = p.pages.get_page(page_number)
     context['page_obj'] = page_obj
     context['pages_to_show'] = p.pages_to_show(page_obj.number)
-    context['sidebar'] = True
 
     return render(request, 'cauldronapp/project/project.html', context=context)
 
 
-def request_repo_actions(request, repo_id):
+def request_project_actions(request, project_id):
+    """Render a view for all the actions for a project"""
+    try:
+        project, context = project_common(request, project_id)
+    except Project.DoesNotExist:
+        return custom_404(request, "The project requested was not found in this server")
+
+    context['show_actions'] = True
+    context['actions'] = project.action_set.select_subclasses()
+
+    return render(request, 'cauldronapp/project/project.html', context=context)
+
+
+def request_project_actions_refresh(request, project_id):
+    if request.method != 'POST':
+        return custom_405(request, request.method)
+    try:
+        project = Project.objects.get(pk=project_id)
+    except Project.DoesNotExist:
+        return custom_404(request, "The project requested was not found in this server")
+
+    if not request.user.is_authenticated and request.user != project.creator and not request.user.is_superuser:
+        return custom_403(request)
+
+    IRefreshActions.objects.create(user=project.creator, project=project)
+
+    return HttpResponseRedirect(reverse('show_project_actions', kwargs={'project_id': project.id}))
+
+
+def request_project_actions_remove(request, project_id):
+    try:
+        project = Project.objects.get(pk=project_id)
+    except Project.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Project not found'}, status=404)
+
+    if not request.user.is_authenticated and request.user != project.creator and not request.user.is_superuser:
+        return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
+
+    action_id = request.POST.get('action_id', None)
+    if action_id is None:
+        return JsonResponse({'status': 'error', 'message': 'action_id not defined'}, status=404)
+
+    project.action_set.filter(id=action_id).delete()
+    return JsonResponse({'status': 'ok'})
+
+
+def request_repo_intentions(request, repo_id):
     """View for a repository. It shows all the intentions related"""
     context = create_context(request)
     try:

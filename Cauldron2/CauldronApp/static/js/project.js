@@ -19,13 +19,39 @@ $(document).ready(function(){
 
     $('.toggle-sidebar').click(toggleSidebar);
 
-    $('.download-toggle').hover(function(){$('.download-menu').show()});
-    $('.download-toggle').mouseleave(function(){$('.download-menu').hide()});
+    $('.action-delete').click(removeAction);
+
+    $('.btn-delete-repo').click(deleteRepo);
+
+    $('.sidebar-item').hover(showFlyOutMenu);
+    $('.sidebar-item').mouseleave(hideFlyOutMenu);
 
     getSummary();
 
     getOnGoingActions();
 });
+
+
+function showFlyOutMenu(event) {
+    console.log('enter')
+    console.log($(event.currentTarget).find('.fly-out-menu').show())
+}
+
+function hideFlyOutMenu(event) {
+    console.log('leave')
+    console.log($(event.currentTarget).find('.fly-out-menu').hide())
+}
+
+function removeAction(event) {
+    var action_id = $(event.currentTarget).data('action');
+    $.post(url=`/project/${Project_ID}/actions/remove`, data={'action_id': action_id})
+        .done(function(data) {
+            window.location.reload();
+        })
+        .fail(function(data) {
+           showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
+        })
+}
 
 
 function onClickEditName(ev) {
@@ -96,8 +122,22 @@ function getSummary() {
         if (data.project_csv) {
             manageCSVStatus(data.project_csv);
         }
+        manageRefreshActionsStatus(data.refresh_actions);
     });
     setTimeout(getSummary, 5000, Project_ID);
+}
+
+
+function manageRefreshActionsStatus(running){
+    var exists_div = $('.refresh-actions-status').length > 0
+    if (running && !exists_div) {
+        var div = $('<div/>').addClass("alert alert-info row align-items-center refresh-actions-status");
+        div.append('<div class="col-auto"><div class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div></div>');
+        div.append(`<div class="col">Rerunning actions for this project</div>`);
+        $('#ongoing-actions').append(div);
+    } else if (!running) {
+        $('.refresh-actions-status').remove();
+    }
 }
 
 
@@ -201,6 +241,50 @@ function toggle_descriptions() {
 }
 
 
+function deleteRepo(event) {
+    var button = $(event.currentTarget);
+    var id_repo = button.attr('data-repo');
+    var backend = $(`tr#repo-${id_repo}`).attr('data-backend');
+    var url_repo = $(`tr#repo-${id_repo} td.repo-url`).html();
+
+    var deleteBtn = $(this);
+    if (id_repo != 'all'){
+        deleteBtn.html(`<div class="spinner-border spinner-border-sm" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>`);
+    } else {
+        deleteBtn.html(`<span class="icon"><div class="spinner-border spinner-border-sm" role="status"></div></span>
+                        <span class="text">Removing...</span>`);
+    }
+
+    $.post(url=`/project/${Project_ID}/repositories/remove`,
+           data = {'repository': id_repo})
+        .done(function (data) {
+            if(id_repo == 'all') {
+                window.location.reload();
+            } else {
+                showToast('Removed', `The repository <b>${url_repo}</b> was deleted from this project`, 'fas fa-check-circle text-success', 1500);
+                $(`tr#repo-${id_repo}`).remove();
+            }
+        })
+        .fail(function (data) {
+            if (data.responseJSON){
+                showToast('Failed', `${data.responseJSON['status']}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
+            } else {
+                showToast('Failed', `500 internal error`, 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
+            }
+        })
+        .always(function(){
+            if (id_repo == 'all'){
+                deleteBtn.html(`<span class="icon"><i class="fa fa-trash-alt"></i></span>
+                                <span class="text">Remove all</span>`)
+            } else {
+                deleteBtn.html('Remove')
+            }
+        })
+}
+
+
 /****************************
  *    ADD DATA SOURCES      *
  ****************************/
@@ -273,11 +357,16 @@ function getOnGoingActions(){
  *   Collapse sidebar       *
  ****************************/
 function toggleSidebar(){
+    $('.sidebar-item').unbind('mouseenter mouseleave');
     if ($('#sidebar').hasClass('sidebar-with-text')) {
         $('#sidebar').addClass('sidebar-with-icons').removeClass('sidebar-with-text');
         $('#toggle-sidebar-icon').removeClass('fa-angle-double-left').addClass('fa-angle-double-right');
+        $('.sidebar-item').hover(showFlyOutMenu);
+        $('.sidebar-item').mouseleave(hideFlyOutMenu);
     } else {
         $('#sidebar').addClass('sidebar-with-text').removeClass('sidebar-with-icons');
         $('#toggle-sidebar-icon').removeClass('fa-angle-double-right').addClass('fa-angle-double-left');
+        $('.download-toggle').hover(function(){$('.download-menu').show()});
+        $('.download-toggle').mouseleave(function(){$('.download-menu').hide()});
     }
 }

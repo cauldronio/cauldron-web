@@ -172,7 +172,7 @@ ul.sidebar-item-list {
 
 }
 
-.download-menu {
+.fly-out-menu {
     position: absolute;
     background-color: #404040;
     color: white;
@@ -180,13 +180,19 @@ ul.sidebar-item-list {
     border: 1px solid #666;
 }
 
-.download-menu .sidebar-item {
+.fly-out-menu .sidebar-item {
     width: 200px;
     height: 46px;
     font-size: 15px;
+    color: white;
+    display: flex;
+    align-items: center;
+    padding: 15px 15px;
+    color: #eeeeee;
+    text-decoration: none;
 }
 
-.sidebar-with-text .download-menu {
+.sidebar-with-text .fly-out-menu {
     left: 220px;
 }
 

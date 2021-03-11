@@ -50,13 +50,16 @@ urlpatterns = [
     path('project/<int:project_id>/delete', views.request_delete_project, name="delete_project"),
     path('project/<int:project_id>/public-kibana', views.request_public_kibana, name="open_public_kibana"),
     path('project/<int:project_id>/repositories', views.request_project_repositories, name="show_project_repos"),
+    path('project/<int:project_id>/actions', views.request_project_actions, name="show_project_actions"),
+    path('project/<int:project_id>/actions/refresh', views.request_project_actions_refresh, name="refresh_project_actions"),
+    path('project/<int:project_id>/actions/remove', views.request_project_actions_remove, name="remove_project_actions"),
     path('project/<int:project_id>/repositories/add', views.request_add_to_project, name="add_project_repos"),
     path('project/<int:project_id>/repositories/remove', views.request_remove_from_project, name="remove_project_repos"),
     path('project/<int:project_id>/ongoing-owners', views.request_ongoing_owners, name='project_ongoing_owners'),
     path('project/<int:project_id>/create-git-csv', views.request_create_git_csv, name='project_create_git_csv'),
 
     path('repository/<int:repo_id>/refresh', views.request_refresh_repository, name='refresh_repository'),
-    path('repository/<int:repo_id>/actions', views.request_repo_actions, name='show_repository_actions'),
+    path('repository/<int:repo_id>/actions', views.request_repo_intentions, name='show_repository_intentions'),
     path('repositories/info', views.request_repos_info),
 
     path('logs/<int:logs_id>', views.request_logs, name='show_logs'),
