@@ -8,6 +8,7 @@ $(document).ready(function(){
     $('form#gl_add').submit(submitBackend);
     $('form#meetup_add').submit(submitBackend);
     $('form#git_add').submit(submitBackend);
+    $('form#stack_add').submit(submitBackend);
 
     $('#rename').click(onClickEditName);
 
@@ -107,6 +108,9 @@ function getSummary() {
         }
         if (data.meetup){
             status_output += `. <b>Meetup:</b> ${data.meetup}`
+        }
+        if (data.stackexchange){
+            status_output += `. <b>StackExchange:</b> ${data.stackexchange}`
         }
         status_output += `. <b>Running:</b> ${data.running}`
         if (data.running > 0) {

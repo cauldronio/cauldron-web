@@ -43,6 +43,7 @@
       <a id="link-tab-meetup" class="dropdown-item" href="#tab-meetup">Meetup</a>
       <a id="link-tab-gnome" class="dropdown-item" href="#tab-gnome">GNOME (GitLab)</a>
       <a id="link-tab-kde" class="dropdown-item" href="#tab-kde">KDE (GitLab)</a>
+      <a id="link-tab-stack" class="dropdown-item" href="#tab-stack">Stack Exchange</a>
     </div>
   </div>
 
@@ -64,6 +65,9 @@
     </div>
     <div class="tab-pane" id="tab-meetup" role="tabpanel">
     {% include "cauldronapp/create_project/datasource_card/meetup.html" %}
+    </div>
+    <div class="tab-pane" id="tab-stack" role="tabpanel">
+    {% include "cauldronapp/create_project/datasource_card/stackexchange.html" %}
     </div>
   </div>
 
@@ -105,7 +109,7 @@
           <i class="{{ action.instance | backend_name_fa_icon}}"></i>
           {% endif %}
         </div>
-        <div class="col-lg-1 col-md-2">
+        <div class="col">
           {% if action.backend == 'gitlab' and action.instance != 'gitlab' %}
           <p class="mt-0 mb-1 font-weight-bold">{{ action.instance | title }} ({{ action.backend | title }})</p>
           {% else %}

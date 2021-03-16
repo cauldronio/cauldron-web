@@ -51,6 +51,14 @@ $(document).ready(function () {
         )
         ev.preventDefault();
     });
+    $('#delete-stack-token').click(function(ev){
+        showModalAlert('Do you want to delete your StackExchange token?',
+                       'We will delete your personal Token from our server. If you delete it, all the pending tasks for that token will be stopped.',
+                       `<button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close">No</button>
+                        <button type="button" class="btn btn-danger" onclick="deleteToken('stackexchange')" data-dismiss="modal">Yes</button>`
+        )
+        ev.preventDefault();
+    });
     $('#unlink-twitter').click(function(ev){
         showModalAlert('Do you want to unlink your Twitter account?',
                        'We will remove the relationship wih your Twitter account from our server. If you remove it, you will no longer receive notifications via Twitter.',

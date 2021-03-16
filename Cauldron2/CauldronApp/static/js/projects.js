@@ -62,6 +62,7 @@ function refreshProjects() {
             $('#project-' + project.id + '-gnome').html(project.gnome);
             $('#project-' + project.id + '-kde').html(project.kde);
             $('#project-' + project.id + '-meetup').html(project.meetup);
+            $('#project-' + project.id + '-stack').html(project.stackexchange);
             $('#project-' + project.id + '-running').html(project.running);
             if (project.running > 0) {
                 $('#spinner-' + project.id).show();

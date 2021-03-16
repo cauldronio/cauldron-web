@@ -1,0 +1,228 @@
+<div class="modal fade" id="add-stackexchange-modal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Add a data source (2/2)</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="container-fluid">
+          <form action="" method="post" id="stack_add">
+            {% csrf_token %}
+            <div class="card-body">
+              <div class="form-group">
+                <input type="hidden" name="backend" value="stackexchange">
+                <input type="hidden" name="action" value="add">
+                <div class="form-row">
+                  <div class="col-4 mb-3">
+                    <label for="stack_data_site" class="font-weight-bold">Site</label>
+                    <select id="stack_data_site" name="site" class="selectpicker form-control custom-select" data-live-search="true" data-dropup-auto="false">
+                      <option data-tokens="stackoverflow" value="stackoverflow.com">Stack Overflow</option>
+                      <option data-tokens="serverfault" value="serverfault.com">Server Fault</option>
+                      <option data-tokens="superuser" value="superuser.com">Super User</option>
+                      <option data-tokens="meta" value="meta.stackexchange.com">Meta Stack Exchange</option>
+                      <option data-tokens="webapps" value="webapps.stackexchange.com">Web Applications</option>
+                      <option data-tokens="gaming" value="gaming.stackexchange.com">Arqade</option>
+                      <option data-tokens="webmasters" value="webmasters.stackexchange.com">Webmasters</option>
+                      <option data-tokens="cooking" value="cooking.stackexchange.com">Seasoned Advice</option>
+                      <option data-tokens="gamedev" value="gamedev.stackexchange.com">Game Development</option>
+                      <option data-tokens="photo" value="photo.stackexchange.com">Photography</option>
+                      <option data-tokens="stats" value="stats.stackexchange.com">Cross Validated</option>
+                      <option data-tokens="math" value="math.stackexchange.com">Mathematics</option>
+                      <option data-tokens="diy" value="diy.stackexchange.com">Home Improvement</option>
+                      <option data-tokens="gis" value="gis.stackexchange.com">Geographic Information Systems</option>
+                      <option data-tokens="tex" value="tex.stackexchange.com">TeX - LaTeX</option>
+                      <option data-tokens="askubuntu" value="askubuntu.com">Ask Ubuntu</option>
+                      <option data-tokens="money" value="money.stackexchange.com">Personal Finance &amp; Money</option>
+                      <option data-tokens="english" value="english.stackexchange.com">English Language &amp; Usage</option>
+                      <option data-tokens="stackapps" value="stackapps.com">Stack Apps</option>
+                      <option data-tokens="ux" value="ux.stackexchange.com">User Experience</option>
+                      <option data-tokens="unix" value="unix.stackexchange.com">Unix &amp; Linux</option>
+                      <option data-tokens="wordpress" value="wordpress.stackexchange.com">WordPress Development</option>
+                      <option data-tokens="cstheory" value="cstheory.stackexchange.com">Theoretical Computer Science</option>
+                      <option data-tokens="apple" value="apple.stackexchange.com">Ask Different</option>
+                      <option data-tokens="rpg" value="rpg.stackexchange.com">Role-playing Games</option>
+                      <option data-tokens="bicycles" value="bicycles.stackexchange.com">Bicycles</option>
+                      <option data-tokens="softwareengineering" value="softwareengineering.stackexchange.com">Software Engineering</option>
+                      <option data-tokens="electronics" value="electronics.stackexchange.com">Electrical Engineering</option>
+                      <option data-tokens="android" value="android.stackexchange.com">Android Enthusiasts</option>
+                      <option data-tokens="boardgames" value="boardgames.stackexchange.com">Board &amp; Card Games</option>
+                      <option data-tokens="physics" value="physics.stackexchange.com">Physics</option>
+                      <option data-tokens="homebrew" value="homebrew.stackexchange.com">Homebrewing</option>
+                      <option data-tokens="security" value="security.stackexchange.com">Information Security</option>
+                      <option data-tokens="writing" value="writing.stackexchange.com">Writing</option>
+                      <option data-tokens="video" value="video.stackexchange.com">Video Production</option>
+                      <option data-tokens="graphicdesign" value="graphicdesign.stackexchange.com">Graphic Design</option>
+                      <option data-tokens="dba" value="dba.stackexchange.com">Database Administrators</option>
+                      <option data-tokens="scifi" value="scifi.stackexchange.com">Science Fiction &amp; Fantasy</option>
+                      <option data-tokens="codereview" value="codereview.stackexchange.com">Code Review</option>
+                      <option data-tokens="codegolf" value="codegolf.stackexchange.com">Code Golf</option>
+                      <option data-tokens="quant" value="quant.stackexchange.com">Quantitative Finance</option>
+                      <option data-tokens="pm" value="pm.stackexchange.com">Project Management</option>
+                      <option data-tokens="skeptics" value="skeptics.stackexchange.com">Skeptics</option>
+                      <option data-tokens="fitness" value="fitness.stackexchange.com">Physical Fitness</option>
+                      <option data-tokens="drupal" value="drupal.stackexchange.com">Drupal Answers</option>
+                      <option data-tokens="mechanics" value="mechanics.stackexchange.com">Motor Vehicle Maintenance &amp; Repair</option>
+                      <option data-tokens="parenting" value="parenting.stackexchange.com">Parenting</option>
+                      <option data-tokens="sharepoint" value="sharepoint.stackexchange.com">SharePoint</option>
+                      <option data-tokens="music" value="music.stackexchange.com">Music: Practice &amp; Theory</option>
+                      <option data-tokens="sqa" value="sqa.stackexchange.com">Software Quality Assurance &amp; Testing</option>
+                      <option data-tokens="judaism" value="judaism.stackexchange.com">Mi Yodeya</option>
+                      <option data-tokens="german" value="german.stackexchange.com">German Language</option>
+                      <option data-tokens="japanese" value="japanese.stackexchange.com">Japanese Language</option>
+                      <option data-tokens="philosophy" value="philosophy.stackexchange.com">Philosophy</option>
+                      <option data-tokens="gardening" value="gardening.stackexchange.com">Gardening &amp; Landscaping</option>
+                      <option data-tokens="travel" value="travel.stackexchange.com">Travel</option>
+                      <option data-tokens="crypto" value="crypto.stackexchange.com">Cryptography</option>
+                      <option data-tokens="dsp" value="dsp.stackexchange.com">Signal Processing</option>
+                      <option data-tokens="french" value="french.stackexchange.com">French Language</option>
+                      <option data-tokens="christianity" value="christianity.stackexchange.com">Christianity</option>
+                      <option data-tokens="bitcoin" value="bitcoin.stackexchange.com">Bitcoin</option>
+                      <option data-tokens="linguistics" value="linguistics.stackexchange.com">Linguistics</option>
+                      <option data-tokens="hermeneutics" value="hermeneutics.stackexchange.com">Biblical Hermeneutics</option>
+                      <option data-tokens="history" value="history.stackexchange.com">History</option>
+                      <option data-tokens="bricks" value="bricks.stackexchange.com">Bricks</option>
+                      <option data-tokens="spanish" value="spanish.stackexchange.com">Spanish Language</option>
+                      <option data-tokens="scicomp" value="scicomp.stackexchange.com">Computational Science</option>
+                      <option data-tokens="movies" value="movies.stackexchange.com">Movies &amp; TV</option>
+                      <option data-tokens="chinese" value="chinese.stackexchange.com">Chinese Language</option>
+                      <option data-tokens="biology" value="biology.stackexchange.com">Biology</option>
+                      <option data-tokens="poker" value="poker.stackexchange.com">Poker</option>
+                      <option data-tokens="mathematica" value="mathematica.stackexchange.com">Mathematica</option>
+                      <option data-tokens="psychology" value="psychology.stackexchange.com">Psychology &amp; Neuroscience</option>
+                      <option data-tokens="outdoors" value="outdoors.stackexchange.com">The Great Outdoors</option>
+                      <option data-tokens="martialarts" value="martialarts.stackexchange.com">Martial Arts</option>
+                      <option data-tokens="sports" value="sports.stackexchange.com">Sports</option>
+                      <option data-tokens="academia" value="academia.stackexchange.com">Academia</option>
+                      <option data-tokens="cs" value="cs.stackexchange.com">Computer Science</option>
+                      <option data-tokens="workplace" value="workplace.stackexchange.com">The Workplace</option>
+                      <option data-tokens="windowsphone" value="windowsphone.stackexchange.com">Windows Phone</option>
+                      <option data-tokens="chemistry" value="chemistry.stackexchange.com">Chemistry</option>
+                      <option data-tokens="chess" value="chess.stackexchange.com">Chess</option>
+                      <option data-tokens="raspberrypi" value="raspberrypi.stackexchange.com">Raspberry Pi</option>
+                      <option data-tokens="russian" value="russian.stackexchange.com">Russian Language</option>
+                      <option data-tokens="islam" value="islam.stackexchange.com">Islam</option>
+                      <option data-tokens="salesforce" value="salesforce.stackexchange.com">Salesforce</option>
+                      <option data-tokens="patents" value="patents.stackexchange.com">Ask Patents</option>
+                      <option data-tokens="genealogy" value="genealogy.stackexchange.com">Genealogy &amp; Family History</option>
+                      <option data-tokens="robotics" value="robotics.stackexchange.com">Robotics</option>
+                      <option data-tokens="expressionengine" value="expressionengine.stackexchange.com">ExpressionEngine&#174; Answers</option>
+                      <option data-tokens="politics" value="politics.stackexchange.com">Politics</option>
+                      <option data-tokens="anime" value="anime.stackexchange.com">Anime &amp; Manga</option>
+                      <option data-tokens="magento" value="magento.stackexchange.com">Magento</option>
+                      <option data-tokens="ell" value="ell.stackexchange.com">English Language Learners</option>
+                      <option data-tokens="sustainability" value="sustainability.stackexchange.com">Sustainable Living</option>
+                      <option data-tokens="tridion" value="tridion.stackexchange.com">Tridion</option>
+                      <option data-tokens="reverseengineering" value="reverseengineering.stackexchange.com">Reverse Engineering</option>
+                      <option data-tokens="networkengineering" value="networkengineering.stackexchange.com">Network Engineering</option>
+                      <option data-tokens="opendata" value="opendata.stackexchange.com">Open Data</option>
+                      <option data-tokens="freelancing" value="freelancing.stackexchange.com">Freelancing</option>
+                      <option data-tokens="blender" value="blender.stackexchange.com">Blender</option>
+                      <option data-tokens="mathoverflow.net" value="mathoverflow.net">MathOverflow</option>
+                      <option data-tokens="space" value="space.stackexchange.com">Space Exploration</option>
+                      <option data-tokens="sound" value="sound.stackexchange.com">Sound Design</option>
+                      <option data-tokens="astronomy" value="astronomy.stackexchange.com">Astronomy</option>
+                      <option data-tokens="tor" value="tor.stackexchange.com">Tor</option>
+                      <option data-tokens="pets" value="pets.stackexchange.com">Pets</option>
+                      <option data-tokens="ham" value="ham.stackexchange.com">Amateur Radio</option>
+                      <option data-tokens="italian" value="italian.stackexchange.com">Italian Language</option>
+                      <option data-tokens="pt.stackoverflow" value="pt.stackoverflow.com">Stack Overflow em Portugu&#234;s</option>
+                      <option data-tokens="aviation" value="aviation.stackexchange.com">Aviation</option>
+                      <option data-tokens="ebooks" value="ebooks.stackexchange.com">Ebooks</option>
+                      <option data-tokens="alcohol" value="alcohol.stackexchange.com">Beer, Wine &amp; Spirits</option>
+                      <option data-tokens="softwarerecs" value="softwarerecs.stackexchange.com">Software Recommendations</option>
+                      <option data-tokens="arduino" value="arduino.stackexchange.com">Arduino</option>
+                      <option data-tokens="cs50" value="cs50.stackexchange.com">CS50</option>
+                      <option data-tokens="expatriates" value="expatriates.stackexchange.com">Expatriates</option>
+                      <option data-tokens="matheducators" value="matheducators.stackexchange.com">Mathematics Educators</option>
+                      <option data-tokens="earthscience" value="earthscience.stackexchange.com">Earth Science</option>
+                      <option data-tokens="joomla" value="joomla.stackexchange.com">Joomla</option>
+                      <option data-tokens="datascience" value="datascience.stackexchange.com">Data Science</option>
+                      <option data-tokens="puzzling" value="puzzling.stackexchange.com">Puzzling</option>
+                      <option data-tokens="craftcms" value="craftcms.stackexchange.com">Craft CMS</option>
+                      <option data-tokens="buddhism" value="buddhism.stackexchange.com">Buddhism</option>
+                      <option data-tokens="hinduism" value="hinduism.stackexchange.com">Hinduism</option>
+                      <option data-tokens="communitybuilding" value="communitybuilding.stackexchange.com">Community Building</option>
+                      <option data-tokens="worldbuilding" value="worldbuilding.stackexchange.com">Worldbuilding</option>
+                      <option data-tokens="ja.stackoverflow" value="ja.stackoverflow.com">スタック・オーバーフロー</option>
+                      <option data-tokens="emacs" value="emacs.stackexchange.com">Emacs</option>
+                      <option data-tokens="hsm" value="hsm.stackexchange.com">History of Science and Mathematics</option>
+                      <option data-tokens="economics" value="economics.stackexchange.com">Economics</option>
+                      <option data-tokens="lifehacks" value="lifehacks.stackexchange.com">Lifehacks</option>
+                      <option data-tokens="engineering" value="engineering.stackexchange.com">Engineering</option>
+                      <option data-tokens="coffee" value="coffee.stackexchange.com">Coffee</option>
+                      <option data-tokens="vi" value="vi.stackexchange.com">Vi and Vim</option>
+                      <option data-tokens="musicfans" value="musicfans.stackexchange.com">Music Fans</option>
+                      <option data-tokens="woodworking" value="woodworking.stackexchange.com">Woodworking</option>
+                      <option data-tokens="civicrm" value="civicrm.stackexchange.com">CiviCRM</option>
+                      <option data-tokens="medicalsciences" value="medicalsciences.stackexchange.com">Medical Sciences</option>
+                      <option data-tokens="ru.stackoverflow" value="ru.stackoverflow.com">Stack Overflow на русском</option>
+                      <option data-tokens="rus" value="rus.stackexchange.com">Русский язык</option>
+                      <option data-tokens="mythology" value="mythology.stackexchange.com">Mythology &amp; Folklore</option>
+                      <option data-tokens="law" value="law.stackexchange.com">Law</option>
+                      <option data-tokens="opensource" value="opensource.stackexchange.com">Open Source</option>
+                      <option data-tokens="elementaryos" value="elementaryos.stackexchange.com">elementary OS</option>
+                      <option data-tokens="portuguese" value="portuguese.stackexchange.com">Portuguese Language</option>
+                      <option data-tokens="computergraphics" value="computergraphics.stackexchange.com">Computer Graphics</option>
+                      <option data-tokens="hardwarerecs" value="hardwarerecs.stackexchange.com">Hardware Recommendations</option>
+                      <option data-tokens="es.stackoverflow" value="es.stackoverflow.com">Stack Overflow en espa&#241;ol</option>
+                      <option data-tokens="3dprinting" value="3dprinting.stackexchange.com">3D Printing</option>
+                      <option data-tokens="ethereum" value="ethereum.stackexchange.com">Ethereum</option>
+                      <option data-tokens="latin" value="latin.stackexchange.com">Latin Language</option>
+                      <option data-tokens="languagelearning" value="languagelearning.stackexchange.com">Language Learning</option>
+                      <option data-tokens="retrocomputing" value="retrocomputing.stackexchange.com">Retrocomputing</option>
+                      <option data-tokens="crafts" value="crafts.stackexchange.com">Arts &amp; Crafts</option>
+                      <option data-tokens="korean" value="korean.stackexchange.com">Korean Language</option>
+                      <option data-tokens="monero" value="monero.stackexchange.com">Monero</option>
+                      <option data-tokens="ai" value="ai.stackexchange.com">Artificial Intelligence</option>
+                      <option data-tokens="esperanto" value="esperanto.stackexchange.com">Esperanto Language</option>
+                      <option data-tokens="sitecore" value="sitecore.stackexchange.com">Sitecore</option>
+                      <option data-tokens="iot" value="iot.stackexchange.com">Internet of Things</option>
+                      <option data-tokens="literature" value="literature.stackexchange.com">Literature</option>
+                      <option data-tokens="vegetarianism" value="vegetarianism.stackexchange.com">Veganism &amp; Vegetarianism</option>
+                      <option data-tokens="ukrainian" value="ukrainian.stackexchange.com">Ukrainian Language</option>
+                      <option data-tokens="devops" value="devops.stackexchange.com">DevOps</option>
+                      <option data-tokens="bioinformatics" value="bioinformatics.stackexchange.com">Bioinformatics</option>
+                      <option data-tokens="cseducators" value="cseducators.stackexchange.com">Computer Science Educators</option>
+                      <option data-tokens="interpersonal" value="interpersonal.stackexchange.com">Interpersonal Skills</option>
+                      <option data-tokens="iota" value="iota.stackexchange.com">Iota</option>
+                      <option data-tokens="stellar" value="stellar.stackexchange.com">Stellar</option>
+                      <option data-tokens="conlang" value="conlang.stackexchange.com">Constructed Languages</option>
+                      <option data-tokens="quantumcomputing" value="quantumcomputing.stackexchange.com">Quantum Computing</option>
+                      <option data-tokens="eosio" value="eosio.stackexchange.com">EOS.IO</option>
+                      <option data-tokens="tezos" value="tezos.stackexchange.com">Tezos</option>
+                      <option data-tokens="or" value="or.stackexchange.com">Operations Research</option>
+                      <option data-tokens="drones" value="drones.stackexchange.com">Drones and Model Aircraft</option>
+                      <option data-tokens="mattermodeling" value="mattermodeling.stackexchange.com">Matter Modeling</option>
+                    </select>
+                  </div>
+                  <div class="col-8 mb-3">
+                    <label for="stack_data_tag" class="font-weight-bold">Tags to constrain questions</label>
+                    <div class="input-group">
+                      <input type="text" class="form-control" id="stack_data_tag" name="tagged">
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <div class="custom-control custom-checkbox">
+                    <input type="checkbox" name="questions" class="custom-control-input" id="checkbox-stack-questions" checked disabled>
+                    <label class="custom-control-label" for="checkbox-stack-questions">Questions & Answers</label>
+                    <span data-toggle="tooltip" style="float:right" title="This will analyze StackExchange Questions and Answers">
+                      <i class="fas fa-info-circle"></i>
+                    </span>
+                  </div>
+                </div>
+
+                <button class="btn btn-primary" type="submit">Add</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+

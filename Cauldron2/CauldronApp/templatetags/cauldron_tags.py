@@ -10,6 +10,7 @@ FA_ICONS = {
     Repository.GNOME: 'gnome-icon',
     Repository.KDE: 'kde-icon',
     Repository.MEETUP: 'fab fa-meetup',
+    Repository.STACK_EXCHANGE: 'fab fa-stack-exchange',
 }
 
 FA_ICONS_NAME = {
@@ -19,6 +20,7 @@ FA_ICONS_NAME = {
     'gnome': 'gnome-icon',
     'kde': 'kde-icon',
     'meetup': 'fab fa-meetup',
+    'stackexchange': 'fab fa-stack-exchange',
 }
 
 

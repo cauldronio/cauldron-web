@@ -4,6 +4,7 @@ from CauldronApp.models import OauthUser
 from cauldron_apps.poolsched_github.models import GHToken
 from cauldron_apps.poolsched_gitlab.models import GLToken, GLInstance
 from cauldron_apps.poolsched_meetup.models import MeetupToken
+from cauldron_apps.poolsched_stackexchange.models import StackExchangeToken
 from django.contrib.auth.decorators import login_required
 
 from .forms import ProfileEditForm
@@ -19,7 +20,8 @@ def index(request):
     context['tokens'] = {
         'github': GHToken.objects.filter(user=request.user, instance='GitHub').first(),
         'meetup': MeetupToken.objects.filter(user=request.user).first(),
-        'gitlab': {}
+        'gitlab': {},
+        'stackexchange': StackExchangeToken.objects.filter(user=request.user).first()
     }
     for instance in GLInstance.objects.values_list('slug', flat=True):
         context['tokens']['gitlab'][instance] = GLToken.objects.filter(user=request.user,

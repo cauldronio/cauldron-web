@@ -31,6 +31,11 @@ GL_CLIENT_SECRET_KDE = os.environ.get('KDE_CLIENT_SECRET')
 TWITTER_CLIENT_ID = os.environ.get('TWITTER_CLIENT_ID')
 TWITTER_CLIENT_SECRET = os.environ.get('TWITTER_CLIENT_SECRET')
 
+# StackExchange Oauth keys
+STACK_EXCHANGE_CLIENT_ID = os.environ.get('STACK_EXCHANGE_CLIENT_ID')
+STACK_EXCHANGE_CLIENT_SECRET = os.environ.get('STACK_EXCHANGE_CLIENT_SECRET')
+STACK_EXCHANGE_APP_KEY = os.environ.get('STACK_EXCHANGE_APP_KEY')
+
 # Webserver
 CAULDRON_HOST = os.environ.get('CAULDRON_HOST')
 CAULDRON_PORT = os.environ.get('CAULDRON_PORT')
@@ -83,6 +88,7 @@ CAULDRON_ADMINS = {
     'GNOME': json.loads(os.environ.get('GNOME_ADMINS', '[]')),
     'KDE': json.loads(os.environ.get('KDE_ADMINS', '[]')),
     'TWITTER': json.loads(os.environ.get('TWITTER_ADMINS', '[]')),
+    'STACK_EXCHANGE': json.loads(os.environ.get('STACK_EXCHANGE_ADMINS', '[]')),
 }
 
 DEBUG = True
@@ -105,6 +111,7 @@ INSTALLED_APPS = [
     'cauldron_apps.poolsched_github',
     'cauldron_apps.poolsched_gitlab.apps.CauldronGitlabConfig',
     'cauldron_apps.poolsched_meetup',
+    'cauldron_apps.poolsched_stackexchange',
     'cauldron_apps.poolsched_export',
     'cauldron_apps.cauldron_actions',
 ]

@@ -24,11 +24,13 @@ urlpatterns = [
     path('oauth/github', oauth.github.start_oauth, name='github_oauth'),
     path('oauth/meetup', oauth.meetup.start_oauth, name='meetup_oauth'),
     path('oauth/twitter', oauth.twitter.start_oauth, name='twitter_oauth'),
+    path('oauth/stackexchange', oauth.stackexchange.start_oauth, name='stack_oauth'),
 
     path('github-login', views.request_github_oauth, name='github_callback'),
     path('gitlab-login/<str:backend>', views.request_gitlab_oauth, name='gitlab_callback'),
     path('meetup-login', views.request_meetup_oauth, name='meetup_callback'),
     path('twitter-login', views.request_twitter_oauth, name='twitter_callback'),
+    path('stackexchange-login', views.request_stack_oauth, name='stackexchange_callback'),
 
     path('login', views.request_login, name='login_page'),
     path('logout', views.request_logout, name='logout_page'),

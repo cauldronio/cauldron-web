@@ -112,6 +112,17 @@
   color: #fff;
 }
 
+.btn-stackexchange {
+  color: #fff;
+  background-color: #62b0df;
+  border-color: #62b0df;
+}
+
+.btn-stackexchange:hover {
+  background-color: #54A0CE;
+  color: #fff;
+}
+
 .btn-orange {
     background-color: #F79C31;
     color: #fff;

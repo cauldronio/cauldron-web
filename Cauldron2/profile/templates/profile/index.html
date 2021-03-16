@@ -261,6 +261,48 @@
             </div>
         </div>
 
+        <!-- StackExchange Token Card -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100">
+                <!-- Card Header - Dropdown -->
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <div class="text-xs font-weight-bold text-info text-uppercase">StackExchange Token</div>
+                    {% if tokens.stackexchange %}
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLinkStack" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLinkStack">
+                            <div class="dropdown-header">Token actions:</div>
+                            <a class="dropdown-item" id="delete-stack-token" href="#">Revoke</a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <!-- Card Body -->
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% if tokens.stackexchange %}
+                                    {% if tokens.stackexchange.is_ready %}
+                                    Status: <i class="fas fa-check text-success" data-toggle="tooltip" title="Ready to use"></i>
+                                    {% else %}
+                                    Status: <i class="fas fa-history" data-toggle="tooltip" title="Token in cooldown"></i> (<span data-countdown='{{ tokens.stackexchange.reset|date:"U000" }}'></span>)
+                                    {% endif %}
+                                {% else %}
+                                Not defined
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fab fa-stack-exchange fa-2x text-gray-400"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <hr class="my-4">

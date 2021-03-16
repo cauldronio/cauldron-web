@@ -17,7 +17,7 @@ from Cauldron2 import settings
 
 from CauldronApp import kibana_objects, utils, datasources
 from CauldronApp.pages import Pages
-from CauldronApp.oauth import GitHubOAuth, GitLabOAuth, MeetupOAuth, TwitterOAuth
+from CauldronApp.oauth import GitHubOAuth, GitLabOAuth, MeetupOAuth, TwitterOAuth, StackExchangeOAuth
 from CauldronApp.project_metrics import metrics
 
 from poolsched.models import Intention, ArchivedIntention
@@ -25,11 +25,12 @@ from poolsched.models.jobs import Log
 from cauldron_apps.poolsched_github.models import GHToken, IGHRaw
 from cauldron_apps.poolsched_gitlab.models import GLToken, GLInstance, IGLRaw
 from cauldron_apps.poolsched_meetup.models import MeetupToken, IMeetupRaw
+from cauldron_apps.poolsched_stackexchange.models import StackExchangeToken, IStackExchangeRaw
 from cauldron_apps.poolsched_export.models.iexportgit import IExportGitCSV
 from cauldron_apps.cauldron_actions.models import IRefreshActions
 from cauldron_apps.cauldron.models import IAddGHOwner, IAddGLOwner, Project, OauthUser, AnonymousUser, \
     UserWorkspace, ProjectRole, Repository, GitLabRepository, GitRepository, GitHubRepository, MeetupRepository, \
-    AuthorizedBackendUser
+    StackExchangeRepository, AuthorizedBackendUser
 
 from cauldron_apps.cauldron.opendistro import OpendistroApi
 
@@ -154,6 +155,7 @@ def merge_accounts(user_origin, user_dest):
     GHToken.objects.filter(user=user_origin).update(user=user_dest)
     GLToken.objects.filter(user=user_origin).update(user=user_dest)
     MeetupToken.objects.filter(user=user_origin).update(user=user_dest)
+    StackExchangeToken.objects.filter(user=user_origin).update(user=user_dest)
     merge_workspaces(user_origin, user_dest)
     merge_admins(user_origin, user_dest)
 
@@ -303,7 +305,6 @@ def request_twitter_oauth(request):
     is_admin = oauth_user.username in settings.CAULDRON_ADMINS['TWITTER']
 
     # Save the state of the session
-    data_add = request.session.pop('add_repo', None)
     last_page = request.session.pop('last_page', None)
     new_project_info = request.session.get('new_project')
     store_oauth = request.session.get('store_oauth')
@@ -319,6 +320,60 @@ def request_twitter_oauth(request):
                                                             f"We have proceeded to merge all the reports and "
                                                             f"visualization in you current account so that you do not "
                                                             f"loose anything"}
+
+    request.session['new_project'] = new_project_info
+    request.session['store_oauth'] = store_oauth
+
+    if last_page:
+        return HttpResponseRedirect(last_page)
+
+    return HttpResponseRedirect(reverse('homepage'))
+
+
+# TODO: Add state
+def request_stack_oauth(request):
+    error = request.GET.get('error', None)
+    if error:
+        return custom_404(request, f"StackExchange callback error. {error}")
+    code = request.GET.get('code', None)
+    if not code:
+        return custom_404(request, "Code not found in the StackExchange callback")
+    redirect_uri = request.build_absolute_uri(reverse('stackexchange_callback'))
+    stack = StackExchangeOAuth(settings.STACK_EXCHANGE_CLIENT_ID, settings.STACK_EXCHANGE_CLIENT_SECRET,
+                               settings.STACK_EXCHANGE_APP_KEY, redirect_uri)
+    error = stack.authenticate(code)
+    if error:
+        return custom_500(request, error)
+    oauth_user = stack.user_data()
+    if not oauth_user:
+        return custom_500(request, 'User not found for your token')
+
+    is_admin = oauth_user.username in settings.CAULDRON_ADMINS['STACK_EXCHANGE']
+
+    # Save the state of the session
+    data_add = request.session.pop('add_repo', None)
+    last_page = request.session.pop('last_page', None)
+    new_project_info = request.session.get('new_project')
+    store_oauth = request.session.get('store_oauth')
+
+    merged, allowed = authenticate_user(request, 'stackexchange', oauth_user, is_admin)
+    if not allowed:
+        return custom_403(request, "You are not allowed to authenticate in this server. "
+                                   "Ask any of the administrators for permission.")
+
+    if merged:
+        request.session['alert_notification'] = {'title': 'Account merged',
+                                                 'message': f"You already had a Cauldron user with this StackExchange account."
+                                                            f" We have proceeded to merge all the projects and "
+                                                            f"visualization in you current account so that you do not "
+                                                            f"loose anything"}
+
+    StackExchangeToken.objects.update_or_create(user=request.user, defaults={'token': oauth_user.token,
+                                                                             'api_key': settings.STACK_EXCHANGE_APP_KEY})
+
+    if data_add and data_add['backend'] == 'stackexchange':
+        project = Project.objects.get(id=data_add['proj_id'])
+        datasources.stackexchange.analyze_data(project, data_add['site'], data_add['tag'])
 
     request.session['new_project'] = new_project_info
     request.session['store_oauth'] = store_oauth
@@ -458,6 +513,7 @@ def request_show_project(request, project_id):
     context['has_github'] = GitHubRepository.objects.filter(projects=project).exists()
     context['has_gitlab'] = GitLabRepository.objects.filter(projects=project).exists()
     context['has_meetup'] = MeetupRepository.objects.filter(projects=project).exists()
+    context['has_stack'] = StackExchangeRepository.objects.filter(projects=project).exists()
     context['repos'] = project.repository_set.all().select_subclasses()
 
     return render(request, 'cauldronapp/project/project.html', context=context)
@@ -570,19 +626,20 @@ def request_add_to_project(request, project_id):
         return JsonResponse({'status': 'error', 'message': 'You cannot edit this project'}, status=403)
 
     backend = request.POST.get('backend', None)
-    data = request.POST.get('data', None)  # Could be url or user
-
-    if not backend or not data:
-        return JsonResponse({'status': 'error', 'message': 'Backend or data missing'},
-                            status=400)
 
     if backend == 'git':
+        data = request.POST.get('data', None)
+        if not data:
+            return JsonResponse({'status': 'error', 'message': 'URL to analyze missing'}, status=400)
         data = data.strip()
         datasources.git.analyze_git(project, data)
         project.update_elastic_role()
         return JsonResponse({'status': 'ok'})
 
     elif backend == 'github':
+        data = request.POST.get('data', None)
+        if not data:
+            return JsonResponse({'status': 'error', 'message': 'URL/Owner to analyze missing'}, status=400)
         analyze_commits = 'commits' in request.POST
         analyze_issues = 'issues' in request.POST
         forks = 'forks' in request.POST
@@ -599,11 +656,9 @@ def request_add_to_project(request, project_id):
                                            'forks': forks,
                                            'issues': analyze_issues}
             request.session['last_page'] = reverse('show_project', kwargs={'project_id': project.id})
-            params = urlencode({'client_id': settings.GH_CLIENT_ID})
-            gh_url_oauth = f"{GitHubOAuth.AUTH_URL}?{params}"
             return JsonResponse({'status': 'error',
                                  'message': generate_request_token_message("GitHub"),
-                                 'redirect': gh_url_oauth},
+                                 'redirect': reverse('github_oauth')},
                                 status=401)
         output = datasources.github.analyze_data(project=project, data=data, commits=analyze_commits,
                                                  issues=analyze_issues, forks=forks)
@@ -611,6 +666,9 @@ def request_add_to_project(request, project_id):
         return JsonResponse(output, status=output['code'])
 
     elif backend == 'meetup':
+        data = request.POST.get('data', None)
+        if not data:
+            return JsonResponse({'status': 'error', 'message': 'Group to analyze missing'}, status=400)
         if not project.creator.meetuptokens.exists():
             if request.user != project.creator:
                 return JsonResponse({'status': 'error',
@@ -619,21 +677,38 @@ def request_add_to_project(request, project_id):
                                     status=401)
             request.session['add_repo'] = {'data': data, 'backend': backend, 'proj_id': project.id}
             request.session['last_page'] = reverse('show_project', kwargs={'project_id': project.id})
-            params = urlencode({'client_id': settings.MEETUP_CLIENT_ID,
-                                'response_type': 'code',
-                                'redirect_uri': "https://{}{}".format(request.get_host(),
-                                                                      MeetupOAuth.REDIRECT_PATH)})
-            meetup_url_oauth = "{}?{}".format(MeetupOAuth.AUTH_URL, params)
             return JsonResponse({'status': 'error',
                                  'message': generate_request_token_message("Meetup"),
-                                 'redirect': meetup_url_oauth},
+                                 'redirect': reverse('meetup_oauth')},
                                 status=401)
 
         output = datasources.meetup.analyze_data(project=project, data=data)
         return JsonResponse(output, status=output['code'])
 
+    elif backend == 'stackexchange':
+        tagged = request.POST.get('tagged', None)
+        site = request.POST.get('site', None)
+        if not site or not tagged:
+            return JsonResponse({'status': 'error', 'message': 'Site or tag missing'}, status=400)
+        if not project.creator.stackexchangetokens.exists():
+            if request.user != project.creator:
+                return JsonResponse({'status': 'error',
+                                     'message': 'Project owner needs a StackExchange token to'
+                                                ' analyze this kind of repositories'},
+                                    status=401)
+            request.session['add_repo'] = {'backend': backend, 'site': site, 'tag': tagged, 'proj_id': project.id}
+            request.session['last_page'] = reverse('show_project', kwargs={'project_id': project.id})
+            return JsonResponse({'status': 'error',
+                                 'message': generate_request_token_message("StackExchange"),
+                                 'redirect': reverse('stack_oauth')},
+                                status=401)
+
+        output = datasources.stackexchange.analyze_data(project, site, tagged)
+        return JsonResponse(output, status=output['code'])
+
     gl_instance = GLInstance.objects.filter(slug=backend).first()
     if gl_instance:
+        data = request.POST.get('data', None)
         analyze_commits = 'commits' in request.POST
         analyze_issues = 'issues' in request.POST
         forks = 'forks' in request.POST
@@ -759,6 +834,7 @@ def create_project(request):
         context['gnome_enabled'] = request.user.gltokens.filter(instance='Gnome').exists()
         context['kde_enabled'] = request.user.gltokens.filter(instance='KDE').exists()
         context['meetup_enabled'] = request.user.meetuptokens.exists()
+        context['stack_enabled'] = request.user.stackexchangetokens.exists()
 
     context['new_project'] = request.session.get('new_project')
 
@@ -867,6 +943,31 @@ def create_project_add(request):
                                         'data': group, 'attrs': {'Events': True}})
         request.session['new_project'] = data_project
 
+    elif backend == 'stackexchange':
+        tagged = request.POST.get('tagged', None)
+        site = request.POST.get('site', None)
+
+        if not tagged:
+            return {'status': 'error', 'message': 'No tags defined'}
+        if not site:
+            return {'status': 'error', 'message': 'No site defined'}
+        if not request.user.is_authenticated or not request.user.stackexchangetokens.exists():
+            return {'status': 'error', 'message': 'User requesting this data is not authenticated for StackExchange. '
+                                                  'Please, refresh the page.'}
+
+        tags = datasources.stackexchange.parse_tags(tagged)
+        if not tags:
+            return {'status': 'error', 'message': f"We can't guess what do you mean with '{tagged}'"}
+
+        data_project = request.session.get('new_project')
+        if data_project is None:
+            data_project = {}
+        if 'actions' not in data_project:
+            data_project['actions'] = []
+        data_project['actions'].append({'id': random_id(5), 'backend': 'stackexchange',
+                                        'data': f'{site}: {tags}', 'attrs': {'questions': True}, 'params': {'site': site, 'tags': tags}})
+        request.session['new_project'] = data_project
+
     else:
         return {'error': 'No backend specified'}
 
@@ -959,6 +1060,14 @@ def request_new_project(request):
             if output and output['status'] != 'ok':
                 error = output['message']
                 break
+        elif backend == 'stackexchange':
+            output = datasources.stackexchange.analyze_data(project=project,
+                                                            site=action['params']['site'],
+                                                            tags=action['params']['tags'])
+            if output and output['status'] != 'ok':
+                error = output['message']
+                break
+
     if error:
         project.delete()
         return custom_404(request, error)
@@ -1317,6 +1426,10 @@ def request_delete_token(request):
         IMeetupRaw.objects.filter(user=request.user, job__isnull=True).delete()
         request.user.meetuptokens.delete()
         return JsonResponse({'status': 'ok'})
+    elif identity == 'stackexchange':
+        IStackExchangeRaw.objects.filter(user=request.user, job__isnull=True).delete()
+        request.user.stackexchangetokens.delete()
+        return JsonResponse({'status': 'ok'})
     gl_instance = GLInstance.objects.filter(slug=identity).first()
     if gl_instance:
         IGLRaw.objects.filter(user=request.user, job__isnull=True, repo__instance=gl_instance).delete()
@@ -1350,13 +1463,6 @@ def create_context(request):
     :return:
     """
     context = dict()
-
-    # Generate information for identities
-    context['gh_uri_identity'] = GitHubOAuth.AUTH_URL
-    context['gh_client_id'] = settings.GH_CLIENT_ID
-    context['meetup_uri_identity'] = MeetupOAuth.AUTH_URL
-    context['meetup_client_id'] = settings.MEETUP_CLIENT_ID
-    context['meetup_uri_redirect'] = "https://{}{}".format(request.get_host(), MeetupOAuth.REDIRECT_PATH)
 
     # Information for the photo and the profile
     context['authenticated'] = request.user.is_authenticated
@@ -1494,6 +1600,7 @@ def status_info():
     context['repos_gnome_count'] = GitLabRepository.objects.exclude(projects=None, instance='Gnome').count()
     context['repos_kde_count'] = GitLabRepository.objects.exclude(projects=None, instance='KDE').count()
     context['repos_meetup_count'] = MeetupRepository.objects.exclude(projects=None).count()
+    context['repos_stack_count'] = StackExchangeRepository.objects.exclude(projects=None).count()
     return context
 
 
