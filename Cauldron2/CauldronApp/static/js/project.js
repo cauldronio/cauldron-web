@@ -100,7 +100,7 @@ function getSummary() {
             status_output += `. <b>GitLab:</b> ${data.gitlab}`
         }
         if (data.gnome){
-            status_output += `. <b>Gnome:</b> ${data.gnome}`
+            status_output += `. <b>GNOME:</b> ${data.gnome}`
         }
         if (data.kde){
             status_output += `. <b>KDE:</b> ${data.kde}`

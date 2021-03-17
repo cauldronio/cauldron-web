@@ -33,12 +33,12 @@
 
 .btn-git {
   color: #fff;
-  background-color: #E94E31;
-  border-color: #E94E31;
+  background-color: #F05133;
+  border-color: #F05133;
 }
 
 .btn-git:hover {
-  background-color: #e03718;
+  background-color: #E04123;
   color: #fff;
 }
 
@@ -49,7 +49,7 @@
 }
 
 .btn-github:hover {
-  background-color: #333333;
+  background-color: #454545;
   color: #fff;
 }
 
@@ -60,29 +60,55 @@
 }
 
 .btn-gitlab:hover {
-  background-color: #f16924;
+  background-color: #eb5c15;
   color: #fff;
 }
 
 .btn-meetup {
   color: #fff;
-  background-color: #F65858;
-  border-color: #F65858;
+  background-color: #F64060;
+  border-color: #F64060;
 }
 
 .btn-meetup:hover {
-  background-color: #F42C2C;
+  background-color: #E52949;
   color: #fff;
+}
+
+.btn-gnome {
+  color: #fff;
+  background-color: #9DB8D2;
+  border-color: #9DB8D2;
+
+}
+
+.btn-gnome:hover {
+  background-color: #8CA7C1;
+  color: #fff;
+
+}
+
+.btn-kde {
+  color: #fff;
+  background-color: #3daee9;
+  border-color: #3daee9;
+
+}
+
+.btn-kde:hover {
+  background-color: #2c9cc8;
+  color: #fff;
+
 }
 
 .btn-twitter {
   color: #fff;
-  background-color: #00ACEE;
-  border-color: #00ACEE;
+  background-color: rgb(29,161,242);
+  border-color: rgb(29,161,242);
 }
 
 .btn-twitter:hover {
-  background-color: #008ABE;
+  background-color: rgb(26,145,218);
   color: #fff;
 }
 

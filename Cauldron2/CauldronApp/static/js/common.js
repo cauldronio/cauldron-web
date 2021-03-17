@@ -36,7 +36,7 @@ $(document).ready(function () {
         ev.preventDefault();
     });
     $('#delete-gnome-token').click(function(ev){
-        showModalAlert('Do you want to delete your GitLab for Gnome token?',
+        showModalAlert('Do you want to delete your GitLab for GNOME token?',
                        'We will delete your personal Token from our server. If you delete it, all the pending tasks for that token will be stopped.',
                        `<button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close">No</button>
                         <button type="button" class="btn btn-danger" onclick="deleteToken('gnome')" data-dismiss="modal">Yes</button>`

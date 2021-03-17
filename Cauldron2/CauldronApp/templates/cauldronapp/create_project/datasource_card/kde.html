@@ -48,7 +48,7 @@
       {% else %}
       <div class="container">
         {% include 'cauldronapp/create_project/datasource_card/message_token_required.html' with datasource='KDE (GitLab)' only %}
-        <a class="btn btn-large btn-gitlab" href="{% url 'gitlab_oauth' 'kde' %}?open_tab=kde"><i class="kde-icon-white"></i> Authorize</a>
+        <a class="btn btn-large btn-kde" href="{% url 'gitlab_oauth' 'kde' %}?open_tab=kde"><i class="kde-icon-white"></i> Authorize</a>
       </div>
       {% endif %}
     </div>
