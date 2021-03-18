@@ -72,6 +72,8 @@ urlpatterns = [
 
     path('projects/info', views.request_projects_info),
 
+    path('message/<int:message_id>/dismiss', views.request_dismiss_message, name='dismiss_message'),
+
     path('terms/', views.terms, name="terms"),
     path('privacy/', views.privacy, name="privacy"),
     path('cookies/', views.cookies, name="cookies"),

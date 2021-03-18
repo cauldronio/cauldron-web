@@ -68,6 +68,19 @@ $(document).ready(function () {
         ev.preventDefault();
     });
 
+    $('.bannerMessage').on('close.bs.alert', function (event) {
+        var message_id = $(event.currentTarget).data('messageId');
+        $.post(`/message/${message_id}/dismiss`)
+        .fail(function (data) {
+            if(!data.hasOwnProperty('responseJSON')){
+                showToast('Unknown error from server', `Internal error.`, 'fas fa-question-circle text-danger', ERROR_TIMEOUT_MS);
+                console.log(data.responseText);
+                return;
+            }
+            showToast('Failed', `There was a problem: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
+        })
+    })
+
     /**
     * Send data to Share modal
     */

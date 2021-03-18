@@ -3,7 +3,6 @@ import datetime
 import random
 from random import choice
 from string import ascii_lowercase, digits
-from urllib.parse import urlencode
 from dateutil.relativedelta import relativedelta
 
 from django.shortcuts import render
@@ -30,7 +29,7 @@ from cauldron_apps.poolsched_export.models.iexportgit import IExportGitCSV
 from cauldron_apps.cauldron_actions.models import IRefreshActions
 from cauldron_apps.cauldron.models import IAddGHOwner, IAddGLOwner, Project, OauthUser, AnonymousUser, \
     UserWorkspace, ProjectRole, Repository, GitLabRepository, GitRepository, GitHubRepository, MeetupRepository, \
-    StackExchangeRepository, AuthorizedBackendUser
+    StackExchangeRepository, AuthorizedBackendUser, BannerMessage
 
 from cauldron_apps.cauldron.opendistro import OpendistroApi
 
@@ -598,6 +597,17 @@ def request_repo_intentions(request, repo_id):
     context['intentions'] = repo.get_intentions()
 
     return render(request, 'cauldronapp/project/repo_actions.html', context=context)
+
+
+def request_dismiss_message(request, message_id):
+    if not request.user.is_authenticated:
+        return JsonResponse({'message': 'You are not authenticated', 'status': 402})
+    try:
+        message = BannerMessage.objects.get(id=message_id)
+    except BannerMessage.DoesNotExist:
+        return JsonResponse({'message': "You can't dismiss a message that doesn't exist", 'status': 404})
+    message.read_by.add(request.user)
+    return JsonResponse({'message': f"Message {message_id} dismissed"})
 
 
 def request_logs(request, logs_id):
@@ -1473,6 +1483,9 @@ def create_context(request):
             context['photo_user'] = oauth_user.photo
         else:
             context['photo_user'] = '/static/img/profile-default.png'
+
+        # Banner message
+        context['banner_messages'] = BannerMessage.objects.exclude(read_by=request.user)
 
     # Message that should be shown to the user
     context['alert_notification'] = request.session.pop('alert_notification', None)
