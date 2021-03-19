@@ -5,8 +5,10 @@
 {% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="h3 mt-5 mb-5 font-weight-bold text-dark text-uppercase">User settings</div>
+<div class="container-fluid mt-3">
+    <div class="mb-3 d-md-flex justify-content-between">
+        <h1>Settings</h1>
+    </div>
 
     <!-- Success message -->
     {% if message_success %}
@@ -25,7 +27,8 @@
     {% endif %}
 
     <!-- Username section -->
-    <div class="mb-1 font-weight-bold text-gray-800 text-uppercase">Change name</div>
+    <h2>Change name</h2>
+    <p>Cauldron might have picked a username for you, but you are able to set up yours here.</p>
     <form class="input-group" method="post">
         {% csrf_token %}
         {{ form.first_name.errors }}
@@ -47,7 +50,8 @@
     <hr class="my-4"-->
 
     <!-- Tokens section -->
-    <div class="mb-1 font-weight-bold text-gray-800 text-uppercase">Tokens</div>
+    <h2>Access tokens</h2>
+    <p>Cauldron connects with certain services using access token. Here you can see the ones activated and revoke them if you wish.</p>
     <div class="row">
 
         <!-- GitHub Token Card -->
@@ -308,7 +312,8 @@
     <hr class="my-4">
 
     <!-- Linked Accounts section -->
-    <div class="mb-1 font-weight-bold text-gray-800 text-uppercase">Linked Accounts</div>
+    <h2>Linked accounts</h2>
+    <p>Cauldron cloud be linked to your account in certain services for notification purposes. Here you can see the ones active and revoke the connection if you want.</p>
     <div class="row">
 
         <!-- Twitter Card -->
@@ -354,7 +359,8 @@
     <hr class="my-4">
 
     <!-- Account section -->
-    <div class="mb-1 font-weight-bold text-gray-800 text-uppercase">Account</div>
+    <h2>Remove account</h2>
+    <p>In the unlikely case you would like to delete your account, this is the place to do it.</p>
     <form action="{% url 'profile:delete_user' %}" method="post" id="delete_user">
         {% csrf_token %}
         <button type="button" class="btn btn-danger my-3" role="button" data-toggle="modal" data-target="#confirm-delete-user">Delete my account</button>
