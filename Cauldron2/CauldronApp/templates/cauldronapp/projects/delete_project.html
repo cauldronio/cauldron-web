@@ -11,17 +11,17 @@
       <div class="modal-body">
 				<p>This cannot be undone. The following actions will be performed:</p>
 				<ul>
-					<li>The project will be removed</li>
-					<li>The tasks associated to this project will be stopped as soon as possible</li>
+					<li>The report will be removed</li>
+					<li>The tasks associated to this report will be stopped as soon as possible</li>
 					<li>You will lose the visualizations created in Kibana</li>
 				</ul>
-				<p>Please, confirm you want to delete the project <span id="delete-project-name" class="font-weight-bold"></span></p>
+				<p>Please, confirm you want to delete the report <span id="delete-project-name" class="font-weight-bold"></span></p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
         <form action="" method="post" id="form-delete-project">
           {% csrf_token %}
-          <button class="btn btn-danger" type="submit">Delete project</button>
+          <button class="btn btn-danger" type="submit">Delete report</button>
         </form>
       </div>
     </div>

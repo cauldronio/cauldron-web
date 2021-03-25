@@ -19,11 +19,11 @@
     </button>
   </div>
   {% endif %}
-  <h1>Create a new project</h1>
-  <p class="text-muted">A project contains a set of repositories from multiple data sources. Cauldron collects and analyzes the data to display it in an elegant way.</p>
+  <h1>Create a new report</h1>
+  <p class="text-muted">A report contains a set of repositories from multiple data sources. Cauldron collects and analyzes the data to display it in an elegant way.</p>
   <hr>
   <div class="form-group">
-    <label for="projectName" class="font-weight-bold" >Project name</label>
+    <label for="projectName" class="font-weight-bold" >Report name</label>
     <input type="text" id="projectName" class="form-control" aria-describedby="projectNameHelper" value="{{new_project.name}}">
     <small id="projectNameHelper" class="invalid-feedback">
 
@@ -129,7 +129,7 @@
     {% csrf_token %}
     <input type="hidden" name="create" value="true">
     <button type="submit" class="btn btn-orange createProjectBtn" {% if not new_project.actions %}disabled{% endif %}>
-      Create project
+      Create report
     </button>
   </form>
 

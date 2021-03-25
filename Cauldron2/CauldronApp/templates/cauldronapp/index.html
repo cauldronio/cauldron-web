@@ -12,7 +12,7 @@
         <div class="col-lg-6 text-center text-lg-left">
           <h1 class="font-weight-bold my-4">Level Up Software Development Analytics</h1>
           <p class="mb-3">Cauldron allows project managers, analysts, and developers to understand more about the community and processes involved in software development</p>
-          <a class="btn btn-orange btn-lg my-3" href="{% url 'create_project' %}">Analyze a Project</a>
+          <a class="btn btn-orange btn-lg my-3" href="{% url 'create_project' %}">Create a report</a>
         </div>
         <!-- <div class="col-lg-2 text-lg-left">-->
         <!--   <img class="img-fluid" src="{% static 'img/three_images.png' %}" alt="">-->
@@ -20,7 +20,7 @@
         <div class="col-lg-2 text-lg-left text-dark mb-1">
           <div class="card">
             <div class="card-body">
-              <h5 class="card-title">Recommended projects</h5>
+              <h5 class="card-title">Recommended reports</h5>
               <table class="table">
                 <tr>
                   <td><a href="https://cauldron.io/project/51?from_date=2016-02-11&to_date=2021-02-11&tab=overview">Elasticsearch</a></td>
@@ -47,7 +47,7 @@
         <div class="col-lg-2 text-lg-left text-dark mb-1">
           <div class="card">
             <div class="card-body">
-              <h5 class="card-title">Latest projects</h5>
+              <h5 class="card-title">Latest reports</h5>
               {% if latest_projects %}
               <table class="table">
                 {% for project in latest_projects %}
@@ -90,7 +90,7 @@
         </div>
       </div>
       <div class="row justify-content-center text-center">
-        <a class="btn btn-orange btn-lg my-3" href="{% url 'create_project' %}">Analyze a Project</a>
+        <a class="btn btn-orange btn-lg my-3" href="{% url 'create_project' %}">Create a report</a>
       </div>
     </div>
   </section>
@@ -139,7 +139,7 @@
 
       </div>
       <div class="row justify-content-center text-center">
-        <a class="btn btn-orange btn-lg my-3" href="{% url 'create_project' %}">Analyze a Project</a>
+        <a class="btn btn-orange btn-lg my-3" href="{% url 'create_project' %}">Create a report</a>
       </div>
     </div>
   </section>

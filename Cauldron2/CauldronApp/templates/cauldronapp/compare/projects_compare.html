@@ -9,7 +9,7 @@
 {% block content %}
 <div class="container-fluid mt-3">
     <div class="mb-3 d-md-flex justify-content-between">
-        <h1>Compare projects</h1>
+        <h1>Compare reports</h1>
     </div>
 
     <!-- Success message -->
@@ -31,7 +31,7 @@
     {% if user_projects|length > 0 %}
     <form method="GET" class="form-inline justify-content-between">
         <div class="form-group mb-2">
-            <select name="projects" id="project-select-0" class="selectpicker mr-2" title="Select a project..." data-style="btn-outline-dark" data-live-search="true" data-size="5" data-showTick="true" data-width="auto" required>
+            <select name="projects" id="project-select-0" class="selectpicker mr-2" title="Select a report..." data-style="btn-outline-dark" data-live-search="true" data-size="5" data-showTick="true" data-width="auto" required>
                 {% for project in user_projects %}
                 <option value="{{ project.id }}">{{ project.name }}</option>
                 {% endfor %}
@@ -39,7 +39,7 @@
 
             <span class="font-weight-bold mr-2"><i class="fas fa-times"></i></span>
 
-            <select name="projects" id="project-select-1" class="selectpicker mr-2" title="Select a project..." data-style="btn-outline-dark" data-live-search="true" data-size="5" data-showTick="true" data-width="auto" required>
+            <select name="projects" id="project-select-1" class="selectpicker mr-2" title="Select a report..." data-style="btn-outline-dark" data-live-search="true" data-size="5" data-showTick="true" data-width="auto" required>
                 {% for project in user_projects %}
                 <option value="{{ project.id }}">{{ project.name }}</option>
                 {% endfor %}
@@ -47,7 +47,7 @@
 
             <span id="times-2" class="font-weight-bold mr-2 d-none"><i class="fas fa-times"></i></span>
 
-            <select name="projects" id="project-select-2" class="selectpicker mr-2" title="Select a project..." data-style="btn-outline-dark" data-live-search="true" data-size="5" data-showTick="true" data-width="auto" disabled required>
+            <select name="projects" id="project-select-2" class="selectpicker mr-2" title="Select a report..." data-style="btn-outline-dark" data-live-search="true" data-size="5" data-showTick="true" data-width="auto" disabled required>
                 {% for project in user_projects %}
                 <option value="{{ project.id }}">{{ project.name }}</option>
                 {% endfor %}
@@ -55,7 +55,7 @@
 
             <span id="times-3" class="font-weight-bold mr-2 d-none"><i class="fas fa-times"></i></span>
 
-            <select name="projects" id="project-select-3" class="selectpicker mr-2" title="Select a project..." data-style="btn-outline-dark" data-live-search="true" data-size="5" data-showTick="true" data-width="auto" disabled required>
+            <select name="projects" id="project-select-3" class="selectpicker mr-2" title="Select a report..." data-style="btn-outline-dark" data-live-search="true" data-size="5" data-showTick="true" data-width="auto" disabled required>
                 {% for project in user_projects %}
                 <option value="{{ project.id }}">{{ project.name }}</option>
                 {% endfor %}
@@ -63,7 +63,7 @@
 
             <span id="times-4" class="font-weight-bold mr-2 d-none"><i class="fas fa-times"></i></span>
 
-            <select name="projects" id="project-select-4" class="selectpicker mr-2" title="Select a project..." data-style="btn-outline-dark" data-live-search="true" data-size="5" data-showTick="true" data-width="auto" disabled required>
+            <select name="projects" id="project-select-4" class="selectpicker mr-2" title="Select a report..." data-style="btn-outline-dark" data-live-search="true" data-size="5" data-showTick="true" data-width="auto" disabled required>
                 {% for project in user_projects %}
                 <option value="{{ project.id }}">{{ project.name }}</option>
                 {% endfor %}
@@ -138,7 +138,7 @@
         </div>
     </div>
     {% else %}
-    <p><em>No projects selected to compare</em></p>
+    <p><em>No reports selected to compare</em></p>
     {% endif %}
 </div>
 {% endblock %}

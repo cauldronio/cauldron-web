@@ -17,21 +17,23 @@
         {% endif %}
       </div>
       <div id="spinner-{{project.id}}" class="spinner-border spinner-border-sm" style="display: none;"></div>
+      {% if project.owner == request.user %}
       <div class="dropdown no-arrow">
         <a id="dropdown{{project.id}}" class="dropdown-toggle px-2 ml-3" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
           <i class="fas fa-ellipsis-v fa-sm fa-fe"></i>
         </a>
-        <div class="dropdown-menu dropdown-menu-right shadow" aria-labelledby="dropddown{{project.id}}">
+        <div class="dropdown-menu dropdown-menu-right shadow" aria-labelledby="dropdown{{project.id}}">
           <div class="dropdown-header">Options</div>
-          <div class="dropdown-item"><a href="{% url 'show_project' project.id %}"><i class="fas fa-cog"></i> Project</a></div>
+          <div class="dropdown-item"><a href="{% url 'show_project' project.id %}"><i class="fas fa-cog"></i> Report</a></div>
           {% if project.total > 0%}
           <div class="dropdown-item"><a href="{% url 'open_workspace' project.id %}" target="_blank" rel="noopener noreferrer"><i class="fa fa-wrench"></i> Data Workspace</a></div>
           <div class="dropdown-item"><button type="button" onclick="refreshProjectDatasources(this, {{project.id}})"role="button" class="btn btn-sm btn-icon-split btn-outline-success {% if project.total == 0 %} disabled{% endif %}" {% if project.total > 0 %}{% endif %}><span class="icon"><i class="fas fa-sync-alt"></i></span><span class="text">Refresh Data</span></button></div>
           {% endif %}
           <div class="dropdown-divider"></div>
-          <div class="dropdown-item"><button type="button" data-toggle="modal" data-target="#modal-delete-project" data-project-id="{{project.id}}" role="button" class="open-deleteProjectModal btn btn-sm btn-outline-danger btn-icon-split"><span class="icon"><i class="fas fa-trash-alt"></i></span><span class="text">Remove Project</span></button></div>
+          <div class="dropdown-item"><button type="button" data-toggle="modal" data-target="#modal-delete-project" data-project-id="{{project.id}}" role="button" class="open-deleteProjectModal btn btn-sm btn-outline-danger btn-icon-split"><span class="icon"><i class="fas fa-trash-alt"></i></span><span class="text">Remove Report</span></button></div>
         </div>
       </div>
+      {% endif %}
     </div>
     <!-- ./card header -->
     <!-- card Body -->

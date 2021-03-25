@@ -62,30 +62,41 @@ def homepage(request):
 
 
 def request_user_projects(request):
-    context = create_context(request)
     if not request.user.is_authenticated:
+        context = create_context(request)
         context['title'] = "You are not logged in"
-        context['description'] = "You need to login or create a new project to continue"
+        context['description'] = "You need to login or create a new report to continue"
         return render(request, 'cauldronapp/error.html', status=400, context=context)
-    else:
-        projects = Project.objects.filter(creator=request.user)
+    projects = Project.objects.filter(creator=request.user)
+    return request_projects(request, projects)
 
-        search = request.GET.get('search')
-        if search is not None:
-            projects = projects.filter(name__icontains=search)
 
-        p = Pages(projects, 9)
-        page_number = request.GET.get('page', 1)
-        page_obj = p.pages.get_page(page_number)
-        context['page_obj'] = page_obj
-        context['pages_to_show'] = p.pages_to_show(page_obj.number)
+def request_explore_projects(request):
+    projects = Project.objects.all()
+    return request_projects(request, projects)
 
-        projects_info = list()
-        for project in page_obj.object_list:
-            summary = project.summary()
-            summary['project'] = project
-            projects_info.append(summary)
-        context['projects_info'] = projects_info
+
+def request_projects(request, projects):
+    context = create_context(request)
+    search = request.GET.get('search')
+    if search is not None:
+        projects = projects.filter(name__icontains=search)
+
+    p = Pages(projects, 9)
+    page_number = request.GET.get('page', 1)
+    page_obj = p.pages.get_page(page_number)
+    context['page_obj'] = page_obj
+    context['pages_to_show'] = p.pages_to_show(page_obj.number)
+
+    projects_info = list()
+    for project in page_obj.object_list:
+        summary = project.summary()
+        summary['project'] = project
+        projects_info.append(summary)
+    context['projects_info'] = projects_info
+    context['total_projects'] = Project.objects.count()
+    if request.user.is_authenticated:
+        context['user_projects'] = Project.objects.filter(creator=request.user).count()
     return render(request, 'cauldronapp/projects/projects.html', context=context)
 
 
@@ -116,7 +127,7 @@ def request_github_oauth(request):
     if merged:
         request.session['alert_notification'] = {'title': 'Account merged',
                                                  'message': f"You already had a Cauldron user with this GitHub account."
-                                                            f" We have proceeded to merge all the projects and "
+                                                            f" We have proceeded to merge all the reports and "
                                                             f"visualization in you current account so that you do not "
                                                             f"loose anything"}
     GHToken.objects.update_or_create(user=request.user, defaults={'token': oauth_user.token})
@@ -195,7 +206,7 @@ def request_gitlab_oauth(request, backend):
     if merged:
         request.session['alert_notification'] = {'title': 'Account merged',
                                                  'message': f"You already had a Cauldron user with this GitLab account."
-                                                            f" We have proceeded to merge all the projects and "
+                                                            f" We have proceeded to merge all the reports and "
                                                             f"visualization in you current account so that you do not "
                                                             f"loose anything"}
 
@@ -248,7 +259,7 @@ def request_meetup_oauth(request):
     if merged:
         request.session['alert_notification'] = {'title': 'Account merged',
                                                  'message': f"You already had a Cauldron user with this Meetup account."
-                                                            f" We have proceeded to merge all the projects and "
+                                                            f" We have proceeded to merge all the reports and "
                                                             f"visualization in you current account so that you do not "
                                                             f"loose anything"}
 
@@ -305,7 +316,7 @@ def request_twitter_oauth(request):
     if merged:
         request.session['alert_notification'] = {'title': 'Account merged',
                                                  'message': f"You already had a Cauldron user with this Twitter account. "
-                                                            f"We have proceeded to merge all the projects and "
+                                                            f"We have proceeded to merge all the reports and "
                                                             f"visualization in you current account so that you do not "
                                                             f"loose anything"}
 
@@ -460,7 +471,7 @@ def request_project_repositories(request, project_id):
     try:
         project, context = project_common(request, project_id)
     except Project.DoesNotExist:
-        return custom_404(request, "The project requested was not found in this server")
+        return custom_404(request, "The report requested was not found in this server")
 
     context['show_table'] = True
     repositories = project.repository_set.all()
@@ -478,7 +489,7 @@ def request_project_actions(request, project_id):
     try:
         project, context = project_common(request, project_id)
     except Project.DoesNotExist:
-        return custom_404(request, "The project requested was not found in this server")
+        return custom_404(request, "The report requested was not found in this server")
 
     context['show_actions'] = True
     context['actions'] = project.action_set.select_subclasses()
@@ -492,7 +503,7 @@ def request_project_actions_refresh(request, project_id):
     try:
         project = Project.objects.get(pk=project_id)
     except Project.DoesNotExist:
-        return custom_404(request, "The project requested was not found in this server")
+        return custom_404(request, "The report requested was not found in this server")
 
     if not request.user.is_authenticated and request.user != project.creator and not request.user.is_superuser:
         return custom_403(request)
@@ -506,7 +517,7 @@ def request_project_actions_remove(request, project_id):
     try:
         project = Project.objects.get(pk=project_id)
     except Project.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Project not found'}, status=404)
+        return JsonResponse({'status': 'error', 'message': 'Report not found'}, status=404)
 
     if not request.user.is_authenticated and request.user != project.creator and not request.user.is_superuser:
         return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
@@ -554,7 +565,7 @@ def request_add_to_project(request, project_id):
     """ Add new repositories to a project"""
     project = Project.objects.filter(id=project_id).first()
     if not project:
-        return JsonResponse({'status': 'error', 'message': 'Project not found'}, status=404)
+        return JsonResponse({'status': 'error', 'message': 'Report not found'}, status=404)
     if not request.user.is_authenticated or (request.user != project.creator and not request.user.is_superuser):
         return JsonResponse({'status': 'error', 'message': 'You cannot edit this project'}, status=403)
 
@@ -578,7 +589,7 @@ def request_add_to_project(request, project_id):
         if not project.creator.ghtokens.filter(instance='GitHub').exists():
             if request.user != project.creator:
                 return JsonResponse({'status': 'error',
-                                     'message': 'Project owner needs a GitHub token '
+                                     'message': 'Report owner needs a GitHub token '
                                                 'to analyze this kind of repositories'},
                                     status=401)
             request.session['add_repo'] = {'data': data,
@@ -630,7 +641,7 @@ def request_add_to_project(request, project_id):
         if not project.creator.gltokens.filter(instance__slug=backend).exists():
             if request.user != project.creator:
                 return JsonResponse({'status': 'error',
-                                     'message': f'Project owner needs a {instance.name} token to '
+                                     'message': f'Report owner needs a {instance.name} token to '
                                                 'analyze this kind of repositories'},
                                     status=401)
             request.session['add_repo'] = {'data': data,
@@ -655,9 +666,9 @@ def request_add_to_project(request, project_id):
 def request_remove_from_project(request, project_id):
     project = Project.objects.filter(id=project_id).first()
     if not project:
-        return JsonResponse({'status': 'error', 'message': 'Project not found'}, status=404)
+        return JsonResponse({'status': 'error', 'message': 'Report not found'}, status=404)
     if not request.user.is_authenticated or (request.user != project.creator and not request.user.is_superuser):
-        return JsonResponse({'status': 'error', 'message': 'You cannot edit this project'}, status=403)
+        return JsonResponse({'status': 'error', 'message': 'You cannot edit this report'}, status=403)
 
     repo_id = request.POST.get('repository', None)
 
@@ -690,10 +701,10 @@ def request_rename_project(request, project_id):
     try:
         project = Project.objects.get(id=project_id)
     except Project.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': f"Project {project_id} does not exist"},
+        return JsonResponse({'status': 'error', 'message': f"Report {project_id} does not exist"},
                             status=404)
     if not request.user.is_authenticated and request.user != project.creator and not request.user.is_superuser:
-        return JsonResponse({'status': 'error', 'message': f'You cannot edit project {project_id}, '
+        return JsonResponse({'status': 'error', 'message': f'You cannot edit report {project_id}, '
                                                            f'you are not the owner'},
                             status=400)
 
@@ -704,7 +715,7 @@ def request_rename_project(request, project_id):
                             status=400)
 
     if Project.objects.filter(creator=project.creator, name=name).exclude(id=project_id).exists():
-        return JsonResponse({'status': 'Duplicated name', 'message': 'You have the same name in another Project'},
+        return JsonResponse({'status': 'Duplicated name', 'message': 'You have the same name in another report'},
                             status=400)
     project.name = name
     project.save()
@@ -722,7 +733,7 @@ def create_project(request):
             request.session['new_project'] = data
             if request.user.is_authenticated and \
                     Project.objects.filter(creator=request.user, name=data['name']).exists():
-                return JsonResponse({'status': 'error', 'message': 'You have the same name defined in another project'})
+                return JsonResponse({'status': 'error', 'message': 'You have the same name defined in another report'})
             elif len(data['name']) < 1 or len(data['name']) > 32:
                 return JsonResponse({'status': 'error', 'message': 'Must be 1-32 characters long.'})
             return JsonResponse({'status': 'ok'}, status=200)
@@ -883,13 +894,13 @@ def _validate_data_project(request, data):
     if not data:
         return 'No data found'
     if 'name' not in data:
-        return 'You need to define a name for the project.'
+        return 'You need to define a name for the report.'
     if not data.get('actions', None):
         return 'You need to add at least one data source.'
     if len(data['name']) < 1 or len(data['name']) > 32:
         return 'Project name should be between 1 and 32 chars.'
     if request.user.is_authenticated and Project.objects.filter(creator=request.user, name=data['name']).exists():
-        return 'You have the same name in another Project. Try with a different one.'
+        return 'You have the same name in another report. Try with a different one.'
 
 
 def request_new_project(request):
@@ -975,11 +986,11 @@ def request_refresh_project(request, project_id):
     try:
         project = Project.objects.get(id=project_id)
     except Project.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': f"Project {project_id} does not exist"},
+        return JsonResponse({'status': 'error', 'message': f"Report {project_id} does not exist"},
                             status=404)
 
     if not request.user.is_authenticated and request.user != project.creator and not request.user.is_superuser:
-        return JsonResponse({'status': 'error', 'message': f'You cannot edit project {project_id}, '
+        return JsonResponse({'status': 'error', 'message': f'You cannot edit report {project_id}, '
                                                            f'you are not the owner'},
                             status=400)
 
@@ -1037,7 +1048,7 @@ def request_compare_projects(request):
         context['user_projects'] = request.user.project_set.all()
 
     if projects.filter(repository=None).count() > 0:
-        context['message_error'] = "Some of the selected projects do not have repositories..."
+        context['message_error'] = "Some of the selected reports do not have repositories..."
         context['projects'] = Project.objects.none()
     else:
         try:
@@ -1084,7 +1095,7 @@ def request_compare_projects_metrics(request):
         return custom_403(request)
 
     if projects.filter(repository=None).count() > 0:
-        return custom_403(request, "Some of the selected projects do not have repositories...")
+        return custom_403(request, "Some of the selected reports do not have repositories...")
 
     try:
         from_str = request.GET.get('from_date', '')
@@ -1119,7 +1130,7 @@ def request_project_metrics(request, project_id):
     try:
         project = Project.objects.get(pk=project_id)
     except Project.DoesNotExist:
-        return custom_404(request, "The project requested was not found in this server")
+        return custom_404(request, "The report requested was not found in this server")
 
     try:
         from_str = request.GET.get('from', '')
@@ -1147,7 +1158,7 @@ def request_delete_project(request, project_id):
     try:
         project = Project.objects.get(id=project_id)
     except Project.DoesNotExist:
-        return custom_404(request, "The project requested was not found in this server")
+        return custom_404(request, "The report requested was not found in this server")
 
     owner = request.user.is_authenticated and request.user == project.creator
     if not owner and not request.user.is_superuser:
@@ -1155,7 +1166,7 @@ def request_delete_project(request, project_id):
 
     delete_project(project)
 
-    return JsonResponse({'status': 'Ok', 'id': project_id, 'message': 'Project deleted successfully'})
+    return JsonResponse({'status': 'Ok', 'id': project_id, 'message': 'Report deleted successfully'})
 
 
 def delete_project(project):
@@ -1182,7 +1193,7 @@ def request_workspace(request, project_id):
     """Redirect to My workspace of the requested project or create it"""
     project = Project.objects.filter(id=project_id).first()
     if not project:
-        return custom_404(request, "The project requested was not found in this server")
+        return custom_404(request, "The report requested was not found in this server")
 
     is_owner = request.user.is_authenticated and request.user == project.creator
     if not is_owner and not request.user.is_superuser:
@@ -1262,7 +1273,7 @@ def request_public_kibana(request, project_id):
     """Redirect to public Kibana"""
     project = Project.objects.filter(id=project_id).first()
     if not project:
-        return custom_404(request, "The project requested was not found in this server")
+        return custom_404(request, "The report requested was not found in this server")
 
     if request.method != 'GET':
         return custom_405(request, request.method)
@@ -1384,7 +1395,7 @@ def request_project_summary(request, project_id):
     try:
         project = Project.objects.get(pk=project_id)
     except Project.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'project not found'})
+        return JsonResponse({'status': 'error', 'message': 'report not found'})
     summary = project.summary()
     return JsonResponse(summary)
 
@@ -1405,7 +1416,7 @@ def request_create_git_csv(request, project_id):
     try:
         project = Project.objects.get(id=project_id)
     except Project.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'project not found'})
+        return JsonResponse({'status': 'error', 'message': 'report not found'})
     IExportGitCSV.objects.get_or_create(defaults={'user': request.user}, project=project)
     return JsonResponse({'status': 'ok'})
 

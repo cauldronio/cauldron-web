@@ -96,66 +96,65 @@
         Cauldron <sup class="badge badge-secondary">carazo</sup>
       </a>
 
-      {% if request.resolver_match.url_name != 'show_project' and request.resolver_match.url_name != 'create_project' and request.resolver_match.url_name != 'login_page' or repositories_count > 0 %}
-      <a class="btn btn-icon-split btn-orange mx-2" href="{% url 'create_project' %}">
-        <span class="icon"><i class="fas fa-plus"></i></span>
-        <span class="text">New project</span>
-      </a>
-      {% endif %}
-
-
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarOptions" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
 
       <div class="collapse navbar-collapse" id="navbarOptions">
-        <ul class="navbar-nav mr-auto">
-
-          {% if authenticated and request.path != homepage %}
+        <ul class="navbar-nav mr-auto ml-3">
           <li class="nav-item">
-            <a class="nav-link" href="{% url 'homepage' %}">My Projects</a>
+            {% if authenticated %}
+            <a class="nav-link" href="{% url 'homepage' %}">Reports</a>
+            {% else %}
+            <a class="nav-link" href="{% url 'explore_projects' %}">Explore</a>
+            {% endif %}
           </li>
-          {% endif %}
-          {% if request.user.is_superuser and hatstall_url %}
-          <li class="nav-item">
-            <a class="nav-link" target="_blank" href="{{ hatstall_url }}">Hatstall</a>
-          </li>
-          {% endif %}
           {% if authenticated and request.path != compare_projects %}
           <li class="nav-item">
             <a class="nav-link" href="{% url 'compare_projects' %}">Compare</a>
           </li>
           {% endif %}
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle navbar-text" href="#" id="dropdownCommunityMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              Community
-            </a>
-            <div class="dropdown-menu" aria-labelledby="dropdownCommunityMenu">
-              <a class="dropdown-item" href="https://community.cauldron.io/" target="_blank">Get Support</a>
-              <a class="dropdown-item" href="https://gitlab.com/cauldronio/cauldron/issues/new" target="_blank">Report an Issue</a>
-				      <a class="dropdown-item" href="https://mailchi.mp/003f1e1f6242/cauldron-newsletter" target="_blank">Join the Newsletter</a>
-              <a class="dropdown-item" href="{% url 'stats' %}" target="_blank">Cauldron Stats</a>
-            </div>
+          {% if request.user.is_superuser and hatstall_url %}
+          <li class="nav-item">
+            <a class="nav-link" target="_blank" href="{{ hatstall_url }}">Contributors</a>
           </li>
+          {% endif %}
         </ul>
 
         <div class="navbar-line d-none"></div>
 
-        {% if authenticated %}
+        {% if request.resolver_match.url_name != 'show_project' and request.resolver_match.url_name != 'create_project' and request.resolver_match.url_name != 'login_page' or repositories_count > 0 %}
+        <a class="btn btn-icon-split btn-orange mx-lg-3 mx-0 my-2 my-lg-0" href="{% url 'create_project' %}">
+          <span class="icon"><i class="fas fa-plus"></i></span>
+          <span class="text">New report</span>
+        </a>
+        {% endif %}
+
         <div class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle navbar-text" href="#" id="dropdownCommunityMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="fas fa-question-circle"></i>
+          </a>
+          <div class="dropdown-menu" aria-labelledby="dropdownCommunityMenu">
+            <a class="dropdown-item" href="https://community.cauldron.io/" target="_blank">Get Support</a>
+            <a class="dropdown-item" href="https://gitlab.com/cauldronio/cauldron/issues/new" target="_blank">Report an Issue</a>
+            <a class="dropdown-item" href="https://mailchi.mp/003f1e1f6242/cauldron-newsletter" target="_blank">Join the Newsletter</a>
+            <a class="dropdown-item" href="{% url 'stats' %}" target="_blank">Cauldron Stats</a>
+          </div>
+        </div>
+
+        {% if authenticated %}
+        <div class="nav-item dropdown ml-0">
           <a class="nav-link dropdown-toggle navbar-text p-0" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
             <span> {{ request.user.first_name }} </span>
             <img src="{{ photo_user }}" class="rounded-circle avatar">
           </a>
 
           <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
-            <a class="dropdown-item" href="{% url 'homepage' %}">My projects</a>
+            <a class="dropdown-item" href="{% url 'homepage' %}">My reports</a>
             <a class="dropdown-item" href="{% url 'profile:index' %}">Settings</a>
-            <div class="dropdown-divider"></div>
-            <a class="dropdown-item" href="/logout">Log out</a>
+            {% if request.user.is_superuser %}
             <div class="dropdown-divider"></div>
             <h6 class="dropdown-header">Administration</h6>
-            {% if request.user.is_superuser %}
             <a class="dropdown-item" target="_blank" href="{% url 'kibana_admin' %}">Kibana admin</a>
             <a class="dropdown-item" href="{% url 'admin:index' %}">Django admin</a>
             {% if plausible_analytics_url %}
@@ -165,13 +164,12 @@
             <a class="dropdown-item" target="_blank" href="{{ matomo_url }}">Matomo</a>
             {% endif %}
             {% endif %}
-
-
-            <!--<a class="dropdown-item" href="/profile">Profile</a>-->
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item" href="/logout">Log out</a>
           </div>
         </div>
         {% elif request.resolver_match.url_name != 'login_page' %}
-        <a class="btn btn-light d-block d-lg-inline-block mb-0 ml-md-3" href="#" data-toggle="modal" data-target="#modalLogin">
+        <a class="btn btn-light d-block d-lg-inline-block mb-0 ml-md-lg-3 ml-md-0" href="#" data-toggle="modal" data-target="#modalLogin">
           Login
         </a>
         {% endif %}
