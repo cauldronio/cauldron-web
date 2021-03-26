@@ -33,7 +33,6 @@ $(function() {
     var VIZ_KEYS = {
         'commits_bokeh': "chart-commits",
         'commits_bokeh_overview': "chart-commits-overview",
-        'commits_bokeh_overview_without_description': "chart-commits-overview-without-description",
         'commits_activity_overview_bokeh': "chart-commits-activity-overview",
         'commits_lines_changed_bokeh': "chart-lines-touched",
         'commits_hour_day_bokeh': "chart-commits-hour",
@@ -50,12 +49,9 @@ $(function() {
         'reviews_opened_heatmap_bokeh': "chart-reviews-opened-heatmap",
         'reviews_closed_heatmap_bokeh': "chart-reviews-closed-heatmap",
         "author_evolution_bokeh": "chart-people-overview",
-        "author_evolution_bokeh_without_description": "chart-people-overview-without-description",
         "issues_open_closed_bokeh_overview": "chart-issues-overview",
-        "issues_open_closed_bokeh_overview_without_description": "chart-issues-overview-without-description",
         'issues_open_closed_activity_overview_bokeh': "chart-issues-open-closed-activity-overview",
         "reviews_open_closed_bokeh_overview": "chart-pull-requests-overview",
-        "reviews_open_closed_bokeh_overview_without_description": "chart-pull-requests-overview-without-description",
         'reviews_open_closed_activity_overview_bokeh': "chart-reviews-open-closed-activity-overview",
         "commits_authors_active_bokeh": "chart-authors-git-active",
         "commits_authors_active_community_overview_bokeh": "chart-authors-git-active-community-overview",
@@ -91,15 +87,13 @@ $(function() {
         "reviews_still_open_bokeh": "chart-reviews-still-open",
         "reviews_closed_ttc_bokeh": "chart-reviews-closed-ttc",
         "reviews_closed_created_ratio_bokeh": "chart-reviews-closed-created-ratio",
+        "questions_answers_stackexchange_bokeh": "questions_answers_stackexchange_bokeh",
+        "questions_answers_stackexchange_bokeh": "questions_answers_stackexchange_bokeh",
         // CHAOSS SECTION
         "reviews_closed_mean_duration_heatmap_bokeh_chaoss": "chart-reviews-closed-mean-duration-chaoss",
-        "reviews_closed_mean_duration_heatmap_bokeh_chaoss_without_description": "chart-reviews-closed-mean-duration-chaoss-without-description",
         "issues_created_closed_bokeh_chaoss": "chart-issues-created-closed-chaoss",
-        "issues_created_closed_bokeh_chaoss_without_description": "chart-issues-created-closed-chaoss-without-description",
         "drive_by_and_repeat_contributor_counts_bokeh_chaoss": "chart-drive-by-and-repeat-contributor-counts-chaoss",
-        "drive_by_and_repeat_contributor_counts_bokeh_chaoss_without_description": "chart-drive-by-and-repeat-contributor-counts-chaoss-without-description",
         "commits_heatmap_bokeh_chaoss": "chart-commits-heatmap-chaoss",
-        "commits_heatmap_bokeh_chaoss_without_description": "chart-commits-heatmap-chaoss-without-description",
     }
 
     var METRICS_ACTIVITY_OVERVIEW = {
@@ -202,6 +196,8 @@ $(function() {
         "issues_created_range": "number_issues_created_range",
         "issues_closed_range": "number_issues_closed_range",
         "issues_time_to_close": "number_issues_time_to_close",
+        "questions_stackexchange": "questions_stackexchange",
+        "answers_stackexchange": "answers_stackexchange",
     }
 
     METRICS_KEYS = Object.assign({}, METRICS_KEYS, METRICS_ACTIVITY_OVERVIEW);

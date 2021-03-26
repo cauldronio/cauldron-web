@@ -17,7 +17,7 @@
         {% endif %}
       </div>
       <div id="spinner-{{project.id}}" class="spinner-border spinner-border-sm" style="display: none;"></div>
-      {% if project.owner == request.user %}
+      {% if project.project.creator == request.user %}
       <div class="dropdown no-arrow">
         <a id="dropdown{{project.id}}" class="dropdown-toggle px-2 ml-3" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
           <i class="fas fa-ellipsis-v fa-sm fa-fe"></i>

@@ -9,6 +9,7 @@ from elasticsearch import Elasticsearch
 from .activity import commits as activity_commits
 from .activity import issues as activity_issues
 from .activity import reviews as activity_reviews
+from .activity import stackexchange as activity_stackexchange
 
 from .community import commits as community_commits
 from .community import issues as community_issues
@@ -293,15 +294,15 @@ def overview_metrics(elastic, urls, from_date, to_date):
     metrics['issues_created_range'] = activity_issues.issues_opened(elastic, urls, from_date, to_date)
     metrics['issues_closed_range'] = activity_issues.issues_closed(elastic, urls, from_date, to_date)
     metrics['issues_time_to_close'] = other.issues_time_to_close(elastic, urls, from_date, to_date)
+    metrics['questions_stackexchange'] = activity_stackexchange.num_questions(elastic, urls, from_date, to_date)
+    metrics['answers_stackexchange'] = activity_stackexchange.num_answers(elastic, urls, from_date, to_date)
     # Visualizations
     metrics['commits_bokeh_overview'] = activity_commits.git_commits_bokeh_line(elastic, urls, from_date, to_date)
-    metrics['commits_bokeh_overview_without_description'] = metrics['commits_bokeh_overview']
     metrics['author_evolution_bokeh'] = other.author_evolution_bokeh(elastic, urls, from_date, to_date)
-    metrics['author_evolution_bokeh_without_description'] = metrics['author_evolution_bokeh']
     metrics['issues_open_closed_bokeh_overview'] = activity_issues.issues_open_closed_bokeh(elastic, urls, from_date, to_date)
-    metrics['issues_open_closed_bokeh_overview_without_description'] = metrics['issues_open_closed_bokeh_overview']
     metrics['reviews_open_closed_bokeh_overview'] = activity_reviews.reviews_open_closed_bokeh(elastic, urls, from_date, to_date)
-    metrics['reviews_open_closed_bokeh_overview_without_description'] = metrics['reviews_open_closed_bokeh_overview']
+    metrics['questions_answers_stackexchange_bokeh'] = activity_stackexchange.questions_answers_bokeh(elastic, urls, from_date, to_date)
+
     return metrics
 
 
@@ -573,11 +574,7 @@ def chaoss_metrics(elastic, urls, from_date, to_date):
     metrics = dict()
     # Visualizations
     metrics['reviews_closed_mean_duration_heatmap_bokeh_chaoss'] = activity_reviews.reviews_closed_mean_duration_heatmap_bokeh(elastic, urls, from_date, to_date)
-    metrics['reviews_closed_mean_duration_heatmap_bokeh_chaoss_without_description'] = metrics['reviews_closed_mean_duration_heatmap_bokeh_chaoss']
     metrics['issues_created_closed_bokeh_chaoss'] = activity_issues.issues_open_closed_bokeh(elastic, urls, from_date, to_date)
-    metrics['issues_created_closed_bokeh_chaoss_without_description'] = metrics['issues_created_closed_bokeh_chaoss']
     metrics['drive_by_and_repeat_contributor_counts_bokeh_chaoss'] = community_commits.drive_by_and_repeat_contributor_counts(elastic, urls, from_date, to_date)
-    metrics['drive_by_and_repeat_contributor_counts_bokeh_chaoss_without_description'] = metrics['drive_by_and_repeat_contributor_counts_bokeh_chaoss']
     metrics['commits_heatmap_bokeh_chaoss'] = activity_commits.git_commits_heatmap_bokeh(elastic, urls, from_date, to_date)
-    metrics['commits_heatmap_bokeh_chaoss_without_description'] = metrics['commits_heatmap_bokeh_chaoss']
     return metrics
