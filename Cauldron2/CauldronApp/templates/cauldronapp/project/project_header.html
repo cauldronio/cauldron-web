@@ -49,16 +49,15 @@
 
   </div>
 
-  {% if project.is_outdated %}
-  <div class="alert alert-warning alert-dismissible mb-0 mt-1 fade show" role="alert">
-    <strong>Data outdated!</strong> Some of the analyzed repositories are not updated. The data could have inconsistencies...
+  {% if project.repos_running == 0 and project.is_outdated %}
+  <div id="project-alert-outdated" class="alert alert-warning alert-dismissible mb-0 mt-1 fade show" role="alert">
+    {% if project.last_refresh %}
+    Data from some repositories have not been refreshed since {{ project.last_refresh | date:"F d, Y"  }}.
+    {% else %}
+    Data from some repositories have not been analyzed.
+    {% endif %}
     {% if editable %}
     <a type="button" class="btn-reanalyze-all text-primary">
-      <span class="icon reanalyze-all-spinner-dynamic" style="display: none;">
-        <div class="spinner-border spinner-border-sm" role="status">
-          <span class="sr-only">Loading...</span>
-        </div>
-      </span>
       Refresh all data sources
     </a>
     {% endif %}

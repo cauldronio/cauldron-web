@@ -1,6 +1,17 @@
 {% load cauldron_tags %}
 {% load static %}
 
+<div id="project-alert-running" class="alert alert-info alert-dismissible mb-2 mt-1 fade show" role="alert" style="display:none;">
+    <div class="spinner-border spinner-border-sm" role="status">
+      <span class="sr-only">Loading...</span>
+    </div>
+    Data is still being collected. Below graphs only show data already processed.
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+
+
 <div>
 
   <div class="card">

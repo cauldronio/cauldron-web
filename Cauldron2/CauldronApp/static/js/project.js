@@ -116,9 +116,12 @@ function getSummary() {
         if (data.running > 0) {
             $('.reanalyze-all-spinner-dynamic').show();
             $('.reanalyze-all-spinner-static').hide();
+            $('#project-alert-running').show();
+            $('#project-alert-outdated').hide();
         } else {
             $('.reanalyze-all-spinner-dynamic').hide();
             $('.reanalyze-all-spinner-static').show();
+            $('#project-alert-running').hide();
         }
         $('#num-repos').html(data.total);
         $('#general-status').html(status_output);
