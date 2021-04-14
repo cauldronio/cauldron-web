@@ -136,6 +136,3 @@ def icon_boolean(true_input):
         return "far fa-check-circle"
     else:
         return "far fa-times-circle"
-
-
-

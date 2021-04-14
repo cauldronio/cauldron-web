@@ -30,6 +30,8 @@ GL_CLIENT_SECRET_KDE = os.environ.get('KDE_CLIENT_SECRET')
 # Twitter Oauth keys
 TWITTER_CLIENT_ID = os.environ.get('TWITTER_CLIENT_ID')
 TWITTER_CLIENT_SECRET = os.environ.get('TWITTER_CLIENT_SECRET')
+TWITTER_ACCESS_TOKEN = os.environ.get('TWITTER_ACCESS_TOKEN')
+TWITTER_ACCESS_TOKEN_SECRET = os.environ.get('TWITTER_ACCESS_TOKEN_SECRET')
 
 # StackExchange Oauth keys
 STACK_EXCHANGE_CLIENT_ID = os.environ.get('STACK_EXCHANGE_CLIENT_ID')
@@ -112,6 +114,7 @@ INSTALLED_APPS = [
     'cauldron_apps.poolsched_gitlab.apps.CauldronGitlabConfig',
     'cauldron_apps.poolsched_meetup',
     'cauldron_apps.poolsched_stackexchange',
+    'cauldron_apps.poolsched_twitter',
     'cauldron_apps.poolsched_export',
     'cauldron_apps.cauldron_actions',
 ]

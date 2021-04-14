@@ -126,6 +126,17 @@
 
   <form method="post" action="">
     {% csrf_token %}
+    <div class="d-flex">
+      <div class="custom-control custom-switch mb-2">
+        <input type="checkbox" class="custom-control-input" {% if not twitter_enabled %} disabled {% endif %} id="twitter-notification" name="twitter-notification">
+        <label class="custom-control-label" for="twitter-notification">Notify me on Twitter</label>
+      </div>
+
+      {% if not twitter_enabled %}
+      <a class="btn btn-large btn-twitter ml-4" href="{% url 'twitter_oauth' %}?open_tab=twitter"><i class="fab fa-twitter"></i> Authenticate</a>
+      <i class="far fa-question-circle text-primary ml-2" data-toggle="tooltip" data-html="true" data-placement="top" title="We need to check the ownership of your Twitter account in order to notify you when a report is ready. You will be prompted by Twitter to grant Cauldron some permissions to retrieve some public information about your account, like your username. We will only store the username of your account, and you can delete it from our servers whenever you may want, either in Twitter or in Cauldron."></i>
+      {% endif %}
+    </div>
     <input type="hidden" name="create" value="true">
     <button type="submit" class="btn btn-orange createProjectBtn" {% if not new_project.actions %}disabled{% endif %}>
       Create report

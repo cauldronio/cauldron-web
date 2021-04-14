@@ -25,6 +25,7 @@ from cauldron_apps.poolsched_github.models import GHToken, IGHRaw
 from cauldron_apps.poolsched_gitlab.models import GLToken, GLInstance, IGLRaw
 from cauldron_apps.poolsched_meetup.models import MeetupToken, IMeetupRaw
 from cauldron_apps.poolsched_stackexchange.models import StackExchangeToken, IStackExchangeRaw
+from cauldron_apps.poolsched_twitter.models import ITwitterNotify
 from cauldron_apps.poolsched_export.models.iexportgit import IExportGitCSV
 from cauldron_apps.cauldron_actions.models import IRefreshActions
 from cauldron_apps.cauldron.models import IAddGHOwner, IAddGLOwner, Project, OauthUser, AnonymousUser, \
@@ -489,6 +490,7 @@ def project_common(request, project_id):
     context['project'] = project
     context['repositories_count'] = project.repository_set.count()
     context['has_git'] = GitRepository.objects.filter(projects=project).exists()
+    context['active_notifications'] = ITwitterNotify.objects.filter(project=project).exists()
     context['editable'] = ((request.user.is_authenticated and request.user == project.creator) or
                            request.user.is_superuser)
     if request.user.is_authenticated:
@@ -845,6 +847,7 @@ def create_project(request):
         context['kde_enabled'] = request.user.gltokens.filter(instance='KDE').exists()
         context['meetup_enabled'] = request.user.meetuptokens.exists()
         context['stack_enabled'] = request.user.stackexchangetokens.exists()
+        context['twitter_enabled'] = OauthUser.objects.filter(user=request.user, backend='twitter').exists()
 
     context['new_project'] = request.session.get('new_project')
 
@@ -1020,6 +1023,9 @@ def request_new_project(request):
         return custom_405(request, request.method)
 
     project_data = request.session.get('new_project')
+
+    twitter_notification = request.POST.get('twitter-notification')
+
     error = _validate_data_project(request, project_data)
     if error:
         # TODO: format error
@@ -1077,6 +1083,14 @@ def request_new_project(request):
             if output and output['status'] != 'ok':
                 error = output['message']
                 break
+
+    if twitter_notification:
+        try:
+            ITwitterNotify.objects.create(user=project.creator,
+                                          project=project,
+                                          report_url=request.build_absolute_uri(reverse('show_project', kwargs={'project_id': project.id})))
+        except:
+            error = "Error creating the Twitter notification."
 
     if error:
         project.delete()
