@@ -1504,10 +1504,6 @@ def create_context(request):
     # Message that should be shown to the user
     context['alert_notification'] = request.session.pop('alert_notification', None)
 
-    # Matomo link
-    context['matomo_enabled'] = settings.MATOMO_ENABLED
-    context['matomo_url'] = settings.MATOMO_URL
-
     # Information about Hatstall
     if settings.HATSTALL_ENABLED:
         context['hatstall_url'] = "/hatstall"

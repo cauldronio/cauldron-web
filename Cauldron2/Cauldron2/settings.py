@@ -67,11 +67,6 @@ LIMITED_ACCESS = os.environ.get('LIMITED_ACCESS') in ('True', 'true')
 LOGIN_REQUIRED_IGNORE_VIEW_NAMES = ['gitlab_oauth', 'github_oauth', 'meetup_oauth', 'github_callback',
                                     'gitlab_callback', 'meetup_callback', 'login_page', 'logout_page']
 
-# Matomo
-MATOMO_ENABLED = os.environ.get('MATOMO_ENABLED', False) in (True, 'True')
-MATOMO_PORT = os.environ.get('MATOMO_PORT')
-MATOMO_URL = f'https://{CAULDRON_HOST}:{MATOMO_PORT}'
-
 # Hatstall/Sortinghat
 HATSTALL_ENABLED = os.environ.get('HATSTALL_ENABLED') in ('True', 'true')
 SORTINGHAT = HATSTALL_ENABLED  # Just define the variable for some files
