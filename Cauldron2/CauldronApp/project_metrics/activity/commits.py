@@ -90,24 +90,29 @@ def git_files_touched(elastic, urls, from_date, to_date):
         return 'X'
 
 
-def git_commits_bucket(elastic, urls, from_date, to_date, interval):
+def git_commits_over_time(elastic, urls, from_date, to_date, interval):
     """ Makes a query to ES to get the number of commits grouped by date """
     s = Search(using=elastic, index='git') \
         .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) \
         .query(~Q('match', files=0)) \
         .query(Q('terms', origin=urls)) \
         .extra(size=0)
-    s.aggs.bucket("commits", 'date_histogram', field='grimoire_creation_date',
-                  calendar_interval=interval)
+    s.aggs.bucket('commits_date', 'date_histogram', field='grimoire_creation_date', calendar_interval=interval) \
+          .bucket('unique_commits', 'cardinality', field='hash')
 
     try:
         response = s.execute()
-        commits_bucket = response.aggregations.commits.buckets
+        commits_bucket = response.aggregations.commits_date.buckets
     except ElasticsearchException as e:
         logger.warning(e)
         commits_bucket = []
 
-    return commits_bucket
+    timestamps, commits = [], []
+    for week in commits_bucket:
+        timestamps.append(week.key)
+        commits.append(week.unique_commits.value)
+
+    return timestamps, commits
 
 
 def git_commits_bokeh_line(elastic, urls, from_date, to_date):
@@ -116,13 +121,7 @@ def git_commits_bokeh_line(elastic, urls, from_date, to_date):
     to_date_es = to_date.strftime("%Y-%m-%d")
     interval_name, interval_elastic, _ = get_interval(from_date, to_date)
 
-    commits_bucket = git_commits_bucket(elastic, urls, from_date_es, to_date_es, interval_elastic)
-
-    # Create the Bokeh visualization
-    timestamp, commits = [], []
-    for week in commits_bucket:
-        timestamp.append(week.key)
-        commits.append(week.doc_count)
+    timestamps, commits = git_commits_over_time(elastic, urls, from_date_es, to_date_es, interval_elastic)
 
     plot = figure(x_axis_type="datetime",
                   x_axis_label='Time',
@@ -133,12 +132,12 @@ def git_commits_bokeh_line(elastic, urls, from_date, to_date):
     plot.title.text = '# Commits'
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
                            '-/blob/master/guides/metrics/activity/commits-chart.md')
-    if len(timestamp) > 0:
+    if len(timestamps) > 0:
         plot.x_range = Range1d(from_date - timedelta(days=1), to_date + timedelta(days=1))
 
     source = ColumnDataSource(data=dict(
         commits=commits,
-        timestamp=timestamp
+        timestamp=timestamps
     ))
 
     plot.circle(x='timestamp', y='commits',
@@ -175,17 +174,11 @@ def git_commits_bokeh_compare(elastics, urls, from_date, to_date):
     commits_buckets = dict()
     for project_id in elastics:
         elastic = elastics[project_id]
-        commits_buckets[project_id] = git_commits_bucket(elastic, urls, from_date_es, to_date_es, interval_elastic)
+        commits_buckets[project_id] = git_commits_over_time(elastic, urls, from_date_es, to_date_es, interval_elastic)
 
     data = []
     for project_id in commits_buckets:
-        commits_bucket = commits_buckets[project_id]
-
-        # Create the data structure
-        commits, timestamps = [], []
-        for week in commits_bucket:
-            timestamps.append(week.key)
-            commits.append(week.doc_count)
+        timestamps, commits = commits_buckets[project_id]
 
         data.append(pandas.DataFrame(list(zip(timestamps, commits)),
                     columns =['timestamps', f'commits_{project_id}']))
@@ -255,13 +248,7 @@ def git_commits_bokeh(elastic, urls, from_date, to_date):
     to_date_es = to_date.strftime("%Y-%m-%d")
     interval_name, interval_elastic, bar_width = get_interval(from_date, to_date)
 
-    commits_bucket = git_commits_bucket(elastic, urls, from_date_es, to_date_es, interval_elastic)
-
-    # Create the Bokeh visualization
-    timestamp, commits = [], []
-    for week in commits_bucket:
-        timestamp.append(week.key)
-        commits.append(week.doc_count)
+    timestamps, commits = git_commits_over_time(elastic, urls, from_date_es, to_date_es, interval_elastic)
 
     plot = figure(x_axis_type="datetime",
                   y_axis_label='# Commits',
@@ -271,12 +258,12 @@ def git_commits_bokeh(elastic, urls, from_date, to_date):
     plot.title.text = '# Commits'
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
                            '-/blob/master/guides/metrics/activity/commits-chart.md')
-    if len(timestamp) > 0:
+    if len(timestamps) > 0:
         plot.x_range = Range1d(from_date - timedelta(days=1), to_date + timedelta(days=1))
 
     source = ColumnDataSource(data=dict(
         commits=commits,
-        timestamp=timestamp
+        timestamp=timestamps
     ))
 
     # width = 1000 ms/s * 60 s/m * 60 m/h * 24 h/d * 7 d/w * 0.9 width
@@ -309,7 +296,8 @@ def git_commits_weekday_bokeh(elastic, urls, from_date, to_date):
         .query(~Q('match', files=0)) \
         .query(Q('terms', origin=urls)) \
         .extra(size=0)
-    s.aggs.bucket('commit_weekday', 'terms', script="doc['commit_date'].value.dayOfWeek", size=7)
+    s.aggs.bucket('commit_weekday', 'terms', script="doc['commit_date'].value.dayOfWeek", size=7) \
+          .bucket('unique_commits', 'cardinality', field='hash')
 
     try:
         response = s.execute()
@@ -321,7 +309,7 @@ def git_commits_weekday_bokeh(elastic, urls, from_date, to_date):
     # Create the Bokeh visualization
     commits_dict = defaultdict(int)
     for weekday_item in commits_bucket:
-        commits_dict[weekday_item.key] = weekday_item.doc_count
+        commits_dict[weekday_item.key] = weekday_item.unique_commits.value
 
     commits = []
     for i, k in enumerate(WEEKDAY):
@@ -349,7 +337,8 @@ def git_commits_hour_day_bokeh(elastic, urls, from_date, to_date):
         .query(~Q('match', files=0)) \
         .query(Q('terms', origin=urls)) \
         .extra(size=0)
-    s.aggs.bucket('commit_hour_day', 'terms', script="doc['commit_date'].value.getHourOfDay()", size=24)
+    s.aggs.bucket('commit_hour_day', 'terms', script="doc['commit_date'].value.getHourOfDay()", size=24) \
+          .bucket('unique_commits', 'cardinality', field='hash')
 
     try:
         response = s.execute()
@@ -362,7 +351,7 @@ def git_commits_hour_day_bokeh(elastic, urls, from_date, to_date):
     hour, commits = [], []
     for week in commits_bucket:
         hour.append(int(week.key))
-        commits.append(week.doc_count)
+        commits.append(week.unique_commits.value)
 
     plot = figure(y_axis_label='# Commits',
                   height=300,
@@ -406,7 +395,8 @@ def git_commits_heatmap_bokeh(elastic, urls, from_date, to_date):
         .query(~Q('match', files=0)) \
         .extra(size=0)
     s.aggs.bucket('weekdays', 'terms', field='commit_date_weekday', size=7, order={'_term': 'asc'}) \
-          .bucket('hours', 'terms', field='commit_date_hour', size=24, order={'_term': 'asc'})
+          .bucket('hours', 'terms', field='commit_date_hour', size=24, order={'_term': 'asc'}) \
+          .bucket('unique_commits', 'cardinality', field='hash')
 
     try:
         response = s.execute()
@@ -426,7 +416,7 @@ def git_commits_heatmap_bokeh(elastic, urls, from_date, to_date):
         day = days[weekday.key - 1]
         data[day] = dict.fromkeys(hours, 0)
         for hour in weekday.hours:
-            data[day][str(hour.key)] = hour.doc_count
+            data[day][str(hour.key)] = hour.unique_commits.value
 
     data = pandas.DataFrame(data)
     data.index.name = "Hour"
