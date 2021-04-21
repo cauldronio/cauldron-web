@@ -19,7 +19,7 @@ $(function() {
     $('.selectpicker').selectpicker('refresh');
 
     $('select[name=repo_url]').on('hidden.bs.select', function() {
-        $('select[name=repo_url] option:selected').prependTo('select');
+        $('select[name=repo_url] option:selected').prependTo(this);
         $(this).selectpicker('refresh');
     });
 
@@ -218,7 +218,7 @@ $(function() {
         $('#repository-select-to-date').val(end.format('YYYY-MM-DD'));
         $('#repository-select-tab').val(tab);
 
-        $('select[name=repo_url] option:selected').prependTo('select');
+        $('select[name=repo_url] option:selected').prependTo('select[name=repo_url]');
         $('select[name=repo_url]').selectpicker('refresh');
     }
 
