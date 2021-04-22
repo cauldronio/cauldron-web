@@ -11,48 +11,68 @@
       </div>
       <div class="modal-body">
         <div class="container-fluid">
-          <div class="d-flex justify-content-around">
-            <button class="btn btn-github m-2 py-4 btn-block btn-datasource"
-                    data-toggle="modal" data-target="#add-github-modal">
-              <i class="fab fa-github"></i>
-              GitHub
-            </button>
-            <button class="btn btn-gitlab m-2 py-4 btn-block btn-datasource"
-                    data-toggle="modal" data-target="#add-gitlab-modal">
-              <i class="fab fa-gitlab"></i>
-              GitLab
-            </button>
-          </div>
-          <div class="d-flex justify-content-around">
-            <button class="btn btn-meetup m-2 py-4 btn-block btn-datasource"
-                    data-toggle="modal" data-target="#add-meetup-modal">
-              <i class="fab fa-meetup"></i>
-              Meetup
-            </button>
-            <button class="btn btn-git m-2 py-4 btn-block btn-datasource"
-                    data-toggle="modal" data-target="#add-git-modal">
-              <i class="fab fa-git-alt"></i>
-              Git
-            </button>
-          </div>
-          <div class="d-flex justify-content-around">
-            <button class="btn btn-gnome m-2 py-4 btn-block btn-datasource"
-                    data-toggle="modal" data-target="#add-gnome-modal">
-              <i class="gnome-icon-white"></i>
-              GitLab (GNOME)
-            </button>
-            <button class="btn btn-kde m-2 py-4 btn-block btn-datasource"
-                    data-toggle="modal" data-target="#add-kde-modal">
-              <i class="kde-icon-white"></i>
-              GitLab (KDE)
-            </button>
-          </div>
-          <div class="d-flex justify-content-around">
-            <button class="btn btn-stackexchange m-2 py-4 btn-block btn-datasource"
-                    data-toggle="modal" data-target="#add-stackexchange-modal">
-              <i class="fab fa-stack-exchange"></i>
-              StackExchange
-            </button>
+          <div class="row">
+            {% if data_sources_enabled.github %}
+            <div class="px-1 col-6">
+              <button class="py-4 my-1 btn btn-github btn-block btn-datasource"
+                      data-toggle="modal" data-target="#add-github-modal">
+                <i class="fab fa-github"></i>
+                GitHub
+              </button>
+            </div>
+            {% endif %}
+            {% if data_sources_enabled.gitlab %}
+            <div class="px-1 col-6">
+              <button class="py-4 my-1 btn btn-gitlab btn-block btn-datasource"
+                      data-toggle="modal" data-target="#add-gitlab-modal">
+                <i class="fab fa-gitlab"></i>
+                GitLab
+              </button>
+            </div>
+            {% endif %}
+            {% if data_sources_enabled.meetup %}
+            <div class="px-1 col-6">
+              <button class="py-4 my-1 btn btn-meetup btn-block btn-datasource"
+                      data-toggle="modal" data-target="#add-meetup-modal">
+                <i class="fab fa-meetup"></i>
+                Meetup
+              </button>
+            </div>
+            {% endif %}
+            <div class="px-1 col-6">
+              <button class="py-4 my-1 btn btn-git btn-block btn-datasource"
+                      data-toggle="modal" data-target="#add-git-modal">
+                <i class="fab fa-git-alt"></i>
+                Git
+              </button>
+            </div>
+            {% if data_sources_enabled.gnome %}
+            <div class="px-1 col-6">
+              <button class="py-4 my-1 btn btn-gnome btn-block btn-datasource"
+                      data-toggle="modal" data-target="#add-gnome-modal">
+                <i class="gnome-icon-white"></i>
+                GitLab (GNOME)
+              </button>
+            </div>
+            {% endif %}
+            {% if data_sources_enabled.kde %}
+            <div class="px-1 col-6">
+              <button class="py-4 my-1 btn btn-kde btn-block btn-datasource"
+                      data-toggle="modal" data-target="#add-kde-modal">
+                <i class="kde-icon-white"></i>
+                GitLab (KDE)
+              </button>
+            </div>
+            {% endif %}
+            {% if data_sources_enabled.stack_exchange %}
+            <div class="px-1 col-6">
+              <button class="py-4 my-1 btn btn-stackexchange btn-block btn-datasource"
+                      data-toggle="modal" data-target="#add-stackexchange-modal">
+                <i class="fab fa-stack-exchange"></i>
+                StackExchange
+              </button>
+            </div>
+            {% endif %}
           </div>
         </div>
       </div>

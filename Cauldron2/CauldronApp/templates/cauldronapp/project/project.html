@@ -176,13 +176,25 @@
     {% include "cauldronapp/project/share_modal.html" %}
     <!-- Data source modals -->
     {% include "cauldronapp/project/datasource_modals/global.html" %}
-    {% include "cauldronapp/project/datasource_modals/github.html" %}
-    {% include "cauldronapp/project/datasource_modals/gitlab.html" %}
+    {% if data_sources_enabled.github %}
+      {% include "cauldronapp/project/datasource_modals/github.html" %}
+    {% endif %}
+    {% if data_sources_enabled.gitlab %}
+      {% include "cauldronapp/project/datasource_modals/gitlab.html" %}
+    {% endif %}
     {% include "cauldronapp/project/datasource_modals/git.html" %}
-    {% include "cauldronapp/project/datasource_modals/meetup.html" %}
-    {% include "cauldronapp/project/datasource_modals/gnome.html" %}
-    {% include "cauldronapp/project/datasource_modals/kde.html" %}
-    {% include "cauldronapp/project/datasource_modals/stackexchange.html" %}
+    {% if data_sources_enabled.meetup %}
+      {% include "cauldronapp/project/datasource_modals/meetup.html" %}
+    {% endif %}
+    {% if data_sources_enabled.gnome %}
+      {% include "cauldronapp/project/datasource_modals/gnome.html" %}
+    {% endif %}
+    {% if data_sources_enabled.kde %}
+      {% include "cauldronapp/project/datasource_modals/kde.html" %}
+    {% endif %}
+    {% if data_sources_enabled.stack_exchange %}
+      {% include "cauldronapp/project/datasource_modals/stackexchange.html" %}
+    {% endif %}
 
   </div>
 

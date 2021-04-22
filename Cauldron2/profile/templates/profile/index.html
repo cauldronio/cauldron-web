@@ -54,6 +54,7 @@
     <p>Cauldron connects with certain services using access token. Here you can see the ones activated and revoke them if you wish.</p>
     <div class="row">
 
+        {% if data_sources_enabled.github %}
         <!-- GitHub Token Card -->
         <div class="col-xl-4 col-md-6 mb-4">
             <div class="card border-left-dark shadow h-100">
@@ -95,7 +96,9 @@
                 </div>
             </div>
         </div>
+        {% endif %}
 
+        {% if data_sources_enabled.gitlab %}
         <!-- Gitlab Token Card -->
         <div class="col-xl-4 col-md-6 mb-4">
             <div class="card border-left-warning shadow h-100">
@@ -137,7 +140,9 @@
                 </div>
             </div>
         </div>
+        {% endif %}
 
+        {% if data_sources_enabled.meetup %}
         <!-- Meetup Token Card -->
         <div class="col-xl-4 col-md-6 mb-4">
             <div class="card border-left-danger shadow h-100">
@@ -179,8 +184,9 @@
                 </div>
             </div>
         </div>
-    </div>
-    <div class="row">
+        {% endif %}
+
+        {% if data_sources_enabled.gnome %}
         <!-- Gnome Token Card -->
         <div class="col-xl-4 col-md-6 mb-4">
             <div class="card border-left-warning shadow h-100">
@@ -222,7 +228,9 @@
                 </div>
             </div>
         </div>
+        {% endif %}
 
+        {% if data_sources_enabled.kde %}
         <!-- KDE Token Card -->
         <div class="col-xl-4 col-md-6 mb-4">
             <div class="card border-left-warning shadow h-100">
@@ -264,7 +272,9 @@
                 </div>
             </div>
         </div>
+        {% endif %}
 
+        {% if data_sources_enabled.stack_exchange %}
         <!-- StackExchange Token Card -->
         <div class="col-xl-4 col-md-6 mb-4">
             <div class="card border-left-info shadow h-100">
@@ -306,11 +316,13 @@
                 </div>
             </div>
         </div>
+        {% endif %}
 
     </div>
 
     <hr class="my-4">
 
+    {% if data_sources_enabled.twitter %}
     <!-- Linked Accounts section -->
     <h2>Linked accounts</h2>
     <p>Cauldron cloud be linked to your account in certain services for notification purposes. Here you can see the ones active and revoke the connection if you want.</p>
@@ -324,10 +336,10 @@
                     <div class="text-xs font-weight-bold text-info text-uppercase">Twitter</div>
                     {% if linked_accounts.twitter %}
                     <div class="dropdown no-arrow">
-                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLinkGH" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLinkTwitter" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
                         </a>
-                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLinkGH">
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLinkTwitter">
                             <div class="dropdown-header">Account actions:</div>
                             <a class="dropdown-item" id="unlink-twitter" href="#">Unlink</a>
                         </div>
@@ -357,6 +369,7 @@
     </div>
 
     <hr class="my-4">
+    {% endif %}
 
     <!-- Account section -->
     <h2>Remove account</h2>

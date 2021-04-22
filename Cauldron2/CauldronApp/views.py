@@ -11,8 +11,7 @@ from django.contrib.auth import login, logout, get_user_model
 from django.urls import reverse
 from django.db import transaction
 from django.views.decorators.http import require_http_methods
-
-from Cauldron2 import settings
+from django.conf import settings
 
 from CauldronApp import kibana_objects, utils, datasources
 from CauldronApp.pages import Pages
@@ -1516,6 +1515,17 @@ def create_context(request):
     if settings.GOOGLE_ANALYTICS_ID:
         context['google_analytics_id'] = settings.GOOGLE_ANALYTICS_ID
 
+    # Data sources enabled (git excluded)
+    context['data_sources_enabled'] = {
+        'github': bool(settings.GH_CLIENT_ID),
+        'gitlab': bool(settings.GL_CLIENT_ID_GITLAB),
+        'meetup': bool(settings.MEETUP_CLIENT_ID),
+        'kde': bool(settings.GL_CLIENT_ID_KDE),
+        'gnome': bool(settings.GL_CLIENT_ID_GNOME),
+        'stack_exchange': bool(settings.STACK_EXCHANGE_CLIENT_ID),
+        'twitter': bool(settings.TWITTER_CLIENT_ID),
+    }
+
     return context
 
 
@@ -1619,9 +1629,9 @@ def status_info():
     context['repos_count'] = Repository.objects.exclude(projects=None).count()
     context['repos_git_count'] = GitRepository.objects.exclude(projects=None).count()
     context['repos_github_count'] = GitHubRepository.objects.exclude(projects=None).count()
-    context['repos_gitlab_count'] = GitLabRepository.objects.exclude(projects=None, instance='GitLab').count()
-    context['repos_gnome_count'] = GitLabRepository.objects.exclude(projects=None, instance='Gnome').count()
-    context['repos_kde_count'] = GitLabRepository.objects.exclude(projects=None, instance='KDE').count()
+    context['repos_gitlab_count'] = GitLabRepository.objects.exclude(projects=None).filter(instance='GitLab').count()
+    context['repos_gnome_count'] = GitLabRepository.objects.exclude(projects=None).filter(instance='Gnome').count()
+    context['repos_kde_count'] = GitLabRepository.objects.exclude(projects=None).filter(instance='KDE').count()
     context['repos_meetup_count'] = MeetupRepository.objects.exclude(projects=None).count()
     context['repos_stack_count'] = StackExchangeRepository.objects.exclude(projects=None).count()
     return context

@@ -34,36 +34,60 @@
 
   <div id="dropdown-datasource">
       <a id="link-tab-git" class="btn btn-git" href="#tab-git"><i class="fab fa-git-alt"></i> Git</a>
-      <a id="link-tab-github" class="btn btn-github" href="#tab-github"><i class="fab fa-github"></i> GitHub</a>
-      <a id="link-tab-gitlab" class="btn btn-gitlab" href="#tab-gitlab"><i class="fab fa-gitlab"></i> GitLab</a>
-      <a id="link-tab-meetup" class="btn btn-meetup" href="#tab-meetup"><i class="fab fa-meetup"></i> Meetup</a>
-      <a id="link-tab-gnome" class="btn btn-gnome" href="#tab-gnome"><i class="gnome-icon-white"></i> GNOME (GitLab)</a>
-      <a id="link-tab-kde" class="btn btn-kde" href="#tab-kde"><i class="kde-icon-white"></i> KDE (GitLab)</a>
-      <a id="link-tab-stack" class="btn btn-stackexchange" href="#tab-stack"><i class="fab fa-stack-exchange"></i> Stack Exchange</a>
+      {% if data_sources_enabled.github %}
+        <a id="link-tab-github" class="btn btn-github" href="#tab-github"><i class="fab fa-github"></i> GitHub</a>
+      {% endif %}
+      {% if data_sources_enabled.gitlab %}
+        <a id="link-tab-gitlab" class="btn btn-gitlab" href="#tab-gitlab"><i class="fab fa-gitlab"></i> GitLab</a>
+      {% endif %}
+      {% if data_sources_enabled.meetup %}
+        <a id="link-tab-meetup" class="btn btn-meetup" href="#tab-meetup"><i class="fab fa-meetup"></i> Meetup</a>
+      {% endif %}
+      {% if data_sources_enabled.gnome %}
+        <a id="link-tab-gnome" class="btn btn-gnome" href="#tab-gnome"><i class="gnome-icon-white"></i> GNOME (GitLab)</a>
+      {% endif %}
+      {% if data_sources_enabled.kde %}
+        <a id="link-tab-kde" class="btn btn-kde" href="#tab-kde"><i class="kde-icon-white"></i> KDE (GitLab)</a>
+      {% endif %}
+      {% if data_sources_enabled.stack_exchange %}
+        <a id="link-tab-stack" class="btn btn-stackexchange" href="#tab-stack"><i class="fab fa-stack-exchange"></i> Stack Exchange</a>
+      {% endif %}
   </div>
 
   <div class="mt-2 tab-content">
     <div class="tab-pane" id="tab-git" role="tabpanel">
     {% include "cauldronapp/create_project/datasource_card/git.html" %}
     </div>
-    <div class="tab-pane" id="tab-github" role="tabpanel">
-    {% include "cauldronapp/create_project/datasource_card/github.html" %}
-    </div>
-    <div class="tab-pane" id="tab-gitlab" role="tabpanel">
-    {% include "cauldronapp/create_project/datasource_card/gitlab.html" %}
-    </div>
-    <div class="tab-pane" id="tab-gnome" role="tabpanel">
-    {% include "cauldronapp/create_project/datasource_card/gnome.html" %}
-    </div>
-    <div class="tab-pane" id="tab-kde" role="tabpanel">
-    {% include "cauldronapp/create_project/datasource_card/kde.html" %}
-    </div>
-    <div class="tab-pane" id="tab-meetup" role="tabpanel">
-    {% include "cauldronapp/create_project/datasource_card/meetup.html" %}
-    </div>
-    <div class="tab-pane" id="tab-stack" role="tabpanel">
-    {% include "cauldronapp/create_project/datasource_card/stackexchange.html" %}
-    </div>
+    {% if data_sources_enabled.github %}
+      <div class="tab-pane" id="tab-github" role="tabpanel">
+      {% include "cauldronapp/create_project/datasource_card/github.html" %}
+      </div>
+    {% endif %}
+    {% if data_sources_enabled.gitlab %}
+      <div class="tab-pane" id="tab-gitlab" role="tabpanel">
+      {% include "cauldronapp/create_project/datasource_card/gitlab.html" %}
+      </div>
+    {% endif %}
+    {% if data_sources_enabled.gnome %}
+      <div class="tab-pane" id="tab-gnome" role="tabpanel">
+      {% include "cauldronapp/create_project/datasource_card/gnome.html" %}
+      </div>
+    {% endif %}
+    {% if data_sources_enabled.kde %}
+      <div class="tab-pane" id="tab-kde" role="tabpanel">
+      {% include "cauldronapp/create_project/datasource_card/kde.html" %}
+      </div>
+    {% endif %}
+    {% if data_sources_enabled.meetup %}
+      <div class="tab-pane" id="tab-meetup" role="tabpanel">
+      {% include "cauldronapp/create_project/datasource_card/meetup.html" %}
+      </div>
+    {% endif %}
+    {% if data_sources_enabled.stack_exchange %}
+      <div class="tab-pane" id="tab-stack" role="tabpanel">
+      {% include "cauldronapp/create_project/datasource_card/stackexchange.html" %}
+      </div>
+    {% endif %}
   </div>
 
   <div class="mt-4">
@@ -126,6 +150,7 @@
 
   <form method="post" action="">
     {% csrf_token %}
+    {% if data_sources_enabled.twitter %}
     <div class="d-flex">
       <div class="custom-control custom-switch mb-2">
         <input type="checkbox" class="custom-control-input" {% if not twitter_enabled %} disabled {% endif %} id="twitter-notification" name="twitter-notification">
@@ -137,6 +162,7 @@
       <i class="far fa-question-circle text-primary ml-2" data-toggle="tooltip" data-html="true" data-placement="top" title="We need to check the ownership of your Twitter account in order to notify you when a report is ready. You will be prompted by Twitter to grant Cauldron some permissions to retrieve some public information about your account, like your username. We will only store the username of your account, and you can delete it from our servers whenever you may want, either in Twitter or in Cauldron."></i>
       {% endif %}
     </div>
+    {% endif %}
     <input type="hidden" name="create" value="true">
     <button type="submit" class="btn btn-orange createProjectBtn" {% if not new_project.actions %}disabled{% endif %}>
       Create report

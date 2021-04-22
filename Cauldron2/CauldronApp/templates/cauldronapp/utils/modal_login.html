@@ -6,55 +6,62 @@
   </div>
   <div class="modal-body">
 
+    {% if data_sources_enabled.github %}
     <div class="text-center">
       <a class="btn btn-github btn-block" href="{% url 'github_oauth' %}">
         <i class="fab fa-github"></i>
         Sign in with <b>GitHub</b>
       </a>
     </div>
-
+    {% endif %}
+    {% if data_sources_enabled.gitlab %}
     <div class="text-center">
       <a class="btn btn-gitlab btn-block" href="{% url 'gitlab_oauth' 'gitlab' %}">
         <i class="fab fa-gitlab"></i>
         Sign in with <b>GitLab</b>
       </a>
     </div>
-
+    {% endif %}
+    {% if data_sources_enabled.meetup %}
     <div class="text-center">
       <a class="btn btn-meetup btn-block" href="{% url 'meetup_oauth' %}">
         <i class="fab fa-meetup"></i>
         Sign in with <b>Meetup</b>
       </a>
     </div>
-
+    {% endif %}
+    {% if data_sources_enabled.gnome %}
     <div class="text-center">
       <a class="btn btn-gnome btn-block" href="{% url 'gitlab_oauth' 'gnome' %}">
         <i class="gnome-icon-white"></i>
         Sign in with <b>GitLab for GNOME</b>
       </a>
     </div>
-
+    {% endif %}
+    {% if data_sources_enabled.kde %}
     <div class="text-center">
       <a class="btn btn-kde btn-block" href="{% url 'gitlab_oauth' 'kde' %}">
         <i class="kde-icon-white"></i>
         Sign in with <b>GitLab for KDE</b>
       </a>
     </div>
-
+    {% endif %}
+    {% if data_sources_enabled.twitter %}
     <div class="text-center">
       <a class="btn btn-twitter btn-block" href="{% url 'twitter_oauth' %}">
         <i class="fab fa-twitter-square"></i>
         Sign in with <b>Twitter</b>
       </a>
     </div>
-
+    {% endif %}
+    {% if data_sources_enabled.stack_exchange %}
     <div class="text-center">
       <a class="btn btn-stackexchange btn-block" href="{% url 'stack_oauth' %}">
         <i class="fab fa-stack-exchange"></i>
         Sign in with <b>StackExchange</b>
       </a>
     </div>
-
+    {% endif %}
   </div>
   <div class="modal-footer">
     <p class="text-muted">We will store your token for your analysis. You can revoke the use at any time</p>
