@@ -1,22 +1,23 @@
 import json
 import logging
+from datetime import timedelta
 
 from bokeh.embed import json_item
-from bokeh.models import ColumnDataSource, tools
+from bokeh.models import ColumnDataSource, tools, Range1d
 from bokeh.palettes import Blues
 from bokeh.plotting import figure
 
 from elasticsearch import ElasticsearchException
 from elasticsearch_dsl import Search, Q
 
-from ..utils import configure_figure
+from ..utils import configure_figure, get_interval
 
 logger = logging.getLogger(__name__)
 
 
-def num_questions(elastic, urls, from_date, to_date):
-    """Get number of questions in the specified range"""
-    s = Search(using=elastic, index='stackexchange')\
+def questions(elastic, urls, from_date, to_date):
+    """Gives the number of StackExchange questions in a period"""
+    s = Search(using=elastic, index='stackexchange') \
         .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) \
         .query(Q('match', is_stackexchange_question='1')) \
         .query(Q('terms', tag=urls)) \
@@ -32,15 +33,16 @@ def num_questions(elastic, urls, from_date, to_date):
     if response is not None and response.success():
         return response.aggregations.questions.value or 0
     else:
-        return 'X'
+        return '?'
 
 
-def num_answers(elastic, urls, from_date, to_date):
-    """Get number of questions in the specified range"""
-    s = Search(using=elastic, index='stackexchange')\
+def answers(elastic, urls, from_date, to_date):
+    """Gives the number of StackExchange answers in a period"""
+    s = Search(using=elastic, index='stackexchange') \
         .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) \
         .query(Q('match', is_stackexchange_answer='1')) \
-        .query(Q('terms', tag=urls))
+        .query(Q('terms', tag=urls)) \
+        .extra(size=0)
     s.aggs.bucket('answers', 'cardinality', field='answer_id')
 
     try:
@@ -52,7 +54,153 @@ def num_answers(elastic, urls, from_date, to_date):
     if response is not None and response.success():
         return response.aggregations.answers.value or 0
     else:
-        return 'X'
+        return '?'
+
+
+def questions_over_time(elastic, urls, from_date, to_date, interval):
+    """Gives the number of StackExchange questions grouped by date"""
+    s = Search(using=elastic, index='stackexchange') \
+        .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) \
+        .query(Q('match', is_stackexchange_question='1')) \
+        .query(Q('terms', tag=urls)) \
+        .extra(size=0)
+    s.aggs.bucket('dates', 'date_histogram', field='grimoire_creation_date', calendar_interval=interval) \
+          .bucket('questions', 'cardinality', field='question_id')
+
+    try:
+        response = s.execute()
+        dates_buckets = response.aggregations.dates.buckets
+    except ElasticsearchException as e:
+        logger.warning(e)
+        dates_buckets = []
+
+    timestamps, questions = [], []
+    for period in dates_buckets:
+        timestamps.append(period.key)
+        questions.append(period.questions.value)
+
+    return timestamps, questions
+
+
+def answers_over_time(elastic, urls, from_date, to_date, interval):
+    """Gives the number of StackExchange answers grouped by date"""
+    s = Search(using=elastic, index='stackexchange') \
+        .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) \
+        .query(Q('match', is_stackexchange_answer='1')) \
+        .query(Q('terms', tag=urls)) \
+        .extra(size=0)
+    s.aggs.bucket('dates', 'date_histogram', field='grimoire_creation_date', calendar_interval=interval) \
+          .bucket('answers', 'cardinality', field='answer_id')
+
+    try:
+        response = s.execute()
+        dates_buckets = response.aggregations.dates.buckets
+    except ElasticsearchException as e:
+        logger.warning(e)
+        dates_buckets = []
+
+    timestamps, answers = [], []
+    for period in dates_buckets:
+        timestamps.append(period.key)
+        answers.append(period.answers.value)
+
+    return timestamps, answers
+
+
+def questions_bokeh(elastic, urls, from_date, to_date):
+    """Get evolution of StackExchange questions (line chart)"""
+    interval_name, interval_elastic, _ = get_interval(from_date, to_date)
+
+    timestamps, questions = questions_over_time(elastic, urls, from_date, to_date, interval_elastic)
+
+    plot = figure(x_axis_type="datetime",
+                  x_axis_label='Time',
+                  y_axis_label='# Questions',
+                  height=300,
+                  sizing_mode="stretch_width",
+                  tools='')
+    plot.title.text = '# Questions'
+    configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
+                           '-/blob/master/guides/metrics/activity/questions-chart.md')
+    if len(timestamps) > 0:
+        plot.x_range = Range1d(from_date - timedelta(days=1), to_date + timedelta(days=1))
+
+    source = ColumnDataSource(data=dict(
+        questions=questions,
+        timestamps=timestamps
+    ))
+
+    plot.circle(x='timestamps', y='questions',
+                color=Blues[3][0],
+                size=8,
+                source=source)
+
+    plot.line(x='timestamps', y='questions',
+              line_width=4,
+              line_color=Blues[3][0],
+              source=source)
+
+    plot.add_tools(tools.HoverTool(
+        tooltips=[
+            (interval_name, '@timestamps{%F}'),
+            ('questions', '@questions')
+        ],
+        formatters={
+            '@timestamps': 'datetime'
+        },
+        mode='vline',
+        toggleable=False
+    ))
+
+    return json.dumps(json_item(plot))
+
+
+def answers_bokeh(elastic, urls, from_date, to_date):
+    """Get evolution of StackExchange answers (line chart)"""
+    interval_name, interval_elastic, _ = get_interval(from_date, to_date)
+
+    timestamps, answers = answers_over_time(elastic, urls, from_date, to_date, interval_elastic)
+
+    plot = figure(x_axis_type="datetime",
+                  x_axis_label='Time',
+                  y_axis_label='# Answers',
+                  height=300,
+                  sizing_mode="stretch_width",
+                  tools='')
+    plot.title.text = '# Answers'
+    configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
+                           '-/blob/master/guides/metrics/activity/answers-chart.md')
+    if len(timestamps) > 0:
+        plot.x_range = Range1d(from_date - timedelta(days=1), to_date + timedelta(days=1))
+
+    source = ColumnDataSource(data=dict(
+        answers=answers,
+        timestamps=timestamps
+    ))
+
+    plot.circle(x='timestamps', y='answers',
+                color=Blues[3][0],
+                size=8,
+                source=source)
+
+    plot.line(x='timestamps', y='answers',
+              line_width=4,
+              line_color=Blues[3][0],
+              source=source)
+
+    plot.add_tools(tools.HoverTool(
+        tooltips=[
+            (interval_name, '@timestamps{%F}'),
+            ('answers', '@answers')
+        ],
+        formatters={
+            '@timestamps': 'datetime'
+        },
+        mode='vline',
+        toggleable=False
+    ))
+
+    return json.dumps(json_item(plot))
 
 
 def questions_answers_bokeh(elastic, urls, from_date, to_date):

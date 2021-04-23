@@ -1,0 +1,24 @@
+<div id="community-qa" class="mb-4 tab-pane fade" role="tabpanel" >
+  <div class="row py-4 border text-center">
+    <div class="col-md">
+      <div class="row">
+        <div class="col-xl">
+          <p class="font-weight-bold text-muted mb-3"># People asking <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/community/people-asking.md"><i class="far fa-question-circle"></i></a></p>
+          <p class="h5 font-weight-bold text-gray-800"><span id="number_people_asking"> {{ metrics.people_asking }}</span></p>
+        </div>
+        <div class="col-xl border-left">
+          <p class="font-weight-bold text-muted mb-3"># People answering <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/community/people-answering.md"><i class="far fa-question-circle"></i></a></p>
+          <p class="h5 font-weight-bold text-gray-800"><span id="number_people_answering">{{ metrics.people_answering }}</span></p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <div id="chart-people-asking"></div>
+    </div>
+    <div class="col-md-6">
+      <div id="chart-people-answering"></div>
+    </div>
+  </div>
+</div>

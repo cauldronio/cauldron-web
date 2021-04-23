@@ -36,6 +36,11 @@
             <a class="dropdown-item disabled" data-category="activity-issues" data-toggle="tab" role="tab" href="#activity-issues">Issues</a>
             <a class="dropdown-item disabled" data-category="activity-reviews" data-toggle="tab" role="tab" href="#activity-reviews">Reviews</a>
             {% endif %}
+            {% if has_stack %}
+            <a class="dropdown-item" data-category="activity-qa" data-toggle="tab" role="tab" href="#activity-qa">Q&A</a>
+            {% else %}
+            <a class="dropdown-item disabled" data-category="activity-qa" data-toggle="tab" role="tab" href="#activity-qa">Q&A</a>
+            {% endif %}
           </div>
         </li>
         <li class="nav-item dropdown" style="line-height:1.5;" role="presentation">
@@ -53,6 +58,11 @@
             {% else %}
             <a class="dropdown-item disabled" data-category="community-issues" data-toggle="tab" role="tab" href="#community-issues">Issues</a>
             <a class="dropdown-item disabled" data-category="community-reviews" data-toggle="tab" role="tab" href="#community-reviews">Reviews</a>
+            {% endif %}
+            {% if has_stack %}
+            <a class="dropdown-item" data-category="community-qa" data-toggle="tab" role="tab" href="#community-qa">Q&A</a>
+            {% else %}
+            <a class="dropdown-item disabled" data-category="community-qa" data-toggle="tab" role="tab" href="#community-qa">Q&A</a>
             {% endif %}
           </div>
         </li>
@@ -132,6 +142,10 @@
       {% if has_gitlab or has_github %}
       {% include "cauldronapp/project/metrics/activity/reviews.html" %}
       {% endif %}
+
+      {% if has_stack %}
+      {% include "cauldronapp/project/metrics/activity/qa.html" %}
+      {% endif %}
       <!-- End ACTIVITY-->
 
       <!-- Start Community -->
@@ -147,6 +161,10 @@
 
       {% if has_gitlab or has_github %}
       {% include "cauldronapp/project/metrics/community/reviews.html" %}
+      {% endif %}
+
+      {% if has_stack %}
+      {% include "cauldronapp/project/metrics/community/qa.html" %}
       {% endif %}
       <!-- End Community -->
 

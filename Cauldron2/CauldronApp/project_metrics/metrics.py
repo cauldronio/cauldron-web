@@ -15,6 +15,7 @@ from .community import commits as community_commits
 from .community import issues as community_issues
 from .community import reviews as community_reviews
 from .community import common as community_common
+from .community import stackexchange as community_stackexchange
 
 from .performance import issues as performance_issues
 from .performance import reviews as performance_reviews
@@ -265,6 +266,8 @@ def get_category_metrics(project, category, urls, from_date, to_date):
         return activity_issues_metrics(elastic, urls, from_date, to_date)
     elif category == 'activity-reviews':
         return activity_reviews_metrics(elastic, urls, from_date, to_date)
+    elif category == 'activity-qa':
+        return activity_qa_metrics(elastic, urls, from_date, to_date)
     elif category == 'community-overview':
         return community_overview_metrics(elastic, urls, from_date, to_date)
     elif category == 'community-git':
@@ -273,6 +276,8 @@ def get_category_metrics(project, category, urls, from_date, to_date):
         return community_issues_metrics(elastic, urls, from_date, to_date)
     elif category == 'community-reviews':
         return community_reviews_metrics(elastic, urls, from_date, to_date)
+    elif category == 'community-qa':
+        return community_qa_metrics(elastic, urls, from_date, to_date)
     elif category == 'performance-overview':
         return performance_overview_metrics(elastic, urls, from_date, to_date)
     elif category == 'performance-issues':
@@ -294,8 +299,8 @@ def overview_metrics(elastic, urls, from_date, to_date):
     metrics['issues_created_range'] = activity_issues.issues_opened(elastic, urls, from_date, to_date)
     metrics['issues_closed_range'] = activity_issues.issues_closed(elastic, urls, from_date, to_date)
     metrics['issues_time_to_close'] = other.issues_time_to_close(elastic, urls, from_date, to_date)
-    metrics['questions_stackexchange'] = activity_stackexchange.num_questions(elastic, urls, from_date, to_date)
-    metrics['answers_stackexchange'] = activity_stackexchange.num_answers(elastic, urls, from_date, to_date)
+    metrics['questions_stackexchange'] = activity_stackexchange.questions(elastic, urls, from_date, to_date)
+    metrics['answers_stackexchange'] = activity_stackexchange.answers(elastic, urls, from_date, to_date)
     # Visualizations
     metrics['commits_bokeh_overview'] = activity_commits.git_commits_bokeh_line(elastic, urls, from_date, to_date)
     metrics['author_evolution_bokeh'] = other.author_evolution_bokeh(elastic, urls, from_date, to_date)
@@ -446,6 +451,20 @@ def activity_reviews_metrics(elastic, urls, from_date, to_date):
     return metrics
 
 
+def activity_qa_metrics(elastic, urls, from_date, to_date):
+    metrics = dict()
+
+    # Metrics
+    metrics['questions'] = activity_stackexchange.questions(elastic, urls, from_date, to_date)
+    metrics['answers'] = activity_stackexchange.answers(elastic, urls, from_date, to_date)
+
+    # Visualizations
+    metrics['questions_bokeh'] = activity_stackexchange.questions_bokeh(elastic, urls, from_date, to_date)
+    metrics['answers_bokeh'] = activity_stackexchange.answers_bokeh(elastic, urls, from_date, to_date)
+
+    return metrics
+
+
 def community_overview_metrics(elastic, urls, from_date, to_date):
     metrics = dict()
     # Metrics
@@ -500,6 +519,20 @@ def community_reviews_metrics(elastic, urls, from_date, to_date):
     metrics['reviews_authors_entering_leaving_bokeh'] = community_reviews.authors_entering_leaving_bokeh(elastic, urls, from_date, to_date)
     metrics['reviews_authors_aging_bokeh'] = community_reviews.authors_aging_bokeh(elastic, urls, to_date)
     metrics['reviews_authors_retained_ratio_bokeh'] = community_reviews.authors_retained_ratio_bokeh(elastic, urls, to_date)
+    return metrics
+
+
+def community_qa_metrics(elastic, urls, from_date, to_date):
+    metrics = dict()
+
+    # Metrics
+    metrics['people_asking'] = community_stackexchange.people_asking(elastic, urls, from_date, to_date)
+    metrics['people_answering'] = community_stackexchange.people_answering(elastic, urls, from_date, to_date)
+
+    # Visualizations
+    metrics['people_asking_bokeh'] = community_stackexchange.people_asking_bokeh(elastic, urls, from_date, to_date)
+    metrics['people_answering_bokeh'] = community_stackexchange.people_answering_bokeh(elastic, urls, from_date, to_date)
+
     return metrics
 
 

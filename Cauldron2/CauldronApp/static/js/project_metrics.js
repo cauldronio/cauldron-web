@@ -2,7 +2,7 @@
  *    METRICS AND VISUALIZATIONS   *
  ***********************************/
 $(function() {
-    var categories = ['overview', 'activity-overview', 'activity-git', 'activity-issues', 'activity-reviews', 'community-overview', 'community-git', 'community-issues', 'community-reviews', 'performance-overview', 'performance-issues', 'performance-reviews', 'chaoss'];
+    var categories = ['overview', 'activity-overview', 'activity-git', 'activity-issues', 'activity-reviews', 'activity-qa', 'community-overview', 'community-git', 'community-issues', 'community-reviews', 'community-qa', 'performance-overview', 'performance-issues', 'performance-reviews', 'chaoss'];
     var start = getUrlParameter('from_date');
     var end = getUrlParameter('to_date');
     var urls = getURLParameterList('repo_url');
@@ -89,6 +89,12 @@ $(function() {
         "reviews_closed_created_ratio_bokeh": "chart-reviews-closed-created-ratio",
         "questions_answers_stackexchange_bokeh": "questions_answers_stackexchange_bokeh",
         "questions_answers_stackexchange_bokeh": "questions_answers_stackexchange_bokeh",
+        // Activity Q&A
+        "questions_bokeh": "chart-questions",
+        "answers_bokeh": "chart-answers",
+        // Community Q&A
+        "people_asking_bokeh": "chart-people-asking",
+        "people_answering_bokeh": "chart-people-answering",
         // CHAOSS SECTION
         "reviews_closed_mean_duration_heatmap_bokeh_chaoss": "chart-reviews-closed-mean-duration-chaoss",
         "issues_created_closed_bokeh_chaoss": "chart-issues-created-closed-chaoss",
@@ -138,6 +144,11 @@ $(function() {
         "reviews_closed_yoy": "number_reviews_closed_yoy",
     }
 
+    var METRICS_ACTIVITY_QA = {
+        "questions": "number_questions",
+        "answers": "number_answers",
+    }
+
     var METRICS_COMMUNITY_OVERVIEW = {
       "active_people_git_community_overview": "active_people_git_community_overview",
       "active_people_issues_community_overview": "active_people_issues_community_overview",
@@ -160,6 +171,11 @@ $(function() {
     var METRICS_COMMUNITY_REVIEWS = {
         "active_people_patches": "active_people_patches",
         "onboardings_patches": "onboardings_patches",
+    }
+
+    var METRICS_COMMUNITY_QA = {
+        "people_asking": "number_people_asking",
+        "people_answering": "number_people_answering",
     }
 
     var METRICS_PERFORMANCE_OVERVIEW = {
@@ -204,10 +220,12 @@ $(function() {
     METRICS_KEYS = Object.assign({}, METRICS_KEYS, METRICS_ACTIVITY_GIT);
     METRICS_KEYS = Object.assign({}, METRICS_KEYS, METRICS_ACTIVITY_ISSUES);
     METRICS_KEYS = Object.assign({}, METRICS_KEYS, METRICS_ACTIVITY_REVIEWS);
+    METRICS_KEYS = Object.assign({}, METRICS_KEYS, METRICS_ACTIVITY_QA);
     METRICS_KEYS = Object.assign({}, METRICS_KEYS, METRICS_COMMUNITY_OVERVIEW);
     METRICS_KEYS = Object.assign({}, METRICS_KEYS, METRICS_COMMUNITY_GIT);
     METRICS_KEYS = Object.assign({}, METRICS_KEYS, METRICS_COMMUNITY_ISSUES);
     METRICS_KEYS = Object.assign({}, METRICS_KEYS, METRICS_COMMUNITY_REVIEWS);
+    METRICS_KEYS = Object.assign({}, METRICS_KEYS, METRICS_COMMUNITY_QA);
     METRICS_KEYS = Object.assign({}, METRICS_KEYS, METRICS_PERFORMANCE_OVERVIEW);
     METRICS_KEYS = Object.assign({}, METRICS_KEYS, METRICS_PERFORMANCE_ISSUES);
     METRICS_KEYS = Object.assign({}, METRICS_KEYS, METRICS_PERFORMANCE_REVIEWS);

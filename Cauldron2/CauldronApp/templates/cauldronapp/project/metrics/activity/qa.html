@@ -1,0 +1,24 @@
+<div id="activity-qa" class="mb-4 tab-pane fade" role="tabpanel" >
+  <div class="row py-4 border text-center">
+    <div class="col-md">
+      <div class="row">
+        <div class="col-xl">
+          <p class="font-weight-bold text-muted mb-3"># Questions <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/questions.md"><i class="far fa-question-circle"></i></a></p>
+          <p class="h5 font-weight-bold text-gray-800"><span id="number_questions"> {{ metrics.questions }}</span></p>
+        </div>
+        <div class="col-xl border-left">
+          <p class="font-weight-bold text-muted mb-3"># Answers <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/answers.md"><i class="far fa-question-circle"></i></a></p>
+          <p class="h5 font-weight-bold text-gray-800"><span id="number_answers">{{ metrics.answers }}</span></p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <div id="chart-questions"></div>
+    </div>
+    <div class="col-md-6">
+      <div id="chart-answers"></div>
+    </div>
+  </div>
+</div>
