@@ -69,23 +69,16 @@
             </a>
           </li>
           {% endif %}
-          {% if has_git and authenticated %}
-          <li class="sidebar-item download-toggle">
-            <div class="download-menu fly-out-menu" style="display:none;">
-              <p class="dropdown-header">Commits data as csv</p>
-              <a class="sidebar-item disabled" href="#" id="download-git-csv-link">Download</a>
-              <a class="sidebar-item" href="#" id="generate-git-csv-link">
-                <div class="spinner-border spinner-border-sm mr-1" role="status"
-                     id="spinner-git-csv-create" style="display: none;">
-                  <span class="sr-only">Loading...</span>
-                </div>
-                Create new file
+          {% if authenticated %}
+          <li class="sidebar-item">
+            <div class="fly-out-menu" style="display:none;">
+              <a class="sidebar-item" href="{% url 'project_export' project.id %}">
+                Export data as CSV
               </a>
             </div>
-            <a type="button" tabindex="0">
+            <a href="{% url 'project_export' project.id %}">
               <i class="fas fa-file-download"></i>
-              <span class="ml-3 sidebar-text">Export data <i class=" ml-1 fas fa-caret-right"></i></span>
-
+              <span class="ml-3 sidebar-text">Export data</span>
             </a>
           </li>
           {% endif %}
@@ -141,6 +134,8 @@
             {% include "cauldronapp/project/project_metrics.html" %}
           {% elif show_actions %}
             {% include "cauldronapp/project/project_actions.html" %}
+          {% elif show_export %}
+            {% include "cauldronapp/project/project_export.html" %}
           {% endif %}
         {% else %}
           <button type="button" class="btn btn-icon-split btn-orange mb-sm-1"
@@ -208,7 +203,11 @@
 
 {% if show_table %}
 <script src="{% static 'js/project_table.js' %}" charset="utf-8"></script>
-{% else %}
+{% endif %}
+{% if show_export %}
+<script src="{% static 'js/project_export.js' %}" charset="utf-8"></script>
+{% endif %}
+{% if show_project_home %}
 <script src="https://cdn.bokeh.org/bokeh/release/bokeh-2.2.3.min.js" crossorigin="anonymous"></script>
 <script src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-2.2.3.min.js" crossorigin="anonymous"></script>
 <script src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-2.2.3.min.js" crossorigin="anonymous"></script>

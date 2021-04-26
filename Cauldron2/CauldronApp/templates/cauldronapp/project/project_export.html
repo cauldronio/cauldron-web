@@ -1,0 +1,107 @@
+{% load cauldron_tags %}
+
+
+<h2>Export data</h2>
+<p>Generate and download data dumps in CSV format from the data collected by Cauldron for you.</p>
+
+<div class="table-responsive mt-4">
+  <table class="table">
+    <thead class="thead-light">
+      <tr>
+        <th scope="col">Data</th>
+        <th scope="col">Dump date</th>
+        <th scope="col">Size</th>
+        <th scope="col">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if has_git %}
+      <tr class="git-row">
+        <th scope="row">Git Commits</th>
+        <td class="creation">-</td>
+        <td class="size">-</td>
+        <td>
+          <button type="button" class="generate-csv btn btn-sm btn-outline-dark" data-backend="GIT">
+            <div class="generate-spinner spinner-border spinner-border-sm" role="status" style="display: none;">
+              <span class="sr-only">Loading...</span>
+            </div>
+            <i class="generate-icon fas fa-sync"></i>
+            <span class="pl-2">Generate</span>
+          </button>
+          <a href="#" type="button" class="csv-link btn btn-sm btn-outline-dark disabled"><i class="fas fa-download pr-2"></i>Download</a>
+        </td>
+      </tr>
+      {% endif %}
+      {% if data_sources_enabled.github and has_github %}
+      <tr class="github-row">
+        <th scope="row">GitHub Issues/Pull requests</th>
+        <td class="creation">-</td>
+        <td class="size">-</td>
+        <td>
+          <button type="button" class="generate-csv btn btn-sm btn-outline-dark" data-backend="GITHUB">
+            <div class="generate-spinner spinner-border spinner-border-sm" role="status" style="display: none;">
+              <span class="sr-only">Loading...</span>
+            </div>
+            <i class="generate-icon fas fa-sync"></i>
+            <span class="pl-2">Generate</span>
+          </button>
+          <a href="#" type="button" class="csv-link btn btn-sm btn-outline-dark disabled"><i class="fas fa-download pr-2"></i>Download</a>
+        </td>
+      </tr>
+      {% endif %}
+      {% if data_sources_enabled.gitlab and has_gitlab %}
+      <tr class="gitlab-row">
+        <th scope="row">GitLab Issues/Merge requests</th>
+        <td class="creation">-</td>
+        <td class="size">-</td>
+        <td>
+          <button type="button" class="generate-csv btn btn-sm btn-outline-dark" data-backend="GITLAB">
+            <div class="generate-spinner spinner-border spinner-border-sm" role="status" style="display: none;">
+              <span class="sr-only">Loading...</span>
+            </div>
+            <i class="generate-icon fas fa-sync"></i>
+            <span class="pl-2">Generate</span>
+          </button>
+          <a href="#" type="button" class="csv-link btn btn-sm btn-outline-dark disabled"><i class="fas fa-download pr-2"></i>Download</a>
+        </td>
+      </tr>
+      {% endif %}
+      {% if data_sources_enabled.meetup and has_meetup %}
+      <tr class="meetup-row">
+        <th scope="row">Meetup events</th>
+        <td class="creation">-</td>
+        <td class="size">-</td>
+        <td>
+          <button type="button" class="generate-csv btn btn-sm btn-outline-dark" data-backend="MEETUP">
+            <div class="generate-spinner spinner-border spinner-border-sm" role="status" style="display: none;">
+              <span class="sr-only">Loading...</span>
+            </div>
+            <i class="generate-icon fas fa-sync"></i>
+            <span class="pl-2">Generate</span>
+          </button>
+          <a href="#" type="button" class="csv-link btn btn-sm btn-outline-dark disabled"><i class="fas fa-download pr-2"></i>Download</a>
+        </td>
+      </tr>
+      {% endif %}
+      {% if data_sources_enabled.stack_exchange and has_stack %}
+      <tr class="stackexchange-row">
+        <th scope="row">StackExchange Questions & Answers</th>
+        <td class="creation">-</td>
+        <td class="size">-</td>
+        <td>
+          <button type="button" class="generate-csv btn btn-sm btn-outline-dark" data-backend="STACK_EXCHANGE">
+            <div class="generate-spinner spinner-border spinner-border-sm" role="status" style="display: none;">
+              <span class="sr-only">Loading...</span>
+            </div>
+            <i class="generate-icon fas fa-sync"></i>
+            <span class="pl-2">Generate</span>
+          </button>
+          <a href="#" type="button" class="csv-link btn btn-sm btn-outline-dark disabled"><i class="fas fa-download pr-2"></i>Download</a>
+        </td>
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+
+</div>
+

@@ -1,16 +1,16 @@
 from django import template
-from cauldron_apps.cauldron.models import Repository
+from cauldron_apps.cauldron.models.backends import Backends
 
 register = template.Library()
 
 FA_ICONS = {
-    Repository.GIT: 'fab fa-git-square',
-    Repository.GITHUB: 'fab fa-github',
-    Repository.GITLAB: 'fab fa-gitlab',
-    Repository.GNOME: 'gnome-icon',
-    Repository.KDE: 'kde-icon',
-    Repository.MEETUP: 'fab fa-meetup',
-    Repository.STACK_EXCHANGE: 'fab fa-stack-exchange',
+    Backends.GIT: 'fab fa-git-square',
+    Backends.GITHUB: 'fab fa-github',
+    Backends.GITLAB: 'fab fa-gitlab',
+    Backends.GNOME: 'gnome-icon',
+    Backends.KDE: 'kde-icon',
+    Backends.MEETUP: 'fab fa-meetup',
+    Backends.STACK_EXCHANGE: 'fab fa-stack-exchange',
 }
 
 FA_ICONS_NAME = {
@@ -33,30 +33,6 @@ def url_replace(request, field, value):
     dict_ = request.GET.copy()
     dict_[field] = value
     return dict_.urlencode()
-
-
-@register.simple_tag
-def get_filter_value(request, filter):
-    '''
-    This tag returns the value of the specified filter or returns
-    a default value if the filter does not meet the requirements
-    '''
-    dict_ = request.GET.copy()
-    filter_ = dict_.get(filter, None)
-
-    if filter == 'kind' and filter_ not in Repository.BACKEND_CHOICES:
-        return 'Any Data Source'
-
-    if filter == 'status' and filter_ not in Repository.STATUS_CHOICES:
-        return 'Any Status'
-
-    if filter == 'search' and filter_ is None:
-        return ''
-
-    if filter_ is None:
-        return 'any'
-
-    return filter_
 
 
 @register.simple_tag

@@ -20,12 +20,13 @@ from CauldronApp.project_metrics import metrics
 
 from poolsched.models import Intention, ArchivedIntention
 from poolsched.models.jobs import Log
+from cauldron_apps.cauldron.models.backends import Backends
 from cauldron_apps.poolsched_github.models import GHToken, IGHRaw
 from cauldron_apps.poolsched_gitlab.models import GLToken, GLInstance, IGLRaw
 from cauldron_apps.poolsched_meetup.models import MeetupToken, IMeetupRaw
 from cauldron_apps.poolsched_stackexchange.models import StackExchangeToken, IStackExchangeRaw
 from cauldron_apps.poolsched_twitter.models import ITwitterNotify
-from cauldron_apps.poolsched_export.models.iexportgit import IExportGitCSV
+from cauldron_apps.poolsched_export.models.iexport import IExportCSV
 from cauldron_apps.cauldron_actions.models import IRefreshActions
 from cauldron_apps.cauldron.models import IAddGHOwner, IAddGLOwner, Project, OauthUser, AnonymousUser, \
     UserWorkspace, ProjectRole, Repository, GitLabRepository, GitRepository, GitHubRepository, MeetupRepository, \
@@ -1283,6 +1284,54 @@ def request_project_metrics(request, project_id):
     return JsonResponse(metrics.get_category_metrics(project, category, urls, from_date, to_date))
 
 
+def request_project_export(request, project_id):
+    """View for data sources that can be exported for a report"""
+    try:
+        project, context = project_common(request, project_id)
+    except Project.DoesNotExist:
+        return custom_404(request, "The project requested was not found in this server")
+
+    context['has_git'] = GitRepository.objects.filter(projects=project).exists()
+    context['has_github'] = GitHubRepository.objects.filter(projects=project).exists()
+    context['has_gitlab'] = GitLabRepository.objects.filter(projects=project).exists()
+    context['has_meetup'] = MeetupRepository.objects.filter(projects=project).exists()
+    context['has_stack'] = StackExchangeRepository.objects.filter(projects=project).exists()
+
+    context['show_export'] = True
+
+    return render(request, 'cauldronapp/project/project.html', context=context)
+
+
+def request_project_export_status(request, project_id):
+    try:
+        project = Project.objects.get(pk=project_id)
+    except Project.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'report not found'}, status=404)
+    summary = project.export_summary()
+    return JsonResponse(summary)
+
+
+def request_project_export_create(request, project_id):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Only POST methods allowed'}, status=405)
+    try:
+        project = Project.objects.get(id=project_id)
+    except Project.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'report not found'}, status=404)
+    backend = request.POST.get('backend', None)
+    if not backend:
+        return JsonResponse({'status': 'error', 'message': 'backend not defined'}, status=404)
+    if not request.user.is_authenticated:
+        return JsonResponse({'status': 'error', 'message': 'only allowed for authenticated users'}, status=403)
+    if backend.upper() not in Backends.names:
+        return JsonResponse({'status': 'error', 'message': f'invalid backend {backend}'}, status=404)
+    bk = Backends[backend.upper()]
+
+    IExportCSV.objects.get_or_create(defaults={'user': request.user}, project=project, backend=bk)
+
+    return JsonResponse({'status': 'ok'})
+
+
 def request_delete_project(request, project_id):
     if request.method != 'POST':
         return custom_405(request, request.method)
@@ -1549,15 +1598,6 @@ def request_ongoing_owners(request, project_id):
     for gl_owner in gl_owners:
         response['owners'].append({'backend': gl_owner.instance.name, 'owner': gl_owner.owner})
     return JsonResponse(response)
-
-
-def request_create_git_csv(request, project_id):
-    try:
-        project = Project.objects.get(id=project_id)
-    except Project.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'report not found'})
-    IExportGitCSV.objects.get_or_create(defaults={'user': request.user}, project=project)
-    return JsonResponse({'status': 'ok'})
 
 
 def request_repos_info(request):

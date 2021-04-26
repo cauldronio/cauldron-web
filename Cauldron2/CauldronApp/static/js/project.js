@@ -14,7 +14,6 @@ $(document).ready(function(){
 
     $('form#change-name').on('submit', onSubmitRename);
     $('.btn-reanalyze-all').click(reanalyzeEveryRepo);
-    $('#generate-git-csv-link').click(exportGitCSV);
 
     $('.btn-datasource').click(onSelectDataSource);
 
@@ -34,13 +33,11 @@ $(document).ready(function(){
 
 
 function showFlyOutMenu(event) {
-    console.log('enter')
-    console.log($(event.currentTarget).find('.fly-out-menu').show())
+    $(event.currentTarget).find('.fly-out-menu').show();
 }
 
 function hideFlyOutMenu(event) {
-    console.log('leave')
-    console.log($(event.currentTarget).find('.fly-out-menu').hide())
+    $(event.currentTarget).find('.fly-out-menu').hide();
 }
 
 function removeAction(event) {
@@ -125,10 +122,6 @@ function getSummary() {
         }
         $('#num-repos').html(data.total);
         $('#general-status').html(status_output);
-
-        if (data.project_csv) {
-            manageCSVStatus(data.project_csv);
-        }
         manageRefreshActionsStatus(data.refresh_actions);
     });
     setTimeout(getSummary, 5000, Project_ID);
@@ -145,41 +138,6 @@ function manageRefreshActionsStatus(running){
     } else if (!running) {
         $('.refresh-actions-status').remove();
     }
-}
-
-
-function manageCSVStatus(csv_data){
-    if (csv_data.generating) {
-        $('#spinner-git-csv-create').show();
-        $('#generate-git-csv-link').addClass('disabled');
-        $('#icon-export-csv-btn').hide();
-        $('#spinner-export-csv-btn').show();
-    } else {
-        $('#spinner-git-csv-create').hide();
-        $('#generate-git-csv-link').removeClass('disabled');
-        $('#icon-export-csv-btn').show();
-        $('#spinner-export-csv-btn').hide();
-    }
-    if (csv_data.download) {
-        $('#download-git-csv-link').removeClass('disabled');
-        var date_from_now = moment(csv_data.download.date, 'YYYY-MM-DDTHH:mm:ss.SSSZ', true).fromNow();
-        $('#download-git-csv-link').html(`Download (created ${date_from_now})`);
-        $('#download-git-csv-link').attr('href', csv_data.download.link);
-    } else {
-        $('#download-git-csv-link').addClass('disabled');
-    }
-}
-
-
-function exportGitCSV(){
-    $.post(url = `/project/${Project_ID}/create-git-csv`)
-        .done(function (data) {
-            $('#spinner-git-csv-create').show();
-            $('#generate-git-csv-link').addClass('disabled');
-            $('#icon-export-csv-btn').hide();
-            $('#spinner-export-csv-btn').show();
-        })
-        .fail(function (data) {onDataFail(data, event.target)})
 }
 
 
