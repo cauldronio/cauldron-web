@@ -291,22 +291,63 @@ def get_category_metrics(project, category, urls, from_date, to_date):
 
 
 def overview_metrics(elastic, urls, from_date, to_date):
+    epoch = datetime.datetime.fromtimestamp(0)
+    now = datetime.datetime.now()
+    one_year_ago = now - relativedelta(years=1)
+    two_year_ago = now - relativedelta(years=2)
+
     metrics = dict()
-    # Metrics
-    metrics['commits_range'] = activity_commits.git_commits(elastic, urls, from_date, to_date)
-    metrics['reviews_opened'] = activity_reviews.reviews_opened(elastic, urls, from_date, to_date)
-    metrics['review_duration'] = other.review_duration(elastic, urls, from_date, to_date)
-    metrics['issues_created_range'] = activity_issues.issues_opened(elastic, urls, from_date, to_date)
-    metrics['issues_closed_range'] = activity_issues.issues_closed(elastic, urls, from_date, to_date)
-    metrics['issues_time_to_close'] = other.issues_time_to_close(elastic, urls, from_date, to_date)
-    metrics['questions_stackexchange'] = activity_stackexchange.questions(elastic, urls, from_date, to_date)
-    metrics['answers_stackexchange'] = activity_stackexchange.answers(elastic, urls, from_date, to_date)
+    # Activity metrics
+    metrics['commits_overview'] = activity_commits.git_commits(elastic, urls, epoch, now)
+    metrics['issues_overview'] = activity_issues.issues_opened(elastic, urls, epoch, now)
+    metrics['reviews_overview'] = activity_reviews.reviews_opened(elastic, urls, epoch, now)
+    metrics['questions_overview'] = activity_stackexchange.questions(elastic, urls, epoch, now)
+    metrics['commits_last_year_overview'] = activity_commits.git_commits(elastic, urls, one_year_ago, now)
+    metrics['issues_last_year_overview'] = activity_issues.issues_opened(elastic, urls, one_year_ago, now)
+    metrics['reviews_last_year_overview'] = activity_reviews.reviews_opened(elastic, urls, one_year_ago, now)
+    metrics['questions_last_year_overview'] = activity_stackexchange.questions(elastic, urls, one_year_ago, now)
+    metrics['commits_yoy_overview'] = round(year_over_year(metrics['commits_last_year_overview'],
+                                                           activity_commits.git_commits(elastic, urls, two_year_ago, one_year_ago)), 2)
+    metrics['issues_yoy_overview'] = round(year_over_year(metrics['issues_last_year_overview'],
+                                                          activity_issues.issues_opened(elastic, urls, two_year_ago, one_year_ago)), 2)
+    metrics['reviews_yoy_overview'] = round(year_over_year(metrics['reviews_last_year_overview'],
+                                                           activity_reviews.reviews_opened(elastic, urls, two_year_ago, one_year_ago)), 2)
+    metrics['questions_yoy_overview'] = round(year_over_year(metrics['questions_last_year_overview'],
+                                                             activity_stackexchange.questions(elastic, urls, two_year_ago, one_year_ago)), 2)
+    # Community metrics
+    metrics['commit_authors_overview'] = community_commits.authors_active(elastic, urls, epoch, now)
+    metrics['issue_submitters_overview'] = community_issues.active_submitters(elastic, urls, epoch, now)
+    metrics['review_submitters_overview'] = community_reviews.active_submitters(elastic, urls, epoch, now)
+    metrics['question_authors_overview'] = community_stackexchange.people_asking(elastic, urls, epoch, now)
+    metrics['commit_authors_last_year_overview'] = community_commits.authors_active(elastic, urls, one_year_ago, now)
+    metrics['issue_submitters_last_year_overview'] = community_issues.active_submitters(elastic, urls, one_year_ago, now)
+    metrics['review_submitters_last_year_overview'] = community_reviews.active_submitters(elastic, urls, one_year_ago, now)
+    metrics['question_authors_last_year_overview'] = community_stackexchange.people_asking(elastic, urls, one_year_ago, now)
+    metrics['commit_authors_yoy_overview'] = round(year_over_year(metrics['commit_authors_last_year_overview'],
+                                                                  community_commits.authors_active(elastic, urls, two_year_ago, one_year_ago)), 2)
+    metrics['issue_submitters_yoy_overview'] = round(year_over_year(metrics['issue_submitters_last_year_overview'],
+                                                                    community_issues.active_submitters(elastic, urls, two_year_ago, one_year_ago)), 2)
+    metrics['review_submitters_yoy_overview'] = round(year_over_year(metrics['review_submitters_last_year_overview'],
+                                                                     community_reviews.active_submitters(elastic, urls, two_year_ago, one_year_ago)), 2)
+    metrics['question_authors_yoy_overview'] = round(year_over_year(metrics['question_authors_last_year_overview'],
+                                                                    community_stackexchange.people_asking(elastic, urls, two_year_ago, one_year_ago)), 2)
+    # Performance metrics
+    metrics['issues_median_time_to_close_overview'] = performance_issues.median_time_to_close(elastic, urls, epoch, now)
+    metrics['reviews_median_time_to_close_overview'] = performance_reviews.median_time_to_close(elastic, urls, epoch, now)
+    metrics['issues_median_time_to_close_last_year_overview'] = performance_issues.median_time_to_close(elastic, urls, one_year_ago, now)
+    metrics['reviews_median_time_to_close_last_year_overview'] = performance_reviews.median_time_to_close(elastic, urls, one_year_ago, now)
+    metrics['issues_median_time_to_close_yoy_overview'] = round(year_over_year(metrics['issues_median_time_to_close_last_year_overview'],
+                                                                               performance_issues.median_time_to_close(elastic, urls, two_year_ago, one_year_ago)), 2)
+    metrics['reviews_median_time_to_close_yoy_overview'] = round(year_over_year(metrics['reviews_median_time_to_close_last_year_overview'],
+                                                                                performance_reviews.median_time_to_close(elastic, urls, two_year_ago, one_year_ago)), 2)
     # Visualizations
     metrics['commits_bokeh_overview'] = activity_commits.git_commits_bokeh_line(elastic, urls, from_date, to_date)
     metrics['author_evolution_bokeh'] = other.author_evolution_bokeh(elastic, urls, from_date, to_date)
     metrics['issues_open_closed_bokeh_overview'] = activity_issues.issues_open_closed_bokeh(elastic, urls, from_date, to_date)
     metrics['reviews_open_closed_bokeh_overview'] = activity_reviews.reviews_open_closed_bokeh(elastic, urls, from_date, to_date)
+    metrics['issues_closed_ttc_overview_bokeh'] = performance_issues.ttc_closed_issues_bokeh(elastic, urls, from_date, to_date)
     metrics['questions_answers_stackexchange_bokeh'] = activity_stackexchange.questions_answers_bokeh(elastic, urls, from_date, to_date)
+    metrics['issues_still_open_overview_bokeh'] = performance_issues.issues_still_open_by_creation_date_bokeh(elastic, urls)
 
     return metrics
 

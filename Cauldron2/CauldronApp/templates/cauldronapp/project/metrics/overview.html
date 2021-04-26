@@ -1,45 +1,66 @@
 <div id="overview" class="mb-4 tab-pane fade show active" role="tabpanel" >
-  <div class="row py-4 border text-center">
-    {% if has_git %}
-    <div class="col-md">
-      <p class="font-weight-bold text-muted mb-3"># Commits <i class="far fa-question-circle text-primary" data-toggle="tooltip" data-html="true" data-placement="top" data-delay='{"hide":"3000"}' title="Number of commits, ignoring pull/merge request commits. <a target='_blank' href='https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/overview/commits.md'>Read more</a>"></i></p>
-      <p class="h5 font-weight-bold text-gray-800"><span id="number_commits_range"> {{ metrics.commits_range }}</span></p>
+  <div class="row mb-4">
+    <div class="col-md-6 p-4 border">
+      <p class="h5 font-weight-bold mb-3">Activity</p>
+      <table class="table table-borderless text-center">
+        <thead>
+          <tr>
+            <th scope="col"></th>
+            {% if has_git %}
+            <th scope="col" data-toggle="tooltip" data-html="true" data-placement="top" data-delay='{"hide":"3000"}' title="Number of commits, ignoring pull/merge request commits. <a target='_blank' href='https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/commits.md'>Read more</a>">Commits</th>
+            {% endif %}
+            {% if has_gitlab or has_github %}
+            <th scope="col" data-toggle="tooltip" data-html="true" data-placement="top" data-delay='{"hide":"3000"}' title="Number of created issues. <a target='_blank' href='https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/issues-created.md'>Read more</a>">Issues</th>
+            <th scope="col" data-toggle="tooltip" data-html="true" data-placement="top" data-delay='{"hide":"3000"}' title="Number of created Pull/Merge Requests. <a target='_blank' href='https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/pull-merge-requests-created.md'>Read more</a>">Reviews</th>
+            {% endif %}
+            {% if has_stack %}
+            <th scope="col" data-toggle="tooltip" data-html="true" data-placement="top" data-delay='{"hide":"3000"}' title="Number of new questions on StackExchange. <a target='_blank' href='https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/questions.md'>Read more</a>">Questions</th>
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Total</th>
+            {% if has_git %}
+            <td><span id="num_commits_overview">{{ metrics.commits_overview }}</span></td>
+            {% endif %}
+            {% if has_gitlab or has_github %}
+            <td><span id="num_issues_overview">{{ metrics.issues_overview }}</span></td>
+            <td><span id="num_reviews_overview">{{ metrics.reviews_overview }}</span></td>
+            {% endif %}
+            {% if has_stack %}
+            <td><span id="num_questions_overview">{{ metrics.questions_overview }}</span></td>
+            {% endif %}
+          </tr>
+          <tr>
+            <th scope="row">Total (Last year)</th>
+            {% if has_git %}
+            <td><span id="num_commits_last_year_overview">{{ metrics.commits_last_year_overview }}</span></td>
+            {% endif %}
+            {% if has_gitlab or has_github %}
+            <td><span id="num_issues_last_year_overview">{{ metrics.issues_last_year_overview }}</span></td>
+            <td><span id="num_reviews_last_year_overview">{{ metrics.reviews_last_year_overview }}</span></td>
+            {% endif %}
+            {% if has_stack %}
+            <td><span id="num_questions_last_year_overview">{{ metrics.questions_last_year_overview }}</span></td>
+            {% endif %}
+          </tr>
+          <tr>
+            <th scope="row">Year-over-year</th>
+            {% if has_git %}
+            <td><span id="num_commits_yoy_overview">{{ metrics.commits_yoy_overview }}</span> %</td>
+            {% endif %}
+            {% if has_gitlab or has_github %}
+            <td><span id="num_issues_yoy_overview">{{ metrics.issues_yoy_overview }}</span> %</td>
+            <td><span id="num_reviews_yoy_overview">{{ metrics.reviews_yoy_overview }}</span> %</td>
+            {% endif %}
+            {% if has_stack %}
+            <td><span id="num_questions_yoy_overview">{{ metrics.questions_yoy_overview }}</span> %</td>
+            {% endif %}
+          </tr>
+        </tbody>
+      </table>
     </div>
-    {% endif %}
-    {% if has_gitlab or has_github %}
-    <div class="col-md border-left border-right">
-      <p class="font-weight-bold text-muted mb-3"># Pull requests <i class="far fa-question-circle text-primary" data-toggle="tooltip" data-html="true" data-placement="top" data-delay='{"hide":"3000"}' title="Number of new Pull/Merge Requests in a period of time. <a target='_blank' href='https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/overview/pull-merge-requests-created.md'>Read more</a>"></i></p>
-      <p class="h5 font-weight-bold text-gray-800"><span id="number_reviews_opened"> {{ metrics.reviews_opened }}</span></p>
-    </div>
-    <div class="col-md border-left border-right">
-      <p class="font-weight-bold text-muted mb-3">Median review duration <i class="far fa-question-circle text-primary" data-toggle="tooltip" data-html="true" data-placement="top" data-delay='{"hide":"3000"}' title="Median time to merge a pull request or merge request (reviews merged in the period defined by the user that were opened at any time). <a target='_blank' href='https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/overview/median-review-duration.md'>Read more</a>"></i></p>
-      <p class="h5 font-weight-bold text-gray-800"><span id="number_review_duration"> {{ metrics.review_duration }}</span> days</p>
-    </div>
-    <div class="col-md border-left border-right">
-      <p class="font-weight-bold text-muted mb-3"># Issues created <i class="far fa-question-circle text-primary" data-toggle="tooltip" data-html="true" data-placement="top" data-delay='{"hide":"3000"}' title="Number of created issues in a period of time. <a target='_blank' href='https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/overview/issues-created.md'>Read more</a>"></i></p>
-      <p class="h5 font-weight-bold text-gray-800"><span id="number_issues_created_range"> {{ metrics.issues_created_range }}</span></p>
-    </div>
-    <div class="col-md border-left border-right">
-      <p class="font-weight-bold text-muted mb-3"># Issues closed <i class="far fa-question-circle text-primary" data-toggle="tooltip" data-html="true" data-placement="top" data-delay='{"hide":"3000"}' title="Number of closed issues in a period of time. <a target='_blank' href='https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/overview/issues-closed.md'>Read more</a>"></i></p>
-      <p class="h5 font-weight-bold text-gray-800"><span id="number_issues_closed_range"> {{ metrics.issues_closed_range }}</span></p>
-    </div>
-    <div class="col-md border-left border-right">
-      <p class="font-weight-bold text-muted mb-3">Median time to close <i class="far fa-question-circle text-primary" data-toggle="tooltip" data-html="true" data-placement="top" data-delay='{"hide":"3000"}' title="Median time to close issues (issues closed in the period defined by the user that were opened at any time). <a target='_blank' href='https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/overview/median-time-to-close.md'>Read more</a>"></i></p>
-      <p class="h5 font-weight-bold text-gray-800"><span id="number_issues_time_to_close"> {{ metrics.issues_time_to_close }}</span> days</p>
-    </div>
-    {% endif %}
-    {% if has_stack %}
-    <div class="col-md border-left border-right">
-      <p class="font-weight-bold text-muted mb-3"># Questions <i class="far fa-question-circle text-primary" data-toggle="tooltip" data-html="true" data-placement="top" data-delay='{"hide":"3000"}' title="Number of StackExchange questions in a period of time."></i></p>
-      <p class="h5 font-weight-bold text-gray-800"><span id="questions_stackexchange"> {{ metrics.questions_stackexchange }}</span></p>
-    </div>
-    <div class="col-md border-left border-right">
-      <p class="font-weight-bold text-muted mb-3"># Answers <i class="far fa-question-circle text-primary" data-toggle="tooltip" data-html="true" data-placement="top" data-delay='{"hide":"3000"}' title="Number of StackExchange answers in a period of time."></i></p>
-      <p class="h5 font-weight-bold text-gray-800"><span id="answers_stackexchange"> {{ metrics.answers_stackexchange }}</span></p>
-    </div>
-    {% endif %}
-  </div>
-  <div class="row">
     {% if has_git %}
     <div class="col-lg-6">
       <div id="chart-commits-overview"></div>
@@ -50,6 +71,70 @@
       </div>
     </div>
     {% endif %}
+  </div>
+
+  <div class="row mb-4">
+    <div class="col-md-6 p-4 border">
+      <p class="h5 font-weight-bold mb-3">Community</p>
+      <table class="table table-borderless text-center">
+        <thead>
+          <tr>
+            <th scope="col"></th>
+            {% if has_git %}
+            <th scope="col" data-toggle="tooltip" data-html="true" data-placement="top" data-delay='{"hide":"3000"}' title="Number of commit authors, ignoring pull/merge request commits. <a target='_blank' href='https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/community/active-people.md'>Read more</a>">Commit authors</th>
+            {% endif %}
+            {% if has_gitlab or has_github %}
+            <th scope="col" data-toggle="tooltip" data-html="true" data-placement="top" data-delay='{"hide":"3000"}' title="Number of issue submitters. <a target='_blank' href='https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/community/active-people.md'>Read more</a>">Issue submitters</th>
+            <th scope="col" data-toggle="tooltip" data-html="true" data-placement="top" data-delay='{"hide":"3000"}' title="Number of review submitters. <a target='_blank' href='https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/community/active-people.md'>Read more</a>">Review submitters</th>
+            {% endif %}
+            {% if has_stack %}
+            <th scope="col" data-toggle="tooltip" data-html="true" data-placement="top" data-delay='{"hide":"3000"}' title="Number of StackExchange question authors. <a target='_blank' href='https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/community/people-asking.md'>Read more</a>">Question authors</th>
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Total</th>
+            {% if has_git %}
+            <td><span id="num_commit_authors_overview">{{ metrics.commit_authors_overview }}</span></td>
+            {% endif %}
+            {% if has_gitlab or has_github %}
+            <td><span id="num_issue_submitters_overview">{{ metrics.issue_submitters_overview }}</span></td>
+            <td><span id="num_review_submitters_overview">{{ metrics.review_submitters_overview }}</span></td>
+            {% endif %}
+            {% if has_stack %}
+            <td><span id="num_question_authors_overview">{{ metrics.question_authors_overview }}</span></td>
+            {% endif %}
+          </tr>
+          <tr>
+            <th scope="row">Total (Last year)</th>
+            {% if has_git %}
+            <td><span id="num_commit_authors_last_year_overview">{{ metrics.commit_authors_last_year_overview }}</span></td>
+            {% endif %}
+            {% if has_gitlab or has_github %}
+            <td><span id="num_issue_submitters_last_year_overview">{{ metrics.issue_submitters_last_year_overview }}</span></td>
+            <td><span id="num_review_submitters_last_year_overview">{{ metrics.review_submitters_last_year_overview }}</span></td>
+            {% endif %}
+            {% if has_stack %}
+            <td><span id="num_question_authors_last_year_overview">{{ metrics.question_authors_last_year_overview }}</span></td>
+            {% endif %}
+          </tr>
+          <tr>
+            <th scope="row">Year-over-year</th>
+            {% if has_git %}
+            <td><span id="num_commit_authors_yoy_overview">{{ metrics.commit_authors_yoy_overview }}</span> %</td>
+            {% endif %}
+            {% if has_gitlab or has_github %}
+            <td><span id="num_issue_submitters_yoy_overview">{{ metrics.issue_submitters_yoy_overview }}</span> %</td>
+            <td><span id="num_review_submitters_yoy_overview">{{ metrics.review_submitters_yoy_overview }}</span> %</td>
+            {% endif %}
+            {% if has_stack %}
+            <td><span id="num_question_authors_yoy_overview">{{ metrics.question_authors_yoy_overview }}</span> %</td>
+            {% endif %}
+          </tr>
+        </tbody>
+      </table>
+    </div>
     {% if has_git or has_github or has_gitlab or has_meetup %}
     <div class="col-lg-6">
       <div id="chart-people-overview"></div>
@@ -60,36 +145,43 @@
       </div>
     </div>
     {% endif %}
-
-    {% if has_gitlab or has_github %}
-    <div class="col-lg-6">
-      <div id="chart-issues-overview"></div>
-      <div class="card-body chart-description" style="display: none;">
-        <h5 class="card-title">Number of issues created/closed</h5>
-        <p class="card-text">Number of issues shows activity in the issue tracking system, usually including bug reports, feature requests, and other tasks that are tracked with issues (tickets). We measure, for each week, the number of issues that were opened (created) or closed during it. Not only the absolute numbers, but also the relationship between open and closed issues is important in this chart: if many more issues are consistently being opened than closed, the report is not dealing with all the new stuff that is entering the issue tracking system.</p>
-        <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/issues-created-closed.md" class="card-link">Read more</a>
-      </div>
-    </div>
-    <div class="col-lg-6">
-      <div id="chart-pull-requests-overview"></div>
-      <div class="card-body chart-description" style="display: none;">
-        <h5 class="card-title">Number of reviews started/closed</h5>
-        <p class="card-text">Number of reviews shows activity related to pull requests (GitHub) or merge requests (GitLab). This chart shows, for each week, the number of merge or pull requests that were submitted (started), and decided (closed). Pull and merge reviews are the mechanism used for reviewing code changes that are proposed to enter repositories. Closing a pull or merge request can be done by accepting the change, or by declining it. As with issues, a larger number of started reviews than closed reviews means that the report is not coping with all proposals for code change that are being submitted.</p>
-        <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/reviews-created-closed.md" class="card-link">Read more</a>
-      </div>
-    </div>
-    {% endif %}
-
-    {% if has_stack %}
-    <div class="col-lg-6">
-      <div id="questions_answers_stackexchange_bokeh"></div>
-      <div class="card-body chart-description" style="display: none;">
-        <h5 class="card-title">Number of questions/answers</h5>
-        <p class="card-text">Number of questions and answers at StackExchange shows activity related to the community. This chart shows, in the selected period of time, the number of questions and answers that were performed at StackExchange. A larger number of questions and answers means that the project is having an higher impact in the community.</p>
-        <a target="_blank" href="https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/activity/reviews-created-closed.md" class="card-link">Read more</a>
-      </div>
-    </div>
-    {% endif %}
   </div>
+
+  {% if has_gitlab or has_github %}
+  <div class="row mb-4">
+    <div class="col-md-6 p-4 border">
+      <p class="h5 font-weight-bold mb-3">Performance</p>
+      <table class="table table-borderless text-center">
+        <thead>
+          <tr>
+            <th scope="col"></th>
+            <th scope="col" data-toggle="tooltip" data-html="true" data-placement="top" data-delay='{"hide":"3000"}' title="Median time to close for closed issues. <a target='_blank' href='https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/performance/issues-time-to-close-median.md'>Read more</a>">Issues</th>
+            <th scope="col" data-toggle="tooltip" data-html="true" data-placement="top" data-delay='{"hide":"3000"}' title="Median time to close for closed (and merged) reviews. <a target='_blank' href='https://gitlab.com/cauldronio/cauldron/-/blob/master/guides/metrics/performance/reviews-time-to-close-median.md'>Read more</a>">Reviews</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Median time to close</th>
+            <td><span id="num_issues_median_time_to_close_overview">{{ metrics.issues_median_time_to_close_overview }}</span> days</td>
+            <td><span id="num_reviews_median_time_to_close_overview">{{ metrics.reviews_median_time_to_close_overview }}</span> days</td>
+          </tr>
+          <tr>
+            <th scope="row">Median time to close (Last year)</th>
+            <td><span id="num_issues_median_time_to_close_last_year_overview">{{ metrics.issues_median_time_to_close_last_year_overview }}</span> days</td>
+            <td><span id="num_reviews_median_time_to_close_last_year_overview">{{ metrics.reviews_median_time_to_close_last_year_overview }}</span> days</td>
+          </tr>
+          <tr>
+            <th scope="row">Year-over-year</th>
+            <td><span id="num_issues_median_time_to_close_yoy_overview">{{ metrics.issues_median_time_to_close_yoy_overview }}</span> %</td>
+            <td><span id="num_reviews_median_time_to_close_yoy_overview">{{ metrics.reviews_median_time_to_close_yoy_overview }}</span> %</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col-lg-6">
+      <div id="chart-issues-still-open-overview"></div>
+    </div>
+  </div>
+  {% endif %}
 
 </div>

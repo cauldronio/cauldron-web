@@ -246,6 +246,7 @@ def author_evolution_bokeh(elastic, urls, from_date, to_date):
         meetup_users.append(categories.meetup_users.authors.value)
 
     plot = figure(x_axis_type="datetime",
+                  x_axis_label='Time',
                   y_axis_label='# Authors',
                   height=300,
                   sizing_mode="stretch_width",
