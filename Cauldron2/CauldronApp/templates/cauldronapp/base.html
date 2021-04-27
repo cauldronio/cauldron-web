@@ -213,7 +213,7 @@
     <div class="site-content {% if sidebar %}content-moved{% endif %}">
       <div class="container-fluid">
         {% for message in banner_messages %}
-        <div class="bannerMessage alert alert-info border-left-primary my-2 alert-dismissible" data-message-id="{{ message.id }}">
+        <div class="bannerMessage alert {{ message.color }} {{ message.border_color }} {{ message.text_color }} my-2 alert-dismissible" data-message-id="{{ message.id }}">
             {{ message.message | safe }}
             <button type="button" class="close" data-dismiss="alert" aria-label="Close">
               <span aria-hidden="true">&times;</span>
