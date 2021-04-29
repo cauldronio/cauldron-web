@@ -652,3 +652,28 @@ def chaoss_metrics(elastic, urls, from_date, to_date):
     metrics['drive_by_and_repeat_contributor_counts_bokeh_chaoss'] = community_commits.drive_by_and_repeat_contributor_counts(elastic, urls, from_date, to_date)
     metrics['commits_heatmap_bokeh_chaoss'] = activity_commits.git_commits_heatmap_bokeh(elastic, urls, from_date, to_date)
     return metrics
+
+
+def report_card_metrics(report, summary=None):
+    if not summary:
+        summary = report.summary()
+    elastic = get_elastic_project(report)
+
+    categories = []
+
+    if summary.get('git'):
+        categories.append('commits')
+    if summary.get('gitlab') or \
+            summary.get('github') or \
+            summary.get('kde') or \
+            summary.get('gnome'):
+        categories.append('issues')
+        categories.append('reviews')
+    if summary.get('meetup'):
+        categories.append('events')
+    if summary.get('stackexchange'):
+        categories.append('questions')
+
+    if len(categories) > 0:
+        return other.report_total_metrics(elastic, categories)
+    return {}

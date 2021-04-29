@@ -63,11 +63,12 @@ function refreshProjects() {
             $('#project-' + project.id + '-kde').html(project.kde);
             $('#project-' + project.id + '-meetup').html(project.meetup);
             $('#project-' + project.id + '-stack').html(project.stackexchange);
-            $('#project-' + project.id + '-running').html(project.running);
             if (project.running > 0) {
                 $('#spinner-' + project.id).show();
+                $('#spinner-' + project.id).attr('data-original-title', `Analyzing ${project.running} repositories.`);
             } else {
                 $('#spinner-' + project.id).hide();
+                $('#spinner-' + project.id).attr('data-original-title', `Analyzing 0 repositories.`);
             }
         });
     });

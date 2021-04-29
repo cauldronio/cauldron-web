@@ -9,14 +9,16 @@
           data-projname="{{project.project.name}}"
           data-projid="{{project.id}}"
           data-projurl="https://{{request.get_host}}{% url 'show_project' project.id %}">
-            <button type="button" class="btn btn-sm btn-outline-success"
+            <button type="button" class="btn btn-sm px-1 py-0 btn-outline-success"
              data-toggle="tooltip" title="Share options">
             <i class="fas fa-share-alt"></i>
             </button>
           </span>
         {% endif %}
       </div>
-      <div id="spinner-{{project.id}}" class="spinner-border spinner-border-sm" style="display: none;"></div>
+      <div id="spinner-{{project.id}}" class="text-muted" style="display: none;" data-toggle="tooltip" data-placement="top" title='Analyzing 0 repositories'>
+        <span class="mr-1">Updating</span> <span class="spinner-border spinner-border-sm"></span>
+      </div>
       {% if project.project.creator == request.user %}
       <div class="dropdown no-arrow">
         <a id="dropdown{{project.id}}" class="dropdown-toggle px-2 ml-3" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -38,73 +40,118 @@
     <!-- ./card header -->
     <!-- card Body -->
     <div class="card-body">
-      <!-- creation date -->
-      <div class="row">
-        <div class="col-5"><strong>Created</strong></div>
-        <div class="col-7">{{ project.project.created | date:"jS M Y"}}</div>
-      </div>
 
-      <hr class="my-2">
-      <!-- data sources -->
-      <div class="row">
-        <div class="col-5"><strong>Data sources</strong></div>
-        <div class="col-7">
-          <div class="container">
-            <div class="row justify-content-between">
-              <div>
-                <i class="fab fa-git-square"></i> <span id="project-{{project.id}}-git">{{project.git}}</span>
-              </div>
-              {% if data_sources_enabled.github %}
-              <div>
-                <i class="fab fa-github"></i> <span id="project-{{project.id}}-github">{{project.github}}</span>
-              </div>
-              {% endif %}
-              {% if data_sources_enabled.gitlab %}
-              <div>
-                <i class="fab fa-gitlab"></i> <span id="project-{{project.id}}-gitlab">{{project.gitlab}}</span>
-              </div>
-              {% endif %}
-              {% if data_sources_enabled.gnome %}
-              <div>
-                <i class="gnome-icon"></i> <span id="project-{{project.id}}-gnome">{{project.gnome}}</span>
-              </div>
-              {% endif %}
-              {% if data_sources_enabled.kde %}
-              <div>
-                <i class="kde-icon"></i> <span id="project-{{project.id}}-kde">{{project.kde}}</span>
-              </div>
-              {% endif %}
-              {% if data_sources_enabled.meetup %}
-              <div>
-                <i class="fab fa-meetup"></i> <span id="project-{{project.id}}-meetup">{{project.meetup}}</span>
-              </div>
-              {% endif %}
-              {% if data_sources_enabled.stack_exchange %}
-              <div>
-                <i class="fab fa-stack-exchange"></i> <span id="project-{{project.id}}-stack">{{project.stackexchange}}</span>
-              </div>
-              {% endif %}
-            </div>
+      <div class="row row-cols-2">
+        <div class="col-auto d-flex justify-content-start">
+          <strong class="pr-2">Data sources</strong>
+          {% if project.git %}
+          <div class="px-1">
+            <i class="fab fa-git-square"></i>
+            <span id="project-{{project.id}}-git">{{project.git}}</span>
           </div>
+          {% endif %}
+          {% if data_sources_enabled.github and project.github%}
+          <div class="px-1">
+            <i class="fab fa-github"></i>
+            <span id="project-{{project.id}}-github">{{project.github}}</span>
+          </div>
+          {% endif %}
+          {% if data_sources_enabled.gitlab and project.gitlab%}
+          <div class="px-1">
+            <i class="fab fa-gitlab"></i>
+            <span id="project-{{project.id}}-gitlab">{{project.gitlab}}</span>
+          </div>
+          {% endif %}
+          {% if data_sources_enabled.gnome and project.gnome%}
+          <div class="px-1">
+            <i class="gnome-icon"></i>
+            <span id="project-{{project.id}}-gnome">{{project.gnome}}</span>
+          </div>
+          {% endif %}
+          {% if data_sources_enabled.kde and project.kde%}
+          <div class="px-1">
+            <i class="kde-icon"></i>
+            <span id="project-{{project.id}}-kde">{{project.kde}}</span>
+          </div>
+          {% endif %}
+          {% if data_sources_enabled.meetup and project.meetup%}
+          <div class="px-1">
+            <i class="fab fa-meetup"></i>
+            <span id="project-{{project.id}}-meetup">{{project.meetup}}</span>
+          </div>
+          {% endif %}
+          {% if data_sources_enabled.stack_exchange and project.stackexchange%}
+          <div class="px-1">
+            <i class="fab fa-stack-exchange"></i>
+            <span id="project-{{project.id}}-stack">{{project.stackexchange}}</span>
+          </div>
+          {% endif %}
         </div>
       </div>
 
       <hr class="my-2">
-      <!-- status -->
-      <div class="row">
-        <div class="col-5"><strong>Gathering status</strong></div>
-        <div class="col-7">
-          <div class="container">
-            <div class="row">
-              <div>
-                Analyzing <span id="project-{{project.id}}-running">{{project.running}}</span> repositories.
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <!---->
 
+      {% if project.total > 0 %}
+      <table class="table table-borderless table-sm text-center">
+        <thead>
+          <tr>
+            <th scope="col"></th>
+            {% if project.git %}
+              <th scope="col" data-toggle="tooltip" data-placement="top" title="Number of commits (Items) and number of authors of those commits">Commits</th>
+            {% endif %}
+            {% if project.github or project.gitlab or project.kde or project.gnome %}
+              <th scope="col" data-toggle="tooltip" data-placement="top" title="Number of issues submitted (Items) and number of submitters (Authors)">Issues</th>
+              <th scope="col" data-toggle="tooltip" data-placement="top" title="Number of pull requests and merge requests (Items) and number of submitters (Authors)">Reviews</th>
+            {% endif %}
+            {% if project.meetup %}
+              <th scope="col" data-toggle="tooltip" data-placement="top" title="Number of Meetup events (Items) and number of people involved in events (Authors)">Events</th>
+            {% endif %}
+            {% if project.stackexchange %}
+              <th scope="col" data-toggle="tooltip" data-placement="top" title="Number of questions in StackExchange (Items) and number of authors of those questions (Authors)">Questions</th>
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row" data-toggle="tooltip" data-placement="top" title="Number of items for each category">Items</th>
+            {% if project.git %}
+              <td data-toggle="tooltip" data-placement="top" title="Number of commits">{{project.metrics.items.commits}}</td>
+            {% endif %}
+            {% if project.github or project.gitlab or project.kde or project.gnome %}
+              <td data-toggle="tooltip" data-placement="top" title="Number of issues">{{project.metrics.items.issues}}</td>
+              <td data-toggle="tooltip" data-placement="top" title="Number of pull requests and merge requests">{{project.metrics.items.reviews}}</td>
+            {% endif %}
+            {% if project.meetup %}
+              <td data-toggle="tooltip" data-placement="top" title="Number of meetup events">{{project.metrics.items.events}}</td>
+            {% endif %}
+            {% if project.stackexchange %}
+              <td data-toggle="tooltip" data-placement="top" title="Number of questions">{{project.metrics.items.questions}}</td>
+            {% endif %}
+          </tr>
+          <tr>
+            <th scope="row" data-toggle="tooltip" data-placement="top" title="Number of authors for each category">Authors</th>
+            {% if project.git %}
+              <td data-toggle="tooltip" data-placement="top" title="Number of commits authors">{{project.metrics.authors.commits}}</td>
+            {% endif %}
+            {% if project.github or project.gitlab or project.kde or project.gnome %}
+              <td data-toggle="tooltip" data-placement="top" title="Number of issue submitters">{{project.metrics.authors.issues}}</td>
+              <td data-toggle="tooltip" data-placement="top" title="Number of PRs and MRs submitters">{{project.metrics.authors.reviews}}</td>
+            {% endif %}
+            {% if project.meetup %}
+              <td data-toggle="tooltip" data-placement="top" title="Number of people involved in Meetup events">{{project.metrics.authors.events}}</td>
+            {% endif %}
+            {% if project.stackexchange %}
+              <td data-toggle="tooltip" data-placement="top" title="Number of people asking">{{project.metrics.authors.questions}}</td>
+            {% endif %}
+          </tr>
+        </tbody>
+      </table>
+      {% else %}
+      Empty report.
+      {% endif %}
+      <div class="text-right">
+        <span class="text-muted small">Creation date: {{ project.project.created | date:"jS M Y"}}</span>
+      </div>
 
     </div>
     <!-- ./card body -->

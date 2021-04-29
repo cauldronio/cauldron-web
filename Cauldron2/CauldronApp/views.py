@@ -93,6 +93,7 @@ def request_projects(request, projects):
     for project in page_obj.object_list:
         summary = project.summary()
         summary['project'] = project
+        summary['metrics'] = metrics.report_card_metrics(project, summary)
         projects_info.append(summary)
     context['projects_info'] = projects_info
     context['total_projects'] = Project.objects.count()

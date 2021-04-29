@@ -1,6 +1,7 @@
 import json
 import math
 import logging
+import operator
 from datetime import timedelta
 
 from bokeh.embed import json_item
@@ -9,7 +10,7 @@ from bokeh.palettes import Category20c, Blues
 from bokeh.plotting import figure
 from bokeh.transform import cumsum
 from elasticsearch import ElasticsearchException
-from elasticsearch_dsl import Search, Q
+from elasticsearch_dsl import Search, MultiSearch, Q
 
 from CauldronApp.models import Project
 
@@ -372,3 +373,83 @@ def review_duration(elastic, urls, from_date, to_date):
         return round(response.aggregations.ttc_percentiles.values['50.0'], 2)
     else:
         return 'X'
+
+
+def report_total_metrics(elastic, categories):
+    metrics = {
+        'items': {},
+        'authors': {}
+    }
+    response_keys = []
+    ms = MultiSearch(using=elastic)
+
+    if 'commits' in categories:
+        # Items
+        s = Search(index='git') \
+            .filter(~Q('match', files=0)) \
+            .extra(size=0)
+        s.aggs.bucket('commits', 'cardinality', field='hash')
+        s.aggs.bucket('authors', 'cardinality', field='author_uuid')
+        ms = ms.add(s)
+        response_keys.append({'name': 'commits',
+                              'results': {'items': 'aggregations.commits.value',
+                                          'authors': 'aggregations.authors.value'}})
+
+    if 'issues' in categories:
+        s = Search(index='all') \
+            .filter(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+            .extra(size=0)
+        s.aggs.bucket('authors', 'cardinality', field='author_uuid')
+        ms = ms.add(s)
+        response_keys.append({'name': 'issues',
+                              'results': {'items': 'hits.total.value',
+                                          'authors': 'aggregations.authors.value'}})
+
+    if 'reviews' in categories:
+        s = Search(index='all') \
+            .filter(Q('match', pull_request=True) | Q('match', merge_request=True)) \
+            .extra(size=0)
+        s.aggs.bucket('authors', 'cardinality', field='author_uuid')
+        ms = ms.add(s)
+        response_keys.append({'name': 'reviews',
+                              'results': {'items': 'hits.total.value',
+                                          'authors': 'aggregations.authors.value'}})
+
+    if 'questions' in categories:
+        s = Search(index='stackexchange') \
+            .filter(Q('match', is_stackexchange_question='1')) \
+            .extra(size=0)
+        s.aggs.bucket('authors', 'cardinality', field='author')
+        ms = ms.add(s)
+        response_keys.append({'name': 'questions',
+                              'results': {'items': 'hits.total.value',
+                                          'authors': 'aggregations.authors.value'}})
+
+    if 'events' in categories:
+        s = Search(index='meetup') \
+            .extra(size=0)
+        s.aggs.bucket('meetups', 'sum', field='is_meetup_meetup')
+        s.aggs.bucket('people', 'cardinality', field='author_uuid')
+        ms = ms.add(s)
+        response_keys.append({'name': 'events',
+                              'results': {'items': 'aggregations.meetups.value',
+                                          'authors': 'aggregations.people.value'}})
+
+    try:
+        response = ms.execute()
+    except ElasticsearchException as e:
+        logger.warning(e)
+        response = None
+
+    for keys_results, result in zip(response_keys, response):
+        try:
+            items = operator.attrgetter(keys_results['results']['items'])(result)
+            authors = operator.attrgetter(keys_results['results']['authors'])(result)
+        except AttributeError:
+            items = '?'
+            authors = '?'
+
+        metrics['items'][keys_results['name']] = items
+        metrics['authors'][keys_results['name']] = authors
+
+    return metrics

@@ -224,3 +224,5 @@ LOGIN_URL = 'homepage'
 STATIC_URL = '/static/'
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
