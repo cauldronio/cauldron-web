@@ -35,6 +35,13 @@
         </span>
         {% endif %}
         <!-- End share button -->
+        <form method="post" action="{% url 'fork_project' project.id %}">
+          <button type="submit" class="btn btn-icon-split btn-outline-dark ml-2" data-toggle="tooltip" data-placement="bottom" title="Create a copy of the report with all the data sources in your workspace.">
+            <span class="icon"><i class="far fa-copy"></i></span>
+            <span class="text">Fork report</span>
+          </button>
+          {% csrf_token %}
+        </form>
         <!-- Twitter notification icon -->
         {% if active_notifications %}
         <i class="fab fa-2x fa-twitter-square ml-3" data-toggle="tooltip" data-html="true" data-placement="top" title="You will have a Twitter notification when the report is ready."></i>

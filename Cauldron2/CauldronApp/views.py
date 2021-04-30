@@ -29,7 +29,7 @@ from cauldron_apps.poolsched_twitter.models import ITwitterNotify
 from cauldron_apps.poolsched_export.models.iexport import IExportCSV
 from cauldron_apps.cauldron_actions.models import IRefreshActions
 from cauldron_apps.cauldron.models import IAddGHOwner, IAddGLOwner, Project, OauthUser, AnonymousUser, \
-    UserWorkspace, ProjectRole, Repository, GitLabRepository, GitRepository, GitHubRepository, MeetupRepository, \
+    UserWorkspace, Repository, GitLabRepository, GitRepository, GitHubRepository, MeetupRepository, \
     StackExchangeRepository, AuthorizedBackendUser, BannerMessage
 
 from cauldron_apps.cauldron.opendistro import OpendistroApi
@@ -1018,6 +1018,16 @@ def _validate_data_project(request, data):
         return 'You have the same name in another report. Try with a different one.'
 
 
+def create_empty_user():
+    user = User.objects.create_user(username=generate_random_uuid(length=96),
+                                    first_name="Anonymous")
+    user.set_unusable_password()
+    user.save()
+    anonym_user = AnonymousUser(user=user)
+    anonym_user.save()
+    return user
+
+
 def request_new_project(request):
     """Create a new project and redirect to project"""
     if request.method != 'POST':
@@ -1037,12 +1047,7 @@ def request_new_project(request):
                                    "Ask any of the administrators for permission.")
 
     if not request.user.is_authenticated:
-        user = User.objects.create_user(username=generate_random_uuid(length=96),
-                                        first_name="Anonymous")
-        user.set_unusable_password()
-        user.save()
-        anonym_user = AnonymousUser(user=user)
-        anonym_user.save()
+        user = create_empty_user()
         login(request, user)
     project = Project.objects.create(name=project_data['name'], creator=request.user)
     project.create_es_role()
@@ -1100,6 +1105,26 @@ def request_new_project(request):
     del request.session['new_project']
 
     return HttpResponseRedirect(reverse('show_project', kwargs={'project_id': project.id}))
+
+
+def request_project_fork(request, project_id):
+    try:
+        project = Project.objects.get(pk=project_id)
+    except Project.DoesNotExist:
+        return custom_404(request, "The report requested was not found in this server")
+
+    if not request.user.is_authenticated:
+        user = create_empty_user()
+        login(request, user)
+    else:
+        user = request.user
+
+    try:
+        new_project = project.fork(user)
+    except Exception as e:
+        return custom_500(request, f'There was an error creating a copy for the report: {e}')
+    else:
+        return HttpResponseRedirect(reverse('show_project', kwargs={'project_id': new_project.id}))
 
 
 def request_refresh_project(request, project_id):

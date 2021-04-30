@@ -52,6 +52,7 @@ urlpatterns = [
     path('project/<int:project_id>/metrics', views.request_project_metrics, name="project_metrics"),
     path('project/<int:project_id>/workspace', views.request_workspace, name="open_workspace"),
     path('project/<int:project_id>/delete', views.request_delete_project, name="delete_project"),
+    path('project/<int:project_id>/fork', views.request_project_fork, name='fork_project'),
     path('project/<int:project_id>/public-kibana', views.request_public_kibana, name="open_public_kibana"),
     path('project/<int:project_id>/repositories', views.request_project_repositories, name="show_project_repos"),
     path('project/<int:project_id>/actions', views.request_project_actions, name="show_project_actions"),
