@@ -1,3 +1,4 @@
+import datetime
 import json
 import math
 import logging
@@ -449,7 +450,38 @@ def report_total_metrics(elastic, categories):
             items = '?'
             authors = '?'
 
-        metrics['items'][keys_results['name']] = items
-        metrics['authors'][keys_results['name']] = authors
+        metrics['items'][keys_results['name']] = int(items)
+        metrics['authors'][keys_results['name']] = int(authors)
 
     return metrics
+
+
+def last_years_evolution(elastic):
+    from_date = datetime.datetime.utcnow() - datetime.timedelta(days=5*365)
+    to_date = datetime.datetime.utcnow()
+    s = Search(using=elastic, index='all') \
+        .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) \
+        .extra(size=0)
+    s.aggs.bucket('data', 'date_histogram',
+                  field='grimoire_creation_date',
+                  interval="month",
+                  min_doc_count=0,
+                  extended_bounds={
+                      "min": from_date,
+                      "max": to_date
+                  })
+
+    try:
+        response = s.execute()
+        buckets = response.aggregations.data.buckets
+    except ElasticsearchException as e:
+        logger.warning(e)
+        buckets = []
+
+    # timestamps = []
+    items = []
+    for item in buckets:
+        # timestamps.append(item.key)
+        items.append(item.doc_count)
+
+    return items

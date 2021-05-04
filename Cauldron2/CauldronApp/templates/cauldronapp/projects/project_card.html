@@ -41,8 +41,8 @@
     <!-- card Body -->
     <div class="card-body">
 
-      <div class="row row-cols-2">
-        <div class="col-auto d-flex justify-content-start">
+      <div class="row">
+        <div class="col d-flex justify-content-start">
           <strong class="pr-2">Data sources</strong>
           {% if project.git %}
           <div class="px-1">
@@ -87,12 +87,17 @@
           </div>
           {% endif %}
         </div>
+        <div class="col-auto">
+          <svg class="sparkline-project-{{project.id}}" width="200" height="50" viewBox="0 0 200 50" stroke-width="2" stroke="blue" fill="rgba(0, 0, 255, .2)"></svg>
+        <span class="tooltip" hidden="true"></span>
+      </div>
       </div>
 
       <hr class="my-2">
 
       {% if project.total > 0 %}
-      <table class="table table-borderless table-sm text-center">
+      <div class="table-responsive">
+        <table class="table table-borderless table-sm text-center">
         <thead>
           <tr>
             <th scope="col"></th>
@@ -146,6 +151,7 @@
           </tr>
         </tbody>
       </table>
+      </div>
       {% else %}
       Empty report.
       {% endif %}

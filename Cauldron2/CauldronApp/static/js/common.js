@@ -97,7 +97,7 @@ $(document).ready(function () {
         $('#shareModal .modal-body .btn-group .shareonemail').attr('href', 'mailto:?subject='+projname+' visualizations by Cauldronio&body='+projurl);
     })
 
-    $('[data-toggle="tooltip"]').tooltip();
+    $('[data-toggle="tooltip"]').tooltip({ boundary: 'window' });
 
     $('.copy-share-link-kibana').click(copy_kibana_public_link);
 });

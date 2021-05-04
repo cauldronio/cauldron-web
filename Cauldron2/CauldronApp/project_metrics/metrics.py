@@ -675,5 +675,10 @@ def report_card_metrics(report, summary=None):
         categories.append('questions')
 
     if len(categories) > 0:
-        return other.report_total_metrics(elastic, categories)
-    return {}
+        data = other.report_total_metrics(elastic, categories)
+    else:
+        data = {}
+
+    data['sparkline'] = other.last_years_evolution(elastic)
+
+    return data

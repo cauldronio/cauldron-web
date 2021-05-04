@@ -98,5 +98,14 @@
 
 
 {% block javascript %}
+<script src="{% static 'js/sparkline.js' %}" charset="utf-8"></script>
 <script src="{% static 'js/projects.js' %}" charset="utf-8"></script>
+
+<script>
+	{% for project in projects_info %}
+		var sparkline_data = {{ project.metrics.sparkline | safe }};
+		sparkline.sparkline(document.querySelector(".sparkline-project-{{ project.id }}"), sparkline_data);
+	{% endfor %}
+</script>
+
 {% endblock %}
