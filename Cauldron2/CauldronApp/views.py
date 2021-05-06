@@ -1312,6 +1312,20 @@ def request_project_export_status(request, project_id):
     return JsonResponse(summary)
 
 
+def request_project_stats_svg(request, project_id):
+    try:
+        project = Project.objects.get(pk=project_id)
+    except Project.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'report not found'}, status=404)
+
+    context = {
+        'project': project,
+        'metrics': metrics.report_svg_yoy_stats(project)
+    }
+
+    return render(request, 'cauldronapp/svg/report_stats.svg', context=context, content_type='image/svg+xml')
+
+
 def request_project_export_create(request, project_id):
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'Only POST methods allowed'}, status=405)

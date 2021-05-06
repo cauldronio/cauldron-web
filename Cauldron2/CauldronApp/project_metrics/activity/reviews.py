@@ -27,8 +27,9 @@ def reviews_opened(elastic, urls, from_date, to_date):
     """Get number of Merge requests and Pull requests opened in the specified range"""
     s = Search(using=elastic, index='all')\
         .filter('range', created_at={'gte': from_date, "lte": to_date}) \
-        .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
-        .query(Q('terms', origin=urls))
+        .query(Q('match', pull_request=True) | Q('match', merge_request=True))
+    if urls:
+        s = s.query(Q('terms', origin=urls))
 
     try:
         response = s.count()

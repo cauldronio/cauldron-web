@@ -29,8 +29,10 @@ def authors_active(elastic, urls, from_date, to_date):
     s = Search(using=elastic, index='git') \
         .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
         .query(~Q('match', files=0)) \
-        .query(Q('terms', origin=urls)) \
         .extra(size=0)
+    if urls:
+        s = s.query(Q('terms', origin=urls))
+
     s.aggs.bucket('authors', 'cardinality', field='author_uuid')
 
     try:

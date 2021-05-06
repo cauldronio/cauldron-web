@@ -682,3 +682,42 @@ def report_card_metrics(report, summary=None):
     data['sparkline'] = other.last_years_evolution(elastic)
 
     return data
+
+
+def report_svg_yoy_stats(report):
+    elastic = get_elastic_project(report)
+    now = datetime.datetime.utcnow()
+    one_year_ago = now - relativedelta(years=1)
+    two_year_ago = now - relativedelta(years=2)
+
+    commits = round(year_over_year(
+        activity_commits.git_commits(elastic, None, one_year_ago, now),
+        activity_commits.git_commits(elastic, None, two_year_ago, one_year_ago)), 2)
+    issues = round(year_over_year(
+        activity_issues.issues_opened(elastic, None, one_year_ago, now),
+        activity_issues.issues_opened(elastic, None, two_year_ago, one_year_ago)), 2)
+    reviews = round(year_over_year(
+        activity_reviews.reviews_opened(elastic, None, one_year_ago, now),
+        activity_reviews.reviews_opened(elastic, None, two_year_ago, one_year_ago)), 2)
+    author_commits = round(year_over_year(
+        community_commits.authors_active(elastic, None, one_year_ago, now),
+        community_commits.authors_active(elastic, None, two_year_ago, one_year_ago)), 2)
+    author_issues = round(year_over_year(
+        community_issues.active_submitters(elastic, None, one_year_ago, now),
+        community_issues.active_submitters(elastic, None, two_year_ago, one_year_ago)), 2)
+    author_reviews = round(year_over_year(
+        community_reviews.active_submitters(elastic, None, one_year_ago, now),
+        community_reviews.active_submitters(elastic, None, two_year_ago, one_year_ago)), 2)
+
+    return {
+        'activity': {
+            'commits': commits,
+            'issues': issues,
+            'reviews': reviews
+        },
+        'community': {
+            'commits': author_commits,
+            'issues': author_issues,
+            'reviews': author_reviews
+        }
+    }

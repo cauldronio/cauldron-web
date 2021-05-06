@@ -63,7 +63,7 @@ urlpatterns = [
     path('project/<int:project_id>/export', views.request_project_export, name='project_export'),
     path('project/<int:project_id>/export/create', views.request_project_export_create, name='project_export_create'),
     path('project/<int:project_id>/export/status', views.request_project_export_status, name='project_export_status'),
-
+    path('project/<int:project_id>/stats.svg', views.request_project_stats_svg, name='project_stats_svg'),
     path('repository/<int:repo_id>/refresh', views.request_refresh_repository, name='refresh_repository'),
     path('repository/<int:repo_id>/actions', views.request_repo_intentions, name='show_repository_intentions'),
     path('repositories/info', views.request_repos_info),

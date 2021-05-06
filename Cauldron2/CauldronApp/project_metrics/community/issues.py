@@ -29,8 +29,9 @@ def active_submitters(elastic, urls, from_date, to_date):
     s = Search(using=elastic, index='all') \
         .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
         .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
-        .query(Q('terms', origin=urls)) \
         .extra(size=0)
+    if urls:
+        s = s.query(Q('terms', origin=urls))
     s.aggs.bucket('authors', 'cardinality', field='author_uuid')
 
     try:

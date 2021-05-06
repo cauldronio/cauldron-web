@@ -29,8 +29,9 @@ def issues_opened(elastic, urls, from_date, to_date):
     to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all')\
         .filter('range', created_at={'gte': from_date_es, "lte": to_date_es}) \
-        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
-        .query(Q('terms', origin=urls))
+        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1))
+    if urls:
+        s = s.query(Q('terms', origin=urls))
 
     try:
         response = s.count()

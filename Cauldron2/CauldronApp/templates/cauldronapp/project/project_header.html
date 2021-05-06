@@ -24,7 +24,10 @@
         <!-- End change name form-->
         <!-- Share button -->
         {% if repositories_count > 0 %}
-        <span data-toggle="modal" data-target="#shareModal" class="ml-3">
+        <span data-toggle="modal" data-target="#shareModal" class="ml-3 shareproject"
+          data-projname="{{project.project.name}}"
+          data-projid="{{project.id}}"
+          data-projurl="https://{{request.get_host}}{% url 'show_project' project.id %}">
           <button type="button" class="btn btn-success"
              data-toggle="tooltip" title="Share report">
             <i class="fas fa-share-alt"></i>

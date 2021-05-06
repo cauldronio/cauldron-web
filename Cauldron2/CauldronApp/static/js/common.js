@@ -88,10 +88,14 @@ $(document).ready(function () {
         var projname = $(this).data('projname');
         var projid = $(this).data('projid');
         var projurl = $(this).data('projurl');
-        $('#shareModal .modal-title').text('Share ' + projname + ' public dashboard');
-        $('#shareModal .modal-body input').attr('id', 'url-public-link-kibana_'+projid);
-        $('#shareModal .modal-body input').attr('value', projurl);
-        $('#shareModal .modal-body button.copy-share-link-kibana').attr('data-project-id', projid);
+        $('#shareModal .modal-title').text('Share ' + projname + ' report');
+        $('#shareModal .modal-body input.report-url').attr('id', 'url-report-'+projid);
+        $('#shareModal .modal-body input.report-url').attr('value', projurl);
+        $('#shareModal .modal-body input.report-svg').attr('id', 'url-report-svg-'+projid);
+        $('#shareModal .modal-body input.report-svg').attr('value', projurl + '/stats.svg');
+        $('#shareModal .modal-body button.copy-share-link-report').attr('data-project-id', projid);
+        $('#shareModal .modal-body button.copy-share-svg-report').attr('data-project-id', projid);
+        $('#shareModal img.svg-report-img').attr('src', projurl+'/stats.svg');
         $('#shareModal .modal-body .btn-group .shareontwitter').attr('href', 'https://twitter.com/intent/tweet?text=Watch+the+public+metrics+about+'+projname+'+development+provided+by+@cauldronio:&url='+projurl+'&hashtags=LevelUp,OpenSource,DevAnalytics');
         $('#shareModal .modal-body .btn-group .shareonlinkedin').attr('href', 'https://www.linkedin.com/shareArticle?mini=true&text=Watch+this+amazing+visualizations+of+'+projname+'+made+with+@cauldronio&url='+projurl);
         $('#shareModal .modal-body .btn-group .shareonemail').attr('href', 'mailto:?subject='+projname+' visualizations by Cauldronio&body='+projurl);
@@ -99,7 +103,8 @@ $(document).ready(function () {
 
     $('[data-toggle="tooltip"]').tooltip({ boundary: 'window' });
 
-    $('.copy-share-link-kibana').click(copy_kibana_public_link);
+    $('.copy-share-link-report').click(copy_report_link);
+    $('.copy-share-svg-report').click(copy_svg_link);
 });
 
 
@@ -249,11 +254,27 @@ function deleteToken(identity) {
   }
 
 
-function copy_kibana_public_link() {
-  var project_id = $(this).attr('data-project-id');
-  var copyText = $('#url-public-link-kibana_' + project_id)[0];
-  copyText.focus();
-  copyText.select();
+function copy_report_link() {
+    var project_id = $(this).attr('data-project-id');
+    var copyText = $('#url-report-' + project_id)[0];
+    copy_clipboard(copyText);
+    share_button = $(this);
+    share_button.tooltip('show');
+    setTimeout(function () {share_button.tooltip('hide')}, 1000)
+}
+
+function copy_svg_link() {
+    var project_id = $(this).attr('data-project-id');
+    var copyText = $('#url-report-svg-' + project_id)[0];
+    copy_clipboard(copyText);
+    share_button = $(this);
+    share_button.tooltip('show');
+    setTimeout(function () {share_button.tooltip('hide')}, 1000)
+}
+
+function copy_clipboard(input_el){
+  input_el.focus();
+  input_el.select();
   try {
     var successful = document.execCommand('copy');
     var msg = successful ? 'successful' : 'unsuccessful';
@@ -261,10 +282,6 @@ function copy_kibana_public_link() {
   } catch (err) {
     console.log('Oops, unable to copy');
   }
-
-  share_button = $(this);
-  share_button.tooltip('show');
-  setTimeout(function () {share_button.tooltip('hide')}, 1000)
 }
 
 // From https://stackoverflow.com/a/21903119/5930859
