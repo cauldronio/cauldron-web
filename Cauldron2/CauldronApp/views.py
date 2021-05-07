@@ -1045,7 +1045,7 @@ def request_new_project(request):
         anonym_user.save()
         login(request, user)
     project = Project.objects.create(name=project_data['name'], creator=request.user)
-    create_es_role(project)
+    project.create_es_role()
 
     for action in project_data['actions']:
         backend = action.get('backend', None)
@@ -1100,19 +1100,6 @@ def request_new_project(request):
     del request.session['new_project']
 
     return HttpResponseRedirect(reverse('show_project', kwargs={'project_id': project.id}))
-
-
-def create_es_role(project):
-    if hasattr(project, 'projectrole'):
-        return
-    role = f"role_project_{project.id}"
-    backend_role = f"br_project_{project.id}"
-
-    od_api = OpendistroApi(ES_IN_URL, settings.ES_ADMIN_PASSWORD)
-    od_api.create_role(role)
-    od_api.create_mapping(role, backend_roles=[backend_role])
-
-    ProjectRole.objects.create(role=role, backend_role=backend_role, project=project)
 
 
 def request_refresh_project(request, project_id):
@@ -1402,7 +1389,9 @@ def request_workspace(request, project_id):
         create_workspace(project.creator)
 
     name = project.creator.first_name.encode('utf-8', 'ignore').decode('ascii', 'ignore')
-    jwt_key = utils.get_jwt_key(name, [project.projectrole.backend_role, project.creator.userworkspace.backend_role])
+    jwt_key = utils.get_jwt_key(name, [project.projectrole.backend_role,
+                                       project.creator.userworkspace.backend_role,
+                                       'br_download_reports'])
 
     url = "{}/app/kibana?jwtToken={}&security_tenant={}#/dashboard/a9513820-41c0-11ea-a32a-715577273fe3".format(
         settings.KIB_OUT_URL,
@@ -1474,7 +1463,7 @@ def request_public_kibana(request, project_id):
     if request.method != 'GET':
         return custom_405(request, request.method)
 
-    jwt_key = utils.get_jwt_key(f"Public {project_id}", project.projectrole.backend_role)
+    jwt_key = utils.get_jwt_key(f"Public {project_id}", [project.projectrole.backend_role, 'br_download_reports'])
 
     url = f"{settings.KIB_OUT_URL}/app/kibana" \
           f"?jwtToken={jwt_key}&security_tenant=global#/dashboard/a834f080-41b1-11ea-a32a-715577273fe3"
