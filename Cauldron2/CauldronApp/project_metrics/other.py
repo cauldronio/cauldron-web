@@ -4,6 +4,7 @@ import math
 import logging
 import operator
 from datetime import timedelta
+from itertools import zip_longest
 
 from bokeh.embed import json_item
 from bokeh.models import ColumnDataSource, Range1d, tools
@@ -440,18 +441,18 @@ def report_total_metrics(elastic, categories):
         response = ms.execute()
     except ElasticsearchException as e:
         logger.warning(e)
-        response = None
+        response = []
 
-    for keys_results, result in zip(response_keys, response):
+    for keys_results, result in zip_longest(response_keys, response):
         try:
-            items = operator.attrgetter(keys_results['results']['items'])(result)
-            authors = operator.attrgetter(keys_results['results']['authors'])(result)
-        except AttributeError:
+            items = int(operator.attrgetter(keys_results['results']['items'])(result))
+            authors = int(operator.attrgetter(keys_results['results']['authors'])(result))
+        except (AttributeError, ValueError):
             items = '?'
             authors = '?'
 
-        metrics['items'][keys_results['name']] = int(items)
-        metrics['authors'][keys_results['name']] = int(authors)
+        metrics['items'][keys_results['name']] = items
+        metrics['authors'][keys_results['name']] = authors
 
     return metrics
 
@@ -464,7 +465,7 @@ def last_years_evolution(elastic):
         .extra(size=0)
     s.aggs.bucket('data', 'date_histogram',
                   field='grimoire_creation_date',
-                  interval="month",
+                  calendar_interval="month",
                   min_doc_count=0,
                   extended_bounds={
                       "min": from_date,
