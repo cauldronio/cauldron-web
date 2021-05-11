@@ -1338,6 +1338,26 @@ def request_project_stats_svg(request, project_id):
     return render(request, 'cauldronapp/svg/report_stats.svg', context=context, content_type='image/svg+xml')
 
 
+def request_project_git_contributors_svg(request, project_id):
+    try:
+        project = Project.objects.get(pk=project_id)
+    except Project.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'report not found'}, status=404)
+
+    epoch = datetime.datetime.fromtimestamp(0)
+    now = datetime.datetime.now()
+    elastic = metrics.get_elastic_project(project)
+
+    context = {
+        'git_contributors': metrics.community_commits.authors_active(elastic=elastic,
+                                                                     urls=None,
+                                                                     from_date=epoch,
+                                                                     to_date=now)
+    }
+
+    return render(request, 'cauldronapp/svg/git_contributors.svg', context=context, content_type='image/svg+xml')
+
+
 def request_project_export_create(request, project_id):
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'Only POST methods allowed'}, status=405)
