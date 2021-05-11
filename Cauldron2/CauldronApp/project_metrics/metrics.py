@@ -649,7 +649,7 @@ def chaoss_metrics(elastic, urls, from_date, to_date):
     # Visualizations
     metrics['reviews_closed_mean_duration_heatmap_bokeh_chaoss'] = activity_reviews.reviews_closed_mean_duration_heatmap_bokeh(elastic, urls, from_date, to_date)
     metrics['issues_created_closed_bokeh_chaoss'] = activity_issues.issues_open_closed_bokeh(elastic, urls, from_date, to_date)
-    metrics['drive_by_and_repeat_contributor_counts_bokeh_chaoss'] = community_commits.drive_by_and_repeat_contributor_counts(elastic, urls, from_date, to_date)
+    metrics['drive_through_and_repeat_contributor_counts_bokeh_chaoss'] = community_commits.drive_through_and_repeat_contributor_counts(elastic, urls, from_date, to_date)
     metrics['commits_heatmap_bokeh_chaoss'] = activity_commits.git_commits_heatmap_bokeh(elastic, urls, from_date, to_date)
     return metrics
 

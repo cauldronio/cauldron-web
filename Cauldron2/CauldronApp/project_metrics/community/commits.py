@@ -516,8 +516,8 @@ def authors_retained_ratio_bokeh(elastic, urls, snap_date):
     return json.dumps(json_item(plot))
 
 
-def drive_by_and_repeat_contributor_counts(elastic, urls, from_date, to_date):
-    """Shows the drive-by and repeat contributors (git) counts in a community"""
+def drive_through_and_repeat_contributor_counts(elastic, urls, from_date, to_date):
+    """Shows the drive-through and repeat contributors (git) counts in a community"""
 
     interval_name, interval_elastic, bar_width = get_interval(from_date, to_date)
 
@@ -562,24 +562,24 @@ def drive_by_and_repeat_contributor_counts(elastic, urls, from_date, to_date):
 
     authors['contributor_type'] = authors['total_contributions'].apply(lambda x: get_contributor_type(x))
 
-    # Group by drive-by authors
-    drive_by_authors = authors.loc[authors['contributor_type'] == 'drive-by']
-    drive_by_authors = drive_by_authors.groupby('first_contribution').size().reset_index(name='drive_by_authors')
+    # Group by drive-through authors
+    drive_through_authors = authors.loc[authors['contributor_type'] == 'drive-through']
+    drive_through_authors = drive_through_authors.groupby('first_contribution').size().reset_index(name='drive_through_authors')
 
     # Group by repeat authors
     repeat_authors = authors.loc[authors['contributor_type'] == 'repeat']
     repeat_authors = repeat_authors.groupby('first_contribution').size().reset_index(name='repeat_authors')
 
-    authors = pandas.merge(drive_by_authors, repeat_authors, on='first_contribution', how='outer')
+    authors = pandas.merge(drive_through_authors, repeat_authors, on='first_contribution', how='outer')
     authors = authors.sort_values('first_contribution')
-    # Only the NaN values of drive_by_authors are turned into 0 to avoid
+    # Only the NaN values of drive_through_authors are turned into 0 to avoid
     # an ugly effect in the chart
-    authors['drive_by_authors'] = authors['drive_by_authors'].fillna(0)
+    authors['drive_through_authors'] = authors['drive_through_authors'].fillna(0)
 
-    timestamps, drive_by_authors, repeat_authors = [], [], []
+    timestamps, drive_through_authors, repeat_authors = [], [], []
     for index, row in authors.iterrows():
         timestamps.append(datetime.combine(row['first_contribution'], datetime.min.time()).timestamp() * 1000)
-        drive_by_authors.append(row['drive_by_authors'])
+        drive_through_authors.append(row['drive_through_authors'])
         repeat_authors.append(row['repeat_authors'])
 
     plot = figure(x_axis_type="datetime",
@@ -589,26 +589,26 @@ def drive_by_and_repeat_contributor_counts(elastic, urls, from_date, to_date):
                   sizing_mode="stretch_width",
                   tools='')
     plot.y_range.start = 0
-    plot.title.text = f'Drive-by and Repeat Contributor Counts'
+    plot.title.text = f'Drive-through and Repeat Contributor Counts'
     configure_figure(plot, 'https://gitlab.com/cauldronio/cauldron/'
-                           '-/blob/master/guides/metrics/community/drive-by-and-repeat-contributor-counts.md')
+                           '-/blob/master/guides/metrics/community/drive-through-and-repeat-contributor-counts.md')
 
     source = ColumnDataSource(data=dict(
         timestamps=timestamps,
-        drive_by=drive_by_authors,
+        drive_through=drive_through_authors,
         repeat=repeat_authors
     ))
 
     plot.vbar_stack(x='timestamps', width=bar_width,
-                    stackers=['drive_by', 'repeat'],
+                    stackers=['drive_through', 'repeat'],
                     source=source,
                     color=[Blues[3][0], Oranges[4][1]],
-                    legend_label=['Drive-by', 'Repeat'])
+                    legend_label=['Drive-through', 'Repeat'])
 
     plot.add_tools(tools.HoverTool(
         tooltips=[
             (interval_name, '@timestamps{%F}'),
-            ('drive_by', '@drive_by'),
+            ('drive_through', '@drive_through'),
             ('repeat', '@repeat')
         ],
         formatters={

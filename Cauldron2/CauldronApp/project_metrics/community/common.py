@@ -44,11 +44,11 @@ def is_still_active(last_contribution_date, ref_date):
 
 
 def get_contributor_type(total_contributions):
-    """Determine if a contributor is a drive-by contributor (less
+    """Determine if a contributor is a drive-through contributor (less
     than five contributions) or a repeat contributor (more than five
     contibutions)"""
     if total_contributions < 5:
-        return "drive-by"
+        return "drive-through"
 
     return "repeat"
 

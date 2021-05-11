@@ -100,7 +100,7 @@ $(function() {
         // CHAOSS SECTION
         "reviews_closed_mean_duration_heatmap_bokeh_chaoss": "chart-reviews-closed-mean-duration-chaoss",
         "issues_created_closed_bokeh_chaoss": "chart-issues-created-closed-chaoss",
-        "drive_by_and_repeat_contributor_counts_bokeh_chaoss": "chart-drive-by-and-repeat-contributor-counts-chaoss",
+        "drive_through_and_repeat_contributor_counts_bokeh_chaoss": "chart-drive-through-and-repeat-contributor-counts-chaoss",
         "commits_heatmap_bokeh_chaoss": "chart-commits-heatmap-chaoss",
     }
 
