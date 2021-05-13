@@ -160,6 +160,7 @@
             <h6 class="dropdown-header">Administration</h6>
             <a class="dropdown-item" target="_blank" href="{% url 'kibana_admin' %}">Kibana admin</a>
             <a class="dropdown-item" href="{% url 'admin:index' %}">Django admin</a>
+            <a class="dropdown-item" href="{% url 'admin_page_users' %}">Manage users</a>
             {% if plausible_analytics_url %}
             <a class="dropdown-item" target="_blank" href="{{ plausible_analytics_url }}">Plausible Analytics</a>
             {% endif %}

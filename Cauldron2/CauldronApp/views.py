@@ -4,7 +4,7 @@ import random
 from random import choice
 from string import ascii_lowercase, digits
 from dateutil.relativedelta import relativedelta
-from django.db.models import Min
+from django.db.models import Min, Count
 
 from django.shortcuts import render
 from django.http import HttpResponseRedirect, JsonResponse
@@ -1708,6 +1708,9 @@ def create_context(request):
         'twitter': bool(settings.TWITTER_CLIENT_ID),
     }
 
+    # Limited Access
+    context['LIMITED_ACCESS'] = settings.LIMITED_ACCESS
+
     return context
 
 
@@ -1808,6 +1811,193 @@ def status_info():
     context['repos_meetup_count'] = MeetupRepository.objects.exclude(projects=None).count()
     context['repos_stack_count'] = StackExchangeRepository.objects.exclude(projects=None).count()
     return context
+
+
+def admin_page_users(request):
+    """
+    View for the administration page to show an overview of each user
+    :param request:
+    :return:
+    """
+    context = create_context(request)
+
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        context['title'] = "User Not Allowed"
+        context['description'] = "Only Admin users allowed"
+        return render(request, 'cauldronapp/error.html', status=403,
+                      context=context)
+    if request.method != 'GET':
+        context['title'] = "Method Not Allowed"
+        context['description'] = "Only GET methods allowed"
+        return render(request, 'cauldronapp/error.html', status=405,
+                      context=context)
+
+    users = User.objects.all()
+
+    search = request.GET.get('search')
+    if search is not None:
+        users = users.filter(first_name__icontains=search)
+
+    sort_by = request.GET.get('sort_by')
+    if sort_by is not None:
+        reverse = False
+        if sort_by[0] == '-':
+            reverse = True
+            sort_by = sort_by[1:]
+
+        SORT_CHOICES = {
+            'name': 'first_name',
+            'joined': 'date_joined',
+            'reports': 'project__count',
+            'authorized': 'is_active',
+            'admin': 'is_superuser',
+        }
+
+        COUNT_CHOICES = {
+            'reports': 'project',
+        }
+
+        if sort_by in SORT_CHOICES:
+            if sort_by in COUNT_CHOICES:
+                users = users.annotate(Count(COUNT_CHOICES[sort_by]))
+
+            users = users.order_by(SORT_CHOICES[sort_by])
+
+            if reverse:
+                users = users.reverse()
+
+    p = Pages(users, 10)
+    page_number = request.GET.get('page', 1)
+    page_obj = p.pages.get_page(page_number)
+    context['page_obj'] = page_obj
+    context['pages_to_show'] = p.pages_to_show(page_obj.number)
+
+    context['users'] = []
+    for user in page_obj.object_list:
+        user_entry = dict()
+        user_entry['user'] = user
+        user_entry['linked_accounts'] = {
+            'github': OauthUser.objects.filter(user=user, backend='github').first(),
+            'gitlab': OauthUser.objects.filter(user=user, backend='gitlab').first(),
+            'gnome': OauthUser.objects.filter(user=user, backend='gnome').first(),
+            'kde': OauthUser.objects.filter(user=user, backend='kde').first(),
+            'meetup': OauthUser.objects.filter(user=user, backend='meetup').first(),
+            'stackexchange': OauthUser.objects.filter(user=user, backend='stackexchange').first(),
+            'twitter': OauthUser.objects.filter(user=user, backend='twitter').first(),
+        }
+        user_entry['tokens'] = {
+            'github': GHToken.objects.filter(user=user, instance='GitHub').first(),
+            'gitlab': {},
+            'meetup': MeetupToken.objects.filter(user=user).first(),
+            'stackexchange': StackExchangeToken.objects.filter(user=user).first(),
+        }
+        for instance in GLInstance.objects.values_list('slug', flat=True):
+            user_entry['tokens']['gitlab'][instance] = GLToken.objects.filter(user=user, instance__slug=instance).first()
+        context['users'].append(user_entry)
+
+    return render(request, 'cauldronapp/admin/admin-users.html', context=context)
+
+
+@require_http_methods(['POST'])
+def request_add_user(request):
+    """ Add a new user"""
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return JsonResponse({'status': 'error', 'message': 'You cannot create a new user'}, status=403)
+
+    backend = request.POST.get('backend', None)
+    username = request.POST.get('username', '').strip()
+    is_admin = request.POST.get('admin', None)
+
+    if backend not in ['github', 'gitlab', 'meetup', 'gnome', 'kde', 'stackexchange']:
+        return JsonResponse({'status': 'error', 'message': f'Backend {backend} not found'}, status=400)
+
+    if username == '':
+        return JsonResponse({'status': 'error', 'message': 'username invalid'}, status=400)
+
+    if OauthUser.objects.filter(username=username, backend=backend).exists():
+        return JsonResponse({'status': 'error', 'message': f'user {username} already exists for backend called {backend}'}, status=400)
+
+    if settings.LIMITED_ACCESS:
+        AuthorizedBackendUser.objects.get_or_create(backend=backend, username=username)
+
+    user = create_django_user(username)
+
+    # Create the backend entity and associate with the account
+    OauthUser.objects.create(user=user,
+                             backend=backend,
+                             username=username)
+
+    # If it is an admin user, upgrade it
+    if is_admin:
+        upgrade_to_admin(user)
+
+    return JsonResponse({'status': 'ok'})
+
+
+def authorize_user(request):
+    """
+    Authorize user to use Cauldron
+    """
+    context = create_context(request)
+
+    if request.method != 'POST':
+        context['title'] = "Not allowed"
+        context['description'] = "Method not allowed for this path"
+        return render(request, 'cauldronapp/error.html', status=405,
+                      context=context)
+
+    user_pk = request.POST.get('user_pk', None)
+    user = User.objects.filter(pk=user_pk).first()
+    if not user:
+        context['title'] = "User not found"
+        context['description'] = "The user requested was not found in this server"
+        return render(request, 'cauldronapp/error.html', status=405,
+                      context=context)
+
+    if not request.user.is_superuser:
+        context['title'] = "Not allowed"
+        context['description'] = "You are not allowed to make this action"
+        return render(request, 'cauldronapp/error.html', status=400,
+                      context=context)
+
+    # Authorize user to use Cauldron
+    user.is_active = True
+    user.save()
+
+    return HttpResponseRedirect(reverse('admin_page_users'))
+
+
+def unauthorize_user(request):
+    """
+    Unauthorize user to use Cauldron
+    """
+    context = create_context(request)
+
+    if request.method != 'POST':
+        context['title'] = "Not allowed"
+        context['description'] = "Method not allowed for this path"
+        return render(request, 'cauldronapp/error.html', status=405,
+                      context=context)
+
+    user_pk = request.POST.get('user_pk', None)
+    user = User.objects.filter(pk=user_pk).first()
+    if not user:
+        context['title'] = "User not found"
+        context['description'] = "The user requested was not found in this server"
+        return render(request, 'cauldronapp/error.html', status=405,
+                      context=context)
+
+    if not request.user.is_superuser:
+        context['title'] = "Not allowed"
+        context['description'] = "You are not allowed to make this action"
+        return render(request, 'cauldronapp/error.html', status=400,
+                      context=context)
+
+    # Downgrade admin to user
+    user.is_active = False
+    user.save()
+
+    return HttpResponseRedirect(reverse('admin_page_users'))
 
 
 def upgrade_user(request):

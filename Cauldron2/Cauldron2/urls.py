@@ -84,6 +84,14 @@ urlpatterns = [
     path('cookies/', views.cookies, name="cookies"),
     path('pricing/', views.pricing, name="pricing"),
 
+    path('users/', views.admin_page_users, name="admin_page_users"),
+    path('users/authorize/', views.authorize_user, name="authorize_user"),
+    path('users/unauthorize/', views.unauthorize_user, name="unauthorize_user"),
+    path('users/upgrade/', views.upgrade_user, name="upgrade_user"),
+    path('users/downgrade/', views.downgrade_user, name="downgrade_user"),
+    path('users/add', views.request_add_user, name="add_user"),
+    path('users/delete/', views.request_delete_user, name="delete_user"),
+
     path('profile/', include('profile.urls')),
 
     path('stats/', views.stats_page, name="stats"),

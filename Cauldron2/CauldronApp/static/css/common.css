@@ -262,6 +262,14 @@ table {
     width: 15px;
 }
 
+.gnome-icon-med {
+    background: url('/static/img/GnomeLogo.png') no-repeat 0px 0px;
+    background-size: 20px;
+    display: inline-block;
+    height: 20px;
+    width: 20px;
+}
+
 .gnome-icon-white {
     background: url('/static/img/GnomeLogoWhite.png') no-repeat 0px 0px;
     background-size: 15px;
@@ -284,6 +292,14 @@ table {
     display: inline-block;
     height: 15px;
     width: 15px;
+}
+
+.kde-icon-med {
+    background: url('/static/img/KDELogo.png') no-repeat 0px 0px;
+    background-size: 20px;
+    display: inline-block;
+    height: 20px;
+    width: 20px;
 }
 
 .kde-icon-white {
