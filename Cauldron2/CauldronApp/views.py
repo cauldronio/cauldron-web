@@ -4,6 +4,7 @@ import random
 from random import choice
 from string import ascii_lowercase, digits
 from dateutil.relativedelta import relativedelta
+from django.db.models import Min
 
 from django.shortcuts import render
 from django.http import HttpResponseRedirect, JsonResponse
@@ -82,7 +83,8 @@ def request_projects(request, projects):
     search = request.GET.get('search')
     if search is not None:
         projects = projects.filter(name__icontains=search)
-
+    projects, sort_by = sort_reports(request, projects)
+    context['sort_by'] = sort_by
     p = Pages(projects, 9)
     page_number = request.GET.get('page', 1)
     page_obj = p.pages.get_page(page_number)
@@ -100,6 +102,37 @@ def request_projects(request, projects):
     if request.user.is_authenticated:
         context['user_projects'] = Project.objects.filter(creator=request.user).count()
     return render(request, 'cauldronapp/projects/projects.html', context=context)
+
+
+def sort_reports(request, projects):
+    sort_names = {
+        'name_asc': 'Name',
+        'name_desc': 'Name, descending',
+        'last_created': 'Last created',
+        'oldest_created': 'Oldest created',
+        'last_updated': 'Last updated',
+        'oldest_updated': 'Oldest updated',
+    }
+    simple_sort_filters = {
+        'name_asc': 'name',
+        'name_desc': '-name',
+        'last_created': '-created',
+        'oldest_created': 'created'
+    }
+    default = request.session.get('reports_sort', 'last_created')
+    key = request.GET.get('sort', default)
+    if key not in sort_names:
+        key = 'last_created'
+    request.session['reports_sort'] = key
+
+    if key in simple_sort_filters:
+        projects = projects.order_by(simple_sort_filters[key])
+    elif key == 'last_updated':
+        projects = projects.annotate(refresh_date=Min('repository__last_refresh')).order_by('-refresh_date')
+    elif key == 'oldest_updated':
+        projects = projects.annotate(refresh_date=Min('repository__last_refresh')).order_by('refresh_date')
+
+    return projects, {'key': key, 'name': sort_names[key]}
 
 
 # TODO: Add state

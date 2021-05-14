@@ -34,18 +34,30 @@
 			</ul>
 		</div>
 
-    <form method="GET" action ="" class="form-inline">
-        <span class="font-weight-bold d-block mr-2">Search: </span>
+		<div class="form-inline">
 
-        <div class="input-group">
-          <input class="form-control" name="search" type="text" value="{{ request.GET.search }}" placeholder="Search..."/>
-          <div class="input-group-append">
-            <button class="btn btn-outline-dark" type="submit">
-              <i class="fas fa-search"></i>
-            </button>
-          </div>
-        </div>
-    </form>
+			<form method="GET" action="" class="form-inline">
+				<div class="dropdown">
+					<button class="btn btn-outline-dark dropdown-toggle" style="border: 1px solid #d1d3e2;" type="button" id="dropdownFilterReports" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+						{{ sort_by.name }}
+					</button>
+					<div class="dropdown-menu" aria-labelledby="dropdownFilterReports">
+						<a class="dropdown-item {% if sort_by.key == 'name_asc' %}active{% endif %}" href="{{ request.path }}?sort=name_asc">Name</a>
+						<a class="dropdown-item {% if sort_by.key == 'name_desc' %}active{% endif %}" href="{{ request.path }}?sort=name_desc">Name, descending</a>
+						<a class="dropdown-item {% if sort_by.key == 'last_created' %}active{% endif %}" href="{{ request.path }}?sort=last_created">Last created</a>
+						<a class="dropdown-item {% if sort_by.key == 'oldest_created' %}active{% endif %}" href="{{ request.path }}?sort=oldest_created">Oldest created</a>
+						<a class="dropdown-item {% if sort_by.key == 'last_updated' %}active{% endif %}" href="{{ request.path }}?sort=last_updated">Last updated</a>
+						<a class="dropdown-item {% if sort_by.key == 'oldest_updated' %}active{% endif %}" href="{{ request.path }}?sort=oldest_updated">Oldest updated</a>
+					</div>
+				</div>
+			</form>
+
+			<form method="GET" action="" class="form-inline ml-md-2">
+				<div class="input-group">
+					<input class="form-control" name="search" type="text" value="{{ request.GET.search }}" placeholder="Search by name"/>
+				</div>
+			</form>
+		</div>
 	</div>
 
 	<div class="row" id="projects-cards">
