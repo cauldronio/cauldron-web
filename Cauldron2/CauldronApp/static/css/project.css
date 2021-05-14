@@ -208,6 +208,10 @@ ul.sidebar-item-list {
     color: #eeeeee !important;
 }
 
+.settings-toggle a:hover {
+    color: #eeeeee !important;
+}
+
 .subtitle {
     font-weight: 300;
     font-size: 0.5em;

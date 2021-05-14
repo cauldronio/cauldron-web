@@ -1,0 +1,24 @@
+<div class="d-flex justify-content-between align-items-end">
+
+  <h1>Settings</h1>
+
+  <!-- Add data sources button -->
+  {% if editable %}
+  <button type="button" class="btn btn-icon-split btn-orange mb-2"
+          data-toggle="modal" data-target="#add-datasource-modal">
+    <span class="icon"><i class="fa fa-plus"></i></span>
+    <span class="text">Add data sources</span>
+  </button>
+  {% endif %}
+  <!-- End add data sources button -->
+</div>
+
+<p>Configure your report settings to define which data sources and repositories you want Cauldron to collect data from.</p>
+
+{% include "cauldronapp/project/project_actions.html" %}
+
+<h2>Data sources repositories</h2>
+
+<p>Check the list of data sources repositories being tracked to collect data for this report. The data sources section allow you to remove or refresh data from repositories, and to check logs of the processes performed to gather the data.</p>
+
+<a class="btn btn-outline-primary" href="{% url 'show_project_repos' project.id %}" role="button">Manage data sources</a>

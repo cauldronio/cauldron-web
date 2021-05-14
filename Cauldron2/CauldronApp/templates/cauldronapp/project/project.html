@@ -95,11 +95,10 @@
             </a>
           </li>
           {% endif %}
-          <li class="sidebar-item">
-            <div class="fly-out-menu" style="display:none;">
-              <a class="sidebar-item" href="{% url 'show_project_actions' project.id %}">
-                Settings
-              </a>
+          <li class="sidebar-item settings-toggle">
+            <div class="settings-menu fly-out-menu" style="display:none;">
+              <a class="sidebar-item" href="{% url 'show_project_actions' project.id %}">Actions</a>
+              <a class="sidebar-item" href="{% url 'show_project_repos' project.id %}">Data sources</a>
             </div>
             <a href="{% url 'show_project_actions' project.id %}">
               <i class="fas fa-cog"></i>
@@ -133,7 +132,7 @@
           {% elif show_project_home %}
             {% include "cauldronapp/project/project_metrics.html" %}
           {% elif show_actions %}
-            {% include "cauldronapp/project/project_actions.html" %}
+            {% include "cauldronapp/project/project_settings.html" %}
           {% elif show_export %}
             {% include "cauldronapp/project/project_export.html" %}
           {% endif %}

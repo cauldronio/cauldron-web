@@ -323,5 +323,7 @@ function toggleSidebar(){
         $('#toggle-sidebar-icon').removeClass('fa-angle-double-right').addClass('fa-angle-double-left');
         $('.download-toggle').hover(function(){$('.download-menu').show()});
         $('.download-toggle').mouseleave(function(){$('.download-menu').hide()});
+        $('.settings-toggle').hover(function(){$('.settings-menu').show()});
+        $('.settings-toggle').mouseleave(function(){$('.settings-menu').hide()});
     }
 }
