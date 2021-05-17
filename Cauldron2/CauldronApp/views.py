@@ -1147,13 +1147,10 @@ def request_project_fork(request, project_id):
         return custom_404(request, "The report requested was not found in this server")
 
     if not request.user.is_authenticated:
-        user = create_empty_user()
-        login(request, user)
-    else:
-        user = request.user
+        return custom_403(request)
 
     try:
-        new_project = project.fork(user)
+        new_project = project.fork(request.user)
     except Exception as e:
         return custom_500(request, f'There was an error creating a copy for the report: {e}')
     else:
