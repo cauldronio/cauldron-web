@@ -23,8 +23,9 @@ def median_time_to_close(elastic, urls, from_date, to_date):
         .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
         .query(Q('range', closed_at={'gte': from_date, 'lte': to_date}) |
                Q('range', merged_at={'gte': from_date, 'lte': to_date})) \
-        .query(Q('terms', origin=urls)) \
         .extra(size=0)
+    if urls:
+        s = s.query(Q('terms', origin=urls))
     s.aggs.bucket('ttc_percentiles', 'percentiles', field='time_to_close_days', percents=[50])
 
     try:

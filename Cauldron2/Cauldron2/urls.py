@@ -66,6 +66,7 @@ urlpatterns = [
     path('project/<int:project_id>/export/status', views.request_project_export_status, name='project_export_status'),
     path('project/<int:project_id>/stats.svg', views.request_project_stats_svg, name='project_stats_svg'),
     path('project/<int:project_id>/git_contributors.svg', views.request_project_git_contributors_svg, name='project_git_contributors_svg'),
+    path('project/<int:project_id>/export/svg/<slug:metric_name>.svg', views.request_project_export_svg, name='request_project_export_svg'),
     path('repository/<int:repo_id>/refresh', views.request_refresh_repository, name='refresh_repository'),
     path('repository/<int:repo_id>/actions', views.request_repo_intentions, name='show_repository_intentions'),
     path('repositories/info', views.request_repos_info),

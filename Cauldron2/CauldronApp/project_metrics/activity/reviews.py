@@ -48,8 +48,9 @@ def reviews_closed(elastic, urls, from_date, to_date):
     s = Search(using=elastic, index='all') \
         .query(Q('range', closed_at={'gte': from_date, "lte": to_date}) |
                Q('range', merged_at={'gte': from_date, "lte": to_date})) \
-        .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
-        .query(Q('terms', origin=urls))
+        .query(Q('match', pull_request=True) | Q('match', merge_request=True))
+    if urls:
+        s = s.query(Q('terms', origin=urls))
 
     try:
         response = s.count()

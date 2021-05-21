@@ -52,8 +52,9 @@ def issues_closed(elastic, urls, from_date, to_date):
     s = Search(using=elastic, index='all')\
         .filter('range', closed_at={'gte': from_date_es, "lte": to_date_es})\
         .filter('match', state='closed')\
-        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
-        .query(Q('terms', origin=urls))
+        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1))
+    if urls:
+        s = s.query(Q('terms', origin=urls))
 
     try:
         response = s.count()

@@ -105,6 +105,8 @@ $(document).ready(function () {
 
     $('.copy-share-link-report').click(copy_report_link);
     $('.copy-share-svg-report').click(copy_svg_link);
+
+    $('.copy-clipboard').click(copy_input_clipboard);
 });
 
 
@@ -270,6 +272,14 @@ function copy_svg_link() {
     share_button = $(this);
     share_button.tooltip('show');
     setTimeout(function () {share_button.tooltip('hide')}, 1000)
+}
+
+function copy_input_clipboard() {
+    var id_input_el = $(this).data('copy-input');
+    var copy_button = $(this);
+    copy_clipboard(document.getElementById(id_input_el));
+    $(copy_button).tooltip('show');
+    setTimeout(function () {copy_button.tooltip('hide')}, 1000)
 }
 
 function copy_clipboard(input_el){

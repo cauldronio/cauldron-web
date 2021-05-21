@@ -105,3 +105,156 @@
 
 </div>
 
+<h2>Export badges</h2>
+<p>Show anywhere badges with the results of Cauldron analysis. Images are updated when the report is refreshed.</p>
+
+<div class="table-responsive mt-4">
+  <table class="table">
+    <thead class="thead-light">
+      <tr>
+        <th scope="col">Name</th>
+        <th scope="col">Image</th>
+        <th scope="col">URL</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if has_git %}
+      <tr>
+        <th scope="row">Git Commits</th>
+        <td><img class="img-fluid" src="{% url 'request_project_export_svg' project.id 'git_commits' %}"/></td>
+        <td>
+          <div class="input-group">
+            <input id="input-git_commits" type="text" class="form-control" value="https://{{request.get_host}}{% url 'request_project_export_svg' project.id 'git_commits' %}" readonly>
+            <div class="input-group-append">
+              <button class="btn btn-outline-dark rounded-right copy-clipboard" data-copy-input="input-git_commits" type="button" data-toggle="tooltip" data-title="Copied to clipboard!" data-trigger="manual" data-placement="bottom"><i class="far fa-copy"></i></button>
+            </div>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <th scope="row">Git Contributors</th>
+        <td><img class="img-fluid" src="{% url 'request_project_export_svg' project.id 'git_contributors' %}"/></td>
+        <td>
+          <div class="input-group">
+            <input id="input-git_contributors" type="text" class="form-control" value="https://{{request.get_host}}{% url 'request_project_export_svg' project.id 'git_contributors' %}" readonly>
+            <div class="input-group-append">
+              <button class="btn btn-outline-dark rounded-right copy-clipboard" data-copy-input="input-git_contributors" type="button" data-toggle="tooltip" data-title="Copied to clipboard!" data-trigger="manual" data-placement="bottom"><i class="far fa-copy"></i></button>
+            </div>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <th scope="row">Git Commits/Line</th>
+        <td><img class="img-fluid" src="{% url 'request_project_export_svg' project.id 'git_lines_commits' %}"/></td>
+        <td>
+          <div class="input-group">
+            <input id="input-git_lines_commits" type="text" class="form-control" value="https://{{request.get_host}}{% url 'request_project_export_svg' project.id 'git_lines_commits' %}" readonly>
+            <div class="input-group-append">
+              <button class="btn btn-outline-dark rounded-right copy-clipboard" data-copy-input="input-git_lines_commits" type="button" data-toggle="tooltip" data-title="Copied to clipboard!" data-trigger="manual" data-placement="bottom"><i class="far fa-copy"></i></button>
+            </div>
+          </div>
+        </td>
+      </tr>
+      {% endif %}
+      {% if has_github or has_gitlab %}
+      <tr>
+        <th scope="row">Issues created</th>
+        <td><img class="img-fluid" src="{% url 'request_project_export_svg' project.id 'issues_created' %}"/></td>
+        <td>
+          <div class="input-group">
+            <input id="input-issues_created" type="text" class="form-control" value="https://{{request.get_host}}{% url 'request_project_export_svg' project.id 'issues_created' %}" readonly>
+            <div class="input-group-append">
+              <button class="btn btn-outline-dark rounded-right copy-clipboard" data-copy-input="input-issues_created" type="button" data-toggle="tooltip" data-title="Copied to clipboard!" data-trigger="manual" data-placement="bottom"><i class="far fa-copy"></i></button>
+            </div>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <th scope="row">Issues closed</th>
+        <td><img class="img-fluid" src="{% url 'request_project_export_svg' project.id 'issues_closed' %}"/></td>
+        <td>
+          <div class="input-group">
+            <input id="input-issues_closed" type="text" class="form-control" value="https://{{request.get_host}}{% url 'request_project_export_svg' project.id 'issues_closed' %}" readonly>
+            <div class="input-group-append">
+              <button class="btn btn-outline-dark rounded-right copy-clipboard" data-copy-input="input-issues_closed" type="button" data-toggle="tooltip" data-title="Copied to clipboard!" data-trigger="manual" data-placement="bottom"><i class="far fa-copy"></i></button>
+            </div>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <th scope="row">Issue authors</th>
+        <td><img class="img-fluid" src="{% url 'request_project_export_svg' project.id 'issues_authors' %}"/></td>
+        <td>
+          <div class="input-group">
+            <input id="input-issues_authors" type="text" class="form-control" value="https://{{request.get_host}}{% url 'request_project_export_svg' project.id 'issues_authors' %}" readonly>
+            <div class="input-group-append">
+              <button class="btn btn-outline-dark rounded-right copy-clipboard" data-copy-input="input-issues_authors" type="button" data-toggle="tooltip" data-title="Copied to clipboard!" data-trigger="manual" data-placement="bottom"><i class="far fa-copy"></i></button>
+            </div>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <th scope="row">Issues Time to close</th>
+        <td><img class="img-fluid" src="{% url 'request_project_export_svg' project.id 'issues_time_to_close' %}"/></td>
+        <td>
+          <div class="input-group">
+            <input id="input-issues_time_to_close" type="text" class="form-control" value="https://{{request.get_host}}{% url 'request_project_export_svg' project.id 'issues_time_to_close' %}" readonly>
+            <div class="input-group-append">
+              <button class="btn btn-outline-dark rounded-right copy-clipboard" data-copy-input="input-issues_time_to_close" type="button" data-toggle="tooltip" data-title="Copied to clipboard!" data-trigger="manual" data-placement="bottom"><i class="far fa-copy"></i></button>
+            </div>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <th scope="row">Reviews created</th>
+        <td><img class="img-fluid" src="{% url 'request_project_export_svg' project.id 'reviews_created' %}"/></td>
+        <td>
+          <div class="input-group">
+            <input id="input-reviews_created" type="text" class="form-control" value="https://{{request.get_host}}{% url 'request_project_export_svg' project.id 'reviews_created' %}" readonly>
+            <div class="input-group-append">
+              <button class="btn btn-outline-dark rounded-right copy-clipboard" data-copy-input="input-reviews_created" type="button" data-toggle="tooltip" data-title="Copied to clipboard!" data-trigger="manual" data-placement="bottom"><i class="far fa-copy"></i></button>
+            </div>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <th scope="row">Reviews closed</th>
+        <td><img class="img-fluid" src="{% url 'request_project_export_svg' project.id 'reviews_closed' %}"/></td>
+        <td>
+          <div class="input-group">
+            <input id="input-reviews_closed" type="text" class="form-control" value="https://{{request.get_host}}{% url 'request_project_export_svg' project.id 'reviews_closed' %}" readonly>
+            <div class="input-group-append">
+              <button class="btn btn-outline-dark rounded-right copy-clipboard" data-copy-input="input-reviews_closed" type="button" data-toggle="tooltip" data-title="Copied to clipboard!" data-trigger="manual" data-placement="bottom"><i class="far fa-copy"></i></button>
+            </div>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <th scope="row">Reviews authors</th>
+        <td><img class="img-fluid" src="{% url 'request_project_export_svg' project.id 'reviews_authors' %}"/></td>
+        <td>
+          <div class="input-group">
+            <input id="input-reviews_authors" type="text" class="form-control" value="https://{{request.get_host}}{% url 'request_project_export_svg' project.id 'reviews_authors' %}" readonly>
+            <div class="input-group-append">
+              <button class="btn btn-outline-dark rounded-right copy-clipboard" data-copy-input="input-reviews_authors" type="button" data-toggle="tooltip" data-title="Copied to clipboard!" data-trigger="manual" data-placement="bottom"><i class="far fa-copy"></i></button>
+            </div>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <th scope="row">Reviews Time to close</th>
+        <td><img class="img-fluid" src="{% url 'request_project_export_svg' project.id 'reviews_time_to_close' %}"/></td>
+        <td>
+          <div class="input-group">
+            <input id="input-reviews_time_to_close" type="text" class="form-control" value="https://{{request.get_host}}{% url 'request_project_export_svg' project.id 'reviews_time_to_close' %}" readonly>
+            <div class="input-group-append">
+              <button class="btn btn-outline-dark rounded-right copy-clipboard" data-copy-input="input-reviews_time_to_close" type="button" data-toggle="tooltip" data-title="Copied to clipboard!" data-trigger="manual" data-placement="bottom"><i class="far fa-copy"></i></button>
+            </div>
+          </div>
+        </td>
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+
+</div>

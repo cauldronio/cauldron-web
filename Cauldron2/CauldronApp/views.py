@@ -1388,6 +1388,57 @@ def request_project_git_contributors_svg(request, project_id):
     return render(request, 'cauldronapp/svg/git_contributors.svg', context=context, content_type='image/svg+xml')
 
 
+def request_project_export_svg(request, project_id, metric_name):
+    try:
+        project = Project.objects.get(pk=project_id)
+    except Project.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'report not found'}, status=404)
+
+    # key: name, function, length. Length from https://img.shields.io/badge/Issue%20authors-50-brightgreen + 5
+    metrics_map = {
+        'git_commits': ('Commits', metrics.activity_commits.git_commits, 52),
+        'git_contributors': ('Contributors', metrics.community_commits.authors_active, 72),
+        'git_lines_commits': ('Commits/Line', metrics.activity_commits.git_lines_commit, 81),
+        'issues_created': ('Issues created', metrics.activity_issues.issues_opened, 86),
+        'issues_closed': ('Issues closed', metrics.activity_issues.issues_closed, 78),
+        'issues_authors': ('Issue authors', metrics.community_issues.active_submitters, 80),
+        'issues_time_to_close': ('Issues Time to close', metrics.performance_issues.median_time_to_close, 118),
+        'reviews_created': ('Reviews created', metrics.activity_reviews.reviews_opened, 96),
+        'reviews_closed': ('Reviews closed', metrics.activity_reviews.reviews_closed, 88),
+        'reviews_authors': ('Reviews authors', metrics.community_reviews.active_submitters, 96),
+        'reviews_time_to_close': ('Reviews Time to close', metrics.performance_reviews.median_time_to_close, 128)
+    }
+
+    metric = metrics_map.get(metric_name)
+    if not metric:
+        return JsonResponse({'status': 'error', 'message': 'metric not found'}, status=404)
+
+    epoch = datetime.datetime.fromtimestamp(0)
+    now = datetime.datetime.now()
+    elastic = metrics.get_elastic_project(project)
+
+    text1 = metric[0]
+    text2 = round(metric[1](elastic=elastic, urls=None, from_date=epoch, to_date=now), 2)
+
+    text1w = metric[2]
+    text2w = len(str(text2)) * 7
+    box2x = 16 + text1w
+    text2x = box2x + 4
+    width = text2x + text2w + 4
+    context = {
+        'text1': text1,
+        'text2': text2,
+        'size': {
+            'width': width,
+            'box2x': box2x,
+            'text2x': text2x,
+            'box2w': width - text2x + 4
+        }
+    }
+
+    return render(request, 'cauldronapp/svg/common_badge.svg', context=context, content_type='image/svg+xml')
+
+
 def request_project_export_create(request, project_id):
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'Only POST methods allowed'}, status=405)

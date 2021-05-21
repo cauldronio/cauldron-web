@@ -20,9 +20,10 @@ def median_time_to_close(elastic, urls, from_date, to_date):
     """Gives the median time to close for closed issues in a period"""
     s = Search(using=elastic, index='all') \
         .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
-        .query(Q('terms', origin=urls)) \
         .filter('range', closed_at={'gte': from_date, "lte": to_date}) \
         .extra(size=0)
+    if urls:
+        s = s.query(Q('terms', origin=urls))
     s.aggs.bucket('ttc_percentiles', 'percentiles', field='time_to_close_days', percents=[50])
 
     try:
