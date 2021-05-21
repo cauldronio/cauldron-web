@@ -2,6 +2,8 @@
 {% load static %}
 
 {% block css%}
+<!-- Custom styles for pricing -->
+<link rel="stylesheet" href="{% static 'css/pricing.css' %}">
 {% endblock %}
 
 
@@ -151,4 +153,9 @@
       </div>
     </div>
   </section>
+  {% if pricing_enabled %}
+  <section class="pricing">
+    {% include "cauldronapp/utils/pricing_cards.html" %}
+  </section>
+  {% endif %}
 {% endblock %}

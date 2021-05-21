@@ -82,6 +82,7 @@ urlpatterns = [
     path('terms/', views.terms, name="terms"),
     path('privacy/', views.privacy, name="privacy"),
     path('cookies/', views.cookies, name="cookies"),
+    path('pricing/', views.pricing, name="pricing"),
 
     path('profile/', include('profile.urls')),
 

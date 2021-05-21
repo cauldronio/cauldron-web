@@ -1694,6 +1694,9 @@ def create_context(request):
     if settings.GOOGLE_ANALYTICS_ID:
         context['google_analytics_id'] = settings.GOOGLE_ANALYTICS_ID
 
+    # Other
+    context['pricing_enabled'] = settings.PRICING_ENABLED
+
     # Data sources enabled (git excluded)
     context['data_sources_enabled'] = {
         'github': bool(settings.GH_CLIENT_ID),
@@ -1951,6 +1954,20 @@ def cookies(request):
     """
     context = create_context(request)
     return render(request, 'cauldronapp/cookies.html', context=context)
+
+
+def pricing(request):
+    """
+    View to show the Pricing of Cauldron
+    :param request:
+    :return:
+    """
+    context = create_context(request)
+
+    if not settings.PRICING_ENABLED:
+        return custom_404(request, "The URL requested was not found in this server")
+
+    return render(request, 'cauldronapp/pricing.html', context=context)
 
 
 def custom_403(request, message=None):

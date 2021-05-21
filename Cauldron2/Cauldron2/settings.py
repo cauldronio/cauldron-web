@@ -77,6 +77,7 @@ PLAUSIBLE_ANALYTICS_URL = os.environ.get('PLAUSIBLE_ANALYTICS_URL')
 
 # Other
 GOOGLE_ANALYTICS_ID = os.environ.get('GOOGLE_ANALYTICS_ID')
+PRICING_ENABLED = os.environ.get('PRICING_ENABLED', False) in (True, 'True')
 
 CAULDRON_ADMINS = {
     'GITHUB': json.loads(os.environ.get('GITHUB_ADMINS', '[]')),

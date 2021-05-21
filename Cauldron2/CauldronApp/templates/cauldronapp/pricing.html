@@ -1,0 +1,14 @@
+{% extends "cauldronapp/base.html" %}
+{% load static %}
+
+{% block css%}
+<!-- Custom styles for pricing -->
+<link rel="stylesheet" href="{% static 'css/pricing.css' %}">
+{% endblock %}
+
+{% block content %}
+{% include "cauldronapp/utils/pricing_cards.html" %}
+{% endblock %}
+
+{% block javascript %}
+{% endblock %}
