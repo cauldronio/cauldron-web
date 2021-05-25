@@ -256,5 +256,24 @@
       {% endif %}
     </tbody>
   </table>
+  {% if has_git or has_github or has_gitlab %}
+  <h3>Detailed badges</h3>
+  <div class="col-md-4">
+    <div class="card">
+      <img class="card-img-top" src="{% url 'project_stats_svg' project.id %}"/>
+
+      <div class="card-body">
+        <h5 class="card-title">Activity and community for repositories</h5>
+        <div class="input-group">
+          <input id="input-general_stats" type="text" class="form-control" value="https://{{request.get_host}}{% url 'project_stats_svg' project.id %}" readonly>
+          <div class="input-group-append">
+            <button class="btn btn-outline-dark rounded-right copy-clipboard" data-copy-input="input-general_stats" type="button" data-toggle="tooltip" data-title="Copied to clipboard!" data-trigger="manual" data-placement="bottom"><i class="far fa-copy"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
 
 </div>

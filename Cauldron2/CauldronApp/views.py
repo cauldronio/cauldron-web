@@ -11,7 +11,7 @@ from django.http import HttpResponseRedirect, JsonResponse
 from django.contrib.auth import login, logout, get_user_model
 from django.urls import reverse
 from django.db import transaction
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_http_methods, last_modified
 from django.conf import settings
 
 from CauldronApp import kibana_objects, utils, datasources
@@ -1354,6 +1354,17 @@ def request_project_export_status(request, project_id):
     return JsonResponse(summary)
 
 
+def report_last_modified(request, project_id, *args, **kwargs):
+    try:
+        project = Project.objects.get(pk=project_id)
+        repo = project.repository_set.latest('last_refresh')
+        if repo:
+            return repo.last_refresh
+    except Project.DoesNotExist:
+        return None
+
+
+@last_modified(report_last_modified)
 def request_project_stats_svg(request, project_id):
     try:
         project = Project.objects.get(pk=project_id)
@@ -1368,6 +1379,7 @@ def request_project_stats_svg(request, project_id):
     return render(request, 'cauldronapp/svg/report_stats.svg', context=context, content_type='image/svg+xml')
 
 
+@last_modified(report_last_modified)
 def request_project_git_contributors_svg(request, project_id):
     try:
         project = Project.objects.get(pk=project_id)
@@ -1388,6 +1400,7 @@ def request_project_git_contributors_svg(request, project_id):
     return render(request, 'cauldronapp/svg/git_contributors.svg', context=context, content_type='image/svg+xml')
 
 
+@last_modified(report_last_modified)
 def request_project_export_svg(request, project_id, metric_name):
     try:
         project = Project.objects.get(pk=project_id)
