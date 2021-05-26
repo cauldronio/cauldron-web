@@ -84,14 +84,10 @@
                     <tr>
                         <td>
                             {% if user.user != request.user %}
-                            <form action="{% url 'delete_user' %}" method="post" id="delete_user">
-                                {{user.user.first_name}}
-                                {% csrf_token %}
-                                <input type="hidden" name="user_pk" value="{{user.user.pk}}">
-                                <button type="button" class="btn btn-xs" data-toggle="modal" data-target="#confirm-delete-user">
-                                    <i class="fas fa-trash-alt text-danger" data-toggle="tooltip" title="Delete this user"></i>
-                                </button>
-                            </form>
+                            {{user.user.first_name}}
+                            <button type="button" class="btn btn-xs" data-toggle="modal" data-target="#deleteUserModal" data-user-id="{{user.user.pk}}">
+                                <i class="fas fa-trash-alt text-danger" data-toggle="tooltip" title="Delete this user"></i>
+                            </button>
                             {% else %}
                             {{user.user.first_name}} <b>(it's you!)</b>
                             {% endif %}
@@ -290,7 +286,7 @@
         <!-- ADMIN SECTION END -->
 
         <!-- USER DELETE MODAL BEGIN -->
-        <div class="modal fade" id="confirm-delete-user" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal fade" id="deleteUserModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -301,8 +297,12 @@
                     </div>
 
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                        <a href="#" id="submit" class="btn btn-danger danger">Delete</a>
+                        <form action="{% url 'delete_user' %}" method="post" id="deleteUserForm">
+                            {% csrf_token %}
+                            <input type="hidden" id="deleteUserForm-UserID" name="user_pk" value="">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-danger danger">Delete</button>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -372,9 +372,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.25.3/moment.min.js" integrity="sha256-C66CaAImteEKZPYvgng9j10J/45e9sAuZyfPYCwp4gE=" crossorigin="anonymous"></script>
 <script>
 $(document).ready(function() {
-  $('#submit').click(function(){
-    $('#delete_user').submit();
-  });
+  $('#deleteUserModal').on('show.bs.modal', function (event) {
+    var button = $(event.relatedTarget)
+    var userID = button.data('user-id')
+    $('#deleteUserForm-UserID').val(userID)
+  })
 });
 </script>
 <script>
