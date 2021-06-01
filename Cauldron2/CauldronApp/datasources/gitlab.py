@@ -10,7 +10,7 @@ from cauldron_apps.cauldron_actions.models import AddGitLabOwnerAction, AddGitLa
 
 def parse_input_data(data, domain):
     """Return a tuple (owner, repository). Return None in owner or repository in the case was not found"""
-    domain_escaped = re.escape(domain)
+    domain_escaped = re.escape(domain[8:])
     gl_user_regex = '([a-zA-Z0-9_\.][a-zA-Z0-9_\-\.]{1,200}[a-zA-Z0-9_\-]|[a-zA-Z0-9_])'
     gl_repo_regex = '((?:[a-zA-Z0-9_\.][a-zA-Z0-9_\-\.]*(?:\/)?)+)'
     data = data.strip()
@@ -18,13 +18,16 @@ def parse_input_data(data, domain):
     re_user = re.match('^{}$'.format(gl_user_regex), data)
     if re_user:
         return re_user.groups()[0], None
-    re_url_user = re.match(f'^{domain_escaped}\/{gl_user_regex}\/?$', data)
+
+    re_url_user = re.match(f'^(?:https?:\/\/)?{domain_escaped}\/{gl_user_regex}\/?$', data)
     if re_url_user:
         return re_url_user.groups()[0], None
-    re_url_repo = re.match(f'^{domain_escaped}\/{gl_user_regex}\/{gl_repo_regex}(?:.git)?$', data)
+
+    re_url_repo = re.match(f'^(?:https?:\/\/)?{domain_escaped}\/{gl_user_regex}\/{gl_repo_regex}(?:.git)?$', data)
     if re_url_repo:
         return re_url_repo.groups()[0], re_url_repo.groups()[1]
-    re_user_repo = re.match(f'{gl_user_regex}/{gl_repo_regex}$', data)
+
+    re_user_repo = re.match(f'{gl_user_regex}\/{gl_repo_regex}$', data)
     if re_user_repo:
         return re_user_repo.groups()[0], re_user_repo.groups()[1]
 

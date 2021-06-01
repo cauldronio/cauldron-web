@@ -1,0 +1,34 @@
+<div class="card">
+  <div class="card-body">
+    <h5 class="card-title">Repository list</h5>
+    <div class="card-body">
+      {% if github_enabled or gitlab_enabled %}
+      <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="add">
+        <input type="hidden" name="backend" value="repo_list">
+        <div class="form-group">
+          <label for="list_data">
+            Type your <span class="font-weight-bold">Git</span>,
+            <span class="font-weight-bold">GitHub</span> or
+            <span class="font-weight-bold">GitLab</span> repositories...
+          </label>
+          <textarea id="list_data" name="list_data" class="form-control" rows="8" placeholder="https://gitlab.com/cauldronio/cauldron&#10;gitlab.com/cauldronio/cauldron&#10;https://gitlab.com/cauldronio&#10;gitlab.com/cauldronio"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="repo_file">
+            ...or <span class="font-weight-bold">upload a file</span> with the same format.
+          </label>
+          <input type="file" name="repo_file" class="form-control-file" id="repo_file">
+        </div>
+        <button class="btn btn-primary" type="submit">Add</button>
+      </form>
+      {% else %}
+      <div class="container">
+        <p>In order to use this feature you need to be able to analyze GitHub or GitLab projects, at least. Please, try to create a report in Cauldron with any of these backends and try again.</p>
+        <p>For details, see our <a href="{% url 'terms' %}">Terms of service</a> and <a href="{% url 'privacy' %}">privacy</a> document.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>

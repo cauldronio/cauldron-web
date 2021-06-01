@@ -1000,6 +1000,99 @@ def create_project_add(request):
                                         'data': f'{site}: {tags}', 'attrs': {'questions': True}, 'params': {'site': site, 'tags': tags}})
         request.session['new_project'] = data_project
 
+    elif backend == 'repo_list':
+        data = []
+
+        list_data = request.POST.get('list_data')
+        if list_data:
+            data.extend(list_data.splitlines())
+
+        repo_file = request.FILES.get('repo_file')
+        file_data = None
+        if repo_file:
+            for chunk in repo_file.chunks():
+                data.extend(chunk.splitlines())
+
+        if not data:
+            return {'status': 'error', 'message': 'No data entered to add'}
+
+        error = False
+        gitlab_instance = GLInstance.objects.get(slug='gitlab')
+
+        for repo_url in data:
+            if isinstance(repo_url, bytes):
+                repo_url = repo_url.decode()
+
+            if datasources.github.parse_input_data(repo_url) != (None, None):
+                if not request.user.is_authenticated or not request.user.ghtokens.filter(instance='GitHub').exists():
+                    error = True
+                    continue
+
+                commits = True
+                issues = True
+                forks = False
+                data_owner, data_repo = datasources.github.parse_input_data(repo_url)
+                if data_owner and data_repo:
+                    data_store = f'{data_owner}/{data_repo}'
+                    attrs_store = {'Commits': commits, 'Issues/PRs': issues}
+                elif data_owner:
+                    data_store = data_owner
+                    attrs_store = {'Commits': commits, 'Issues/PRs': issues, 'Forks': forks}
+                else:
+                    error = True
+                    continue
+
+                data_project = request.session.get('new_project')
+                if data_project is None:
+                    data_project = {}
+                if 'actions' not in data_project:
+                    data_project['actions'] = []
+                data_project['actions'].append({'id': random_id(5), 'backend': 'github',
+                                                'data': data_store, 'attrs': attrs_store})
+                request.session['new_project'] = data_project
+
+            elif datasources.gitlab.parse_input_data(repo_url, gitlab_instance.endpoint) != (None, None):
+                if not request.user.is_authenticated or not request.user.gltokens.filter(instance__slug='gitlab').exists():
+                    error = True
+                    continue
+
+                commits = True
+                issues = True
+                forks = False
+                data_owner, data_repo = datasources.gitlab.parse_input_data(repo_url, gitlab_instance.endpoint)
+                if data_owner and data_repo:
+                    data_store = f'{data_owner}/{data_repo}'
+                    attrs_store = {'Commits': commits, 'Issues/MRs': issues}
+                elif data_owner:
+                    data_store = data_owner
+                    attrs_store = {'Commits': commits, 'Issues/MRs': issues, 'Forks': forks}
+                else:
+                    error = True
+                    continue
+
+                data_project = request.session.get('new_project')
+                if data_project is None:
+                    data_project = {}
+                if 'actions' not in data_project:
+                    data_project['actions'] = []
+                data_project['actions'].append({'id': random_id(5), 'backend': 'gitlab', 'instance': 'gitlab',
+                                                'data': data_store, 'attrs': attrs_store})
+                request.session['new_project'] = data_project
+
+            else:
+                repo_url = repo_url.strip()
+
+                data_project = request.session.get('new_project')
+                if data_project is None:
+                    data_project = {}
+                if 'actions' not in data_project:
+                    data_project['actions'] = []
+                data_project['actions'].append({'id': random_id(5), 'backend': 'git', 'data': repo_url, 'attrs': {'Commits': True}})
+                request.session['new_project'] = data_project
+
+        if error:
+            return {'status': 'error', 'message': 'Some entries have errors.'}
+
     else:
         return {'error': 'No backend specified'}
 

@@ -52,6 +52,7 @@
       {% if data_sources_enabled.stack_exchange %}
         <a id="link-tab-stack" class="btn btn-stackexchange" href="#tab-stack"><i class="fab fa-stack-exchange"></i> Stack Exchange</a>
       {% endif %}
+      <a id="link-tab-repo-list" class="btn btn-secondary" href="#tab-repo-list"><i class="far fa-file"></i> Repository list</a>
   </div>
 
   <div class="mt-2 tab-content">
@@ -88,6 +89,9 @@
       {% include "cauldronapp/create_project/datasource_card/stackexchange.html" %}
       </div>
     {% endif %}
+    <div class="tab-pane" id="tab-repo-list" role="tabpanel">
+    {% include "cauldronapp/create_project/datasource_card/repo_list.html" %}
+    </div>
   </div>
 
   <div class="mt-4">

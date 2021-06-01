@@ -16,13 +16,16 @@ def parse_input_data(data):
     re_owner = re.match(f'^{owner_regex}$', data)
     if re_owner:
         return re_owner.groups()[0], None
-    re_url_owner = re.match(f'^https?://github\.com/{owner_regex}/?$', data)
+
+    re_url_owner = re.match(f'^(?:https?:\/\/)?github\.com\/{owner_regex}\/?$', data)
     if re_url_owner:
         return re_url_owner.groups()[0], None
-    re_url_repo = re.match(f'^https?://github\.com/{owner_regex}/{repo_regex}(?:.git)?$', data)
+
+    re_url_repo = re.match(f'^(?:https?:\/\/)?github\.com\/{owner_regex}\/{repo_regex}(?:.git)?$', data)
     if re_url_repo:
         return re_url_repo.groups()[0], re_url_repo.groups()[1]
-    re_owner_repo = re.match(f'^{owner_regex}/{repo_regex}$', data)
+
+    re_owner_repo = re.match(f'^{owner_regex}\/{repo_regex}$', data)
     if re_owner_repo:
         return re_owner_repo.groups()[0], re_owner_repo.groups()[1]
 

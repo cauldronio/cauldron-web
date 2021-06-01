@@ -1,0 +1,38 @@
+<div class="modal fade" id="add-repo-list-modal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Add a data source (2/2)</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="container-fluid">
+          <form action="" method="post" enctype="multipart/form-data" id="repo_list_add">
+            {% csrf_token %}
+            <div class="card-body">
+              <input type="hidden" name="add">
+              <input type="hidden" name="backend" value="repo_list">
+              <div class="form-group">
+                <label for="list_data">
+                  Type your <span class="font-weight-bold">Git</span>,
+                  <span class="font-weight-bold">GitHub</span> or
+                  <span class="font-weight-bold">GitLab</span> repositories...
+                </label>
+                <textarea id="list_data" name="list_data" class="form-control" rows="8" placeholder="https://gitlab.com/cauldronio/cauldron&#10;gitlab.com/cauldronio/cauldron&#10;https://gitlab.com/cauldronio&#10;gitlab.com/cauldronio"></textarea>
+              </div>
+              <div class="form-group">
+                <label for="repo_file">
+                  ...or <span class="font-weight-bold">upload a file</span> with the same format.
+                </label>
+                <input type="file" name="repo_file" class="form-control-file" id="repo_file">
+              </div>
+              <button class="btn btn-primary" type="submit">Add</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
