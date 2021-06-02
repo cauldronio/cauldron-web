@@ -22,7 +22,7 @@
 <p class="mb-4">Check the list of data sources repositories being tracked to collect data for this report. The data sources section allow you to remove or refresh data from repositories, and to check logs of the processes performed to gather the data.</p>
 
 <div class="d-flex justify-content-end mb-1">
-  {% if editable %}
+  {% if authenticated %}
   <div class="ml-3">
     <button type="button" class="btn btn-icon-split btn-outline-success btn-reanalyze-all">
       <span class="icon reanalyze-all-spinner-dynamic" style="display: none;">
@@ -36,7 +36,8 @@
       <span class="text">Refresh all data sources</span>
     </button>
   </div>
-
+  {% endif %}
+  {% if editable %}
   <div class="ml-3">
     <button type="button" class="btn btn-icon-split btn-outline-danger btn-delete-repo" data-repo="all">
       <span class="icon"><i class="fa fa-trash-alt"></i></span>

@@ -689,12 +689,7 @@ def request_add_to_project(request, project_id):
         analyze_commits = 'commits' in request.POST
         analyze_issues = 'issues' in request.POST
         forks = 'forks' in request.POST
-        if not project.creator.ghtokens.filter(instance='GitHub').exists():
-            if request.user != project.creator:
-                return JsonResponse({'status': 'error',
-                                     'message': 'Report owner needs a GitHub token '
-                                                'to analyze this kind of repositories'},
-                                    status=401)
+        if not request.user.ghtokens.filter(instance='GitHub').exists():
             request.session['add_repo'] = {'data': data,
                                            'backend': backend,
                                            'proj_id': project.id,
@@ -715,12 +710,7 @@ def request_add_to_project(request, project_id):
         data = request.POST.get('data', None)
         if not data:
             return JsonResponse({'status': 'error', 'message': 'Group to analyze missing'}, status=400)
-        if not project.creator.meetuptokens.exists():
-            if request.user != project.creator:
-                return JsonResponse({'status': 'error',
-                                     'message': 'Project owner needs a Meetup token to'
-                                                ' analyze this kind of repositories'},
-                                    status=401)
+        if not request.user.meetuptokens.exists():
             request.session['add_repo'] = {'data': data, 'backend': backend, 'proj_id': project.id}
             request.session['last_page'] = reverse('show_project', kwargs={'project_id': project.id})
             return JsonResponse({'status': 'error',
@@ -759,12 +749,7 @@ def request_add_to_project(request, project_id):
         analyze_issues = 'issues' in request.POST
         forks = 'forks' in request.POST
         instance = GLInstance.objects.get(slug=backend)
-        if not project.creator.gltokens.filter(instance__slug=backend).exists():
-            if request.user != project.creator:
-                return JsonResponse({'status': 'error',
-                                     'message': f'Report owner needs a {instance.name} token to '
-                                                'analyze this kind of repositories'},
-                                    status=401)
+        if not request.user.gltokens.filter(instance__slug=backend).exists():
             request.session['add_repo'] = {'data': data,
                                            'backend': backend,
                                            'proj_id': project.id,
@@ -1125,7 +1110,7 @@ def request_new_project(request):
 
     if twitter_notification:
         try:
-            ITwitterNotify.objects.create(user=project.creator,
+            ITwitterNotify.objects.create(user=request.user,
                                           project=project,
                                           report_url=request.build_absolute_uri(reverse('show_project', kwargs={'project_id': project.id})))
         except:
@@ -1157,6 +1142,39 @@ def request_project_fork(request, project_id):
         return HttpResponseRedirect(reverse('show_project', kwargs={'project_id': new_project.id}))
 
 
+def check_missing_tokens(request, user, backends, last_page):
+    if 'GH' in backends and not user.ghtokens.exists():
+        request.session['last_page'] = last_page
+        return JsonResponse({'status': 'error',
+                             'message': generate_request_token_message('GitHub'),
+                             'redirect': reverse('github_oauth')}, status=401)
+    if 'GL' in backends and not request.user.gltokens.filter(instance='gitlab').exists():
+        request.session['last_page'] = last_page
+        return JsonResponse({'status': 'error',
+                             'message': generate_request_token_message('GitLab'),
+                             'redirect': reverse('gitlab_oauth', kwargs={'backend': 'gitlab'})}, status=401)
+    if 'GN' in backends and not request.user.gltokens.filter(instance='gnome').exists():
+        request.session['last_page'] = last_page
+        return JsonResponse({'status': 'error',
+                             'message': generate_request_token_message('GNOME'),
+                             'redirect': reverse('gitlab_oauth', kwargs={'backend': 'gnome'})}, status=401)
+    if 'KD' in backends and not request.user.gltokens.filter(instance='kde').exists():
+        request.session['last_page'] = last_page
+        return JsonResponse({'status': 'error',
+                             'message': generate_request_token_message('KDE'),
+                             'redirect': reverse('gitlab_oauth', kwargs={'backend': 'kde'})}, status=401)
+    if 'MU' in backends and not request.user.meetuptokens.exists():
+        request.session['last_page'] = last_page
+        return JsonResponse({'status': 'error',
+                             'message': generate_request_token_message('Meetup'),
+                             'redirect': reverse('meetup_oauth')}, status=401)
+    if 'SE' in backends and not request.user.stackexchangetokens.exists():
+        request.session['last_page'] = last_page
+        return JsonResponse({'status': 'error',
+                             'message': generate_request_token_message('StackExchange'),
+                             'redirect': reverse('stack_oauth')}, status=401)
+
+
 def request_refresh_project(request, project_id):
     """Refresh all the project"""
     try:
@@ -1165,14 +1183,18 @@ def request_refresh_project(request, project_id):
         return JsonResponse({'status': 'error', 'message': f"Report {project_id} does not exist"},
                             status=404)
 
-    if not request.user.is_authenticated and request.user != project.creator and not request.user.is_superuser:
-        return JsonResponse({'status': 'error', 'message': f'You cannot edit report {project_id}, '
-                                                           f'you are not the owner'},
-                            status=400)
+    if not request.user.is_authenticated:
+        return JsonResponse({'status': 'error', 'message': f"You are not authenticated."}, status=400)
+
+    backends = project.repository_set.values_list('backend', flat=True).distinct()
+    current_page = reverse('show_project', kwargs={'project_id': project_id})
+    response = check_missing_tokens(request, request.user, backends, current_page)
+    if response:
+        return response
 
     refresh_count = 0
     for repo in project.repository_set.select_subclasses():
-        if repo.refresh(project.creator):
+        if repo.refresh(request.user):
             refresh_count += 1
 
     return JsonResponse({'status': 'reanalyze',

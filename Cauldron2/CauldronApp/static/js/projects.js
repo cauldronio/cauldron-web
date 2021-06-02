@@ -38,7 +38,12 @@ function refreshProjectDatasources(button, project_id) {
     }
   })
   .fail(function (data) {
-    showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', 15000);
+    if (data.responseJSON.hasOwnProperty('redirect')){
+        vr redirect = `<a href="${data.responseJSON['redirect']}" class="btn btn-primary">Go</a>`;
+        showModalAlert('We need a token for refreshing', `<p class="text-justify">${data.responseJSON['message']}</p>`,  redirect);
+    } else {
+        showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
+    }
   })
   .always(function(){
     $(button).html(old_html)

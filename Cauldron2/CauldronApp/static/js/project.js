@@ -77,7 +77,12 @@ function reanalyzeEveryRepo(event){
             }
         })
         .fail(function (data) {
-            showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
+            if (data.responseJSON.hasOwnProperty('redirect')){
+                var redirect = `<a href="${data.responseJSON['redirect']}" class="btn btn-primary">Go</a>`;
+                showModalAlert('We need a token for refreshing', `<p class="text-justify">${data.responseJSON['message']}</p>`,  redirect);
+            } else {
+                showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
+            }
             $('.reanalyze-all-spinner-dynamic').hide();
             $('.reanalyze-all-spinner-static').show();
         })
