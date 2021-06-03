@@ -389,7 +389,7 @@ def report_total_metrics(elastic, categories):
         # Items
         s = Search(index='git') \
             .filter(~Q('match', files=0)) \
-            .extra(size=0)
+            .extra(size=0, track_total_hits=True)
         s.aggs.bucket('commits', 'cardinality', field='hash')
         s.aggs.bucket('authors', 'cardinality', field='author_uuid')
         ms = ms.add(s)
@@ -400,7 +400,7 @@ def report_total_metrics(elastic, categories):
     if 'issues' in categories:
         s = Search(index='all') \
             .filter(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
-            .extra(size=0)
+            .extra(size=0, track_total_hits=True)
         s.aggs.bucket('authors', 'cardinality', field='author_uuid')
         ms = ms.add(s)
         response_keys.append({'name': 'issues',
@@ -410,7 +410,7 @@ def report_total_metrics(elastic, categories):
     if 'reviews' in categories:
         s = Search(index='all') \
             .filter(Q('match', pull_request=True) | Q('match', merge_request=True)) \
-            .extra(size=0)
+            .extra(size=0, track_total_hits=True)
         s.aggs.bucket('authors', 'cardinality', field='author_uuid')
         ms = ms.add(s)
         response_keys.append({'name': 'reviews',
@@ -420,7 +420,7 @@ def report_total_metrics(elastic, categories):
     if 'questions' in categories:
         s = Search(index='stackexchange') \
             .filter(Q('match', is_stackexchange_question='1')) \
-            .extra(size=0)
+            .extra(size=0, track_total_hits=True)
         s.aggs.bucket('authors', 'cardinality', field='author')
         ms = ms.add(s)
         response_keys.append({'name': 'questions',
