@@ -135,12 +135,15 @@
             <i class="fas fa-question-circle"></i>
           </a>
           <div class="dropdown-menu" aria-labelledby="dropdownCommunityMenu">
-            <a class="dropdown-item" href="https://community.cauldron.io/" target="_blank">Get Support</a>
-            <a class="dropdown-item" href="https://gitlab.com/cauldronio/cauldron/issues/new" target="_blank">Report an Issue</a>
-            <a class="dropdown-item" href="https://mailchi.mp/003f1e1f6242/cauldron-newsletter" target="_blank">Join the Newsletter</a>
             {% if pricing_enabled %}
             <a class="dropdown-item" href="{% url 'pricing' %}" target="_blank">Pricing</a>
+            <div class="dropdown-divider"></div>
             {% endif %}
+            <a class="dropdown-item" href="https://community.cauldron.io/" target="_blank">Support forum</a>
+            <a class="dropdown-item" href="https://gitlab.com/cauldronio/cauldron/issues/new" target="_blank">Report an Issue</a>
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item" href="https://mailchi.mp/003f1e1f6242/cauldron-newsletter" target="_blank">Newsletter</a>
+            <div class="dropdown-divider"></div>
             <a class="dropdown-item" href="{% url 'stats' %}" target="_blank">Cauldron Stats</a>
           </div>
         </div>
@@ -153,8 +156,7 @@
           </a>
 
           <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
-            <a class="dropdown-item" href="{% url 'homepage' %}">My reports</a>
-            <a class="dropdown-item" href="{% url 'profile:index' %}">Settings</a>
+            <a class="dropdown-item" href="{% url 'profile:index' %}">Profile settings</a>
             {% if request.user.is_superuser %}
             <div class="dropdown-divider"></div>
             <h6 class="dropdown-header">Administration</h6>
