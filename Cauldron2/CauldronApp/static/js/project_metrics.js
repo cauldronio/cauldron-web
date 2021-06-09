@@ -7,6 +7,8 @@ $(function() {
     var end = getUrlParameter('to_date');
     var urls = getURLParameterList('repo_url');
     var tab = getUrlParameter('tab');
+    var page = getUrlParameter('page');
+    var sort_by = getUrlParameter('sort_by');
     start = (typeof start === 'undefined') ? moment().subtract(1, 'year') : moment(start, "YYYY-MM-DD");
     end = (typeof end === 'undefined') ? moment() : moment(end, "YYYY-MM-DD");
     tab = ((typeof tab === 'undefined') | !categories.includes(tab) ) ? 'overview' : tab;
@@ -299,6 +301,8 @@ $(function() {
         var start_str = start.format('YYYY-MM-DD');
         var end_str = end.format('YYYY-MM-DD');
         var payload = `?from_date=${start_str}&to_date=${end_str}&tab=${tab}`
+        if (page) { payload += `&page=${page}` }
+        if (sort_by) { payload += `&sort_by=${sort_by}` }
         for (var i = 0; i < urls.length; i++) {
           payload += `&repo_url=${urls[i]}`
         }
@@ -343,6 +347,8 @@ $(function() {
         var start_str = start.format('YYYY-MM-DD');
         var end_str = end.format('YYYY-MM-DD');
         var payload = `?from_date=${start_str}&to_date=${end_str}&tab=${tab}`
+        if (page) { payload += `&page=${page}` }
+        if (sort_by) { payload += `&sort_by=${sort_by}` }
         for (var i = 0; i < urls.length; i++) {
           payload += `&repo_url=${urls[i]}`
         }

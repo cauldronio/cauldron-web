@@ -31,7 +31,7 @@ from cauldron_apps.poolsched_export.models.iexport import IExportCSV
 from cauldron_apps.cauldron_actions.models import IRefreshActions
 from cauldron_apps.cauldron.models import IAddGHOwner, IAddGLOwner, Project, OauthUser, AnonymousUser, \
     UserWorkspace, Repository, GitLabRepository, GitRepository, GitHubRepository, MeetupRepository, \
-    StackExchangeRepository, AuthorizedBackendUser, BannerMessage
+    StackExchangeRepository, AuthorizedBackendUser, BannerMessage, RepositoryMetrics
 
 from cauldron_apps.cauldron.opendistro import OpendistroApi
 
@@ -542,6 +542,27 @@ def request_show_project(request, project_id):
         project, context = project_common(request, project_id)
     except Project.DoesNotExist:
         return custom_404(request, "The project requested was not found in this server")
+
+    sort_by = request.GET.get('sort_by', 'id')
+    if sort_by[0] == '-':
+        reverse = True
+        sort_by = sort_by[1:]
+    else:
+        reverse = False
+    if sort_by not in ('name', 'commits', 'issues', 'reviews'):
+        sort_by = 'id'
+
+    page_number = request.GET.get('page')
+
+    repo_metrics = RepositoryMetrics.objects.filter(repository__in=project.repository_set.all())\
+        .distinct()\
+        .order_by(sort_by)
+    if reverse:
+        repo_metrics = repo_metrics.reverse()
+    p = Pages(repo_metrics, 10)
+    page_obj = p.pages.get_page(page_number)
+    context['page_obj'] = page_obj
+    context['pages_to_show'] = p.pages_to_show(page_obj.number)
 
     context['show_project_home'] = True
     context['has_git'] = GitRepository.objects.filter(projects=project).exists()

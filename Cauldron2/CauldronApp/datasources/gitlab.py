@@ -1,9 +1,8 @@
 import re
 
-from CauldronApp.models import GitLabRepository
 from CauldronApp.datasources import git
 from cauldron_apps.poolsched_gitlab.api import analyze_gl_repo_obj
-from cauldron_apps.cauldron.models import IAddGLOwner
+from cauldron_apps.cauldron.models import IAddGLOwner, GitLabRepository, RepositoryMetrics
 from cauldron_apps.poolsched_gitlab.models import GLInstance
 from cauldron_apps.cauldron_actions.models import AddGitLabOwnerAction, AddGitLabRepoAction
 
@@ -34,9 +33,10 @@ def parse_input_data(data, domain):
     return None, None
 
 
-def analyze_gitlab(project, owner, repo, instance):
+def analyze_gitlab(project, owner, repo, instance, result):
     """IMPORTANT: update the repo role after this call"""
-    repo, created = GitLabRepository.objects.get_or_create(owner=owner, repo=repo, instance=instance)
+    repo, created = GitLabRepository.objects.get_or_create(owner=owner, repo=repo, instance=instance,
+                                                           defaults={'results': result})
     if created:
         repo.link_sched_repo()
     repo.projects.add(project)
@@ -67,6 +67,7 @@ def analyze_data(project, data, commits=False, issues=False, forks=False, instan
                                             instance=instance, owner=owner, commits=commits,
                                             issues=issues, forks=forks)
     elif owner and repository:
+        result, _ = RepositoryMetrics.objects.get_or_create(name=f'{instance.name} {owner}/{repository}')
         if issues:
             token = project.creator.gltokens.filter(instance=instance).first()
             if not token:
@@ -74,10 +75,10 @@ def analyze_data(project, data, commits=False, issues=False, forks=False, instan
                         'message': 'Token not found for the creator of the project',
                         'code': 400}
             repo_encoded = '%2F'.join(repository.strip('/').split('/'))
-            analyze_gitlab(project, owner, repo_encoded, instance)
+            analyze_gitlab(project, owner, repo_encoded, instance, result)
         if commits:
             url = f"{instance.endpoint}/{owner}/{repository}.git"
-            git.analyze_git(project, url)
+            git.analyze_git(project, url, result)
         project.update_elastic_role()
     else:
         return {'status': 'error',

@@ -1,9 +1,8 @@
 import re
 
 from cauldron_apps.poolsched_github.api import analyze_gh_repo_obj
-from CauldronApp.models import GitHubRepository
 from CauldronApp.datasources import git
-from cauldron_apps.cauldron.models import IAddGHOwner
+from cauldron_apps.cauldron.models import IAddGHOwner, GitHubRepository, RepositoryMetrics
 from cauldron_apps.cauldron_actions.models import AddGitHubRepoAction, AddGitHubOwnerAction
 
 
@@ -32,9 +31,9 @@ def parse_input_data(data):
     return None, None
 
 
-def analyze_github(project, owner, repo):
+def analyze_github(project, owner, repo, result):
     """IMPORTANT: update the repo role after this call"""
-    repo, created = GitHubRepository.objects.get_or_create(owner=owner, repo=repo)
+    repo, created = GitHubRepository.objects.get_or_create(owner=owner, repo=repo, defaults={'results': result})
     if not repo.repo_sched:
         repo.link_sched_repo()
     repo.projects.add(project)
@@ -61,16 +60,17 @@ def analyze_data(project, data, commits=False, issues=False, forks=False):
         AddGitHubOwnerAction.objects.create(creator=project.creator, project=project,
                                             owner=owner, commits=commits, issues=issues, forks=forks)
     elif owner and repository:
+        result, _ = RepositoryMetrics.objects.get_or_create(name=f'GitHub {owner}/{repository}')
         if issues:
             token = project.creator.ghtokens.first()
             if not token:
                 return {'status': 'error',
                         'message': 'Token not found for the creator of the project',
                         'code': 400}
-            analyze_github(project, owner, repository)
+            analyze_github(project, owner, repository, result)
         if commits:
             url = f"https://github.com/{owner}/{repository}.git"
-            git.analyze_git(project, url)
+            git.analyze_git(project, url, result)
         project.update_elastic_role()
     else:
         return {'status': 'error',
