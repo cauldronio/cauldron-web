@@ -67,6 +67,7 @@ urlpatterns = [
     path('project/<int:project_id>/stats.svg', views.request_project_stats_svg, name='project_stats_svg'),
     path('project/<int:project_id>/git_contributors.svg', views.request_project_git_contributors_svg, name='project_git_contributors_svg'),
     path('project/<int:project_id>/export/svg/<slug:metric_name>.svg', views.request_project_export_svg, name='request_project_export_svg'),
+    path('project/<int:project_id>/printable-report', views.request_project_kibana_report, name='request_printable_report'),
 
     path('repository/<int:repo_id>/refresh', views.request_refresh_repository, name='refresh_repository'),
     path('repository/<int:repo_id>/actions', views.request_repo_intentions, name='show_repository_intentions'),

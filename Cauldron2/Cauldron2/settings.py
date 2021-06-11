@@ -100,6 +100,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
     'CauldronApp.apps.CauldronAppConfig',
     'metrics.apps.MetricsConfig',
     'profile.apps.ProfileConfig',

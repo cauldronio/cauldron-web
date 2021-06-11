@@ -1,4 +1,5 @@
 {% load cauldron_tags %}
+{% load humanize %}
 
 
 <h2>Export data</h2>
@@ -103,6 +104,66 @@
     </tbody>
   </table>
 
+</div>
+
+<h2>Printable reports</h2>
+<p>Generate printable reports to share them anywhere. Select the dashboard you want to export and the date range. You can only export public dashboards, if you want to export your own visualizations open your Data Workspace and click on reporting.</p>
+
+<form id="export-printable-report" class="form-inline"action="{% url 'request_printable_report' project.id %}" method="post">
+  {% csrf_token %}
+  <select class="custom-select mr-sm-2" name="dashboard" required>
+    <option value="all" selected>All dashboards</option>
+    {% for dashboard in available_dashboards %}
+    <option value="{{dashboard.id}}">{{dashboard.name}}</option>
+    {% endfor %}
+  </select>
+  <select class="custom-select mr-sm-2" name="format">
+    <option selected value="pdf">PDF</option>
+    <option value="png">PNG</option>
+  </select>
+  <div class="input-group">
+    <input type="text" class="form-control"  id="date-picker-input" name="date-range">
+    <div class="input-group-append mr-sm-2">
+      <button class="btn btn-outline-secondary" type="button" id="date-picker">
+        <i class="fa fa-calendar"></i>&nbsp;
+        <i class="fa fa-caret-down"></i>
+      </button>
+    </div>
+  </div>
+  <button type="submit" class="btn btn-outline-dark">Generate</button>
+</form>
+
+<div class="table-responsive mt-4">
+  <table class="table">
+    <thead class="thead-light">
+      <tr>
+        <th scope="col">Dashboard</th>
+        <th scope="col">Format</th>
+        <th scope="col">Created</th>
+        <th scope="col">From date</th>
+        <th scope="col">To date</th>
+        <th scope="col">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for report in kbn_reports %}
+      <tr id="printable-report-{{report.id}}">
+        <td>{{report.dashboard_name}}</td>
+        <td>{{report.format}}</td>
+        <td>{{report.created | naturaltime}}</td>
+        <td>{{report.from_date | date:"F d, Y"}}</td>
+        <td>{{report.to_date | date:"F d, Y"}}</td>
+        <td class="report-location">
+        {% if report.location %}
+        <a href="/download/{{report.location}}" target="_blank">Download</a>
+        {% else %}
+        -
+        {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </div>
 
 <h2>Export badges</h2>

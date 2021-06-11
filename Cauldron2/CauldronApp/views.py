@@ -1,5 +1,6 @@
 import logging
 import datetime
+import requests
 import random
 from random import choice
 from string import ascii_lowercase, digits
@@ -27,7 +28,7 @@ from cauldron_apps.poolsched_gitlab.models import GLToken, GLInstance, IGLRaw
 from cauldron_apps.poolsched_meetup.models import MeetupToken, IMeetupRaw
 from cauldron_apps.poolsched_stackexchange.models import StackExchangeToken, IStackExchangeRaw
 from cauldron_apps.poolsched_twitter.models import ITwitterNotify
-from cauldron_apps.poolsched_export.models.iexport import IExportCSV
+from cauldron_apps.poolsched_export.models import IExportCSV, IReportKbn, ProjectKibanaReport
 from cauldron_apps.cauldron_actions.models import IRefreshActions
 from cauldron_apps.cauldron.models import IAddGHOwner, IAddGLOwner, Project, OauthUser, AnonymousUser, \
     UserWorkspace, Repository, GitLabRepository, GitRepository, GitHubRepository, MeetupRepository, \
@@ -1464,6 +1465,26 @@ def request_project_metrics(request, project_id):
     return JsonResponse(metrics.get_category_metrics(project, category, urls, from_date, to_date))
 
 
+def get_available_dashboards(project):
+    output = []
+    token = utils.get_jwt_key('Dashboards', project.projectrole.backend_role)
+    with requests.Session() as client:
+        client.get(f"{KIB_IN_URL}/", params={'jwtToken': token})
+        res = client.get(f"{KIB_IN_URL}/api/saved_objects/_find", params={'default_search_operator': 'AND',
+                                                                          'page': 1,
+                                                                          'per_page': 1000,
+                                                                          'type': 'dashboard'})
+        if res.ok:
+            data = res.json()
+            for dashboard in data['saved_objects']:
+                output.append({
+                    'name': dashboard['attributes']['title'],
+                    'id': dashboard['id']
+                })
+
+    return output
+
+
 def request_project_export(request, project_id):
     """View for data sources that can be exported for a report"""
     try:
@@ -1477,7 +1498,13 @@ def request_project_export(request, project_id):
     context['has_meetup'] = MeetupRepository.objects.filter(projects=project).exists()
     context['has_stack'] = StackExchangeRepository.objects.filter(projects=project).exists()
 
+    dashboards = get_available_dashboards(project)
+
+    context['kbn_reports'] = project.kbn_report.order_by('-created')[:8]
+
     context['show_export'] = True
+
+    context['available_dashboards'] = dashboards
 
     return render(request, 'cauldronapp/project/project.html', context=context)
 
@@ -1587,6 +1614,51 @@ def request_project_export_svg(request, project_id, metric_name):
     }
 
     return render(request, 'cauldronapp/svg/common_badge.svg', context=context, content_type='image/svg+xml')
+
+
+def request_project_kibana_report(request, project_id):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Only POST methods allowed'}, status=405)
+    if not request.user.is_authenticated:
+        return JsonResponse({'status': 'error', 'message': 'only allowed for authenticated users'}, status=403)
+    try:
+        project = Project.objects.get(pk=project_id)
+    except Project.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'report not found'}, status=404)
+
+    dashboard_id = request.POST.get('dashboard', 'a834f080-41b1-11ea-a32a-715577273fe3')
+    dashboard_format = request.POST.get('format', 'pdf')
+    date_range = request.POST.get('date-range', '')
+    if dashboard_id == 'all':
+        dashboard_name = 'All dashboards'
+    else:
+        dashboards = get_available_dashboards(project)
+        dashboard_name = dashboard_id
+        for d in dashboards:
+            if d['id'] == dashboard_id:
+                dashboard_name = d['name']
+                break
+    try:
+        fd, td = date_range.split('-')
+        from_date = datetime.datetime.strptime(fd.strip(), '%Y/%m/%d')
+        to_date = datetime.datetime.strptime(td.strip(), '%Y/%m/%d')
+    except:
+        from_date, to_date = None, None
+
+    if not from_date:
+        from_date = datetime.datetime.utcnow() - datetime.timedelta(days=365)
+    if not to_date:
+        to_date = datetime.datetime.utcnow()
+
+    report = ProjectKibanaReport.objects.create(project=project,
+                                                dashboard=dashboard_id,
+                                                dashboard_name=dashboard_name,
+                                                format=dashboard_format,
+                                                from_date=from_date,
+                                                to_date=to_date)
+    IReportKbn.objects.create(user=request.user, kbn_report=report)
+
+    return HttpResponseRedirect(reverse('project_export', kwargs={'project_id': project.id}))
 
 
 def request_project_export_create(request, project_id):
