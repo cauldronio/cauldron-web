@@ -28,53 +28,31 @@
     </div>
     {% endif %}
 
-    {% if user_projects|length > 0 %}
-    <form method="GET" class="form-inline justify-content-between">
+    <form method="GET" id="compare-form" class="form-inline justify-content-between">
         <div class="form-group mb-2">
-            <select name="projects" id="project-select-0" class="selectpicker mr-2" title="Select a report..." data-style="btn-outline-dark" data-live-search="true" data-size="5" data-showTick="true" data-width="auto" required>
+
+            {% for i in '12345'|make_list %}
+
+            {% if not forloop.first %}
+            <span id="times-{{forloop.counter0}}" class="font-weight-bold mx-2 {%if forloop.counter0 != 0 and forloop.counter0 != 1 %}d-none{%endif%}"><i class="fas fa-times"></i></span>
+            {% endif %}
+
+            <select name="projects" id="project-select-{{forloop.counter0}}" class="selectpicker mr-1" title="Select a report..." data-style="btn-outline-dark" data-live-search="true" data-size="5" data-showTick="true" data-width="auto" {%if forloop.counter0 != 0 and forloop.counter0 != 1 %}disabled{% endif %} required>
                 {% for project in user_projects %}
+                <option value="{{ project.id }}" data-subtext="yours">{{ project.name }}</option>
+                {% endfor %}
+                {% for project in other_projects %}
                 <option value="{{ project.id }}">{{ project.name }}</option>
                 {% endfor %}
             </select>
+            <button id="delete-{{forloop.counter0}}" type="button" class="btn btn-outline-danger remove-option {%if forloop.counter0 != 0 and forloop.counter0 != 1 %}d-none{%endif%}" data-target="project-select-{{forloop.counter0}}"><i class="fas fa-trash-alt"></i></button>
 
-            <span class="font-weight-bold mr-2"><i class="fas fa-times"></i></span>
+            {% endfor %}
 
-            <select name="projects" id="project-select-1" class="selectpicker mr-2" title="Select a report..." data-style="btn-outline-dark" data-live-search="true" data-size="5" data-showTick="true" data-width="auto" required>
-                {% for project in user_projects %}
-                <option value="{{ project.id }}">{{ project.name }}</option>
-                {% endfor %}
-            </select>
+            <button type="button" id="addProjectButton" class="btn btn-outline-dark font-weight-bold mx-2"><i class="fas fa-plus"></i></button>
 
-            <span id="times-2" class="font-weight-bold mr-2 d-none"><i class="fas fa-times"></i></span>
-
-            <select name="projects" id="project-select-2" class="selectpicker mr-2" title="Select a report..." data-style="btn-outline-dark" data-live-search="true" data-size="5" data-showTick="true" data-width="auto" disabled required>
-                {% for project in user_projects %}
-                <option value="{{ project.id }}">{{ project.name }}</option>
-                {% endfor %}
-            </select>
-
-            <span id="times-3" class="font-weight-bold mr-2 d-none"><i class="fas fa-times"></i></span>
-
-            <select name="projects" id="project-select-3" class="selectpicker mr-2" title="Select a report..." data-style="btn-outline-dark" data-live-search="true" data-size="5" data-showTick="true" data-width="auto" disabled required>
-                {% for project in user_projects %}
-                <option value="{{ project.id }}">{{ project.name }}</option>
-                {% endfor %}
-            </select>
-
-            <span id="times-4" class="font-weight-bold mr-2 d-none"><i class="fas fa-times"></i></span>
-
-            <select name="projects" id="project-select-4" class="selectpicker mr-2" title="Select a report..." data-style="btn-outline-dark" data-live-search="true" data-size="5" data-showTick="true" data-width="auto" disabled required>
-                {% for project in user_projects %}
-                <option value="{{ project.id }}">{{ project.name }}</option>
-                {% endfor %}
-            </select>
-
-            <button type="button" id="addProjectButton" class="btn btn-outline-dark font-weight-bold mr-2"><i class="fas fa-plus"></i></button>
-
-            <button type="submit" class="btn btn-outline-dark"><strong>Compare</strong></button>
         </div>
     </form>
-    {% endif %}
 
     {% if projects|length > 0 %}
     <div class="card">
@@ -158,11 +136,20 @@ $(function() {
     }
 });
 
+$('#compare-form').submit(function(){
+    $("select:not(:disabled)").each(function(i){
+        if(!$(this).val()){
+            $(this).remove();
+        }
+    })
+})
+
 $('#addProjectButton').on('click', function(event) {
     event.preventDefault();
     var non_disabled = $("select:not(:disabled)").length;
     if (non_disabled < 5) {
         $('#times-'+non_disabled).removeClass('d-none');
+        $('#delete-'+non_disabled).removeClass('d-none');
         $('#project-select-'+non_disabled).selectpicker('show');
         $('#project-select-'+non_disabled).attr('disabled',false);
         $('#project-select-'+non_disabled).selectpicker('refresh');
@@ -172,6 +159,14 @@ $('#addProjectButton').on('click', function(event) {
         $('#addProjectButton').addClass('d-none');
     }
 });
+
+$('.remove-option').click(function(event){
+    var target_id = $(event.currentTarget).data('target');
+    $(`#${target_id}`).remove();
+    $('#compare-form').submit();
+})
+
+$('.selectpicker').on('changed.bs.select', function(){ $('#compare-form').submit(); })
 </script>
 {% if projects|length > 0 %}
 <script>
@@ -270,6 +265,7 @@ $(function() {
     if (projects.length <= 5) {
         for (const [index, project] of projects.entries()) {
             $('#times-'+index).removeClass('d-none');
+            $('#delete-'+index).removeClass('d-none');
             $('#project-select-'+index).selectpicker('show');
             $('#project-select-'+index).val(project);
             $('#project-select-'+index).attr('disabled',false);
