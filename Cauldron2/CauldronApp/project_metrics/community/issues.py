@@ -28,10 +28,10 @@ def active_submitters(elastic, urls, from_date, to_date):
     to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all') \
         .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
-        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .filter(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
         .extra(size=0)
     if urls:
-        s = s.query(Q('terms', origin=urls))
+        s = s.filter(Q('terms', origin=urls))
     s.aggs.bucket('authors', 'cardinality', field='author_uuid')
 
     try:
@@ -50,8 +50,8 @@ def issue_submitters_buckets(elastic, urls, from_date, to_date, interval):
     """Makes a query to ES to get the number of issue submitters grouped by date"""
     s = Search(using=elastic, index='all') \
         .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) \
-        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
-        .query(Q('terms', origin=urls)) \
+        .filter(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .filter(Q('terms', origin=urls)) \
         .extra(size=0)
     s.aggs.bucket("dates", 'date_histogram', field='grimoire_creation_date', calendar_interval=interval) \
           .bucket('authors', 'cardinality', field='author_uuid')
@@ -200,8 +200,8 @@ def authors_active_bokeh(elastic, urls, from_date, to_date):
 def authors_entering(elastic, urls, from_date, to_date):
     """Get number of issue authors entering in a project for a period of time"""
     s = Search(using=elastic, index='all') \
-        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
-        .query(Q('terms', origin=urls)) \
+        .filter(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .filter(Q('terms', origin=urls)) \
         .extra(size=0)
     s.aggs.bucket('authors', 'terms', field='author_uuid', size=30000) \
           .metric('first_issue', 'min', field='grimoire_creation_date')
@@ -231,8 +231,8 @@ def authors_entering_leaving_bokeh(elastic, urls, from_date, to_date):
     """Get a visualization of issue submitters entering and leaving
     the project"""
     s = Search(using=elastic, index='all') \
-        .query(Q('terms', origin=urls)) \
-        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .filter(Q('terms', origin=urls)) \
+        .filter(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
         .extra(size=0)
     s.aggs.bucket('authors', 'terms', field='author_uuid', size=30000) \
           .metric('first_contribution', 'min', field='grimoire_creation_date') \
@@ -340,8 +340,8 @@ def authors_aging_bokeh(elastic, urls, snap_date):
     snap_date_es = snap_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all') \
         .filter('range', grimoire_creation_date={"lt": snap_date_es}) \
-        .query(Q('terms', origin=urls)) \
-        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .filter(Q('terms', origin=urls)) \
+        .filter(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
         .extra(size=0)
     s.aggs.bucket('authors', 'terms', field='author_uuid', size=30000) \
           .metric('first_contribution', 'min', field='grimoire_creation_date') \
@@ -430,8 +430,8 @@ def authors_retained_ratio_bokeh(elastic, urls, snap_date):
     snap_date_es = snap_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all') \
         .filter('range', grimoire_creation_date={"lt": snap_date_es}) \
-        .query(Q('terms', origin=urls)) \
-        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .filter(Q('terms', origin=urls)) \
+        .filter(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
         .extra(size=0)
     s.aggs.bucket('authors', 'terms', field='author_uuid', size=30000) \
           .metric('first_contribution', 'min', field='grimoire_creation_date') \

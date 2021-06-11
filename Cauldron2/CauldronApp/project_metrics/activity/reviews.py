@@ -27,9 +27,9 @@ def reviews_opened(elastic, urls, from_date, to_date):
     """Get number of Merge requests and Pull requests opened in the specified range"""
     s = Search(using=elastic, index='all')\
         .filter('range', created_at={'gte': from_date, "lte": to_date}) \
-        .query(Q('match', pull_request=True) | Q('match', merge_request=True))
+        .filter(Q('match', pull_request=True) | Q('match', merge_request=True))
     if urls:
-        s = s.query(Q('terms', origin=urls))
+        s = s.filter(Q('terms', origin=urls))
 
     try:
         response = s.count()
@@ -46,11 +46,11 @@ def reviews_opened(elastic, urls, from_date, to_date):
 def reviews_closed(elastic, urls, from_date, to_date):
     """Get number of Merge requests and Pull requests closed in the specified range"""
     s = Search(using=elastic, index='all') \
-        .query(Q('range', closed_at={'gte': from_date, "lte": to_date}) |
+        .filter(Q('range', closed_at={'gte': from_date, "lte": to_date}) |
                Q('range', merged_at={'gte': from_date, "lte": to_date})) \
-        .query(Q('match', pull_request=True) | Q('match', merge_request=True))
+        .filter(Q('match', pull_request=True) | Q('match', merge_request=True))
     if urls:
-        s = s.query(Q('terms', origin=urls))
+        s = s.filter(Q('terms', origin=urls))
 
     try:
         response = s.count()
@@ -68,9 +68,9 @@ def reviews_open_on(elastic, urls, date):
     # TODO: This metric is equal to performance/open_reviews
     """Gives the number of open reviews in a given date"""
     s = Search(using=elastic, index='all') \
-        .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
-        .query(Q('terms', origin=urls)) \
-        .query(Q('range', created_at={'lte': date}) &
+        .filter(Q('match', pull_request=True) | Q('match', merge_request=True)) \
+        .filter(Q('terms', origin=urls)) \
+        .filter(Q('range', created_at={'lte': date}) &
               (Q('range', closed_at={'gte': date}) |
                Q('range', merged_at={'gte': date}) |
                Q('terms', state=['open', 'opened'])))
@@ -94,7 +94,7 @@ def reviews_created_bokeh_compare(elastics, from_date, to_date):
 
         s = Search(using=elastic, index='all') \
             .filter('range', created_at={'gte': from_date, 'lte': to_date}) \
-            .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
+            .filter(Q('match', pull_request=True) | Q('match', merge_request=True)) \
             .extra(size=0)
         s.aggs.bucket('dates', 'date_histogram', field='created_at', calendar_interval=interval_elastic)
 
@@ -188,7 +188,7 @@ def reviews_closed_bokeh_compare(elastics, from_date, to_date):
         elastic = elastics[project_id]
 
         s = Search(using=elastic, index='all') \
-            .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
+            .filter(Q('match', pull_request=True) | Q('match', merge_request=True)) \
             .extra(size=0)
         s.aggs.bucket('closed', 'filter', Q('range', closed_at={'gte': from_date, "lte": to_date})) \
               .bucket('reviews', 'date_histogram', field='closed_at', calendar_interval=interval_elastic)
@@ -293,8 +293,8 @@ def reviews_open_closed_bokeh(elastic, urls, from_date, to_date):
     to_date_es = to_date.strftime("%Y-%m-%d")
     interval_name, interval_elastic, bar_width = get_interval(from_date, to_date)
     s = Search(using=elastic, index='all') \
-        .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
-        .query(Q('terms', origin=urls)) \
+        .filter(Q('match', pull_request=True) | Q('match', merge_request=True)) \
+        .filter(Q('terms', origin=urls)) \
         .extra(size=0)
     s.aggs.bucket('range_open', 'filter', Q('range', created_at={'gte': from_date_es, "lte": to_date_es})) \
         .bucket('open', 'date_histogram', field='created_at', calendar_interval=interval_elastic)
@@ -403,7 +403,7 @@ def reviews_open_closed_bokeh(elastic, urls, from_date, to_date):
 def reviews_open_age_opened_bokeh(elastic):
     """Get a visualization of current open reviews age"""
     s = Search(using=elastic, index='all') \
-        .query('bool', filter=((Q('match', pull_request=True) | Q('match', merge_request=True)) &
+        .filter('bool', filter=((Q('match', pull_request=True) | Q('match', merge_request=True)) &
                Q('terms', state=['open', 'opened']))) \
         .extra(size=0)
     s.aggs.bucket("open_reviews", 'date_histogram', field='created_at', calendar_interval='1M')
@@ -463,8 +463,8 @@ def reviews_open_weekday_bokeh(elastic, urls, from_date, to_date):
     to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all') \
         .filter('range', created_at={'gte': from_date_es, "lte": to_date_es}) \
-        .query(Q('terms', origin=urls)) \
-        .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
+        .filter(Q('terms', origin=urls)) \
+        .filter(Q('match', pull_request=True) | Q('match', merge_request=True)) \
         .extra(size=0)
     s.aggs.bucket('reviews_weekday', 'terms', script="doc['created_at'].value.dayOfWeek", size=7)
 
@@ -500,8 +500,8 @@ def reviews_open_weekday_bokeh(elastic, urls, from_date, to_date):
 def reviews_closed_weekday_bokeh(elastic, urls, from_date, to_date):
     """Get reviews closed by week day in the specified range of time"""
     s = Search(using=elastic, index='all') \
-        .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
-        .query(Q('terms', origin=urls)) \
+        .filter(Q('match', pull_request=True) | Q('match', merge_request=True)) \
+        .filter(Q('terms', origin=urls)) \
         .extra(size=0)
     s.aggs.bucket('closed', 'filter', Q('range', closed_at={'gte': from_date, "lte": to_date})) \
           .bucket('weekdays', 'terms', script="doc['closed_at'].value.dayOfWeek", size=7)
@@ -550,8 +550,8 @@ def reviews_opened_heatmap_bokeh(elastic, urls, from_date, to_date):
 
     s = Search(using=elastic, index='all') \
         .filter('range', created_at={'gte': from_date_es, "lte": to_date_es}) \
-        .query(Q('terms', origin=urls)) \
-        .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
+        .filter(Q('terms', origin=urls)) \
+        .filter(Q('match', pull_request=True) | Q('match', merge_request=True)) \
         .extra(size=0)
     s.aggs.bucket('weekdays', 'terms', script="doc['created_at'].value.dayOfWeek", size=7, order={'_term': 'asc'}) \
           .bucket('hours', 'terms', script="doc['created_at'].value.getHourOfDay()", size=24, order={'_term': 'asc'})
@@ -616,8 +616,8 @@ def reviews_closed_heatmap_bokeh(elastic, urls, from_date, to_date):
     specified range of time"""
 
     s = Search(using=elastic, index='all') \
-        .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
-        .query(Q('terms', origin=urls)) \
+        .filter(Q('match', pull_request=True) | Q('match', merge_request=True)) \
+        .filter(Q('terms', origin=urls)) \
         .extra(size=0)
     s.aggs.bucket('closed', 'filter', Q('range', closed_at={'gte': from_date, "lte": to_date})) \
           .bucket('weekdays', 'terms', script="doc['closed_at'].value.dayOfWeek", size=7, order={'_term': 'asc'}) \
@@ -695,7 +695,7 @@ def reviews_created_by_repository(elastic, from_date, to_date):
     grouped by repository"""
     s = Search(using=elastic, index='all') \
         .filter('range', created_at={'gte': from_date, 'lte': to_date}) \
-        .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
+        .filter(Q('match', pull_request=True) | Q('match', merge_request=True)) \
         .extra(size=0)
     s.aggs.bucket('repositories', 'terms', field='repository', size=10)
 
@@ -720,8 +720,8 @@ def reviews_created_by_repository(elastic, from_date, to_date):
     s = Search(using=elastic, index='all') \
         .filter('range', created_at={'gte': from_date, 'lte': to_date}) \
         .filter('exists', field='repository') \
-        .query(Q('bool', must_not=repos_ignored)) \
-        .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
+        .filter(Q('bool', must_not=repos_ignored)) \
+        .filter(Q('match', pull_request=True) | Q('match', merge_request=True)) \
         .extra(size=0)
 
     try:
@@ -779,9 +779,9 @@ def reviews_closed_by_repository(elastic, from_date, to_date):
     """Shows the number of reviews closed in a project
     grouped by repository"""
     s = Search(using=elastic, index='all') \
-        .query(Q('range', closed_at={'gte': from_date, 'lte': to_date}) |
+        .filter(Q('range', closed_at={'gte': from_date, 'lte': to_date}) |
                Q('range', merged_at={'gte': from_date, 'lte': to_date})) \
-        .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
+        .filter(Q('match', pull_request=True) | Q('match', merge_request=True)) \
         .extra(size=0)
     s.aggs.bucket('repositories', 'terms', field='repository', size=10)
 
@@ -804,10 +804,10 @@ def reviews_closed_by_repository(elastic, from_date, to_date):
     repos_ignored = [Q('match_phrase', repository=repo) for repo in data['repo']]
 
     s = Search(using=elastic, index='all') \
-        .query(Q('range', closed_at={'gte': from_date, 'lte': to_date}) | Q('range', merged_at={'gte': from_date, 'lte': to_date})) \
+        .filter(Q('range', closed_at={'gte': from_date, 'lte': to_date}) | Q('range', merged_at={'gte': from_date, 'lte': to_date})) \
         .filter('exists', field='repository') \
-        .query(Q('bool', must_not=repos_ignored)) \
-        .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
+        .filter(Q('bool', must_not=repos_ignored)) \
+        .filter(Q('match', pull_request=True) | Q('match', merge_request=True)) \
         .extra(size=0)
 
     try:
@@ -867,8 +867,8 @@ def reviews_closed_mean_duration_heatmap_bokeh(elastic, urls, from_date, to_date
 
     interval_name, interval_elastic, _ = get_interval(from_date, to_date)
     s = Search(using=elastic, index='all') \
-        .query(Q('match', pull_request=True) | Q('match', merge_request=True)) \
-        .query(Q('terms', origin=urls)) \
+        .filter(Q('match', pull_request=True) | Q('match', merge_request=True)) \
+        .filter(Q('terms', origin=urls)) \
         .filter('range', closed_at={'gte': from_date, "lte": to_date}) \
         .extra(size=0)
     s.aggs.bucket('dates', 'date_histogram', field='closed_at', calendar_interval=interval_elastic, format='yyyy-MM-dd') \

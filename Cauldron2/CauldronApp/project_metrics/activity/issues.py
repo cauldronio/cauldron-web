@@ -29,9 +29,9 @@ def issues_opened(elastic, urls, from_date, to_date):
     to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all')\
         .filter('range', created_at={'gte': from_date_es, "lte": to_date_es}) \
-        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1))
+        .filter(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1))
     if urls:
-        s = s.query(Q('terms', origin=urls))
+        s = s.filter(Q('terms', origin=urls))
 
     try:
         response = s.count()
@@ -52,9 +52,9 @@ def issues_closed(elastic, urls, from_date, to_date):
     s = Search(using=elastic, index='all')\
         .filter('range', closed_at={'gte': from_date_es, "lte": to_date_es})\
         .filter('match', state='closed')\
-        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1))
+        .filter(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1))
     if urls:
-        s = s.query(Q('terms', origin=urls))
+        s = s.filter(Q('terms', origin=urls))
 
     try:
         response = s.count()
@@ -71,9 +71,9 @@ def issues_closed(elastic, urls, from_date, to_date):
 def issues_open_on(elastic, urls, date):
     """Get the number of issues that were open on a specific day"""
     s = Search(using=elastic, index='all') \
-        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
-        .query(Q('terms', origin=urls)) \
-        .query(Q('range', created_at={'lte': date}) &
+        .filter(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .filter(Q('terms', origin=urls)) \
+        .filter(Q('range', created_at={'lte': date}) &
                (Q('range', closed_at={'gte': date}) | Q('terms', state=['open', 'opened'])))
 
     try:
@@ -98,7 +98,7 @@ def issues_created_bokeh_compare(elastics, from_date, to_date):
 
         s = Search(using=elastic, index='all') \
             .filter('range', created_at={'gte': from_date, 'lte': to_date}) \
-            .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+            .filter(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
             .extra(size=0)
         s.aggs.bucket('dates', 'date_histogram', field='created_at', calendar_interval=interval_elastic)
 
@@ -193,7 +193,7 @@ def issues_closed_bokeh_compare(elastics, from_date, to_date):
 
         s = Search(using=elastic, index='all') \
             .filter('range', closed_at={'gte': from_date, 'lte': to_date}) \
-            .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+            .filter(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
             .extra(size=0)
         s.aggs.bucket('dates', 'date_histogram', field='closed_at', calendar_interval=interval_elastic)
 
@@ -284,8 +284,8 @@ def issues_open_closed_bokeh(elastic, urls, from_date, to_date):
     to_date_es = to_date.strftime("%Y-%m-%d")
     interval_name, interval_elastic, bar_width = get_interval(from_date, to_date)
     s = Search(using=elastic, index='all') \
-        .query('bool', filter=(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1))) \
-        .query(Q('terms', origin=urls)) \
+        .filter('bool', filter=(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1))) \
+        .filter(Q('terms', origin=urls)) \
         .extra(size=0)
     s.aggs.bucket('range_open', 'filter', Q('range', created_at={'gte': from_date_es, "lte": to_date}))\
         .bucket('open', 'date_histogram', field='created_at', calendar_interval=interval_elastic)
@@ -381,7 +381,7 @@ def issues_open_closed_bokeh(elastic, urls, from_date, to_date):
 def issues_open_age_opened_bokeh(elastic):
     """Get a visualization of current open issues age"""
     s = Search(using=elastic, index='all') \
-        .query('bool', filter=((Q('match', pull_request=False) |
+        .filter('bool', filter=((Q('match', pull_request=False) |
                                Q('match', is_gitlab_issue=1)) &
                                Q('terms', state=['open', 'opened'])))\
         .extra(size=0)
@@ -442,8 +442,8 @@ def issues_open_weekday_bokeh(elastic, urls, from_date, to_date):
     to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all') \
         .filter('range', created_at={'gte': from_date_es, "lte": to_date_es}) \
-        .query(Q('terms', origin=urls)) \
-        .query('bool', filter=(Q('match', pull_request=False) |
+        .filter(Q('terms', origin=urls)) \
+        .filter('bool', filter=(Q('match', pull_request=False) |
                                Q('match', is_gitlab_issue=1))) \
         .extra(size=0)
     s.aggs.bucket('issue_weekday', 'terms', script="doc['created_at'].value.dayOfWeek", size=7)
@@ -483,8 +483,8 @@ def issues_closed_weekday_bokeh(elastic, urls, from_date, to_date):
     to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all') \
         .filter('range', closed_at={'gte': from_date_es, "lte": to_date_es}) \
-        .query(Q('terms', origin=urls)) \
-        .query('bool', filter=((Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) &
+        .filter(Q('terms', origin=urls)) \
+        .filter('bool', filter=((Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) &
                                Q('exists', field='closed_at'))) \
         .extra(size=0)
     s.aggs.bucket('issue_weekday', 'terms', script="doc['closed_at'].value.dayOfWeek", size=7)
@@ -526,8 +526,8 @@ def issues_opened_heatmap_bokeh(elastic, urls, from_date, to_date):
 
     s = Search(using=elastic, index='all') \
         .filter('range', created_at={'gte': from_date_es, "lte": to_date_es}) \
-        .query(Q('terms', origin=urls)) \
-        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .filter(Q('terms', origin=urls)) \
+        .filter(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
         .extra(size=0)
     s.aggs.bucket('weekdays', 'terms', script="doc['created_at'].value.dayOfWeek", size=7, order={'_term': 'asc'}) \
           .bucket('hours', 'terms', script="doc['created_at'].value.getHourOfDay()", size=24, order={'_term': 'asc'})
@@ -595,8 +595,8 @@ def issues_closed_heatmap_bokeh(elastic, urls, from_date, to_date):
 
     s = Search(using=elastic, index='all') \
         .filter('range', closed_at={'gte': from_date_es, "lte": to_date_es}) \
-        .query(Q('terms', origin=urls)) \
-        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .filter(Q('terms', origin=urls)) \
+        .filter(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
         .extra(size=0)
     s.aggs.bucket('weekdays', 'terms', script="doc['closed_at'].value.dayOfWeek", size=7, order={'_term': 'asc'}) \
           .bucket('hours', 'terms', script="doc['closed_at'].value.getHourOfDay()", size=24, order={'_term': 'asc'})
@@ -662,7 +662,7 @@ def issues_created_by_repository(elastic, from_date, to_date):
     grouped by repository"""
     s = Search(using=elastic, index='all') \
         .filter('range', created_at={'gte': from_date, 'lte': to_date}) \
-        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .filter(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
         .extra(size=0)
     s.aggs.bucket('repositories', 'terms', field='repository', size=10)
 
@@ -687,8 +687,8 @@ def issues_created_by_repository(elastic, from_date, to_date):
     s = Search(using=elastic, index='all') \
         .filter('range', created_at={'gte': from_date, 'lte': to_date}) \
         .filter('exists', field='repository') \
-        .query(Q('bool', must_not=repos_ignored)) \
-        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .filter(Q('bool', must_not=repos_ignored)) \
+        .filter(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
         .extra(size=0)
 
     try:
@@ -747,7 +747,7 @@ def issues_closed_by_repository(elastic, from_date, to_date):
     grouped by repository"""
     s = Search(using=elastic, index='all') \
         .filter('range', closed_at={'gte': from_date, 'lte': to_date}) \
-        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .filter(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
         .extra(size=0)
     s.aggs.bucket('repositories', 'terms', field='repository', size=10)
 
@@ -772,8 +772,8 @@ def issues_closed_by_repository(elastic, from_date, to_date):
     s = Search(using=elastic, index='all') \
         .filter('range', closed_at={'gte': from_date, 'lte': to_date}) \
         .filter('exists', field='repository') \
-        .query(Q('bool', must_not=repos_ignored)) \
-        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .filter(Q('bool', must_not=repos_ignored)) \
+        .filter(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
         .extra(size=0)
 
     try:

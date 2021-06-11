@@ -19,8 +19,8 @@ def people_asking(elastic, urls, from_date, to_date):
     """Gives the number of people asking questions on StackExchange in a period"""
     s = Search(using=elastic, index='stackexchange') \
         .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) \
-        .query(Q('match', is_stackexchange_question='1')) \
-        .query(Q('terms', tag=urls)) \
+        .filter(Q('match', is_stackexchange_question='1')) \
+        .filter(Q('terms', tag=urls)) \
         .extra(size=0)
     s.aggs.bucket('people_asking', 'cardinality', field='author')
 
@@ -40,8 +40,8 @@ def people_answering(elastic, urls, from_date, to_date):
     """Gives the number of people answering questions on StackExchange in a period"""
     s = Search(using=elastic, index='stackexchange') \
         .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) \
-        .query(Q('match', is_stackexchange_answer='1')) \
-        .query(Q('terms', tag=urls)) \
+        .filter(Q('match', is_stackexchange_answer='1')) \
+        .filter(Q('terms', tag=urls)) \
         .extra(size=0)
     s.aggs.bucket('people_answering', 'cardinality', field='author')
 
@@ -61,8 +61,8 @@ def people_asking_over_time(elastic, urls, from_date, to_date, interval):
     """Gives the number of people asking questions on StackExchange grouped by date"""
     s = Search(using=elastic, index='stackexchange') \
         .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) \
-        .query(Q('match', is_stackexchange_question='1')) \
-        .query(Q('terms', tag=urls)) \
+        .filter(Q('match', is_stackexchange_question='1')) \
+        .filter(Q('terms', tag=urls)) \
         .extra(size=0)
     s.aggs.bucket('dates', 'date_histogram', field='grimoire_creation_date', calendar_interval=interval) \
           .bucket('people_asking', 'cardinality', field='author')
@@ -86,8 +86,8 @@ def people_answering_over_time(elastic, urls, from_date, to_date, interval):
     """Gives the number of people answering questions on StackExchange grouped by date"""
     s = Search(using=elastic, index='stackexchange') \
         .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) \
-        .query(Q('match', is_stackexchange_answer='1')) \
-        .query(Q('terms', tag=urls)) \
+        .filter(Q('match', is_stackexchange_answer='1')) \
+        .filter(Q('terms', tag=urls)) \
         .extra(size=0)
     s.aggs.bucket('dates', 'date_histogram', field='grimoire_creation_date', calendar_interval=interval) \
           .bucket('people_answering', 'cardinality', field='author')

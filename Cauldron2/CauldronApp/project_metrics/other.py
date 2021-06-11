@@ -28,8 +28,8 @@ def issues_time_to_close(elastic, urls, from_date, to_date):
     s = Search(using=elastic, index='all')\
         .filter('range', closed_at={'gte': from_date_es, "lte": to_date_es})\
         .filter('match', state='closed')\
-        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
-        .query(Q('terms', origin=urls))
+        .filter(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .filter(Q('terms', origin=urls))
     s.aggs.bucket('ttc_percentiles', 'percentiles', field='time_to_close_days', percents=[50])
 
     try:
@@ -81,7 +81,7 @@ def author_domains_bokeh(elastic, from_date, to_date):
     s = Search(using=elastic, index='all')\
         .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es})\
         .filter('exists', field='author_domain')\
-        .query(Q('bool', must_not=ignore_domains))\
+        .filter(Q('bool', must_not=ignore_domains))\
         .extra(size=0)
 
     s.aggs.bucket('authors', 'cardinality', field='author_uuid')
@@ -123,7 +123,7 @@ def get_authors_bucket(elastic, urls, from_date, to_date, interval):
     """ Makes a query to ES to get the number of authors grouped by date """
     s = Search(using=elastic, index='all') \
         .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) \
-        .query(Q('terms', origin=urls)) \
+        .filter(Q('terms', origin=urls)) \
         .extra(size=0)
 
     s.aggs.bucket('dates', 'date_histogram', field='grimoire_creation_date', calendar_interval=interval) \
@@ -360,8 +360,8 @@ def review_duration(elastic, urls, from_date, to_date):
     to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='all')\
         .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
-        .query(Q('terms', origin=urls)) \
-        .query((Q('match', pull_request=True) & Q('match', state='closed')) |
+        .filter(Q('terms', origin=urls)) \
+        .filter((Q('match', pull_request=True) & Q('match', state='closed')) |
                (Q('match', merge_request=True) & Q('match', state='merged')))
     s.aggs.bucket('ttc_percentiles', 'percentiles', field='time_to_close_days', percents=[50])
 

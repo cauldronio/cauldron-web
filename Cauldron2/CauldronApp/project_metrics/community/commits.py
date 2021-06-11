@@ -28,10 +28,10 @@ def authors_active(elastic, urls, from_date, to_date):
     to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='git') \
         .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
-        .query(~Q('match', files=0)) \
+        .filter(~Q('match', files=0)) \
         .extra(size=0)
     if urls:
-        s = s.query(Q('terms', origin=urls))
+        s = s.filter(Q('terms', origin=urls))
 
     s.aggs.bucket('authors', 'cardinality', field='author_uuid')
 
@@ -51,8 +51,8 @@ def get_authors_bucket(elastic, urls, from_date, to_date, interval):
     """ Makes a query to ES to get the number of authors grouped by date """
     s = Search(using=elastic, index='git') \
         .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) \
-        .query(Q('terms', origin=urls)) \
-        .query(~Q('match', files=0)) \
+        .filter(Q('terms', origin=urls)) \
+        .filter(~Q('match', files=0)) \
         .extra(size=0)
 
     s.aggs.bucket("bucket1", 'date_histogram', field='grimoire_creation_date', calendar_interval=interval) \
@@ -209,8 +209,8 @@ def authors_entering(elastic, urls, from_date, to_date):
     from_date_es = from_date.strftime("%Y-%m-%d")
     to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='git') \
-        .query(~Q('match', files=0)) \
-        .query(Q('terms', origin=urls)) \
+        .filter(~Q('match', files=0)) \
+        .filter(Q('terms', origin=urls)) \
         .extra(size=0)
     s.aggs.bucket('authors', 'terms', field='author_uuid', size=30000) \
           .metric('first_commit', 'min', field='grimoire_creation_date')
@@ -239,8 +239,8 @@ def authors_entering(elastic, urls, from_date, to_date):
 def authors_entering_leaving_bokeh(elastic, urls, from_date, to_date):
     """Get a visualization of git authors entering and leaving the project"""
     s = Search(using=elastic, index='git') \
-        .query(Q('terms', origin=urls)) \
-        .query(~Q('match', files=0)) \
+        .filter(Q('terms', origin=urls)) \
+        .filter(~Q('match', files=0)) \
         .extra(size=0)
     s.aggs.bucket('authors', 'terms', field='author_uuid', size=30000) \
           .metric('first_contribution', 'min', field='grimoire_creation_date') \
@@ -348,8 +348,8 @@ def authors_aging_bokeh(elastic, urls, snap_date):
     snap_date_es = snap_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='git') \
         .filter('range', grimoire_creation_date={"lt": snap_date_es}) \
-        .query(Q('terms', origin=urls)) \
-        .query(~Q('match', files=0)) \
+        .filter(Q('terms', origin=urls)) \
+        .filter(~Q('match', files=0)) \
         .extra(size=0)
     s.aggs.bucket('authors', 'terms', field='author_uuid', size=30000) \
           .metric('first_contribution', 'min', field='grimoire_creation_date') \
@@ -438,8 +438,8 @@ def authors_retained_ratio_bokeh(elastic, urls, snap_date):
     snap_date_es = snap_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='git') \
         .filter('range', grimoire_creation_date={"lt": snap_date_es}) \
-        .query(Q('terms', origin=urls)) \
-        .query(~Q('match', files=0)) \
+        .filter(Q('terms', origin=urls)) \
+        .filter(~Q('match', files=0)) \
         .extra(size=0)
     s.aggs.bucket('authors', 'terms', field='author_uuid', size=30000) \
           .metric('first_contribution', 'min', field='grimoire_creation_date') \
@@ -523,8 +523,8 @@ def drive_through_and_repeat_contributor_counts(elastic, urls, from_date, to_dat
 
     s = Search(using=elastic, index='git') \
         .filter('range', grimoire_creation_date={"lt": to_date}) \
-        .query(Q('terms', origin=urls)) \
-        .query(~Q('match', files=0)) \
+        .filter(Q('terms', origin=urls)) \
+        .filter(~Q('match', files=0)) \
         .extra(size=0)
     s.aggs.bucket('authors', 'terms', field='author_uuid', size=30000) \
           .metric('first_contribution', 'min', field='grimoire_creation_date') \

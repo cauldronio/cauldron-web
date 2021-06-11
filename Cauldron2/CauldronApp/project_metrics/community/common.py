@@ -60,8 +60,8 @@ def organizational_diversity_authors(elastic, urls, from_date, to_date):
     to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='git') \
         .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
-        .query(Q('terms', origin=urls)) \
-        .query(~Q('match', files=0)) \
+        .filter(Q('terms', origin=urls)) \
+        .filter(~Q('match', files=0)) \
         .extra(size=0)
     s.aggs.bucket('domains', 'terms', field='author_domain', size=10, order={'authors': 'desc'}) \
           .metric('authors', 'cardinality', field='author_uuid')
@@ -87,8 +87,8 @@ def organizational_diversity_authors(elastic, urls, from_date, to_date):
     s = Search(using=elastic, index='git') \
         .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
         .filter('exists', field='author_domain') \
-        .query(Q('bool', must_not=domains_ignored)) \
-        .query(~Q('match', files=0)) \
+        .filter(Q('bool', must_not=domains_ignored)) \
+        .filter(~Q('match', files=0)) \
         .extra(size=0)
     s.aggs.bucket('authors', 'cardinality', field='author_uuid')
 
@@ -148,8 +148,8 @@ def organizational_diversity_commits(elastic, urls, from_date, to_date):
     to_date_es = to_date.strftime("%Y-%m-%d")
     s = Search(using=elastic, index='git') \
         .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
-        .query(Q('terms', origin=urls)) \
-        .query(~Q('match', files=0)) \
+        .filter(Q('terms', origin=urls)) \
+        .filter(~Q('match', files=0)) \
         .extra(size=0)
     s.aggs.bucket('domains', 'terms', field='author_domain', size=10, order={'commits': 'desc'}) \
           .metric('commits', 'cardinality', field='hash')
@@ -175,8 +175,8 @@ def organizational_diversity_commits(elastic, urls, from_date, to_date):
     s = Search(using=elastic, index='git') \
         .filter('range', grimoire_creation_date={'gte': from_date_es, "lte": to_date_es}) \
         .filter('exists', field='author_domain') \
-        .query(Q('bool', must_not=domains_ignored)) \
-        .query(~Q('match', files=0)) \
+        .filter(Q('bool', must_not=domains_ignored)) \
+        .filter(~Q('match', files=0)) \
         .extra(size=0)
     s.aggs.bucket('commits', 'cardinality', field='hash')
 

@@ -19,11 +19,11 @@ logger = logging.getLogger(__name__)
 def median_time_to_close(elastic, urls, from_date, to_date):
     """Gives the median time to close for closed issues in a period"""
     s = Search(using=elastic, index='all') \
-        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .filter(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
         .filter('range', closed_at={'gte': from_date, "lte": to_date}) \
         .extra(size=0)
     if urls:
-        s = s.query(Q('terms', origin=urls))
+        s = s.filter(Q('terms', origin=urls))
     s.aggs.bucket('ttc_percentiles', 'percentiles', field='time_to_close_days', percents=[50])
 
     try:
@@ -41,9 +41,9 @@ def median_time_to_close(elastic, urls, from_date, to_date):
 def average_open_time(elastic, urls, date):
     """Gives the average time that open issues have been open"""
     s = Search(using=elastic, index='all') \
-        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
-        .query(Q('terms', origin=urls)) \
-        .query(Q('range', created_at={'lte': date}) &
+        .filter(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .filter(Q('terms', origin=urls)) \
+        .filter(Q('range', created_at={'lte': date}) &
               (Q('range', closed_at={'gte': date}) | Q('terms', state=['open', 'opened']))) \
         .source('created_at')
 
@@ -70,9 +70,9 @@ def average_open_time(elastic, urls, date):
 def median_open_time(elastic, urls, date):
     """Gives the median time that open issues have been open"""
     s = Search(using=elastic, index='all') \
-        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
-        .query(Q('terms', origin=urls)) \
-        .query(Q('range', created_at={'lte': date}) &
+        .filter(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .filter(Q('terms', origin=urls)) \
+        .filter(Q('range', created_at={'lte': date}) &
               (Q('range', closed_at={'gte': date}) | Q('terms', state=['open', 'opened']))) \
         .source('created_at')
 
@@ -99,9 +99,9 @@ def median_open_time(elastic, urls, date):
 def open_issues(elastic, urls, date):
     """Gives the number of open issues in a given date"""
     s = Search(using=elastic, index='all') \
-        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
-        .query(Q('terms', origin=urls)) \
-        .query(Q('range', created_at={'lte': date}) &
+        .filter(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .filter(Q('terms', origin=urls)) \
+        .filter(Q('range', created_at={'lte': date}) &
               (Q('range', closed_at={'gte': date}) | Q('terms', state=['open', 'opened'])))
 
     try:
@@ -118,8 +118,8 @@ def ttc_created_issues_bokeh(elastic, urls, from_date, to_date):
     time to close of created issues in a given period"""
     interval_name, interval_elastic, bar_width = get_interval(from_date, to_date)
     s = Search(using=elastic, index='all') \
-        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
-        .query(Q('terms', origin=urls)) \
+        .filter(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .filter(Q('terms', origin=urls)) \
         .filter('range', created_at={'gte': from_date, "lte": to_date}) \
         .extra(size=0)
     s.aggs.bucket('dates', 'date_histogram', field='created_at', calendar_interval=interval_elastic) \
@@ -193,9 +193,9 @@ def ttc_created_issues_bokeh(elastic, urls, from_date, to_date):
 def issues_still_open_by_creation_date_bokeh(elastic, urls):
     """Get a visualization of current open issues age"""
     s = Search(using=elastic, index='all') \
-        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
-        .query(Q('terms', origin=urls)) \
-        .query(Q('terms', state=['open', 'opened']))
+        .filter(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .filter(Q('terms', origin=urls)) \
+        .filter(Q('terms', state=['open', 'opened']))
     s.aggs.bucket("open_issues", 'date_histogram', field='created_at', calendar_interval='1M')
 
     try:
@@ -252,8 +252,8 @@ def ttc_closed_issues_bokeh(elastic, urls, from_date, to_date):
     time to close of closed issues in a given period"""
     interval_name, interval_elastic, bar_width = get_interval(from_date, to_date)
     s = Search(using=elastic, index='all') \
-        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
-        .query(Q('terms', origin=urls)) \
+        .filter(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .filter(Q('terms', origin=urls)) \
         .filter('range', closed_at={'gte': from_date, "lte": to_date}) \
         .extra(size=0)
     s.aggs.bucket('dates', 'date_histogram', field='closed_at', calendar_interval=interval_elastic) \
@@ -331,8 +331,8 @@ def closed_created_issues_ratio_bokeh(elastic, urls, from_date, to_date):
     interval_name, interval_elastic, _ = get_interval(from_date, to_date)
 
     s = Search(using=elastic, index='all') \
-        .query(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
-        .query(Q('terms', origin=urls)) \
+        .filter(Q('match', pull_request=False) | Q('match', is_gitlab_issue=1)) \
+        .filter(Q('terms', origin=urls)) \
         .extra(size=0)
     s.aggs.bucket('created_issues', 'filter', Q('range', created_at={'gte': from_date, "lte": to_date})) \
           .bucket('dates', 'date_histogram', field='created_at', calendar_interval=interval_elastic)

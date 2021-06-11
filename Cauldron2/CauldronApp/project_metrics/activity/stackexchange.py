@@ -19,8 +19,8 @@ def questions(elastic, urls, from_date, to_date):
     """Gives the number of StackExchange questions in a period"""
     s = Search(using=elastic, index='stackexchange') \
         .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) \
-        .query(Q('match', is_stackexchange_question='1')) \
-        .query(Q('terms', tag=urls)) \
+        .filter(Q('match', is_stackexchange_question='1')) \
+        .filter(Q('terms', tag=urls)) \
         .extra(size=0)
     s.aggs.bucket('questions', 'cardinality', field='question_id')
 
@@ -40,8 +40,8 @@ def answers(elastic, urls, from_date, to_date):
     """Gives the number of StackExchange answers in a period"""
     s = Search(using=elastic, index='stackexchange') \
         .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) \
-        .query(Q('match', is_stackexchange_answer='1')) \
-        .query(Q('terms', tag=urls)) \
+        .filter(Q('match', is_stackexchange_answer='1')) \
+        .filter(Q('terms', tag=urls)) \
         .extra(size=0)
     s.aggs.bucket('answers', 'cardinality', field='answer_id')
 
@@ -61,8 +61,8 @@ def questions_over_time(elastic, urls, from_date, to_date, interval):
     """Gives the number of StackExchange questions grouped by date"""
     s = Search(using=elastic, index='stackexchange') \
         .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) \
-        .query(Q('match', is_stackexchange_question='1')) \
-        .query(Q('terms', tag=urls)) \
+        .filter(Q('match', is_stackexchange_question='1')) \
+        .filter(Q('terms', tag=urls)) \
         .extra(size=0)
     s.aggs.bucket('dates', 'date_histogram', field='grimoire_creation_date', calendar_interval=interval) \
           .bucket('questions', 'cardinality', field='question_id')
@@ -86,8 +86,8 @@ def answers_over_time(elastic, urls, from_date, to_date, interval):
     """Gives the number of StackExchange answers grouped by date"""
     s = Search(using=elastic, index='stackexchange') \
         .filter('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) \
-        .query(Q('match', is_stackexchange_answer='1')) \
-        .query(Q('terms', tag=urls)) \
+        .filter(Q('match', is_stackexchange_answer='1')) \
+        .filter(Q('terms', tag=urls)) \
         .extra(size=0)
     s.aggs.bucket('dates', 'date_histogram', field='grimoire_creation_date', calendar_interval=interval) \
           .bucket('answers', 'cardinality', field='answer_id')
@@ -206,7 +206,7 @@ def answers_bokeh(elastic, urls, from_date, to_date):
 def questions_answers_bokeh(elastic, urls, from_date, to_date):
     """Visualization of questions and answers in the specified time rage"""
     s = Search(using=elastic, index='stackexchange') \
-        .query(Q('terms', tag=urls)) \
+        .filter(Q('terms', tag=urls)) \
         .extra(size=0)
     s.aggs.bucket('range_questions', 'filter', Q('range', grimoire_creation_date={'gte': from_date, "lte": to_date}) &
                   Q('match', is_stackexchange_question='1')) \
