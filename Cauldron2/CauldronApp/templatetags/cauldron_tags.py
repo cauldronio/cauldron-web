@@ -1,6 +1,7 @@
 from django import template
 import urllib.parse
 from cauldron_apps.cauldron.models.backends import Backends
+import datetime
 
 register = template.Library()
 
@@ -124,3 +125,13 @@ def icon_boolean(true_input):
         return "far fa-check-circle"
     else:
         return "far fa-times-circle"
+
+@register.filter
+def print_timestamp(timestamp):
+    try:
+        # It assumes that the timestamp has float format and it is in milliseconds
+        ts = float(timestamp)
+        ts = ts/1000
+    except ValueError:
+        return None
+    return datetime.datetime.fromtimestamp(ts)

@@ -78,6 +78,11 @@
             <a class="dropdown-item" data-category="performance-reviews" data-toggle="tab" role="tab" href="#performance-reviews">Reviews</a>
           </div>
         </li>
+        {% if hatstall_enabled %}
+        <li class="nav-item" role="presentation">
+          <a class="nav-link" data-category="people" data-toggle="tab" href="#people" role="tab" aria-controls="people" aria-selected="true">People</a>
+        </li>
+        {% endif %}
         {% if has_gitlab or has_github or has_git %}
         <li class="nav-item" role="presentation">
           <a class="nav-link" data-category="repos" data-toggle="tab" href="#repos" role="tab" aria-controls="repos" aria-selected="true">Repos</a>
@@ -180,6 +185,12 @@
 
       {% include "cauldronapp/project/metrics/performance/reviews.html" %}
       <!-- End Performance -->
+
+      <!-- Start People -->
+      {% if hatstall_enabled %}
+      {% include "cauldronapp/project/metrics/people/overview.html" %}
+      {% endif %}
+      <!-- End People -->
 
       <!-- Start repos -->
       {% include "cauldronapp/project/metrics/repos.html" %}

@@ -565,6 +565,31 @@ def request_show_project(request, project_id):
 
     page_number = request.GET.get('page')
 
+    if settings.HATSTALL_ENABLED:
+        try:
+            from_str = request.GET.get('from', '')
+            from_date = datetime.datetime.strptime(from_str, '%Y-%m-%d')
+        except ValueError:
+            from_date = datetime.datetime.now() - relativedelta(years=1)
+
+        try:
+            to_str = request.GET.get('to', '')
+            to_date = datetime.datetime.strptime(to_str, '%Y-%m-%d')
+        except ValueError:
+            to_date = datetime.datetime.now()
+
+        urls = request.GET.getlist('repo_url[]')
+        if not urls:
+            urls = project.url_list()
+
+        elastic = metrics.get_elastic_project(project)
+        contrib_metrics = metrics.people_commits.contributors_and_affiliations(elastic=elastic,
+                                                                               urls=urls,
+                                                                               from_date=from_date,
+                                                                               to_date=to_date)
+
+        context['contributors'] = contrib_metrics
+
     repo_metrics = RepositoryMetrics.objects.filter(repository__in=project.repository_set.all())\
         .distinct()\
         .order_by(sort_by)
@@ -581,6 +606,7 @@ def request_show_project(request, project_id):
     context['has_gitlab'] = GitLabRepository.objects.filter(projects=project).exists()
     context['has_meetup'] = MeetupRepository.objects.filter(projects=project).exists()
     context['has_stack'] = StackExchangeRepository.objects.filter(projects=project).exists()
+    context['hatstall_enabled'] = settings.HATSTALL_ENABLED
     context['repos'] = project.repository_set.all().select_subclasses()
 
     return render(request, 'cauldronapp/project/project.html', context=context)

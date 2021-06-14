@@ -2,7 +2,7 @@
  *    METRICS AND VISUALIZATIONS   *
  ***********************************/
 $(function() {
-    var categories = ['overview', 'activity-overview', 'activity-git', 'activity-issues', 'activity-reviews', 'activity-qa', 'community-overview', 'community-git', 'community-issues', 'community-reviews', 'community-qa', 'performance-overview', 'performance-issues', 'performance-reviews', 'chaoss', 'repos'];
+    var categories = ['overview', 'activity-overview', 'activity-git', 'activity-issues', 'activity-reviews', 'activity-qa', 'community-overview', 'community-git', 'community-issues', 'community-reviews', 'community-qa', 'performance-overview', 'performance-issues', 'performance-reviews', 'people', 'chaoss', 'repos'];
     var start = getUrlParameter('from_date');
     var end = getUrlParameter('to_date');
     var urls = getURLParameterList('repo_url');
@@ -30,6 +30,8 @@ $(function() {
     if (getCookie('project_metrics_description') != 'dismiss') {
       show_descriptions();
     }
+
+    $('#contributors_table').DataTable();
 
     //"html_id": "key from Django"
     var VIZ_KEYS = {

@@ -20,6 +20,8 @@ from .community import stackexchange as community_stackexchange
 from .performance import issues as performance_issues
 from .performance import reviews as performance_reviews
 
+from .people import commits as people_commits
+
 from .utils import year_over_year
 from . import other
 

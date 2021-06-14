@@ -1,0 +1,42 @@
+{% load cauldron_tags %}
+
+<div id="people" class="mb-4 tab-pane fade" role="tabpanel" >
+  <div class="table-responsive">
+    <table id="contributors_table" class="table table-striped">
+      <thead>
+        <tr>
+          <th>
+            Name
+          </th>
+          <th>
+            Author UUID
+          </th>
+          <th class="text-center">
+            Affiliation
+          </th>
+          <th class="text-center">
+            Contributions
+          </th>
+          <th>
+            Last contribution
+          </th>
+          <th>
+            First contribution
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for contributor in contributors %}
+        <tr>
+          <td>{{contributor.name}}</td>
+          <td><a target="_blank" href="{{ hatstall_url }}/{{contributor.author_uuid}}" role="button">{{contributor.author_uuid}}</a></td>
+          <td class="text-center">{{contributor.affiliation}}</td>
+          <td class="text-center">{{contributor.count}}</td>
+          <td>{{contributor.last_contribution|print_timestamp}}</td>
+          <td>{{contributor.first_contribution|print_timestamp}}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
