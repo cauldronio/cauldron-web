@@ -4,6 +4,7 @@ from django.shortcuts import render
 from django.urls import resolve, reverse
 
 from CauldronApp.views import create_context
+from cauldron_apps.cauldron.models import Project
 
 
 class HatstallAuthorizationMiddleware:
@@ -47,5 +48,10 @@ class LoginRequiredMiddleware:
         resolver = resolve(request.path)
         if resolver.view_name in settings.LOGIN_REQUIRED_IGNORE_VIEW_NAMES:
             return self.get_response(request)
-
+        elif resolver.route.startswith('project/'):
+            try:
+                if Project.objects.get(id=resolver.kwargs['project_id']).public:
+                    return self.get_response(request)
+            except (KeyError, Project.DoesNotExist):
+                pass
         return HttpResponseRedirect(reverse('login_page'))

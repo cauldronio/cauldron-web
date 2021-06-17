@@ -15,6 +15,16 @@
 
 <p>Configure your report settings to define which data sources and repositories you want Cauldron to collect data from.</p>
 
+{% if LIMITED_ACCESS and editable %}
+<h2>Visibility</h2>
+<p>You can make your report public so it will appear in the landing page and can be shared with anyone with read only access.</p>
+<div class="custom-control custom-switch mb-4">
+  <input type="checkbox" class="custom-control-input" id="publicReportSwitch" name="visibility" {% if project.public %}checked{% endif %}>
+  <label class="custom-control-label" for="publicReportSwitch">Public report</label>
+</div>
+
+{% endif %}
+
 {% include "cauldronapp/project/project_actions.html" %}
 
 <h2>Data sources repositories</h2>

@@ -74,6 +74,12 @@
     {% include "cauldronapp/utils/nav_pagination.html" %}
   {% endif %}
 
+	{% if not projects_info and LIMITED_ACCESS and request.resolver_match.url_name == 'explore_projects' %}
+	<div class="text-center">
+		<h2>There aren't public reports to view.</h2>
+	</div>
+	{% endif %}
+
 </div>
 
 {% include "cauldronapp/projects/delete_project.html" %}

@@ -56,6 +56,10 @@ def homepage(request):
     if request.user.is_authenticated:
         return request_user_projects(request)
 
+    # If LIMITED_ACCESS is enabled, show explore page
+    if settings.LIMITED_ACCESS:
+        return HttpResponseRedirect(reverse('explore_projects'))
+
     latest_projects = Project.objects.order_by('-created')[:6]
 
     context = create_context(request)
@@ -76,6 +80,8 @@ def request_user_projects(request):
 
 def request_explore_projects(request):
     projects = Project.objects.all()
+    if not request.user.is_authenticated:
+        projects = projects.filter(public=True)
     return request_projects(request, projects)
 
 
@@ -99,7 +105,10 @@ def request_projects(request, projects):
         summary['metrics'] = metrics.report_card_metrics(project, summary)
         projects_info.append(summary)
     context['projects_info'] = projects_info
-    context['total_projects'] = Project.objects.count()
+    if request.user.is_authenticated:
+        context['total_projects'] = Project.objects.count()
+    else:
+        context['total_projects'] = Project.objects.filter(public=True).count()
     if request.user.is_authenticated:
         context['user_projects'] = Project.objects.filter(creator=request.user).count()
     return render(request, 'cauldronapp/projects/projects.html', context=context)
@@ -604,10 +613,32 @@ def request_project_actions(request, project_id):
     except Project.DoesNotExist:
         return custom_404(request, "The report requested was not found in this server")
 
+    context['public'] = project.public
     context['show_actions'] = True
     context['actions'] = project.action_set.select_subclasses()
 
     return render(request, 'cauldronapp/project/project.html', context=context)
+
+
+@require_http_methods(['POST'])
+def request_report_visibility(request, project_id):
+    if not request.user.is_authenticated:
+        return JsonResponse({'message': 'You are not authenticated', 'status': 402})
+    try:
+        project = Project.objects.get(pk=project_id)
+    except Project.DoesNotExist:
+        return JsonResponse({'message': 'The report requested was not found in this server', 'status': 404})
+
+    if not request.user.is_authenticated and request.user != project.creator and not request.user.is_superuser:
+        return JsonResponse({'message': 'You are not allowed to modify this report', 'status': 404})
+
+    visibility = request.POST.get('visibility')
+    if visibility in ('public', 'private'):
+        project.public = True if visibility == 'public' else False
+        project.save()
+
+    status = 'public' if project.public else 'private'
+    return JsonResponse({'message': f'Your project is now {status}', 'status': 'Success'})
 
 
 def request_project_actions_refresh(request, project_id):
@@ -1182,7 +1213,8 @@ def request_new_project(request):
     if not request.user.is_authenticated:
         user = create_empty_user()
         login(request, user)
-    project = Project.objects.create(name=project_data['name'], creator=request.user)
+    public = False if settings.LIMITED_ACCESS else True
+    project = Project.objects.create(name=project_data['name'], creator=request.user, public=public)
     project.create_es_role()
 
     for action in project_data['actions']:

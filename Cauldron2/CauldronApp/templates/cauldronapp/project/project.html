@@ -54,8 +54,7 @@
               <span class="ml-3 sidebar-text">Data sources</span>
             </a>
           </li>
-        {% if editable %}
-          {% if repositories_count > 0 %}
+          {% if repositories_count > 0 and editable %}
           <li class="sidebar-item">
             <div class="fly-out-menu" style="display:none;">
               <a class="sidebar-item" href="{% url 'open_workspace' project.id %}" target="_blank">
@@ -69,7 +68,6 @@
             </a>
           </li>
           {% endif %}
-          {% if authenticated %}
           <li class="sidebar-item">
             <div class="fly-out-menu" style="display:none;">
               <a class="sidebar-item" href="{% url 'project_export' project.id %}">
@@ -81,7 +79,6 @@
               <span class="ml-3 sidebar-text">Export data & badges</span>
             </a>
           </li>
-          {% endif %}
           {% if projects_compare and repositories_count > 0 %}
           <li class="sidebar-item">
             <div class="fly-out-menu" style="display:none;">
@@ -105,7 +102,6 @@
               <span class="ml-3 sidebar-text">Settings</span>
             </a>
           </li>
-        {% endif %}
         </ul>
         <div class="toggle-sidebar sidebar-item">
           <i id="toggle-sidebar-icon" class="fas fa-angle-double-right"></i>

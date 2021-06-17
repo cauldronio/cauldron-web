@@ -64,8 +64,11 @@ DB_PORT = os.environ.get('DB_PORT')
 
 # Authorization
 LIMITED_ACCESS = os.environ.get('LIMITED_ACCESS') in ('True', 'true')
-LOGIN_REQUIRED_IGNORE_VIEW_NAMES = ['gitlab_oauth', 'github_oauth', 'meetup_oauth', 'github_callback',
-                                    'gitlab_callback', 'meetup_callback', 'login_page', 'logout_page']
+# Additionally to these views, any public report is visible
+LOGIN_REQUIRED_IGNORE_VIEW_NAMES = ['gitlab_oauth', 'github_oauth', 'meetup_oauth', 'twitter_oauth', 'stack_oauth',
+                                    'gitlab_callback', 'github_callback', 'meetup_callback', 'twitter_callback',
+                                    'stackexchange_callback', 'login_page', 'logout_page', 'homepage',
+                                    'explore_projects']
 
 # Hatstall/Sortinghat
 HATSTALL_ENABLED = os.environ.get('HATSTALL_ENABLED') in ('True', 'true')
