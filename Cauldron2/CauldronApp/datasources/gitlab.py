@@ -36,7 +36,7 @@ def parse_input_data(data, domain):
 def analyze_gitlab(project, owner, repo, instance, result):
     """IMPORTANT: update the repo role after this call"""
     repo, created = GitLabRepository.objects.get_or_create(owner=owner, repo=repo, instance=instance,
-                                                           defaults={'results': result})
+                                                           defaults={'metrics': result})
     if created:
         repo.link_sched_repo()
     repo.projects.add(project)

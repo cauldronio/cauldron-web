@@ -33,7 +33,7 @@ def parse_input_data(data):
 
 def analyze_github(project, owner, repo, result):
     """IMPORTANT: update the repo role after this call"""
-    repo, created = GitHubRepository.objects.get_or_create(owner=owner, repo=repo, defaults={'results': result})
+    repo, created = GitHubRepository.objects.get_or_create(owner=owner, repo=repo, defaults={'metrics': result})
     if not repo.repo_sched:
         repo.link_sched_repo()
     repo.projects.add(project)
