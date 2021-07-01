@@ -2,7 +2,7 @@
  *    METRICS AND VISUALIZATIONS   *
  ***********************************/
 $(function() {
-    var categories = ['overview', 'activity-overview', 'activity-git', 'activity-issues', 'activity-reviews', 'activity-qa', 'community-overview', 'community-git', 'community-issues', 'community-reviews', 'community-qa', 'performance-overview', 'performance-issues', 'performance-reviews', 'chaoss'];
+    var categories = ['overview', 'activity-overview', 'activity-git', 'activity-issues', 'activity-reviews', 'activity-qa', 'community-overview', 'community-git', 'community-issues', 'community-reviews', 'community-qa', 'performance-overview', 'performance-issues', 'performance-reviews', 'chaoss', 'repos'];
     var start = getUrlParameter('from_date');
     var end = getUrlParameter('to_date');
     var urls = getURLParameterList('repo_url');
@@ -339,7 +339,7 @@ $(function() {
 
     $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
         tab = e.target.dataset.category;
-        if (!['overview', 'chaoss'].includes(tab)) {
+        if (!['overview', 'chaoss', 'repos'].includes(tab)) {
           $('#toggle-btn').prop('disabled', true);
         } else {
           $('#toggle-btn').prop('disabled', false);

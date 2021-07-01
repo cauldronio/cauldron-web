@@ -1,0 +1,124 @@
+{% load static %}
+{% load cauldron_tags %}
+
+<div id="repos" class="mb-4 tab-pane fade" role="tabpanel">
+  <p>The following table shows all the commits, issues, reviews and its corresponding number of authors/submitters for all the history of each repository.</p>
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <tr>
+        <th>
+          Repository
+          {% get_sorting_link request 'name' as name_sorting_link %}
+          {% url_replace request 'sort_by' name_sorting_link as url_with_sort%}
+          <a href="?{% url_replace_qs url_with_sort 'tab' 'repos' %}">
+            <i class="{% get_sorting_icon request 'name' %}"></i>
+          </a>
+        </th>
+        <th>
+          Commits
+          {% get_sorting_link request 'commits' as name_sorting_link %}
+          {% url_replace request 'sort_by' name_sorting_link as url_with_sort%}
+          <a href="?{% url_replace_qs url_with_sort 'tab' 'repos' %}">
+            <i class="{% get_sorting_icon request 'commits' %}"></i>
+          </a>
+        </th>
+        <th>
+          Issues
+          {% get_sorting_link request 'issues' as name_sorting_link %}
+          {% url_replace request 'sort_by' name_sorting_link as url_with_sort%}
+          <a href="?{% url_replace_qs url_with_sort 'tab' 'repos' %}">
+            <i class="{% get_sorting_icon request 'issues' %}"></i>
+          </a>
+        </th>
+        <th>
+          Reviews
+          {% get_sorting_link request 'reviews' as name_sorting_link %}
+          {% url_replace request 'sort_by' name_sorting_link as url_with_sort%}
+          <a href="?{% url_replace_qs url_with_sort 'tab' 'repos' %}">
+            <i class="{% get_sorting_icon request 'reviews' %}"></i>
+          </a>
+        </th>
+        <th>
+          Commits<br>authors
+          {% get_sorting_link request 'commits_authors' as name_sorting_link %}
+          {% url_replace request 'sort_by' name_sorting_link as url_with_sort%}
+          <a href="?{% url_replace_qs url_with_sort 'tab' 'repos' %}">
+            <i class="{% get_sorting_icon request 'commits_authors' %}"></i>
+          </a>
+        </th>
+        <th>
+          Issues<br>submitters
+          {% get_sorting_link request 'issues_submitters' as name_sorting_link %}
+          {% url_replace request 'sort_by' name_sorting_link as url_with_sort%}
+          <a href="?{% url_replace_qs url_with_sort 'tab' 'repos' %}">
+            <i class="{% get_sorting_icon request 'issues_submitters' %}"></i>
+          </a>
+        </th>
+        <th>
+          Reviews<br>submitters
+          {% get_sorting_link request 'reviews_submitters' as name_sorting_link %}
+          {% url_replace request 'sort_by' name_sorting_link as url_with_sort%}
+          <a href="?{% url_replace_qs url_with_sort 'tab' 'repos' %}">
+            <i class="{% get_sorting_icon request 'reviews_submitters' %}"></i>
+          </a>
+        </th>
+      </tr>
+      {% for repo in page_obj %}
+      <tr>
+        <td>{{repo.name}}</td>
+        <td>{{repo.commits}}</td>
+        <td>{{repo.issues}}</td>
+        <td>{{repo.reviews}}</td>
+        <td>{{repo.commits_authors}}</td>
+        <td>{{repo.issues_submitters}}</td>
+        <td>{{repo.reviews_submitters}}</td>
+      </tr>
+      {% endfor %}
+    </table>
+
+
+    <nav class="my-3">
+      <ul class="pagination nav justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+          {% url_replace request 'page' page_obj.previous_page_number as url_with_page%}
+          <a class="page-link" href="?{% url_replace_qs url_with_page 'tab' 'repos' %}">&laquo; Prev</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+          <a class="page-link" href="#" tabindex="-1">&laquo; Prev</a>
+        </li>
+        {% endif %}
+
+        {% for page in pages_to_show %}
+          {% if page == -1 %}
+          <li class="page-item disabled">
+            <a class="page-link" href="#">&hellip;</a>
+          </li>
+          {% elif page == page_obj.number %}
+          <li class="page-item active">
+            <a class="page-link" href="#">{{ page_obj.number }}</a>
+          </li>
+          {% else %}
+          <li class="page-item">
+            {% url_replace request 'page' page as url_with_page%}
+            <a class="page-link" href="?{% url_replace_qs url_with_page 'tab' 'repos' %}">{{ page }}</a>
+          </li>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <li class="page-item">
+          {% url_replace request 'page' page_obj.next_page_number as url_with_page%}
+          <a class="page-link" href="?{% url_replace_qs url_with_page 'tab' 'repos' %}">Next &raquo;</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+          <a class="page-link" href="#" tabindex="-1">Next &raquo;</a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+
+  </div>
+</div>

@@ -78,6 +78,11 @@
             <a class="dropdown-item" data-category="performance-reviews" data-toggle="tab" role="tab" href="#performance-reviews">Reviews</a>
           </div>
         </li>
+        {% if has_gitlab or has_github or has_git %}
+        <li class="nav-item" role="presentation">
+          <a class="nav-link" data-category="repos" data-toggle="tab" href="#repos" role="tab" aria-controls="repos" aria-selected="true">Repos</a>
+        </li>
+        {% endif %}
         <li class="nav-item" role="presentation">
           <a class="nav-link" data-category="chaoss" data-toggle="tab" href="#chaoss" role="tab" aria-controls="chaoss" aria-selected="true"><img src="{% static '/img/chaoss_logo.png' %}" width="90" height="25" class="d-inline-block align-top" alt=""></a>
         </li>
@@ -175,6 +180,10 @@
 
       {% include "cauldronapp/project/metrics/performance/reviews.html" %}
       <!-- End Performance -->
+
+      <!-- Start repos -->
+      {% include "cauldronapp/project/metrics/repos.html" %}
+      <!-- End Repos sections -->
 
       <!-- Start CHAOSS section -->
       {% include "cauldronapp/project/metrics/chaoss.html" %}

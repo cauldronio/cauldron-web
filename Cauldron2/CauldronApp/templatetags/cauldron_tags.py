@@ -1,4 +1,5 @@
 from django import template
+import urllib.parse
 from cauldron_apps.cauldron.models.backends import Backends
 
 register = template.Library()
@@ -33,6 +34,17 @@ def url_replace(request, field, value):
     dict_ = request.GET.copy()
     dict_[field] = value
     return dict_.urlencode()
+
+
+@register.simple_tag
+def url_replace_qs(url, field, value):
+    """
+    This filter replaces the specified field of the QueryString, keeping
+    the values of the rest of the fields
+    """
+    dict_ = urllib.parse.parse_qs(url)
+    dict_[field] = value
+    return urllib.parse.urlencode(dict_, doseq=True)
 
 
 @register.simple_tag

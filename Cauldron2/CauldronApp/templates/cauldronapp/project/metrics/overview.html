@@ -185,47 +185,4 @@
     </div>
   </div>
   {% endif %}
-  <div class="table-responsive">
-    <table class="table table-striped">
-      <tr>
-        <th>
-          Repository
-          {% get_sorting_link request 'name' as name_sorting_link %}
-          <a href="?{% url_replace request 'sort_by' name_sorting_link %}">
-            <i class="{% get_sorting_icon request 'name' %}"></i>
-          </a>
-        </th>
-        <th>
-          Commits
-          {% get_sorting_link request 'commits' as name_sorting_link %}
-          <a href="?{% url_replace request 'sort_by' name_sorting_link %}">
-            <i class="{% get_sorting_icon request 'commits' %}"></i>
-          </a>
-        </th>
-        <th>
-          Issues
-          {% get_sorting_link request 'issues' as name_sorting_link %}
-          <a href="?{% url_replace request 'sort_by' name_sorting_link %}">
-            <i class="{% get_sorting_icon request 'issues' %}"></i>
-          </a>
-        </th>
-        <th>
-          Reviews
-          {% get_sorting_link request 'reviews' as name_sorting_link %}
-          <a href="?{% url_replace request 'sort_by' name_sorting_link %}">
-            <i class="{% get_sorting_icon request 'reviews' %}"></i>
-          </a>
-        </th>
-      </tr>
-      {% for repo in page_obj %}
-      <tr>
-        <td>{{repo.name}}</td>
-        <td>{{repo.commits}}</td>
-        <td>{{repo.issues}}</td>
-        <td>{{repo.reviews}}</td>
-      </tr>
-      {% endfor %}
-    </table>
-    {% include "cauldronapp/utils/nav_pagination.html" %}
-  </div>
 </div>

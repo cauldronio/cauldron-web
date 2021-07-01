@@ -559,7 +559,8 @@ def request_show_project(request, project_id):
         sort_by = sort_by[1:]
     else:
         reverse = False
-    if sort_by not in ('name', 'commits', 'issues', 'reviews'):
+    if sort_by not in ('name', 'commits', 'issues', 'reviews', 'commits_authors',
+                       'issues_submitters', 'reviews_submitters'):
         sort_by = 'id'
 
     page_number = request.GET.get('page')
@@ -569,7 +570,7 @@ def request_show_project(request, project_id):
         .order_by(sort_by)
     if reverse:
         repo_metrics = repo_metrics.reverse()
-    p = Pages(repo_metrics, 10)
+    p = Pages(repo_metrics, 20)
     page_obj = p.pages.get_page(page_number)
     context['page_obj'] = page_obj
     context['pages_to_show'] = p.pages_to_show(page_obj.number)
