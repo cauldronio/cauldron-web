@@ -567,13 +567,13 @@ def request_show_project(request, project_id):
 
     if settings.HATSTALL_ENABLED:
         try:
-            from_str = request.GET.get('from', '')
+            from_str = request.GET.get('from_date', '')
             from_date = datetime.datetime.strptime(from_str, '%Y-%m-%d')
         except ValueError:
             from_date = datetime.datetime.now() - relativedelta(years=1)
 
         try:
-            to_str = request.GET.get('to', '')
+            to_str = request.GET.get('to_date', '')
             to_date = datetime.datetime.strptime(to_str, '%Y-%m-%d')
         except ValueError:
             to_date = datetime.datetime.now()
