@@ -1418,7 +1418,9 @@ def request_compare_projects(request):
 
     if request.user.is_authenticated:
         context['user_projects'] = request.user.project_set.all()
-    context['other_projects'] = Project.objects.exclude(creator=request.user)
+        context['other_projects'] = Project.objects.exclude(creator=request.user)
+    else:
+        context['other_projects'] = Project.objects.all()
 
     if projects.filter(repository=None).count() > 0:
         context['message_error'] = "Some of the selected reports do not have repositories..."
