@@ -116,7 +116,7 @@
           {% endif %}
           {% if request.user.is_superuser and hatstall_url %}
           <li class="nav-item">
-            <a class="nav-link" target="_blank" href="{{ hatstall_url }}">Contributors</a>
+            <a class="nav-link" target="_blank" rel="noopener noreferrer" href="{{ hatstall_url }}">Contributors</a>
           </li>
           {% endif %}
         </ul>
@@ -139,10 +139,10 @@
             <a class="dropdown-item" href="{% url 'pricing' %}" target="_blank">Pricing</a>
             <div class="dropdown-divider"></div>
             {% endif %}
-            <a class="dropdown-item" href="https://community.cauldron.io/" target="_blank">Support forum</a>
-            <a class="dropdown-item" href="https://gitlab.com/cauldronio/cauldron/issues/new" target="_blank">Report an Issue</a>
+            <a class="dropdown-item" href="https://community.cauldron.io/" target="_blank" rel="noopener noreferrer">Support forum</a>
+            <a class="dropdown-item" href="https://gitlab.com/cauldronio/cauldron/issues/new" target="_blank" rel="noopener noreferrer">Report an Issue</a>
             <div class="dropdown-divider"></div>
-            <a class="dropdown-item" href="https://mailchi.mp/003f1e1f6242/cauldron-newsletter" target="_blank">Newsletter</a>
+            <a class="dropdown-item" href="https://mailchi.mp/003f1e1f6242/cauldron-newsletter" target="_blank" rel="noopener noreferrer">Newsletter</a>
             <div class="dropdown-divider"></div>
             <a class="dropdown-item" href="{% url 'stats' %}" target="_blank">Cauldron Stats</a>
           </div>
@@ -160,11 +160,11 @@
             {% if request.user.is_superuser %}
             <div class="dropdown-divider"></div>
             <h6 class="dropdown-header">Administration</h6>
-            <a class="dropdown-item" target="_blank" href="{% url 'kibana_admin' %}">Kibana admin</a>
+            <a class="dropdown-item" target="_blank" rel="noopener noreferrer" href="{% url 'kibana_admin' %}">Kibana admin</a>
             <a class="dropdown-item" href="{% url 'admin:index' %}">Django admin</a>
             <a class="dropdown-item" href="{% url 'admin_page_users' %}">Manage users</a>
             {% if plausible_analytics_url %}
-            <a class="dropdown-item" target="_blank" href="{{ plausible_analytics_url }}">Plausible Analytics</a>
+            <a class="dropdown-item" target="_blank" rel="noopener noreferrer" href="{{ plausible_analytics_url }}">Plausible Analytics</a>
             {% endif %}
             {% endif %}
             <div class="dropdown-divider"></div>
@@ -233,7 +233,7 @@
           <div class="container-fluid">
             <div class="row">
               <div class="col-md-3 offset-md-1">
-                <div><a href="https://bitergia.com" target="_blank"><img src="/static/img/bitergia-w-logo-s.png" alt="Bitergia" width="120"></a></div>
+                <div><a href="https://bitergia.com" target="_blank" rel="noopener noreferrer"><img src="/static/img/bitergia-w-logo-s.png" alt="Bitergia" width="120"></a></div>
                   <p style="display:inline-block">Copyright &copy; 2021 <a href="https://bitergia.com">Bitergium SLL.</a> and its
                     contributors.</p>
                   <p>Some Rights Reserved.</p>
@@ -244,25 +244,25 @@
                 </p>
               </div>
               <div class="col-md-4">
-                <p><a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank">
+                <p><a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer">
                   <img src="/static/img/by-sa.png" width="120" alt="Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)">
                 </a></p>
                 <p>Cauldron and the Cauldron logo are
-                  trademarks of <a href="https://bitergia.com" target="_blank">Bitergium SLL.</a> in the European Union and/or
+                  trademarks of <a href="https://bitergia.com" target="_blank" rel="noopener noreferrer">Bitergium SLL.</a> in the European Union and/or
                   other jurisdictions. All other trademarks are the property of their respective holders.</p>
               </div>
               <div class="col-md-4">
-              <p>Made with <abbr title="love"><span style="color: red; font-size: 1.2rem;">&hearts;</span></abbr> and <strong><a href="https://cauldronio.gitlab.io" target="_blank">free, open source software</a></strong> based on:</p>
+              <p>Made with <abbr title="love"><span style="color: red; font-size: 1.2rem;">&hearts;</span></abbr> and <strong><a href="https://cauldronio.gitlab.io" target="_blank" rel="noopener noreferrer">free, open source software</a></strong> based on:</p>
               <p>
-                <a href="https://chaoss.github.io/grimoirelab/" target="_blank"><img src="/static/img/wizard-y.svg"
+                <a href="https://chaoss.github.io/grimoirelab/" target="_blank" rel="noopener noreferrer"><img src="/static/img/wizard-y.svg"
                     height="24" alt=""> GrimoireLab</a> |
-                <a href="https://www.djangoproject.com/" target="_blank">Django</a> |
-                <a href="https://opendistro.github.io/for-elasticsearch/" target="_blank">Open Distro for Elasticsearch</a>
+                <a href="https://www.djangoproject.com/" target="_blank" rel="noopener noreferrer">Django</a> |
+                <a href="https://opendistro.github.io/for-elasticsearch/" target="_blank" rel="noopener noreferrer">Open Distro for Elasticsearch</a>
               </p>
               <p>
                 <a href="https://status.cauldron.io/">Status</a> |
-                Follow us on <a href="https://twitter.com/cauldronio" target="_blank"><i class="fab fa-twitter" style="background: none;"></i> @cauldronio</a> |
-                <a href="https://mailchi.mp/003f1e1f6242/cauldron-newsletter" target="_blank"><i class="fa fa-envelop"></i> Newsletter</a>
+                Follow us on <a href="https://twitter.com/cauldronio" target="_blank" rel="noopener noreferrer"><i class="fab fa-twitter" style="background: none;"></i> @cauldronio</a> |
+                <a href="https://mailchi.mp/003f1e1f6242/cauldron-newsletter" target="_blank" rel="noopener noreferrer"><i class="fa fa-envelop"></i> Newsletter</a>
               </p>
 
             </div>

@@ -155,7 +155,7 @@
         <td>{{report.to_date | date:"F d, Y"}}</td>
         <td class="report-location">
         {% if report.location %}
-        <a href="/download/{{report.location}}" target="_blank">Download</a>
+        <a href="/download/{{report.location}}" target="_blank" rel="noopener noreferrer">Download</a>
         {% else %}
         -
         {% endif %}

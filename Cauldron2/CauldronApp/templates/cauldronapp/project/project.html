@@ -58,11 +58,11 @@
           {% if repositories_count > 0 and editable %}
           <li class="sidebar-item">
             <div class="fly-out-menu" style="display:none;">
-              <a class="sidebar-item" href="{% url 'open_workspace' project.id %}" target="_blank">
+              <a class="sidebar-item" href="{% url 'open_workspace' project.id %}" target="_blank" rel="noopener noreferrer">
                 Data Workspace
               </a>
             </div>
-            <a href="{% url 'open_workspace' project.id %}" target="_blank">
+            <a href="{% url 'open_workspace' project.id %}" target="_blank" rel="noopener noreferrer">
               <i class="fas fa-chart-area"></i>
               <span class="ml-3 mr-2 sidebar-text">Data workspace <small><i class="fas fa-external-link-alt"></i></small></span>
 

@@ -29,7 +29,7 @@
         {% for contributor in contributors %}
         <tr>
           <td>{{contributor.name}}</td>
-          <td><a target="_blank" href="{{ hatstall_url }}/{{contributor.author_uuid}}" role="button">{{contributor.author_uuid}}</a></td>
+          <td><a target="_blank" rel="noopener noreferrer" href="{{ hatstall_url }}/{{contributor.author_uuid}}" role="button">{{contributor.author_uuid}}</a></td>
           <td class="text-center">{{contributor.affiliation}}</td>
           <td class="text-center">{{contributor.count}}</td>
           <td>{{contributor.last_contribution|print_timestamp}}</td>
