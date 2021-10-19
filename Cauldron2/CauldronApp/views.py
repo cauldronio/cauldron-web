@@ -2002,6 +2002,10 @@ def create_context(request):
     # Limited Access
     context['LIMITED_ACCESS'] = settings.LIMITED_ACCESS
 
+    # Branding
+    context['CLOUD_CUSTOM_BRAND'] = settings.CLOUD_CUSTOM_BRAND
+    context['CLOUD_CUSTOM_SUB_BRAND'] = settings.CLOUD_CUSTOM_SUB_BRAND
+
     return context
 
 

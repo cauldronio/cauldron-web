@@ -82,6 +82,10 @@ PLAUSIBLE_ANALYTICS_URL = os.environ.get('PLAUSIBLE_ANALYTICS_URL')
 GOOGLE_ANALYTICS_ID = os.environ.get('GOOGLE_ANALYTICS_ID')
 PRICING_ENABLED = os.environ.get('PRICING_ENABLED', False) in (True, 'True')
 
+# Branding
+CLOUD_CUSTOM_BRAND = os.environ.get('CLOUD_CUSTOM_BRAND')
+CLOUD_CUSTOM_SUB_BRAND = os.environ.get('CLOUD_CUSTOM_SUB_BRAND')
+
 CAULDRON_ADMINS = {
     'GITHUB': json.loads(os.environ.get('GITHUB_ADMINS', '[]')),
     'GITLAB': json.loads(os.environ.get('GITLAB_ADMINS', '[]')),
