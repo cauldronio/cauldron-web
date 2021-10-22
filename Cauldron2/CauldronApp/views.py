@@ -889,7 +889,7 @@ def request_rename_project(request, project_id):
     except Project.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': f"Report {project_id} does not exist"},
                             status=404)
-    if not request.user.is_authenticated and request.user != project.creator and not request.user.is_superuser:
+    if not(request.user.is_authenticated and (request.user == project.creator or request.user.is_superuser)):
         return JsonResponse({'status': 'error', 'message': f'You cannot edit report {project_id}, '
                                                            f'you are not the owner'},
                             status=400)
@@ -1548,6 +1548,10 @@ def get_available_dashboards(project):
 
 def request_project_export(request, project_id):
     """View for data sources that can be exported for a report"""
+    if settings.LIMITED_ACCESS and request.user and not request.user.is_authenticated:
+        return custom_403(request, "You are not allowed to export data."
+                                   "Ask any of the administrators for permission.")
+
     try:
         project, context = project_common(request, project_id)
     except Project.DoesNotExist:
@@ -1865,6 +1869,10 @@ def remove_workspace(user):
 
 def request_public_kibana(request, project_id):
     """Redirect to public Kibana"""
+    if settings.LIMITED_ACCESS and not request.user.is_authenticated:
+        return custom_403(request, "You are not allowed to open Kibana. "
+                                   "Ask any of the administrators for permission.")
+
     project = Project.objects.filter(id=project_id).first()
     if not project:
         return custom_404(request, "The report requested was not found in this server")

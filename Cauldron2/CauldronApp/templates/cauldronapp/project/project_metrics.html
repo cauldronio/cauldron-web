@@ -91,7 +91,7 @@
         <li class="nav-item" role="presentation">
           <a class="nav-link" data-category="chaoss" data-toggle="tab" href="#chaoss" role="tab" aria-controls="chaoss" aria-selected="true"><img src="{% static '/img/chaoss_logo.png' %}" width="90" height="25" class="d-inline-block align-top" alt=""></a>
         </li>
-        {% if repositories_count > 0 %}
+        {% if repositories_count > 0 and not LIMITED_ACCESS or repositories_count > 0 and authenticated %}
         <li class="nav-item">
           <a class="nav-link"
              data-toggle="tooltip" title="Visualize the data in Kibana"
