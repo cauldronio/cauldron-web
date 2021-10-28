@@ -104,5 +104,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 ]
 
+if settings.SPDX_ENABLED:
+    urlpatterns.append(path('sbom/new', views.request_create_sbom, name='create_sbom'))
+    urlpatterns.append(path('spdx/results/<int:spdx_id>', views.request_spdx_results, name='spdx_results'))
+
 if settings.HATSTALL_ENABLED:
     urlpatterns.insert(0, path('hatstall/', include('hatstall.urls')))

@@ -86,6 +86,10 @@ PRICING_ENABLED = os.environ.get('PRICING_ENABLED', False) in (True, 'True')
 CLOUD_CUSTOM_BRAND = os.environ.get('CLOUD_CUSTOM_BRAND')
 CLOUD_CUSTOM_SUB_BRAND = os.environ.get('CLOUD_CUSTOM_SUB_BRAND')
 
+# SPDX configuration
+SPDX_FILES_PATH = '/spdx_files'
+SPDX_ENABLED = os.environ.get('SPDX_ENABLED', False) in (True, 'True', 'true')
+
 CAULDRON_ADMINS = {
     'GITHUB': json.loads(os.environ.get('GITHUB_ADMINS', '[]')),
     'GITLAB': json.loads(os.environ.get('GITLAB_ADMINS', '[]')),
@@ -121,6 +125,7 @@ INSTALLED_APPS = [
     'cauldron_apps.poolsched_twitter',
     'cauldron_apps.poolsched_export',
     'cauldron_apps.cauldron_actions',
+    'cauldron_apps.poolsched_sbom',
 ]
 if HATSTALL_ENABLED:
     INSTALLED_APPS.append('hatstall')

@@ -110,10 +110,9 @@ function getReportsExportStatus() {
             $("#dropdown-generate .commits-progress").html(`(${data['progress']})`)
             setTimeout(getReportsExportStatus, 3000);
         } else if (data['status'] == 'completed') {
-            $("#dropdown-generate .commits-progress").html();
+            $("#dropdown-generate .commits-progress").html('');
             $('a[name=download-commits-reports]').removeClass('disabled');
             $('a[name=download-commits-reports]').attr('href', data['location']);
-            console.log(data['last-updated'])
             var created = moment(data['last-updated'], 'YYYY-MM-DDTHH:mm:ss.SSSZ', true).from(moment.utc());
             $('a[name=download-commits-reports] span.last-updated').html(`(${created})`);
             $("#dropdown-generate .generate-spinner").hide();

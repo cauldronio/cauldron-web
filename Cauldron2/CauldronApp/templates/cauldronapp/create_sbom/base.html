@@ -1,0 +1,129 @@
+{% extends "cauldronapp/base.html" %}
+{% load cauldron_tags %}
+{% load static %}
+
+{% block css%}
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+<link rel="stylesheet" href="{% static 'css/project.css' %}">
+<link rel="stylesheet" href="{% static 'css/create_project.css' %}">
+{% endblock %}
+
+
+{% block content %}
+<div class="container mt-5 mb-2">
+  <h1>Analyze a Software Bill Of Materials file</h1>
+  <p class="text-muted">A Software Bill Of Materials is a list of all dependencies present in a codebase. Cauldron collects and analyzes the data to display it in an elegant way.</p>
+  <hr>
+  <div class="form-group">
+    <label for="projectName" class="font-weight-bold" >Report name</label>
+    <input type="text" id="projectName" class="form-control" aria-describedby="projectNameHelper" value="{{new_project.name}}">
+    <small id="projectNameHelper" class="invalid-feedback">
+
+    </small>
+  </div>
+
+  <label class="font-weight-bold" >Import SPDX file</label>
+  <div class="card">
+    <div class="card-body">
+      <form action="" method="post" class="form-inline d-flex justify-content-between" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" name="spdx_file" id="spdx_file">
+        <button type="submit" class="btn btn-outline-primary">
+          Import file
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-center">
+    <div class="spinner-border" role="status" id="spdx-load-spinner" style="display: none;">
+      <span class="sr-only">Loading...</span>
+    </div>
+  </div>
+  <form method="post" action="">
+    <div class="table-responsive" id="spdx-table" style="display: none;">
+      <table class="table table-stripped">
+        <thead>
+          <tr>
+            <th>
+              <input type="checkbox" id="spdx_select_all">
+            </th>
+            <th>
+              Package Name
+            </th>
+            <th>
+              Source Repository
+            </th>
+            <th>
+              Data source
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+      </table>
+    </div>
+
+    {% csrf_token %}
+    <input type="hidden" name="create" value="true">
+    <button type="submit" class="btn btn-orange createProjectBtn" disabled>
+      Analyze SBOM
+    </button>
+  </form>
+
+</div>
+
+{% if not github_enabled %}
+<div class="modal fade" id="modal-github-need" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">We need a token</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+				{% include 'cauldronapp/create_project/datasource_card/message_token_required.html' with datasource='GitHub' only %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <a class="btn btn-large btn-github" href="{% url 'github_oauth' %}?open_tab=github"><i class="fab fa-github"></i> Authorize</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endif %}
+
+{% if not gitlab_enabled %}
+<div class="modal fade" id="modal-gitlab-need" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">We need a token</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+				{% include 'cauldronapp/create_project/datasource_card/message_token_required.html' with datasource='GitLab' only %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <a class="btn btn-large btn-gitlab" href="{% url 'gitlab_oauth' 'gitlab' %}?open_tab=gitlab"><i class="fab fa-gitlab"></i> Authorize</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+
+{% block javascript %}
+<script>OpenSPDX = {{new_project.spdx_file|default:'undefined'}};</script>
+<script>OpenTab = '{{open_tab|default:''}}';</script>
+<script src="{% static 'js/create_project_k.js' %}"></script>
+{% endblock %}

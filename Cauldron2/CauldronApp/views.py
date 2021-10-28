@@ -1,5 +1,7 @@
 import logging
 import datetime
+import os.path
+
 import requests
 import random
 from random import choice
@@ -31,6 +33,7 @@ from cauldron_apps.poolsched_twitter.models import ITwitterNotify
 from cauldron_apps.poolsched_export.models import IExportCSV, IReportKbn, ProjectKibanaReport, \
     ICommitsByMonth, ReportsCommitsByMonth
 from cauldron_apps.cauldron_actions.models import IRefreshActions
+from cauldron_apps.poolsched_sbom.models import SPDXUserFile, IParseSPDX
 from cauldron_apps.cauldron.models import IAddGHOwner, IAddGLOwner, Project, OauthUser, AnonymousUser, \
     UserWorkspace, Repository, GitLabRepository, GitRepository, GitHubRepository, MeetupRepository, \
     StackExchangeRepository, AuthorizedBackendUser, BannerMessage, RepositoryMetrics
@@ -743,6 +746,121 @@ def request_logs(request, logs_id):
     return JsonResponse({'content': logs, 'more': logs_obj.job_set.exists()})
 
 
+def request_spdx_results(request, spdx_id):
+    try:
+        dbfile = SPDXUserFile.objects.get(id=spdx_id)
+    except SPDXUserFile.DoesNotExist:
+        return JsonResponse({'error': "SPDX file not found."})
+    if not dbfile.result:
+        return JsonResponse({'status': 'parsing'})
+    if 'results' in dbfile.result:
+        return JsonResponse(dbfile.result)
+
+
+def create_repositories(project, repositories):
+    """
+    Repositories should include at least the backend name. For each backend different parameters are needed.
+    GitHub: backend, url, Commits?, Issues/PRs?, Forks?
+    GitLab: backend, url, instance?, Commits?, Issues/MRs?, Forks?
+    Git: backend, url
+    Meetup: backend, url
+    StackExchange: backend, site, tags
+    """
+    error = None
+
+    for repo_url in repositories:
+        owner, repo = datasources.github.parse_input_data(repo_url)
+        if owner and repo:
+            if not project.creator.ghtokens.filter(instance='GitHub').exists():
+                error = 'Missing GitHub token for a repository'
+                break
+            commits, issues, forks = True, True, False
+            output = datasources.github.analyze_data(project=project,
+                                                     data=repo_url,
+                                                     commits=commits,
+                                                     issues=issues,
+                                                     forks=forks)
+            if output and output['status'] != 'ok':
+                error = output['message']
+                break
+
+        gl_instance = GLInstance.objects.get(slug='gitlab')
+        owner, repo = datasources.gitlab.parse_input_data(repo_url, gl_instance.endpoint)
+        if owner and repo:
+            if not project.creator.gltokens.filter(instance=gl_instance).exists():
+                error = 'Missing GitLab token for a repository'
+                break
+            commits, issues, forks = True, True, False
+            output = datasources.gitlab.analyze_data(project=project,
+                                                     data=repo_url,
+                                                     instance=gl_instance,
+                                                     commits=commits,
+                                                     issues=issues,
+                                                     forks=forks)
+            if output and output['status'] != 'ok':
+                error = output['message']
+                break
+
+    return error
+
+
+def request_create_sbom(request):
+    data = request.session.get('new_project')
+    if data is None:
+        data = {}
+
+    if request.method == 'POST':
+        if 'name' in request.POST:
+            data['name'] = request.POST['name']
+            request.session['new_project'] = data
+            if request.user.is_authenticated and \
+                    Project.objects.filter(creator=request.user, name=data['name']).exists():
+                return JsonResponse({'status': 'error', 'message': 'You have the same name defined in another report'})
+            elif len(data['name']) < 1 or len(data['name']) > 32:
+                return JsonResponse({'status': 'error', 'message': 'Must be 1-32 characters long.'})
+            return JsonResponse({'status': 'ok'}, status=200)
+
+        if 'create' in request.POST and 'repository' in request.POST:
+            repositories = request.POST.getlist('repository')
+            error = _validate_data_project(request, data)
+            if error:
+                return custom_404(request, error)
+            if not request.user.is_authenticated:
+                user = create_empty_user()
+                login(request, user)
+            public = False if settings.LIMITED_ACCESS else True
+            project = Project.objects.create(name=data['name'], creator=request.user, public=public)
+            project.create_es_role()
+            error = create_repositories(project, repositories)
+            if error:
+                delete_project(project)
+                return custom_403(request, error)
+            del request.session['new_project']
+            return HttpResponseRedirect(reverse('show_project', kwargs={'project_id': project.id}))
+
+        if 'spdx_file' in request.FILES:
+            spdx_file = request.FILES['spdx_file']
+            dbfile = SPDXUserFile.objects.create(uploaded_by=request.user, name=spdx_file.name)
+            file_path = os.path.join(settings.SPDX_FILES_PATH, dbfile.location)
+            with open(file_path, 'wb+') as destination:
+                for chunk in spdx_file.chunks():
+                    destination.write(chunk)
+            IParseSPDX.objects.create(user=request.user, spdx_file=dbfile)
+            data['spdx_file'] = dbfile.id
+            request.session['new_project'] = data
+
+    context = create_context(request)
+
+    if request.user.is_authenticated:
+        context['github_enabled'] = request.user.ghtokens.filter(instance='GitHub').exists()
+        context['gitlab_enabled'] = request.user.gltokens.filter(instance='GitLab').exists()
+
+    context['new_project'] = request.session.get('new_project')
+
+    request.session['last_page'] = reverse('create_sbom')
+    return render(request, 'cauldronapp/create_sbom/base.html', context=context)
+
+
 @require_http_methods(['POST'])
 def request_add_to_project(request, project_id):
     """ Add new repositories to a project"""
@@ -1202,8 +1320,6 @@ def _validate_data_project(request, data):
         return 'No data found'
     if 'name' not in data:
         return 'You need to define a name for the report.'
-    if not data.get('actions', None):
-        return 'You need to add at least one data source.'
     if len(data['name']) < 1 or len(data['name']) > 32:
         return 'Project name should be between 1 and 32 chars.'
     if request.user.is_authenticated and Project.objects.filter(creator=request.user, name=data['name']).exists():
@@ -1230,6 +1346,8 @@ def request_new_project(request):
     twitter_notification = request.POST.get('twitter-notification')
 
     error = _validate_data_project(request, project_data)
+    if not project_data.get('actions', None):
+        error = 'You need to add at least one data source.'
     if error:
         # TODO: format error
         return custom_404(request, error)
@@ -2031,6 +2149,9 @@ def create_context(request):
     # Branding
     context['CLOUD_CUSTOM_BRAND'] = settings.CLOUD_CUSTOM_BRAND
     context['CLOUD_CUSTOM_SUB_BRAND'] = settings.CLOUD_CUSTOM_SUB_BRAND
+
+    # SPDX
+    context['spdx_enabled'] = settings.SPDX_ENABLED
 
     return context
 
