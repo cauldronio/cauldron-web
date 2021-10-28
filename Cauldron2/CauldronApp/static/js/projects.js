@@ -1,6 +1,8 @@
 $(document).ready(function(){
     $('form#form-delete-project').on('submit', onSubmitDelete);
+    $('a[name=generate-commits-reports]').on('click', generateCommitsReports);
     refreshProjects();
+    getReportsExportStatus();
 });
 
 $('#modal-delete-project').on('show.bs.modal', function (e) {
@@ -79,4 +81,43 @@ function refreshProjects() {
     });
     setTimeout(refreshProjects, 5000);
   }
+}
+
+
+function generateCommitsReports(event) {
+    event.preventDefault();
+    $.post(url =`/projects/commits-by-month`)
+    .done(function (data) {
+        $(`#dropdown-generate .generate-spinner`).show();
+        $(`#dropdown-generate .generate-icon`).hide();
+        setTimeout(getReportsExportStatus, 3000);
+    })
+    .fail(function (data) {
+        if(!data.hasOwnProperty('responseJSON')){
+            showToast('Unknown error from server', `Internal error.`, 'fas fa-question-circle text-danger', ERROR_TIMEOUT_MS);
+            return;
+        }
+        showToast('Failed', `There was a problem: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
+    })
+}
+
+function getReportsExportStatus() {
+    $.getJSON(`/projects/commits-by-month`)
+    .done(function(data) {
+        if (data['status'] == 'running') {
+            $("#dropdown-generate .generate-spinner").show();
+            $("#dropdown-generate .generate-icon").hide();
+            $("#dropdown-generate .commits-progress").html(`(${data['progress']})`)
+            setTimeout(getReportsExportStatus, 3000);
+        } else if (data['status'] == 'completed') {
+            $("#dropdown-generate .commits-progress").html();
+            $('a[name=download-commits-reports]').removeClass('disabled');
+            $('a[name=download-commits-reports]').attr('href', data['location']);
+            console.log(data['last-updated'])
+            var created = moment(data['last-updated'], 'YYYY-MM-DDTHH:mm:ss.SSSZ', true).from(moment.utc());
+            $('a[name=download-commits-reports] span.last-updated').html(`(${created})`);
+            $("#dropdown-generate .generate-spinner").hide();
+            $("#dropdown-generate .generate-icon").show();
+        }
+    })
 }

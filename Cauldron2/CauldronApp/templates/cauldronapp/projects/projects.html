@@ -9,7 +9,39 @@
 
 {% block content %}
 <div class="container-fluid mt-3">
-	<h1>Reports</h1>
+	<div class="d-flex justify-content-between">
+		<h1>Reports</h1>
+		{% if request.user.is_superuser %}
+		<div class="dropdown" id="dropdown-generate">
+			<button class="btn btn-outline-secondary dropdown-toggle" type="button" id="commits-by-month" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+				<div class="generate-spinner spinner-border spinner-border-sm pr-2" role="status" style="display: none;">
+					<span class="sr-only">Loading...</span>
+				</div>
+				<span>Commits by month</span>
+			</button>
+			<div class="dropdown-menu dropdown-menu-right">
+				<h6 class="dropdown-header">admin exclusive</h6>
+				<p class="text-muted px-3 py-1 m-0">
+					Download commit numbers for all reports grouped my month.
+				</p>
+				<div class="dropdown-divider"></div>
+				<a name="generate-commits-reports" class="dropdown-item" href="#">
+					<div class="generate-spinner spinner-border spinner-border-sm" role="status" style="display: none;">
+						<span class="sr-only">Loading...</span>
+					</div>
+					<i class="generate-icon fas fa-sync"></i>
+					<span class="px-2">Generate</span>
+					<span class="commits-progress"></span>
+				</a>
+				<a name="download-commits-reports" class="dropdown-item disabled" href="">
+					<i class="fas fa-download"></i>
+					<span class="px-2">Download</span>
+					<span class="last-updated"></span>
+				</a>
+			</div>
+		</div>
+		{% endif %}
+	</div>
 
 	<div class="my-3 d-flex justify-content-between border-bottom border-top">
 
@@ -90,6 +122,7 @@
 
 
 {% block javascript %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js" integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ==" crossorigin="anonymous"></script>
 <script src="{% static 'js/sparkline.js' %}" charset="utf-8"></script>
 <script src="{% static 'js/projects.js' %}" charset="utf-8"></script>
 

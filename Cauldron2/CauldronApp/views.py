@@ -28,7 +28,8 @@ from cauldron_apps.poolsched_gitlab.models import GLToken, GLInstance, IGLRaw
 from cauldron_apps.poolsched_meetup.models import MeetupToken, IMeetupRaw
 from cauldron_apps.poolsched_stackexchange.models import StackExchangeToken, IStackExchangeRaw
 from cauldron_apps.poolsched_twitter.models import ITwitterNotify
-from cauldron_apps.poolsched_export.models import IExportCSV, IReportKbn, ProjectKibanaReport
+from cauldron_apps.poolsched_export.models import IExportCSV, IReportKbn, ProjectKibanaReport, \
+    ICommitsByMonth, ReportsCommitsByMonth
 from cauldron_apps.cauldron_actions.models import IRefreshActions
 from cauldron_apps.cauldron.models import IAddGHOwner, IAddGLOwner, Project, OauthUser, AnonymousUser, \
     UserWorkspace, Repository, GitLabRepository, GitRepository, GitHubRepository, MeetupRepository, \
@@ -1581,6 +1582,31 @@ def request_project_export_status(request, project_id):
         return JsonResponse({'status': 'error', 'message': 'report not found'}, status=404)
     summary = project.export_summary()
     return JsonResponse(summary)
+
+
+def request_commits_by_month(request):
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return JsonResponse({'status': 'error', 'message': 'Not authorized'}, status=403)
+
+    if request.method == 'POST':
+        ICommitsByMonth.objects.get_or_create(defaults={'user': request.user})
+
+    response = {
+        'status': 'unknown'
+    }
+    result = ReportsCommitsByMonth.objects.first()
+    if result:
+        response['status'] = 'completed'
+        response['location'] = '/download/' + result.location
+        response['last-updated'] = result.created
+
+    # Check if a new intention is running
+    intention = ICommitsByMonth.objects.first()
+    if intention:
+        response['status'] = 'running'
+        response['progress'] = intention.progress
+
+    return JsonResponse(response)
 
 
 def report_last_modified(request, project_id, *args, **kwargs):
