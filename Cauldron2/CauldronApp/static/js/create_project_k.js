@@ -12,6 +12,7 @@ $(document).ready(function(){
     }
     $('#spdx_select_all').change(function(){
         var checks = $('#spdx-table').find(':checkbox:enabled:not(#spdx_select_all)');
+        checks.prop('checked', $(this).is(':checked'));
         checks.trigger('change');
         checks.prop('checked', $(this).is(':checked'));
     });
@@ -80,7 +81,7 @@ function fetch_spdx_results(spdx_id){
                 }
                 $(':checkbox:enabled').change(function(event){
                     var jq_target = $(event.target);
-                    if (!jq_target.is(':checked')) {
+                    if (jq_target.is(':checked')) {
                         var datasource_row = jq_target.closest('tr').children('.row-datasource').html()
                         if (datasource_row == 'github' && document.getElementById('modal-github-need')) {
                             $('#modal-github-need').modal('show');

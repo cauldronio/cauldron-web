@@ -826,8 +826,11 @@ def request_create_sbom(request):
             if error:
                 return custom_404(request, error)
             if not request.user.is_authenticated:
-                user = create_empty_user()
-                login(request, user)
+                if not settings.LIMITED_ACCESS:
+                    user = create_empty_user()
+                    login(request, user)
+                else:
+                    return custom_404(request, 'Not authorized')
             public = False if settings.LIMITED_ACCESS else True
             project = Project.objects.create(name=data['name'], creator=request.user, public=public)
             project.create_es_role()
