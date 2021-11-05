@@ -17,12 +17,20 @@
 
 {% if LIMITED_ACCESS and editable %}
 <h2>Visibility</h2>
-<p>You can make your report public so it will appear in the landing page and can be shared with anyone with read only access.</p>
+<p>You can make your report public, it will appear in the landing page and can be shared with anyone with read only access.</p>
 <div class="custom-control custom-switch mb-4">
   <input type="checkbox" class="custom-control-input" id="publicReportSwitch" name="visibility" {% if project.public %}checked{% endif %}>
   <label class="custom-control-label" for="publicReportSwitch">Public report</label>
 </div>
+{% endif %}
 
+{% if editable and autorefresh_enabled or request.user.is_superuser %}
+<h2>Auto refresh report</h2>
+<p>If this option is selected, your report will be automatically be refreshed every day.</p>
+<div class="custom-control custom-switch mb-4">
+  <input type="checkbox" class="custom-control-input" id="refreshReportSwitch" name="refresh" {% if project.autorefresh %}checked{% endif %}>
+  <label class="custom-control-label" for="refreshReportSwitch">Auto refresh</label>
+</div>
 {% endif %}
 
 {% include "cauldronapp/project/project_actions.html" %}

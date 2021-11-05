@@ -22,7 +22,7 @@ from CauldronApp.pages import Pages
 from CauldronApp.oauth import GitHubOAuth, GitLabOAuth, MeetupOAuth, TwitterOAuth, StackExchangeOAuth
 from CauldronApp.project_metrics import metrics
 
-from poolsched.models import Intention, ArchivedIntention
+from poolsched.models import Intention, ArchivedIntention, ScheduledIntention
 from poolsched.models.jobs import Log
 from cauldron_apps.cauldron.models.backends import Backends
 from cauldron_apps.poolsched_github.models import GHToken, IGHRaw
@@ -45,7 +45,6 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 User = get_user_model()
-
 
 JOB_LOGS = '/job_logs'
 
@@ -541,6 +540,7 @@ def project_common(request, project_id):
     context['active_notifications'] = ITwitterNotify.objects.filter(project=project).exists()
     context['editable'] = ((request.user.is_authenticated and request.user == project.creator) or
                            request.user.is_superuser)
+    context['autorefresh_enabled'] = settings.AUTOREFRESH_ENABLED
     if request.user.is_authenticated:
         context['projects_compare'] = request.user.project_set.exclude(pk=project.pk)
 
@@ -594,8 +594,8 @@ def request_show_project(request, project_id):
 
         context['contributors'] = contrib_metrics
 
-    repo_metrics = RepositoryMetrics.objects.filter(repository__in=project.repository_set.all())\
-        .distinct()\
+    repo_metrics = RepositoryMetrics.objects.filter(repository__in=project.repository_set.all()) \
+        .distinct() \
         .order_by(sort_by)
     if reverse:
         repo_metrics = repo_metrics.reverse()
@@ -660,7 +660,7 @@ def request_report_visibility(request, project_id):
     except Project.DoesNotExist:
         return JsonResponse({'message': 'The report requested was not found in this server', 'status': 404})
 
-    if not request.user.is_authenticated and request.user != project.creator and not request.user.is_superuser:
+    if not request.user.is_authenticated or (request.user != project.creator and not request.user.is_superuser):
         return JsonResponse({'message': 'You are not allowed to modify this report', 'status': 404})
 
     visibility = request.POST.get('visibility')
@@ -1011,7 +1011,7 @@ def request_rename_project(request, project_id):
     except Project.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': f"Report {project_id} does not exist"},
                             status=404)
-    if not(request.user.is_authenticated and (request.user == project.creator or request.user.is_superuser)):
+    if not (request.user.is_authenticated and (request.user == project.creator or request.user.is_superuser)):
         return JsonResponse({'status': 'error', 'message': f'You cannot edit report {project_id}, '
                                                            f'you are not the owner'},
                             status=400)
@@ -1199,7 +1199,8 @@ def create_project_add(request):
         if 'actions' not in data_project:
             data_project['actions'] = []
         data_project['actions'].append({'id': random_id(5), 'backend': 'stackexchange',
-                                        'data': f'{site}: {tags}', 'attrs': {'questions': True}, 'params': {'site': site, 'tags': tags}})
+                                        'data': f'{site}: {tags}', 'attrs': {'questions': True},
+                                        'params': {'site': site, 'tags': tags}})
         request.session['new_project'] = data_project
 
     elif backend == 'repo_list':
@@ -1210,7 +1211,6 @@ def create_project_add(request):
             data.extend(list_data.splitlines())
 
         repo_file = request.FILES.get('repo_file')
-        file_data = None
         if repo_file:
             for chunk in repo_file.chunks():
                 data.extend(chunk.splitlines())
@@ -1254,7 +1254,8 @@ def create_project_add(request):
                 request.session['new_project'] = data_project
 
             elif datasources.gitlab.parse_input_data(repo_url, gitlab_instance.endpoint) != (None, None):
-                if not request.user.is_authenticated or not request.user.gltokens.filter(instance__slug='gitlab').exists():
+                if not request.user.is_authenticated or not request.user.gltokens.filter(
+                        instance__slug='gitlab').exists():
                     error = True
                     continue
 
@@ -1289,7 +1290,8 @@ def create_project_add(request):
                     data_project = {}
                 if 'actions' not in data_project:
                     data_project['actions'] = []
-                data_project['actions'].append({'id': random_id(5), 'backend': 'git', 'data': repo_url, 'attrs': {'Commits': True}})
+                data_project['actions'].append(
+                    {'id': random_id(5), 'backend': 'git', 'data': repo_url, 'attrs': {'Commits': True}})
                 request.session['new_project'] = data_project
 
         if error:
@@ -1408,7 +1410,8 @@ def request_new_project(request):
         try:
             ITwitterNotify.objects.create(user=request.user,
                                           project=project,
-                                          report_url=request.build_absolute_uri(reverse('show_project', kwargs={'project_id': project.id})))
+                                          report_url=request.build_absolute_uri(
+                                              reverse('show_project', kwargs={'project_id': project.id})))
         except:
             error = "Error creating the Twitter notification."
 
@@ -1497,6 +1500,48 @@ def request_refresh_project(request, project_id):
                          'message': f"Refreshing {refresh_count} repositories"})
 
 
+@require_http_methods(['POST'])
+def request_project_autorefresh(request, project_id):
+    """Enable auto refresh of repositories"""
+    if request.method != 'POST':
+        JsonResponse({'status': 'error', 'message': f"Method not allowed"},
+                     status=403)
+
+    try:
+        project = Project.objects.get(id=project_id)
+    except Project.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': f"Project {project_id} does not exist"},
+                            status=404)
+
+    if not request.user.is_authenticated or (request.user != project.creator and not request.user.is_superuser):
+        return JsonResponse({'message': 'You are not allowed to modify this report'},
+                            status=404)
+
+    if not (settings.AUTOREFRESH_ENABLED or request.user.is_superuser):
+        return JsonResponse({'message': 'Not authorized to perform this action. Ask an administrator'},
+                            status=403)
+
+    refresh = request.POST.get('refresh')
+    if refresh == 'enabled':
+        project.autorefresh = True
+        project.save()
+        scheduled_date = datetime.datetime.now() + datetime.timedelta(hours=1)
+        ScheduledIntention.objects.get_or_create(intention_class='cauldron_apps.cauldron.models.IRefreshProject',
+                                                 kwargs={'project_id': project.id, 'user_id': request.user.id},
+                                                 user=request.user,
+                                                 scheduled_at=scheduled_date)
+        return JsonResponse({'status': 'ok', 'message': "Refresh report every 24 hours."})
+    elif refresh == 'disabled':
+        project.autorefresh = False
+        project.save()
+        ScheduledIntention.objects.filter(intention_class='cauldron_apps.cauldron.models.IRefreshProject') \
+            .filter(kwargs__project_id=project.id).delete()
+        return JsonResponse({'status': 'ok', 'message': "Stop refreshing report."})
+    else:
+        return JsonResponse({'status': 'error', 'message': f"refresh value not in ('enabled', 'disabled')"},
+                            status=404)
+
+
 def request_refresh_repository(request, repo_id):
     """Refresh the selected repository"""
     try:
@@ -1534,7 +1579,7 @@ def request_compare_projects(request):
     context['projects'] = projects
     context['tab'] = request.GET.get('tab', 'overview')
 
-    available_tags = ['overview', 'activity-git', 'activity-issues', 'activity-reviews', 'community-overview'];
+    available_tags = ['overview', 'activity-git', 'activity-issues', 'activity-reviews', 'community-overview']
     if context['tab'] not in available_tags:
         context['tab'] = 'overview'
 
@@ -2215,7 +2260,7 @@ def request_projects_info(request):
 
 # https://gist.github.com/jcinis/2866253
 def generate_random_uuid(length=16, chars=ascii_lowercase + digits, split=4, delimiter='-'):
-    username = ''.join([choice(chars) for i in range(length)])
+    username = ''.join([choice(chars) for _ in range(length)])
 
     if split:
         username = delimiter.join([username[start:start + split] for start in range(0, len(username), split)])
@@ -2337,7 +2382,8 @@ def admin_page_users(request):
             'stackexchange': StackExchangeToken.objects.filter(user=user).first(),
         }
         for instance in GLInstance.objects.values_list('slug', flat=True):
-            user_entry['tokens']['gitlab'][instance] = GLToken.objects.filter(user=user, instance__slug=instance).first()
+            user_entry['tokens']['gitlab'][instance] = GLToken.objects.filter(user=user,
+                                                                              instance__slug=instance).first()
         context['users'].append(user_entry)
 
     return render(request, 'cauldronapp/admin/admin-users.html', context=context)
@@ -2360,7 +2406,8 @@ def request_add_user(request):
         return JsonResponse({'status': 'error', 'message': 'username invalid'}, status=400)
 
     if OauthUser.objects.filter(username=username, backend=backend).exists():
-        return JsonResponse({'status': 'error', 'message': f'user {username} already exists for backend called {backend}'}, status=400)
+        return JsonResponse(
+            {'status': 'error', 'message': f'user {username} already exists for backend called {backend}'}, status=400)
 
     if settings.LIMITED_ACCESS:
         AuthorizedBackendUser.objects.get_or_create(backend=backend, username=username)

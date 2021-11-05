@@ -90,6 +90,9 @@ CLOUD_CUSTOM_SUB_BRAND = os.environ.get('CLOUD_CUSTOM_SUB_BRAND')
 SPDX_FILES_PATH = '/spdx_files'
 SPDX_ENABLED = os.environ.get('SPDX_ENABLED', False) in (True, 'True', 'true')
 
+# Autorefresh reports
+AUTOREFRESH_ENABLED = os.environ.get('AUTOREFRESH_REPORTS', False) in (True, 'True', 'true')
+
 CAULDRON_ADMINS = {
     'GITHUB': json.loads(os.environ.get('GITHUB_ADMINS', '[]')),
     'GITLAB': json.loads(os.environ.get('GITLAB_ADMINS', '[]')),

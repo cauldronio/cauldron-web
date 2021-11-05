@@ -27,6 +27,8 @@ $(document).ready(function(){
     $('.sidebar-item').mouseleave(hideFlyOutMenu);
 
     $('#publicReportSwitch').change(onSwitchPublicReport)
+    $('#refreshReportSwitch').change(onSwitchAutorefreshReport)
+
 
     getSummary();
 
@@ -339,6 +341,18 @@ function toggleSidebar(){
 function onSwitchPublicReport(event){
     var value = this.checked ? 'public': 'private'
     $.post(url=window.location.pathname+'/visibility', data={'visibility': value})
+    .done(function (data) {
+        showToast('Success', `${data.message}`, 'fas fa-check-circle text-success', 3000);
+    })
+    .fail(function (data) {
+        showToast('Failed', `${data.responseJSON['status']} ${data.status}: ${data.responseJSON['message']}`, 'fas fa-times-circle text-danger', ERROR_TIMEOUT_MS);
+    })
+}
+
+
+function onSwitchAutorefreshReport(event){
+    var value = this.checked ? 'enabled': 'disabled'
+    $.post(url=window.location.pathname+'/autorefresh', data={'refresh': value})
     .done(function (data) {
         showToast('Success', `${data.message}`, 'fas fa-check-circle text-success', 3000);
     })
