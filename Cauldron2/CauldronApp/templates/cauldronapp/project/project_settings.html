@@ -26,7 +26,7 @@
 
 {% if editable and autorefresh_enabled or request.user.is_superuser %}
 <h2>Auto refresh report</h2>
-<p>If this option is selected, your report will be automatically be refreshed every day.</p>
+<p>If this option is selected, your report will be automatically refreshed every day. The first refresh will be 1 hour after enabling this option.</p>
 <div class="custom-control custom-switch mb-4">
   <input type="checkbox" class="custom-control-input" id="refreshReportSwitch" name="refresh" {% if project.autorefresh %}checked{% endif %}>
   <label class="custom-control-label" for="refreshReportSwitch">Auto refresh</label>

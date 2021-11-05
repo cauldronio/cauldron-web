@@ -86,7 +86,7 @@ function refreshProjects() {
 
 function generateCommitsReports(event) {
     event.preventDefault();
-    $.post(url =`/projects/commits-by-month`)
+    $.post(url =`/projects/commits-by-week`)
     .done(function (data) {
         $(`#dropdown-generate .generate-spinner`).show();
         $(`#dropdown-generate .generate-icon`).hide();
@@ -102,7 +102,7 @@ function generateCommitsReports(event) {
 }
 
 function getReportsExportStatus() {
-    $.getJSON(`/projects/commits-by-month`)
+    $.getJSON(`/projects/commits-by-week`)
     .done(function(data) {
         if (data['status'] == 'running') {
             $("#dropdown-generate .generate-spinner").show();

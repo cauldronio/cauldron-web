@@ -80,7 +80,7 @@ urlpatterns = [
     path('admin-kibana', views.request_kibana_admin, name='kibana_admin'),
 
     path('projects/info', views.request_projects_info),
-    path('projects/commits-by-month', views.request_commits_by_month, name='commits_by_month'),
+    path('projects/commits-by-week', views.request_commits_by_week, name='commits_by_week'),
 
     path('message/<int:message_id>/dismiss', views.request_dismiss_message, name='dismiss_message'),
 

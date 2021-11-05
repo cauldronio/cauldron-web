@@ -31,7 +31,7 @@ from cauldron_apps.poolsched_meetup.models import MeetupToken, IMeetupRaw
 from cauldron_apps.poolsched_stackexchange.models import StackExchangeToken, IStackExchangeRaw
 from cauldron_apps.poolsched_twitter.models import ITwitterNotify
 from cauldron_apps.poolsched_export.models import IExportCSV, IReportKbn, ProjectKibanaReport, \
-    ICommitsByMonth, ReportsCommitsByMonth
+    ICommitsByWeek, ReportsCommitsByWeek
 from cauldron_apps.cauldron_actions.models import IRefreshActions
 from cauldron_apps.poolsched_sbom.models import SPDXUserFile, IParseSPDX
 from cauldron_apps.cauldron.models import IAddGHOwner, IAddGLOwner, Project, OauthUser, AnonymousUser, \
@@ -1750,24 +1750,24 @@ def request_project_export_status(request, project_id):
     return JsonResponse(summary)
 
 
-def request_commits_by_month(request):
+def request_commits_by_week(request):
     if not request.user.is_authenticated or not request.user.is_superuser:
         return JsonResponse({'status': 'error', 'message': 'Not authorized'}, status=403)
 
     if request.method == 'POST':
-        ICommitsByMonth.objects.get_or_create(defaults={'user': request.user})
+        ICommitsByWeek.objects.get_or_create(defaults={'user': request.user})
 
     response = {
         'status': 'unknown'
     }
-    result = ReportsCommitsByMonth.objects.first()
+    result = ReportsCommitsByWeek.objects.first()
     if result:
         response['status'] = 'completed'
         response['location'] = '/download/' + result.location
         response['last-updated'] = result.created
 
     # Check if a new intention is running
-    intention = ICommitsByMonth.objects.first()
+    intention = ICommitsByWeek.objects.first()
     if intention:
         response['status'] = 'running'
         response['progress'] = intention.progress
