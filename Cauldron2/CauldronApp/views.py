@@ -1763,7 +1763,10 @@ def request_commits_by_week(request):
     result = ReportsCommitsByWeek.objects.first()
     if result:
         response['status'] = 'completed'
-        response['location'] = '/download/' + result.location
+        if result.location_commits:
+            response['location_commits'] = '/download/' + result.location_commits
+        if result.location_authors:
+            response['location_authors'] = '/download/' + result.location_authors
         response['last-updated'] = result.created
 
     # Check if a new intention is running

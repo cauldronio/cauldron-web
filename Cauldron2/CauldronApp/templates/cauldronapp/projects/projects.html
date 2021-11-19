@@ -17,12 +17,12 @@
 				<div class="generate-spinner spinner-border spinner-border-sm pr-2" role="status" style="display: none;">
 					<span class="sr-only">Loading...</span>
 				</div>
-				<span>Commits by week</span>
+				<span>Export data by week</span>
 			</button>
 			<div class="dropdown-menu dropdown-menu-right">
 				<h6 class="dropdown-header">admin exclusive</h6>
 				<p class="text-muted px-3 py-1 m-0">
-					Download commit numbers for all reports grouped by week.
+					Download commit and author numbers for all reports grouped by week.
 				</p>
 				<div class="dropdown-divider"></div>
 				<a name="generate-commits-reports" class="dropdown-item" href="#">
@@ -35,7 +35,12 @@
 				</a>
 				<a name="download-commits-reports" class="dropdown-item disabled" href="">
 					<i class="fas fa-download"></i>
-					<span class="px-2">Download</span>
+					<span class="px-2">Download commits</span>
+					<span class="last-updated"></span>
+				</a>
+				<a name="download-authors-reports" class="dropdown-item disabled" href="">
+					<i class="fas fa-download"></i>
+					<span class="px-2">Download authors</span>
 					<span class="last-updated"></span>
 				</a>
 			</div>
@@ -124,7 +129,7 @@
 {% block javascript %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js" integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ==" crossorigin="anonymous"></script>
 <script src="{% static 'js/sparkline.js' %}" charset="utf-8"></script>
-<script src="{% static 'js/projects.js' %}" charset="utf-8"></script>
+<script src="{% static 'js/projects_k.js' %}" charset="utf-8"></script>
 
 <script>
 	{% for project in projects_info %}

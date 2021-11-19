@@ -6,7 +6,7 @@ elasticsearch>=7.0.0,<7.14.0
 elasticsearch-dsl>=7.0.0,<8.0.0
 mysqlclient
 python-gitlab>=2.0,<3.0
-python-slugify>= 4.0.0,<5
+python-slugify>= 4.0.0,<6
 cryptography>=3.2
 pyjwt<2
 bokeh==2.3.1

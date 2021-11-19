@@ -111,10 +111,17 @@ function getReportsExportStatus() {
             setTimeout(getReportsExportStatus, 3000);
         } else if (data['status'] == 'completed') {
             $("#dropdown-generate .commits-progress").html('');
-            $('a[name=download-commits-reports]').removeClass('disabled');
-            $('a[name=download-commits-reports]').attr('href', data['location']);
             var created = moment(data['last-updated'], 'YYYY-MM-DDTHH:mm:ss.SSSZ', true).from(moment.utc());
-            $('a[name=download-commits-reports] span.last-updated').html(`(${created})`);
+            if (data['location_commits']) {
+                 $('a[name=download-commits-reports]').removeClass('disabled');
+                 $('a[name=download-commits-reports]').attr('href', data['location_commits']);
+                 $('a[name=download-commits-reports] span.last-updated').html(`(${created})`);
+            }
+            if (data['location_authors']) {
+                $('a[name=download-authors-reports]').removeClass('disabled');
+                $('a[name=download-authors-reports]').attr('href', data['location_authors']);
+                $('a[name=download-authors-reports] span.last-updated').html(`(${created})`);
+            }
             $("#dropdown-generate .generate-spinner").hide();
             $("#dropdown-generate .generate-icon").show();
         }
