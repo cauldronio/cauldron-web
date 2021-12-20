@@ -67,6 +67,7 @@ function fetch_spdx_results(spdx_id){
             } else if (data['results']) {
                 $('#spdx-load-spinner').hide();
                 $('#spdx-table').show();
+                $('#remove-table').show();
                 for(var i=0; i<data['results'].length; i++){
                     var item = data['results'][i]
                     var repository = item['repository'] ? item['repository'] : '?'

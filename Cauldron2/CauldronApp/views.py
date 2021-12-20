@@ -810,6 +810,9 @@ def request_create_sbom(request):
         data = {}
 
     if request.method == 'POST':
+        if 'delete' in request.POST:
+            request.session['new_project'] = {}
+
         if 'name' in request.POST:
             data['name'] = request.POST['name']
             request.session['new_project'] = data
@@ -832,7 +835,7 @@ def request_create_sbom(request):
                 else:
                     return custom_404(request, 'Not authorized')
             public = False if settings.LIMITED_ACCESS else True
-            project = Project.objects.create(name=data['name'], creator=request.user, public=public)
+            project = Project.objects.create(name=data['name'], creator=request.user, public=public, sbom=True)
             project.create_es_role()
             error = create_repositories(project, repositories)
             if error:

@@ -85,7 +85,7 @@
         {% endif %}
         {% if has_gitlab or has_github or has_git %}
         <li class="nav-item" role="presentation">
-          <a class="nav-link" data-category="repos" data-toggle="tab" href="#repos" role="tab" aria-controls="repos" aria-selected="true">SBOM (repos)</a>
+          <a class="nav-link" data-category="repos" data-toggle="tab" href="#repos" role="tab" aria-controls="repos" aria-selected="true">{% if project.sbom %}SBOM{% else %}Repos{% endif %}</a>
         </li>
         {% endif %}
         <li class="nav-item" role="presentation">

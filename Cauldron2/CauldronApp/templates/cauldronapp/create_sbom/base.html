@@ -40,6 +40,15 @@
       <span class="sr-only">Loading...</span>
     </div>
   </div>
+  <form action="" method="post" class="btn-remove mb-1" id="remove-table" style="display: none;">
+    {% csrf_token %}
+    <input type="hidden" name="delete" value="all">
+    <button type="submit" class="btn btn-sm btn-icon-split btn-outline-danger">
+      <span class="icon"><i class="fa fa-trash-alt"></i></span>
+      <span class="text">Remove all</span>
+    </button>
+  </form>
+
   <form method="post" action="">
     <div class="table-responsive" id="spdx-table" style="display: none;">
       <table class="table table-stripped">
