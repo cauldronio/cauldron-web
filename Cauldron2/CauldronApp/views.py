@@ -63,10 +63,7 @@ def homepage(request):
     if settings.LIMITED_ACCESS:
         return HttpResponseRedirect(reverse('explore_projects'))
 
-    latest_projects = Project.objects.order_by('-created')[:6]
-
     context = create_context(request)
-    context['latest_projects'] = latest_projects
 
     return render(request, 'cauldronapp/index.html', context=context)
 
@@ -259,7 +256,10 @@ def request_gitlab_oauth(request, backend):
                                                             f"visualization in you current account so that you do not "
                                                             f"loose anything"}
 
-    GLToken.objects.update_or_create(user=request.user, instance=instance, defaults={'token': oauth_user.token})
+    GLToken.objects.update_or_create(user=request.user,
+                                     instance=instance,
+                                     defaults={'token': oauth_user.token,
+                                               'refresh_token': oauth_user.refresh_token})
 
     if data_add and data_add['backend'] == backend:
         project = Project.objects.get(id=data_add['proj_id'])

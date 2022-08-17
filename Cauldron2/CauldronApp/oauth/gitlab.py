@@ -36,6 +36,7 @@ class GitLabOAuth(oauth.OAuth):
         if not r.ok:
             return f"GitLab API Error. {r.status_code}: {r.reason}"
         self.token = r.json().get('access_token', None)
+        self.refresh_token = r.json().get('refresh_token', None)
         if not self.token:
             return f"GitLab API Error. Oauth token not found for the authorization"
 
