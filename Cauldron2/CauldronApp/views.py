@@ -14,6 +14,7 @@ from django.http import HttpResponseRedirect, JsonResponse
 from django.contrib.auth import login, logout, get_user_model
 from django.urls import reverse
 from django.db import transaction
+from django.utils.timezone import now
 from django.views.decorators.http import require_http_methods, last_modified
 from django.conf import settings
 
@@ -259,7 +260,8 @@ def request_gitlab_oauth(request, backend):
     GLToken.objects.update_or_create(user=request.user,
                                      instance=instance,
                                      defaults={'token': oauth_user.token,
-                                               'refresh_token': oauth_user.refresh_token})
+                                               'refresh_token': oauth_user.refresh_token,
+                                               'expiration_date': now() + datetime.timedelta(seconds=7200)})
 
     if data_add and data_add['backend'] == backend:
         project = Project.objects.get(id=data_add['proj_id'])
