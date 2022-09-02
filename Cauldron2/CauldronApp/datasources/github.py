@@ -8,7 +8,7 @@ from cauldron_apps.cauldron_actions.models import AddGitHubRepoAction, AddGitHub
 
 def parse_input_data(data):
     """Return a tuple (owner, repository). Return None in owner or repository in the case was not found"""
-    owner_regex = '([a-zA-Z0-9](?:[a-zA-Z0-9]|-[a-zA-Z0-9]){1,38})'
+    owner_regex = '([a-zA-Z0-9](?:[a-zA-Z0-9]|[a-zA-Z0-9\-]){1,38})'
     repo_regex = '([a-zA-Z0-9\.\-\_]{1,100})'
     data = data.strip()
 
